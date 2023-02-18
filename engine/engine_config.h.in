@@ -1,0 +1,10 @@
+#pragma once
+
+#cmakedefine ENGINE_ENABLE_LOGGING
+#cmakedefine ENGINE_ENABLE_ASSERTS
+
+#ifndef NDEBUG
+#   define ENGINE_DEBUG
+#   define ENGINE_ENABLE_ASSERTS
+#   define ENGINE_GL_DEBUG
+#endif
