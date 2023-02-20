@@ -1,11 +1,6 @@
 #pragma once
 
-#include "engine/utils/engine_config.h"
+#include "utils/setup.h"
+#include "utils/log.h"
+#include "utils/mathdefs.h"
 
-#include <glm/glm.hpp>
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
