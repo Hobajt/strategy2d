@@ -2,6 +2,7 @@
 
 #cmakedefine ENGINE_ENABLE_LOGGING
 #cmakedefine ENGINE_ENABLE_ASSERTS
+#cmakedefine ENGINE_ENABLE_GUI
 
 #ifndef NDEBUG
 #   define ENGINE_DEBUG
