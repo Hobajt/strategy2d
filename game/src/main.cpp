@@ -2,32 +2,64 @@
 
 #include <engine/engine.h>
 
-int main(int argc, char** argv) {
-    eng::Log::Initialize();
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
-    eng::Window& window = eng::Window::Get();
-    eng::Input& input = eng::Input::Get();
+using namespace eng;
+
+void DBG_GUI();
+
+int main(int argc, char** argv) {
+
+    Log::Initialize();
+
+    Window& window = Window::Get();
+    Input& input = Input::Get();
 
     window.Initialize(640, 480, "test");
-    eng::GUI::Initialize();
+    GUI::Initialize();
+
+    ShaderRef shader = std::make_shared<Shader>("res/shaders/test_shader");
+    shader->InitTextureSlots(Renderer::TextureSlotsCount());
+
+    FontRef font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", 48);
+
+    TextureRef texture = std::make_shared<Texture>("res/textures/test2.png");
 
     while(!window.ShouldClose()) {
         input.Update();
+        if(window.GetKeyState(GLFW_KEY_Q))
+            window.Close();
 
-        LOG_INFO("Mouse pos: ({}, {})", input.mousePos.x, input.mousePos.y);
+        Renderer::StatsReset();
 
-        eng::GUI::Begin();
-#ifdef ENGINE_ENABLE_GUI
-        static bool show_demo_window = true;
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-#endif
-        eng::GUI::End();
+        GUI::Begin();
+        Renderer::Begin(shader, true);
+
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(-0.5f, 0.f, 0.f), glm::vec2(0.2f, 0.2f), glm::vec4(1.f, 0.f, 0.f, 1.f)));
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3( 0.5f, 0.f, 0.f), glm::vec2(0.2f, 0.2f), glm::vec4(1.f), texture));
+
+        font->RenderText("Sample text.", glm::vec2(0.f, -0.75f), 1.f, glm::vec4(1.f));
+        font->RenderTextCentered("Centered sample text.", glm::vec2(0.f, -0.5f), 1.f, glm::vec4(1.f, 0.f, 0.9f, 1.f));
+
+        Renderer::End();
+
+        DBG_GUI();
+        GUI::End();
 
         window.SwapAndPoll();
     }
 
-    eng::GUI::Release();
+    GUI::Release();
     
     return 0;
+}
+
+void DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+    ImGui::Begin("General");
+    ImGui::Text("FPS: %.1f", Input::Get().fps);
+    ImGui::Text("Draw calls: %d | Total quads: %d (%d wasted)", Renderer::Stats().drawCalls, Renderer::Stats().totalQuads, Renderer::Stats().wastedQuads);
+    ImGui::End();
+#endif
 }
