@@ -6,3 +6,4 @@
 #include "utils/gui.h"
 
 #include "core/window.h"
+#include "core/input.h"

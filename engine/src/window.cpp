@@ -8,6 +8,7 @@
 
 #include "engine/utils/setup.h"
 #include "engine/utils/gl_error.h"
+#include "engine/core/input.h"
 
 #define WINDOW_HANDLE_CHECK() ASSERT_MSG(window != nullptr, "Attempting to use uninitialized window.")
 
@@ -41,7 +42,7 @@ namespace eng {
 
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, onResizeCallback);
-        // Input::Get().InitCallbacks(*this);
+        Input::Get().InitCallbacks(*this);
 
         ENG_LOG_TRACE("[C] Window '{}'", name);
     }
