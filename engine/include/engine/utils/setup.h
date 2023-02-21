@@ -38,7 +38,7 @@
     #define ENGINE_GL_DEBUG
 #endif
 
-#include "utils/log.h"
+#include "engine/utils/log.h"
 
 //===== assertion macros =====
 #ifdef ENGINE_ENABLE_ASSERTS
