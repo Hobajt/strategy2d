@@ -8,6 +8,7 @@
 
 #include "core/window.h"
 #include "core/input.h"
+#include "core/audio.h"
 
 #include "core/text.h"
 #include "core/quad.h"

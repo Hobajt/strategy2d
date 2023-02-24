@@ -13,9 +13,11 @@ namespace eng {
     public:
         static void Initialize();
 
+        static std::shared_ptr<spdlog::logger>& EngineFineLogger() { return engineFineLogger; }
         static std::shared_ptr<spdlog::logger>& EngineLogger() { return engineLogger; }
         static std::shared_ptr<spdlog::logger>& AppLogger() { return appLogger; }
     private:
+        static std::shared_ptr<spdlog::logger> engineFineLogger;
         static std::shared_ptr<spdlog::logger> engineLogger;
         static std::shared_ptr<spdlog::logger> appLogger;
     };
@@ -23,6 +25,10 @@ namespace eng {
 }//namespace eng
 
 #ifdef ENGINE_ENABLE_LOGGING
+    #define ENG_LOG_FINEST(...)     eng::Log::EngineFineLogger()->trace(__VA_ARGS__)
+    #define ENG_LOG_FINER(...)      eng::Log::EngineFineLogger()->debug(__VA_ARGS__)
+    #define ENG_LOG_FINE(...)       eng::Log::EngineFineLogger()->info(__VA_ARGS__)
+
     #define ENG_LOG_TRACE(...)      eng::Log::EngineLogger()->trace(__VA_ARGS__)
     #define ENG_LOG_DEBUG(...)      eng::Log::EngineLogger()->debug(__VA_ARGS__)
     #define ENG_LOG_INFO(...)       eng::Log::EngineLogger()->info(__VA_ARGS__)
@@ -37,6 +43,10 @@ namespace eng {
     #define LOG_ERROR(...)      eng::Log::AppLogger()->error(__VA_ARGS__)
     #define LOG_CRITICAL(...)   eng::Log::AppLogger()->critical(__VA_ARGS__)
 #else
+    #define ENG_LOG_FINEST(...)
+    #define ENG_LOG_FINER(...)
+    #define ENG_LOG_FINE(...)
+
     #define ENG_LOG_TRACE(...)
     #define ENG_LOG_INFO(...)
     #define ENG_LOG_WARN(...)
