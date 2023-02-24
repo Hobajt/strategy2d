@@ -7,9 +7,9 @@
     #define COLOR_CODE_FINER 8
     #define COLOR_CODE_FINE 8
 #else
-    #define COLOR_CODE_FINEST "\033[40m\033[90m"
-    #define COLOR_CODE_FINER "\033[40m\033[90m"
-    #define COLOR_CODE_FINE "\033[40m\033[37m"
+    #define COLOR_CODE_FINEST "\033[90m"
+    #define COLOR_CODE_FINER "\033[90m"
+    #define COLOR_CODE_FINE "\033[37m"
 #endif
 
 namespace eng {

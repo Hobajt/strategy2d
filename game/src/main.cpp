@@ -79,8 +79,11 @@ int main(int argc, char** argv) {
         window.SwapAndPoll();
     }
 
+    Renderer::Release();
     Audio::Release();
     GUI::Release();
+
+    ENG_LOG_INFO("Terminating...");
     return 0;
 }
 

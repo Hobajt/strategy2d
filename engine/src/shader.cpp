@@ -138,7 +138,7 @@ namespace eng {
 
     void Shader::Release() noexcept {
         if (program != 0) {
-            ENG_LOG_TRACE("[D] Shader '{}' ({})\n", name.c_str(), program);
+            ENG_LOG_TRACE("[D] Shader '{}' ({})", name.c_str(), program);
             glDeleteProgram(program);
             program = 0;
         }
