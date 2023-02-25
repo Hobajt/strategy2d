@@ -10,10 +10,14 @@ namespace eng {
 
     //====== InputButton ======
 
-    //Detects button up/down/hold from key press updates.
+    //Wrapper for button management, tracks key presses and generates up/down/hold signals from it.
     struct InputButton {
         int state = 0;
+        int keycode = GLFW_KEY_A;
     public:
+        InputButton() {}
+        InputButton(int keycode_) : keycode(keycode_) {}
+
         bool up() const { return state == -1; }
         bool down() const { return state == 1; }
         bool pressed() const { return state > 0; }
@@ -26,6 +30,9 @@ namespace eng {
             // if (isPressed) state = state > 0 ? 2 : 1;
             // else state = state < 0 ? -1 : 0;
         }
+
+        void Update(Window& w) { Update(w.GetKeyState(keycode)); }
+        void Update() { Update(Window::Get().GetKeyState(keycode)); }
     };
 
     //====== Input ======

@@ -3,6 +3,7 @@
 struct GLFWwindow;
 
 #include "engine/utils/mathdefs.h"
+#include "engine/utils/keycodes.h"
 
 namespace eng {
 

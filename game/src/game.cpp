@@ -1,14 +1,10 @@
 #include "game.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 using namespace eng;
 
 //TODO: add some precursor to main menu
 //TODO: create more elaborate main(); add cmd arguments to launch in some kind of debug mode (skip menus, test map, etc.)
 //TODO: add string methods for vector classes - for debug prints
-//TODO: add additional input button wrapper - will track key code; will hide away the GLFW dependency
 
 Game::Game() : App(640, 480, "game") {}
 
@@ -17,6 +13,10 @@ void Game::OnResize(int width, int height) {
 }
 
 void Game::OnInit() {
+    k1 = InputButton(GLFW_KEY_C);
+    k2 = InputButton(GLFW_KEY_V);
+    k3 = InputButton(GLFW_KEY_B);
+
     try {
         font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", 48);
 
@@ -43,9 +43,9 @@ void Game::OnUpdate() {
     if(window.GetKeyState(GLFW_KEY_Q))
         window.Close();
     
-    k1.Update(window.GetKeyState(GLFW_KEY_C));
-    k2.Update(window.GetKeyState(GLFW_KEY_V));
-    k3.Update(window.GetKeyState(GLFW_KEY_B));
+    k1.Update();
+    k2.Update();
+    k3.Update();
     if(k1.down()) Audio::Play("res/sounds/test_sound.mp3");
     if(k2.down()) Audio::Play("res/sounds/test_sound.mp3", pos);
     if(k3.down()) Audio::PlayMusic("res/sounds/test_sound.mp3");
