@@ -18,3 +18,4 @@
 #include "core/framebuffer.h"
 
 #include "game/camera.h"
+#include "game/app.h"
