@@ -4,7 +4,7 @@
 #include "utils/log.h"
 #include "utils/mathdefs.h"
 #include "utils/utils.h"
-#include "utils/gui.h"
+#include "utils/dbg_gui.h"
 
 #include "core/window.h"
 #include "core/input.h"

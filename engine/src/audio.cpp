@@ -5,7 +5,7 @@
 #include <deque>
 
 #include "engine/utils/log.h"
-#include "engine/utils/gui.h"
+#include "engine/utils/dbg_gui.h"
 
 #include <miniaudio.h>
 

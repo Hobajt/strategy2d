@@ -1,4 +1,4 @@
-#include "engine/utils/gui.h"
+#include "engine/utils/dbg_gui.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -12,13 +12,13 @@
 
 #include "engine/core/window.h"
 
-namespace eng::GUI {
+namespace eng::DBG_GUI {
 
     void Initialize() {
 #ifdef ENGINE_ENABLE_GUI
         Window& window = Window::Get();
         if(!window.IsInitialized()) {
-            ENG_LOG_ERROR("GUI::Init() must be called after window initialization.");
+            ENG_LOG_ERROR("DBG_GUIInit() must be called after window initialization.");
             throw std::exception();
         }
 
@@ -49,10 +49,10 @@ namespace eng::GUI {
 #else
         Window& window = Window::Get();
         if(!window.IsInitialized()) {
-            ENG_LOG_ERROR("GUI::Init() must be called after window initialization.");
+            ENG_LOG_ERROR("DBG_GUIInit() must be called after window initialization.");
             throw std::exception();
         }
-        ENG_LOG_INFO("GUI::Init() - Debugging GUI features are not enabled (compile with ENGINE_ENABLE_GUI).");
+        ENG_LOG_INFO("DBG_GUIInit() - Debugging GUI features are not enabled (compile with ENGINE_ENABLE_GUI).");
 #endif
     }
 

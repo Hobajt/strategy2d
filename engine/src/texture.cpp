@@ -1,7 +1,7 @@
 #include "engine/core/texture.h"
 
 #include "engine/utils/utils.h"
-#include "engine/utils/gui.h"
+#include "engine/utils/dbg_gui.h"
 
 namespace eng {
 

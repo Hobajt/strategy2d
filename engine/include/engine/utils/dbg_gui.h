@@ -9,7 +9,7 @@
     #include <imgui.h>
 #endif
 
-namespace eng::GUI {
+namespace eng::DBG_GUI {
 
     //Initializes imgui context. Must be called after window initialization.
     void Initialize();

@@ -1,6 +1,6 @@
 #include "engine/game/camera.h"
 
-#include "engine/utils/gui.h"
+#include "engine/utils/dbg_gui.h"
 #include "engine/core/input.h"
 #include "engine/core/window.h"
 
@@ -20,7 +20,7 @@ static const float CAM_ZOOM_MAX = std::pow(10,  CAM_ZOOM_LOG_RANGE);
 namespace eng {
 
     Camera& Camera::Get() {
-        static Camera instance = Camera();
+        static Camera instance = {};
         return instance;
     }
 

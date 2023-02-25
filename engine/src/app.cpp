@@ -1,7 +1,7 @@
 #include "engine/game/app.h"
 
 #include "engine/utils/log.h"
-#include "engine/utils/gui.h"
+#include "engine/utils/dbg_gui.h"
 #include "engine/core/renderer.h"
 #include "engine/core/audio.h"
 
@@ -13,7 +13,7 @@ namespace eng {
         Window::Get().Initialize(windowWidth, windowHeight, windowName);
         Window::Get().SetResizeCallbackHandler(this);
 
-        GUI::Initialize();
+        DBG_GUI::Initialize();
         Audio::Initialize();
         Renderer::Initialize();
         
@@ -23,7 +23,7 @@ namespace eng {
     App::~App() {
         Renderer::Release();
         Audio::Release();
-        GUI::Release();
+        DBG_GUI::Release();
 
         ENG_LOG_TRACE("[D] App");
     }
@@ -36,7 +36,7 @@ namespace eng {
 
         ENG_LOG_INFO("App::MainLoop");
         while(!window.ShouldClose()) {
-            GUI::Begin();
+            DBG_GUI::Begin();
 
             OnUpdate();
 
@@ -44,7 +44,7 @@ namespace eng {
             OnGUI();
 #endif
 
-            GUI::End();
+            DBG_GUI::End();
 
             window.SwapAndPoll();
         }
