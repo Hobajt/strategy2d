@@ -9,6 +9,11 @@ using namespace eng;
 
 void DBG_GUI();
 
+//TODO: add some precursor to main menu
+//TODO: create more elaborate main(); add cmd arguments to launch in some kind of debug mode (skip menus, test map, etc.)
+//TODO: setup a Game or App class
+//TODO: add string methods for vector classes - for debug prints
+
 int main(int argc, char** argv) {
 
     Log::Initialize();
@@ -16,6 +21,7 @@ int main(int argc, char** argv) {
 
     Window& window = Window::Get();
     Input& input = Input::Get();
+    Camera& camera = Camera::Get();
 
     window.Initialize(640, 480, "test");
     GUI::Initialize();
@@ -33,26 +39,21 @@ int main(int argc, char** argv) {
 
     static glm::vec2 pos = glm::vec2(0.f);
 
-    //TODO: test fine colors on linux (not sure about the ansi color codes)
-    ENG_LOG_TRACE("=================");
-    ENG_LOG_FINEST("TEST FINEST");
-    ENG_LOG_FINER("TEST FINER");
-    ENG_LOG_FINE("TEST FINE");
-    ENG_LOG_TRACE("TEST TRACE");
-    ENG_LOG_TRACE("=================");
+    // input.Update();
 
-    InputButton s, d, f;
+    InputButton k1,k2,k3;
     while(!window.ShouldClose()) {
         input.Update();
+        camera.Update();
         if(window.GetKeyState(GLFW_KEY_Q))
             window.Close();
 
-        s.Update(window.GetKeyState(GLFW_KEY_S));
-        d.Update(window.GetKeyState(GLFW_KEY_D));
-        f.Update(window.GetKeyState(GLFW_KEY_F));
-        if(s.down()) Audio::Play("res/sounds/test_sound.mp3");
-        if(d.down()) Audio::Play("res/sounds/test_sound.mp3", pos);
-        if(f.down()) Audio::PlayMusic("res/sounds/test_sound.mp3");
+        k1.Update(window.GetKeyState(GLFW_KEY_C));
+        k2.Update(window.GetKeyState(GLFW_KEY_V));
+        k3.Update(window.GetKeyState(GLFW_KEY_B));
+        if(k1.down()) Audio::Play("res/sounds/test_sound.mp3");
+        if(k2.down()) Audio::Play("res/sounds/test_sound.mp3", pos);
+        if(k3.down()) Audio::PlayMusic("res/sounds/test_sound.mp3");
 
         Renderer::StatsReset();
 
@@ -65,8 +66,8 @@ int main(int argc, char** argv) {
         ImGui::End();
 #endif
 
-        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(-0.5f, 0.f, 0.f), glm::vec2(0.2f, 0.2f), glm::vec4(1.f, 0.f, 0.f, 1.f)));
-        Renderer::RenderQuad(Quad::FromCenter(glm::vec3( 0.5f, 0.f, 0.f), glm::vec2(0.2f, 0.2f), glm::vec4(1.f), texture));
+        Renderer::RenderQuad(Quad::FromCenter((glm::vec3(-0.5f, 0.f, 0.f) - camera.Position3d()) * camera.Mult3d(), glm::vec2(0.2f, 0.2f) * camera.Mult(), glm::vec4(1.f, 0.f, 0.f, 1.f)));
+        Renderer::RenderQuad(Quad::FromCenter((glm::vec3( 0.5f, 0.f, 0.f) - camera.Position3d()) * camera.Mult3d(), glm::vec2(0.2f, 0.2f) * camera.Mult(), glm::vec4(1.f), texture));
 
         font->RenderText("Sample text.", glm::vec2(0.f, -0.75f), 1.f, glm::vec4(1.f));
         font->RenderTextCentered("Centered sample text.", glm::vec2(0.f, -0.5f), 1.f, glm::vec4(1.f, 0.f, 0.9f, 1.f));
@@ -95,5 +96,6 @@ void DBG_GUI() {
     ImGui::End();
 
     Audio::DBG_GUI();
+    Camera::Get().DBG_GUI();
 #endif
 }
