@@ -4,7 +4,6 @@ using namespace eng;
 
 //TODO: add some precursor to main menu
 //TODO: create more elaborate main(); add cmd arguments to launch in some kind of debug mode (skip menus, test map, etc.)
-//TODO: add string methods for vector classes - for debug prints
 
 Game::Game() : App(640, 480, "game") {}
 
@@ -61,6 +60,10 @@ void Game::OnUpdate() {
     font->RenderTextCentered("Centered sample text.", glm::vec2(0.f, -0.5f), 1.f, glm::vec4(1.f, 0.f, 0.9f, 1.f));
 
     Renderer::End();
+
+    // glm::vec3 v = {1.f, 2.f, 3.f};
+    // LOG_INFO("V = {}", v);
+    // LOG_INFO("V = {}", eng::to_string(v));
 }
 
 void Game::OnGUI() {

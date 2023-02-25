@@ -7,6 +7,9 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
 namespace eng {
 
     class Log {
@@ -59,3 +62,15 @@ namespace eng {
     #define LOG_ERROR(...)
     #define LOG_CRITICAL(...)
 #endif
+
+//=== logging for custom types ===
+
+template<typename OStream, glm::length_t L, typename T, glm::qualifier Q>
+inline OStream& operator<<(OStream& os, const glm::vec<L, T, Q>& v) {
+    return os << glm::to_string(v);
+}
+
+template<typename OStream, glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
+inline OStream& operator<<(OStream& os, const glm::mat<C, R, T, Q>& m) {
+    return os << glm::to_string(m);
+}

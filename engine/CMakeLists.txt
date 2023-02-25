@@ -15,7 +15,7 @@ configure_file("engine_config.h.in" "include/engine/utils/engine_config.h" @ONLY
 
 
 add_library(${LIB_NAME}
-"include/engine/engine.h" "include/engine/utils/setup.h" "include/engine/utils/log.h" "src/log.cpp" "include/engine/utils/mathdefs.h"
+"include/engine/engine.h" "include/engine/utils/setup.h" "include/engine/utils/log.h" "src/log.cpp" "include/engine/utils/mathdefs.h" "src/mathdefs.cpp"
 "include/engine/core/window.h" "src/window.cpp" "include/engine/utils/gl_error.h" "src/gl_error.cpp"  "include/engine/utils/gui.h" "src/gui.cpp"
 "include/engine/core/input.h" "src/input.cpp" "include/engine/core/renderer.h" "src/renderer.cpp" "include/engine/core/quad.h" "src/quad.cpp"
 "include/engine/core/texture.h" "src/texture.cpp" "src/stb_image.cpp" "include/engine/core/shader.h" "src/shader.cpp" 
