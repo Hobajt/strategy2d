@@ -5,6 +5,8 @@ using namespace eng;
 //TODO: add some precursor to main menu
 //TODO: create more elaborate main(); add cmd arguments to launch in some kind of debug mode (skip menus, test map, etc.)
 //TODO: think through the screen size & resizing -> use square screen like the game?
+//TODO: add scroll menu to gui
+//TODO: add OnDrag() to GUI detection - for map implementation (or some similar name, drag, down, hold, whatever)
 
 Game::Game() : App(640, 640, "game") {}
 
@@ -60,9 +62,9 @@ void Game::OnUpdate() {
     // }
 
     static GUI::Menu tstMenu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
-        GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), font, "button 1", glm::vec4(1.f, 1.f, 1.f, 1.f)),
-        GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "button 2", glm::vec4(1.f, 0.f, .9f, 1.f)),
-        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), font, "button 3", glm::vec4(0.f, 0.f, 1.f, 1.f)),
+        GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), &menu, 1, font, "button 1", glm::vec4(1.f, 1.f, 1.f, 1.f)),
+        GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), &menu, 2, font, "button 2", glm::vec4(1.f, 0.f, .9f, 1.f)),
+        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), &menu, 3, font, "button 3", glm::vec4(0.f, 0.f, 1.f, 1.f)),
         // GUI::Button(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.3f), 2.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "KEK", glm::vec4(1.f, 0.f, .9f, 1.f)),
     });
 
@@ -85,21 +87,10 @@ void Game::OnUpdate() {
         }
     }
 
-
     //do this in ingame state to differentiate between gui & ingame selection handlers
     // SelectionHandler& selection = mapSelection;
     // if(mousePos.x < xyz)
     //     selection = guiSelection;
-    
-
-
-    
-
-    // ImGui::Begin("test gui");
-    // ImGui::SliderFloat2("menu size", (float*)&tstMenu.size, -1.f, 1.f);
-    // ImGui::SliderFloat2("btn size", (float*)&tstMenu.buttons[1].size, -1.f, 1.f);
-    // ImGui::SliderFloat2("btn offset", (float*)&tstMenu.buttons[1].offset, -1.f, 1.f);
-    // ImGui::End();
 
     Renderer::Begin(shader, true);
     tstMenu.Render();
@@ -113,29 +104,6 @@ void Game::OnUpdate() {
 
     //     }
     // }
-
-    //============================================== old stuff
-
-    
-    
-    // k1.Update();
-    // k2.Update();
-    // k3.Update();
-    // if(k1.down()) Audio::Play("res/sounds/test_sound.mp3");
-    // if(k2.down()) Audio::Play("res/sounds/test_sound.mp3", pos);
-    // if(k3.down()) Audio::PlayMusic("res/sounds/test_sound.mp3");
-
-    
-
-    // Renderer::Begin(shader, true);
-
-    // Renderer::RenderQuad(Quad::FromCenter((glm::vec3(-0.5f, 0.f, 0.f) - camera.Position3d()) * camera.Mult3d(), glm::vec2(0.2f, 0.2f) * camera.Mult(), glm::vec4(1.f, 0.f, 0.f, 1.f)));
-    // Renderer::RenderQuad(Quad::FromCenter((glm::vec3( 0.5f, 0.f, 0.f) - camera.Position3d()) * camera.Mult3d(), glm::vec2(0.2f, 0.2f) * camera.Mult(), glm::vec4(1.f), texture));
-
-    // font->RenderText("Sample text.", glm::vec2(0.f, -0.75f), 1.f, glm::vec4(1.f));
-    // font->RenderTextCentered("Centered sample text.", glm::vec2(0.f, -0.5f), 1.f, glm::vec4(1.f, 0.f, 0.9f, 1.f));
-
-    // Renderer::End();
 }
 
 void Game::OnGUI() {

@@ -56,11 +56,21 @@ namespace eng::GUI {
         std::vector<Element*> children;
     };
 
+
+    //Base class for objects that should process GUI button interaction.
+    class ButtonCallbackHandler {
+    public:
+        virtual void OnClick(int buttonID) = 0;
+    };
+
     //===== Button =====
 
     class Button : public Element {
     public:
-        Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_, const FontRef& font_, const std::string& text_ = std::string(""), const glm::vec4& textColor_ = glm::vec4(1.f));
+        Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_,
+            const TextureRef& texture_, const glm::vec4& color_, 
+            ButtonCallbackHandler* handler_, int buttonID_, 
+            const FontRef& font_,  const std::string& text_ = std::string(""), const glm::vec4& textColor_ = glm::vec4(1.f));
 
         virtual void OnHover() override;
         virtual void OnClick() override;
@@ -70,6 +80,9 @@ namespace eng::GUI {
         FontRef font;
         std::string text;
         glm::vec4 textColor;
+
+        int id;
+        ButtonCallbackHandler* handler = nullptr;
     };
 
     //===== Menu =====

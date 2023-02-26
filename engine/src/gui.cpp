@@ -52,9 +52,9 @@ namespace eng::GUI {
 
     //===== Button =====
 
-    Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, 
-                   const glm::vec4& color_, const FontRef& font_, const std::string& text_, const glm::vec4& textColor_)
-        : Element(offset_, size_, zOffset_, texture_, color_), text(text_), textColor(textColor_), font(font_) {}
+    Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_,
+                   ButtonCallbackHandler* handler_, int buttonID_, const FontRef& font_, const std::string& text_, const glm::vec4& textColor_)
+        : Element(offset_, size_, zOffset_, texture_, color_), text(text_), textColor(textColor_), font(font_), handler(handler_), id(buttonID_) {}
 
     void Button::InnerRender(const glm::vec2& pos, const glm::vec2& size, float zIdx) const {
         Element::InnerRender(pos, size, zIdx);
@@ -62,11 +62,14 @@ namespace eng::GUI {
     }
 
     void Button::OnHover() {
-        ENG_LOG_FINE("Button HOVER - '{}'", text);
+        // ENG_LOG_FINER("Button HOVER - '{}'", text);
     }
 
     void Button::OnClick() {
-        ENG_LOG_FINE("Button CLICK - '{}'", text);
+        // ENG_LOG_FINER("Button CLICK - '{}'", text);
+        if(handler) {
+            handler->OnClick(id);
+        }
     }
 
     //===== Menu =====
