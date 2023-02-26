@@ -128,6 +128,8 @@ namespace eng {
         mousePos = window.GetMousePos();
         mouseDelta = mousePos - data.prevMousePos;
         data.prevMousePos = mousePos;
+
+        mousePos_n = mousePos / glm::vec2(window.Size());
     }
 
     float Input::UpdateDeltaTime() {

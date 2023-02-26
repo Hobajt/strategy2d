@@ -41,31 +41,65 @@ void Game::OnUpdate() {
     input.Update();
     camera.Update();
 
-    
-    switch(state) {
-        case GameState::INTRO:
-            //TODO: do intro
-            state = GameState::MAIN_MENU;
-            break;
-        case GameState::MAIN_MENU:
-            // menu.
-            break;
-        case GameState::INGAME:
-            break;
-    }
+    Renderer::StatsReset();
+
+    if(window.GetKeyState(GLFW_KEY_Q))
+        window.Close();
+
+
+    // switch(state) {
+    //     case GameState::INTRO:
+    //         //TODO: do intro
+    //         state = GameState::MAIN_MENU;
+    //         break;
+    //     case GameState::MAIN_MENU:
+    //         // menu.
+    //         break;
+    //     case GameState::INGAME:
+    //         break;
+    // }
 
     static GUI::Menu tstMenu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
         GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), font, "button 1", glm::vec4(1.f, 1.f, 1.f, 1.f)),
         GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "button 2", glm::vec4(1.f, 0.f, .9f, 1.f)),
-        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), font, "button 3", glm::vec4(0.f, 0.f, 1.f, 1.f))
-        // GUI::Button(glm::vec2(0.5f, 0.f), glm::vec2(0.5f, 0.3f), 1.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "button 2", glm::vec4(1.f, 0.f, .9f, 1.f)),
+        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), font, "button 3", glm::vec4(0.f, 0.f, 1.f, 1.f)),
+        // GUI::Button(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.3f), 2.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "KEK", glm::vec4(1.f, 0.f, .9f, 1.f)),
     });
 
-    ImGui::Begin("test gui");
-    ImGui::SliderFloat2("menu size", (float*)&tstMenu.size, -1.f, 1.f);
-    ImGui::SliderFloat2("btn size", (float*)&tstMenu.buttons[1].size, -1.f, 1.f);
-    ImGui::SliderFloat2("btn offset", (float*)&tstMenu.buttons[1].offset, -1.f, 1.f);
-    ImGui::End();
+    guiSelection.visibleObjects.clear();
+    guiSelection.visibleObjects.push_back({ tstMenu.GetAABB(), &tstMenu });
+
+    SelectionHandler& selection = guiSelection;
+    ScreenObject* selectedObject = selection.GetSelection(input.mousePos_n);
+
+    if(selectedObject != nullptr) {
+        if(input.lmb.down()) {
+            selectedObject->OnClick();
+            // selectUnit();                        //in ingame state
+        }
+        // else if(input.rmb.down()) {
+        //     issueCommandForSelectedUnit();       //in ingame state
+        // }
+        else {
+            selectedObject->OnHover();
+        }
+    }
+
+
+    //do this in ingame state to differentiate between gui & ingame selection handlers
+    // SelectionHandler& selection = mapSelection;
+    // if(mousePos.x < xyz)
+    //     selection = guiSelection;
+    
+
+
+    
+
+    // ImGui::Begin("test gui");
+    // ImGui::SliderFloat2("menu size", (float*)&tstMenu.size, -1.f, 1.f);
+    // ImGui::SliderFloat2("btn size", (float*)&tstMenu.buttons[1].size, -1.f, 1.f);
+    // ImGui::SliderFloat2("btn offset", (float*)&tstMenu.buttons[1].offset, -1.f, 1.f);
+    // ImGui::End();
 
     Renderer::Begin(shader, true);
     tstMenu.Render();
@@ -82,8 +116,7 @@ void Game::OnUpdate() {
 
     //============================================== old stuff
 
-    if(window.GetKeyState(GLFW_KEY_Q))
-        window.Close();
+    
     
     // k1.Update();
     // k2.Update();
@@ -92,7 +125,7 @@ void Game::OnUpdate() {
     // if(k2.down()) Audio::Play("res/sounds/test_sound.mp3", pos);
     // if(k3.down()) Audio::PlayMusic("res/sounds/test_sound.mp3");
 
-    // Renderer::StatsReset();
+    
 
     // Renderer::Begin(shader, true);
 

@@ -10,6 +10,7 @@
 #include "core/input.h"
 #include "core/audio.h"
 #include "core/gui.h"
+#include "core/selection.h"
 
 #include "core/text.h"
 #include "core/quad.h"
@@ -18,5 +19,5 @@
 #include "core/renderer.h"
 #include "core/framebuffer.h"
 
-#include "game/camera.h"
 #include "game/app.h"
+#include "game/camera.h"

@@ -28,4 +28,7 @@ private:
     int state = GameState::INTRO;
     MainMenu menu;
     TransitionHandler transition;
+
+    eng::SelectionHandler guiSelection;
+    eng::SelectionHandler mapSelection;
 };

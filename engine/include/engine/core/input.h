@@ -83,6 +83,7 @@ namespace eng {
 
         InputButton lmb,rmb,mmb;
         glm::vec2 mousePos, mouseDelta, scroll;
+        glm::vec2 mousePos_n;
 
         bool alt, shift, ctrl, space;
     };
