@@ -2,6 +2,10 @@
 
 #include <engine/engine.h>
 
+#include "menu.h"
+
+namespace GameState { enum { INTRO, MAIN_MENU, INGAME }; }
+
 class Game : public eng::App {
 public:
     Game();
@@ -15,8 +19,13 @@ private:
     void ReloadShaders();
 private:
     eng::ShaderRef shader;
-    eng::TextureRef texture;    
+    eng::TextureRef texture;
+    eng::TextureRef btnTexture;
     eng::FontRef font;
 
     eng::InputButton k1,k2,k3;
+
+    int state = GameState::INTRO;
+    MainMenu menu;
+    TransitionHandler transition;
 };
