@@ -3,85 +3,87 @@
 using namespace eng;
 
 MainMenuController::MainMenuController(const FontRef& font, const TextureRef& btnTexture) {
-    main_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
-        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), this, 1, font, "Single Player Game", glm::vec4(1.f, 1.f, 1.f, 1.f)),
-        GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), this, 2, font, "Multi Player Game", glm::vec4(1.f, 0.f, .9f, 1.f)),
-        GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), this, 3, font, "Exit Program", glm::vec4(0.f, 0.f, 1.f, 1.f)),
-        // GUI::Button(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.3f), 2.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "KEK", glm::vec4(1.f, 0.f, .9f, 1.f)),
+    main_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
+        new GUI::TextButton(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
+            font, "Single Player Game", glm::vec4(1.f, 1.f, 1.f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){ 
+                LOG_INFO("MainMenu::Main - 'Single Player Game' button clicked.");
+                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                menu.SwitchState(MainMenuState::START_GAME);
+            }
+        ),
+        new GUI::TextButton(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
+            font, "Multi Player Game", glm::vec4(1.f, 0.f, .9f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){
+                LOG_INFO("MainMenu::Main - 'Multi Player Game' button clicked.");
+            }
+        ),
+        new GUI::TextButton(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f),
+            font, "Exit Program", glm::vec4(0.f, 0.f, 1.f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){
+                LOG_INFO("MainMenu::Main - 'Exit Program' button clicked.");
+                Window::Get().Close();
+            }
+        ),
     });
 
-    startGame_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
-        GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), this, 11, font, "ASDF", glm::vec4(1.f, 1.f, 1.f, 1.f)),
-        GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), this, 12, font, "FDAS", glm::vec4(1.f, 0.f, .9f, 1.f)),
-        GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), this, 13, font, "Back", glm::vec4(0.f, 0.f, 1.f, 1.f)),
-        // GUI::Button(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.3f), 2.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "KEK", glm::vec4(1.f, 0.f, .9f, 1.f)),
+    startGame_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
+        new GUI::TextButton(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
+            font, "ASDF", glm::vec4(1.f, 1.f, 1.f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){ 
+                LOG_INFO("MainMenu::StartGame - 'ASDF' button clicked.");
+            }
+        ),
+        new GUI::TextButton(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
+            font, "FDAS", glm::vec4(1.f, 0.f, .9f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){
+                LOG_INFO("MainMenu::StartGame - 'FDAS' button clicked.");
+            }
+        ),
+        new GUI::TextButton(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f),
+            font, "Back", glm::vec4(0.f, 0.f, 1.f, 1.f),
+            this, [](GUI::ButtonCallbackHandler* handler, int id){
+                LOG_INFO("MainMenu::StartGame - 'Back' button clicked.");
+                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                menu.SwitchState(MainMenuState::MAIN);
+            }
+        ),
     });
 
     SwitchState(MainMenuState::MAIN);
 }
 
 void MainMenuController::Update() {
+    ASSERT_MSG(activeMenu != nullptr, "There should always be active submenu in the main menu.");
+
     Input& input = Input::Get();
 
-    //button hover/click detection
-    ScreenObject* selectedObject = selection.GetSelection(input.mousePos_n);
-    if(selectedObject != nullptr) {
-        if(input.lmb.down()) {
-            selectedObject->OnClick();
-        }
-        else {
-            selectedObject->OnHover();
-        }
+    GUI::Element* selection = activeMenu->ResolveMouseSelection(input.mousePos_n);
+    if(selection != nullptr) {
+        if(input.lmb.down())
+            selection->OnClick();
+        else
+            selection->OnHover();
     }
-
-    //button click processing
-    if(clickID > 0) {
-        switch(clickID) {
-            case 1:
-                SwitchState(MainMenuState::START_GAME);
-                break;
-            case 13:
-                SwitchState(MainMenuState::MAIN);
-                break;
-        }
-    }
-    clickID = 0;
 }
 
 void MainMenuController::Render() {
+    ASSERT_MSG(activeMenu != nullptr, "There should always be active submenu in the main menu.");
     //TODO: render the background image here
-    switch(state) {
-        default:
-        case MainMenuState::MAIN:
-            main_menu.Render();
-            break;
-        case MainMenuState::START_GAME:
-            startGame_menu.Render();
-            break;
-    }
-}
-
-void MainMenuController::OnClick(int buttonID) {
-    LOG_INFO("MainMenuController::OnClick - button {}", buttonID);
-    clickID = buttonID;
+    activeMenu->Render();
 }
 
 void MainMenuController::SwitchState(int newState) {
-    //TODO: switch state as well as setup variables (selection handler for example)
-
-    selection.visibleObjects.clear();
     switch(newState) {
+        default:
+            LOG_WARN("MainMenu - Unrecognized menu state ({}), switching to main submenu.", newState);
+            newState = MainMenuState::MAIN;
         case MainMenuState::MAIN:
-            selection.visibleObjects.push_back({ main_menu.GetAABB(), &main_menu });
+            activeMenu = &main_menu;
             break;
         case MainMenuState::START_GAME:
-            selection.visibleObjects.push_back({ startGame_menu.GetAABB(), &startGame_menu });
+            activeMenu = &startGame_menu;
             break;
     }
-    state = newState;
-
-    //TODO: maybe rework, so that single menu object covers the entire menu stuff
-    //then you could just change pointer to different menu, wouldn't have to fuck around with all these switches
-
-    //also, maybe the button ID resolution could be done through some kind of array
+    activeState = newState;
 }

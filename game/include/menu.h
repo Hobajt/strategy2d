@@ -6,7 +6,7 @@
 
 //===== MainMenu =====
 
-namespace MainMenuState { enum { MAIN, START_GAME, OPTIONS }; }
+namespace MainMenuState { enum { INVALID, MAIN, START_GAME, OPTIONS }; }
 
 class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
@@ -15,17 +15,14 @@ public:
     virtual void Update() override;
     virtual void Render() override;
 
-    virtual int GetStageID() const { return GameStageName::MAIN_MENU; }
-
-    virtual void OnClick(int buttonID) override;
+    virtual int GetStageID() const override { return GameStageName::MAIN_MENU; }
 private:
     void SwitchState(int newState);
 private:
-    int state = MainMenuState::MAIN;
 
     eng::GUI::Menu main_menu;
     eng::GUI::Menu startGame_menu;
 
-    eng::SelectionHandler selection;
-    int clickID = 0;
+    eng::GUI::Menu* activeMenu = nullptr;
+    int activeState = MainMenuState::INVALID;
 };

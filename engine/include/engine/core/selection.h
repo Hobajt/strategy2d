@@ -22,6 +22,9 @@ namespace eng {
         glm::vec2& operator[](int i);
         const glm::vec2& operator[](int i) const;
     public:
+        AABB();
+        AABB(const glm::vec2& m, const glm::vec2& M);
+
         bool IsInside(const glm::vec2& pos);
     };
 
@@ -37,18 +40,6 @@ namespace eng {
 
         //In case screen object wraps around other objects and does the lookup by itself.
         virtual ScreenObject* FetchLeaf(const glm::vec2& mousePos) { return this; }
-    };
-
-    //===== SelectionHandler =====
-
-    //Helper class that keeps a list of currently visible objects and can find the one that is currently under the mouse.
-    class SelectionHandler {
-        using VisibleObject = std::pair<AABB, ScreenObject*>;
-        using VisibleObjectsPool = std::vector<VisibleObject>;
-    public:
-        ScreenObject* GetSelection(const glm::vec2& mousePos);
-    public:
-        VisibleObjectsPool visibleObjects;
     };
 
 }//namespace eng
