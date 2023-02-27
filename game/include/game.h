@@ -23,10 +23,8 @@ private:
     eng::TextureRef btnTexture;
     eng::FontRef font;
 
-    eng::InputButton k1,k2,k3;
-
     int state = GameState::INTRO;
-    MainMenu menu;
+    MainMenu menu = {};
     TransitionHandler transition;
 
     eng::SelectionHandler guiSelection;

@@ -89,6 +89,7 @@ namespace eng::GUI {
 
     class Menu : public Element {
     public:
+        Menu() = default;
         Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const std::vector<Button>& buttons, const TextureRef& texture = nullptr, const glm::vec4& color = glm::vec4(1.f));
 
         virtual ScreenObject* FetchLeaf(const glm::vec2& mousePos) override;
