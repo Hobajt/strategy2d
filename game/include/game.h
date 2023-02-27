@@ -2,9 +2,7 @@
 
 #include <engine/engine.h>
 
-#include "menu.h"
-
-namespace GameState { enum { INTRO, MAIN_MENU, INGAME }; }
+#include "stage.h"
 
 class Game : public eng::App {
 public:
@@ -23,10 +21,5 @@ private:
     eng::TextureRef btnTexture;
     eng::FontRef font;
 
-    int state = GameState::INTRO;
-    MainMenu menu = {};
-    TransitionHandler transition;
-
-    eng::SelectionHandler guiSelection;
-    eng::SelectionHandler mapSelection;
+    GameStage stageController;
 };

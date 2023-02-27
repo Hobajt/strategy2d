@@ -2,7 +2,7 @@
 
 using namespace eng;
 
-void MainMenu::Initialize(const FontRef& font, const TextureRef& btnTexture) {
+MainMenuController::MainMenuController(const FontRef& font, const TextureRef& btnTexture) {
     main_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
         GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), this, 1, font, "Single Player Game", glm::vec4(1.f, 1.f, 1.f, 1.f)),
         GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), this, 2, font, "Multi Player Game", glm::vec4(1.f, 0.f, .9f, 1.f)),
@@ -20,7 +20,7 @@ void MainMenu::Initialize(const FontRef& font, const TextureRef& btnTexture) {
     SwitchState(MainMenuState::MAIN);
 }
 
-void MainMenu::Update(TransitionHandler& transition) {
+void MainMenuController::Update() {
     Input& input = Input::Get();
 
     //button hover/click detection
@@ -48,7 +48,7 @@ void MainMenu::Update(TransitionHandler& transition) {
     clickID = 0;
 }
 
-void MainMenu::Render() {
+void MainMenuController::Render() {
     //TODO: render the background image here
     switch(state) {
         default:
@@ -61,12 +61,12 @@ void MainMenu::Render() {
     }
 }
 
-void MainMenu::OnClick(int buttonID) {
-    LOG_INFO("MainMenu::OnClick - button {}", buttonID);
+void MainMenuController::OnClick(int buttonID) {
+    LOG_INFO("MainMenuController::OnClick - button {}", buttonID);
     clickID = buttonID;
 }
 
-void MainMenu::SwitchState(int newState) {
+void MainMenuController::SwitchState(int newState) {
     //TODO: switch state as well as setup variables (selection handler for example)
 
     selection.visibleObjects.clear();

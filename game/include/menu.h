@@ -2,24 +2,20 @@
 
 #include <engine/engine.h>
 
-//===== TransitionHandler =====
-
-class TransitionHandler {
-public:
-    bool IsHappening();
-    bool IsDone();
-};
+#include "stage.h"
 
 //===== MainMenu =====
 
 namespace MainMenuState { enum { MAIN, START_GAME, OPTIONS }; }
 
-class MainMenu : public eng::GUI::ButtonCallbackHandler {
+class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
-    void Initialize(const eng::FontRef& font, const eng::TextureRef& btnTexture);
+    MainMenuController(const eng::FontRef& font, const eng::TextureRef& btnTexture);
 
-    void Update(TransitionHandler& transition);
-    void Render();
+    virtual void Update() override;
+    virtual void Render() override;
+
+    virtual int GetStageID() const { return GameStageName::MAIN_MENU; }
 
     virtual void OnClick(int buttonID) override;
 private:

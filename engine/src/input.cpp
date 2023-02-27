@@ -84,6 +84,10 @@ namespace eng {
         }
     }
 
+    double Input::CurrentTime() {
+        return glfwGetTime();
+    }
+
     Input::~Input() {
         ENG_LOG_TRACE("[D] Input");
     }

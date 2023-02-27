@@ -63,6 +63,8 @@ namespace eng {
         //If replace == true, replaces the first found callback for the same key.
         //Use keycode=-1 for any key.
         void AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace = false);
+
+        static double CurrentTime();
     private:
         Input() = default;
         ~Input();

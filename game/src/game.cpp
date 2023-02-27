@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include "menu.h"
+
 using namespace eng;
 
 //TODO: add some precursor to main menu
@@ -28,7 +30,9 @@ void Game::OnInit() {
         throw e;
     }
 
-    menu.Initialize(font, btnTexture);
+    stageController.Initialize({ 
+        std::make_shared<MainMenuController>(font, btnTexture)
+    });
 }
 
 static glm::vec2 pos = glm::vec2(0.f);
@@ -46,72 +50,10 @@ void Game::OnUpdate() {
     if(window.GetKeyState(GLFW_KEY_Q))
         window.Close();
 
-
-    switch(state) {
-        case GameState::INTRO:
-            //TODO: do intro
-            state = GameState::MAIN_MENU;
-            break;
-        case GameState::MAIN_MENU:
-            menu.Update(transition);
-            break;
-        case GameState::INGAME:
-            break;
-    }
-
-    // static GUI::Menu tstMenu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Button>{
-    //     GUI::Button(glm::vec2(0.f, 0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f), &menu, 1, font, "button 1", glm::vec4(1.f, 1.f, 1.f, 1.f)),
-    //     GUI::Button(glm::vec2(0.f, 0.00f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), &menu, 2, font, "button 2", glm::vec4(1.f, 0.f, .9f, 1.f)),
-    //     GUI::Button(glm::vec2(0.f,-0.31f * 2.f), glm::vec2(0.9f, 0.3f), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f), &menu, 3, font, "button 3", glm::vec4(0.f, 0.f, 1.f, 1.f)),
-    //     // GUI::Button(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.3f), 2.f, nullptr, glm::vec4(0.7f, 0.7f, 0.7f, 1.f), font, "KEK", glm::vec4(1.f, 0.f, .9f, 1.f)),
-    // });
-
-    // guiSelection.visibleObjects.clear();
-    // guiSelection.visibleObjects.push_back({ tstMenu.GetAABB(), &tstMenu });
-
-    // SelectionHandler& selection = guiSelection;
-    // ScreenObject* selectedObject = selection.GetSelection(input.mousePos_n);
-
-    // if(selectedObject != nullptr) {
-    //     if(input.lmb.down()) {
-    //         selectedObject->OnClick();
-    //         // selectUnit();                        //in ingame state
-    //     }
-    //     // else if(input.rmb.down()) {
-    //     //     issueCommandForSelectedUnit();       //in ingame state
-    //     // }
-    //     else {
-    //         selectedObject->OnHover();
-    //     }
-    // }
-
-    //do this in ingame state to differentiate between gui & ingame selection handlers
-    // SelectionHandler& selection = mapSelection;
-    // if(mousePos.x < xyz)
-    //     selection = guiSelection;
+    stageController.Update();
 
     Renderer::Begin(shader, true);
-    switch(state) {
-        case GameState::INTRO:
-            //TODO: do intro
-            state = GameState::MAIN_MENU;
-            break;
-        case GameState::MAIN_MENU:
-            menu.Render();
-            break;
-        case GameState::INGAME:
-            break;
-    }
-
-    // //game state transition logic
-    // if(transition.IsHappening()) {
-    //     float t = transition....;
-    //     Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, t)));
-    //     if(transition.IsDone()) {
-
-    //     }
-    // }
-
+    stageController.Render();
     Renderer::End();
 }
 
