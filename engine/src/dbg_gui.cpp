@@ -49,10 +49,10 @@ namespace eng::DBG_GUI {
 #else
         Window& window = Window::Get();
         if(!window.IsInitialized()) {
-            ENG_LOG_ERROR("DBG_GUIInit() must be called after window initialization.");
+            ENG_LOG_ERROR("DBG_GUI::Initialize() must be called after window initialization.");
             throw std::exception();
         }
-        ENG_LOG_INFO("DBG_GUIInit() - Debugging GUI features are not enabled (compile with ENGINE_ENABLE_GUI).");
+        ENG_LOG_INFO("DBG_GUI::Initialize() - Debugging GUI features are not enabled (compile with ENGINE_ENABLE_GUI).");
 #endif
     }
 
@@ -77,7 +77,8 @@ namespace eng::DBG_GUI {
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(Window::Get().Handle(), &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
+        // glViewport(0, 0, display_w, display_h);
+        Window::Get().UpdateViewport();
         // glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         // glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

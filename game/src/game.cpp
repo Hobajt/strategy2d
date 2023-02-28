@@ -101,7 +101,6 @@ void Game::OnUpdate() {
     if(window.GetKeyState(GLFW_KEY_Q))
         window.Close();
 
-
     t.Update();
     if(t.down()) {
         static bool fullscreen = false;
@@ -109,10 +108,6 @@ void Game::OnUpdate() {
         LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
         window.SetFullscreen(fullscreen);
     }
-
-    // window.UpdateViewport_full();
-    // window.Clear();
-    window.UpdateViewport();
 
     stageController.Update();
 
