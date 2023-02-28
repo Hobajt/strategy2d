@@ -142,6 +142,8 @@ namespace eng {
         GLFWmonitor* mon = glfwGetPrimaryMonitor();
         const GLFWvidmode* vid = glfwGetVideoMode(mon);
 
+        is_fullscreen = fullscreen;
+
         if(fullscreen) {
             glfwSetWindowMonitor(window, mon, 0, 0, vid->width, vid->height, GLFW_DONT_CARE);
         }
@@ -156,8 +158,6 @@ namespace eng {
 
             glfwSetWindowMonitor(window, nullptr, pos.x, pos.y, windowed_size.x, windowed_size.y, GLFW_DONT_CARE);
         }
-        
-        is_fullscreen = fullscreen;
     }
 
     void Window::SetRatio(float r) {

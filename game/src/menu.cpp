@@ -7,13 +7,14 @@ MainMenuController::MainMenuController(const FontRef& font, const TextureRef& bt
 
     float bh = 0.1f;                    //button height
     float bw = 0.33f;
-    float bg = (bh + 0.01f) * 2.f;      //button gap (*2 to offset menu's size scaling)
+    float gap = 0.03f;
+    float bg = (bh + gap) * 2.f;      //button gap (*2 to offset menu's size scaling)
     float mw = 0.5f;
     float mh = 0.5f;
     float mwi = 1.f / mw;
     float mhi = 1.f / mh;
 
-    main_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
+    main_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
         new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
             font, "Single Player Game", txtClr,
             this, [](GUI::ButtonCallbackHandler* handler, int id){ 
@@ -47,9 +48,7 @@ MainMenuController::MainMenuController(const FontRef& font, const TextureRef& bt
         ),
     });
 
-    bh = 0.2f;
-    bg = (bh + 0.01f) * 2.f;
-    startGame_menu = GUI::Menu(glm::vec2(0.f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
+    startGame_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
         new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
             font, "New Campaign", txtClr,
             this, [](GUI::ButtonCallbackHandler* handler, int id){ 

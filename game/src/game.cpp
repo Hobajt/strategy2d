@@ -24,6 +24,7 @@ using namespace eng;
 //TODO: font resizing to match current window size (mainly in buttons)
 
 //TODO: stage switching, stage transitions (once there's ingame stage controller)
+//TODO: add intro & loading screen (either using stages or in some other way)
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it
@@ -45,7 +46,7 @@ void Game::OnInit() {
 
         texture = std::make_shared<Texture>("res/textures/test2.png");
         btnTexture = std::make_shared<Texture>("res/textures/test_button.png");
-        // backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
+        backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
 
         ReloadShaders();
     } catch(std::exception& e) {
