@@ -48,7 +48,7 @@ namespace eng {
         glm::ivec2 CursorPos_VFlip() const;
 
         void UpdateViewport();
-        void UpdateViewport(const glm::ivec2& size);
+        void UpdateViewport_full();
 
         void SetClearColor(const glm::vec4& clr);
         void Clear();
@@ -60,6 +60,8 @@ namespace eng {
         bool GetKeyState(int keycode) const;
         bool GetMouseKeyState(int keycode) const;
         glm::vec2 GetMousePos() const;
+
+        void SetFullscreen(bool fullscreen);
     private:
         Window() = default;
         ~Window();
@@ -69,10 +71,15 @@ namespace eng {
         void UpdateSize(int width, int height);
     private:
         GLFWwindow* window = nullptr;
-        glm::ivec2 size;
-        glm::vec2 aspect;
+        glm::ivec2 size;            //current window size; always rectangular
+        glm::vec2 aspect;           //no point in having this, but i'm lazy and don't wanna remove it
 
         WindowResizeHandler* resizeHandler = nullptr;
+
+        bool is_fullscreen = false;
+        glm::ivec2 windowed_size;   //size in windowed mode - to preserve between fullscreen switching (only preserves the smaller dimension)
+        glm::ivec2 real_size;       //real size of window in pixels
+        glm::ivec2 offset;          //pixel offset between window corner and screen corner
     };
 
 }//namespace eng

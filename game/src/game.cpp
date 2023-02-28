@@ -5,19 +5,19 @@
 using namespace eng;
 
 //TODO: add some precursor to main menu
-//TODO: think through the screen size & resizing -> use square screen like the game?
 //TODO: add OnDrag() to GUI detection - for map implementation (or some similar name, drag, down, hold, whatever)
 //TODO: make logging initialization through singleton -> static objects cannot really use logging now since they get initialized before the logging
 
 //TODO: remove SelectionHandler completely - use GUI hierarchy for GUI selection and cells for map selection
 //TODO: think through how to handle resources - for example during menu initializations ... how to pass various things to correct places
 
+//TODO: add some config file that will act as a persistent storage for options and stuff
+
 //immediate future:
 //TODO: add scroll menu to gui
 //TODO: add basic play button with proper stage change & setup
 //TODO: add cmdline args to launch in debug mode, skip menus, etc.
 
-//TODO: finalize the screen size stuff - fullsc
 //TODO: figure out how to generate (nice) button textures - with borders and stuff
 //TODO: add on hover and click button visuals
 //TODO: do input key handling through callbacks
@@ -54,9 +54,13 @@ void Game::OnInit() {
     stageController.Initialize({ 
         std::make_shared<MainMenuController>(font, btnTexture)
     });
+
+    // Window::Get().SetFullscreen(true);
 }
 
-static glm::vec2 pos = glm::vec2(0.f);
+static bool rdr = true;
+static InputButton r = InputButton(GLFW_KEY_R);
+static InputButton t = InputButton(GLFW_KEY_T);
 
 void Game::OnUpdate() {
     Window& window = Window::Get();
@@ -71,9 +75,28 @@ void Game::OnUpdate() {
     if(window.GetKeyState(GLFW_KEY_Q))
         window.Close();
 
+
+    t.Update();
+    if(t.down()) {
+        static bool fullscreen = false;
+        fullscreen = !fullscreen;
+        LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
+        window.SetFullscreen(fullscreen);
+    }
+
+    r.Update();
+    if(r.down()) rdr = !rdr;
+
+    LOG_INFO("MOUSE POS = {}", to_string(input.mousePos));
+
+    // window.UpdateViewport_full();
+    // window.Clear();
+    window.UpdateViewport();
+
     stageController.Update();
 
     Renderer::Begin(shader, true);
+    if(rdr) Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f), glm::vec4(1.f))); //white background to check that viewport is set correctly
     stageController.Render();
     Renderer::End();
 }

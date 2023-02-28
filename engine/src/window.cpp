@@ -35,6 +35,7 @@ namespace eng {
             Release();
         }
 
+        windowed_size = glm::ivec2(width, height);
         UpdateSize(width, height);
         if(!WindowInit(width, height, samples, name, window)) {
             throw std::exception();
@@ -70,20 +71,27 @@ namespace eng {
     void Window::Resize(int width, int height) {
         UpdateSize(width, height);
         UpdateViewport();
+        ENG_LOG_TRACE("Window resize; size = ({}, {}), real_size = ({}, {}), offset = ({}, {})", size.x, size.y, real_size.x, real_size.y, offset.x, offset.y);
         if(resizeHandler != nullptr) {
             resizeHandler->OnResize(width, height);
         }
     }
 
     void Window::UpdateSize(int width, int height) {
-        size = glm::ivec2(width, height);
-        aspect = (size.x > size.y) ? glm::vec2(size.y / (float)size.x, 1.f) : glm::vec2(1.f, size.x / (float)size.y);
+        real_size = glm::ivec2(width, height);
+        if(!is_fullscreen) windowed_size = size;
+        //to keep the screen rectangular
+        size = (real_size.x > real_size.y) ? glm::ivec2(real_size.y) : glm::ivec2(real_size.x);
+        aspect = glm::vec2(1.f);
+
+        offset = (real_size.x > real_size.y) ? glm::ivec2((real_size.x - real_size.y) / 2, 0) : glm::ivec2(0, (real_size.y - real_size.x) / 2);
     }
 
     glm::ivec2 Window::CursorPos() const {
         double x,y;
         glfwGetCursorPos(window, &x, &y);
-        return glm::ivec2((int)x, (int)y);
+        //subtract screen offset to account for rectangular centered window
+        return glm::ivec2((int)x - offset.y, (int)y - offset.y);
     }
 
     glm::ivec2 Window::CursorPos_VFlip() const {
@@ -93,11 +101,11 @@ namespace eng {
     }
 
     void Window::UpdateViewport() {
-        glViewport(0, 0, size.x, size.y);
+        glViewport(offset.x, offset.y, size.x, size.y);
     }
 
-    void Window::UpdateViewport(const glm::ivec2& sz) {
-        glViewport(0, 0, sz.x, sz.y);
+    void Window::UpdateViewport_full() {
+        glViewport(0, 0, real_size.x, real_size.y);
     }
 
     void Window::SetClearColor(const glm::vec4& clr) {
@@ -120,7 +128,30 @@ namespace eng {
     glm::vec2 Window::GetMousePos() const {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        return glm::vec2(xpos, ypos);
+        //subtract screen offset to account for rectangular centered window
+        return glm::vec2(xpos - offset.x, ypos - offset.y);
+    }
+
+    void Window::SetFullscreen(bool fullscreen) {
+        GLFWmonitor* mon = glfwGetPrimaryMonitor();
+        const GLFWvidmode* vid = glfwGetVideoMode(mon);
+
+        if(fullscreen) {
+            glfwSetWindowMonitor(window, mon, 0, 0, vid->width, vid->height, GLFW_DONT_CARE);
+        }
+        else {
+            //offset, so that even the window bar is visible
+            glm::ivec2 pos = windowed_size / glm::ivec2(8,4);
+            
+            //decrease the offset if parts of window are out of screen
+            glm::ivec2 tmp = (pos + windowed_size) - glm::ivec2(vid->width, vid->height);
+            if(tmp.x > 0) pos -= tmp.x;
+            if(tmp.y > 0) pos -= tmp.y;
+
+            glfwSetWindowMonitor(window, nullptr, pos.x, pos.y, windowed_size.x, windowed_size.y, GLFW_DONT_CARE);
+        }
+        
+        is_fullscreen = fullscreen;
     }
 
     void Window::Release() noexcept {
@@ -145,7 +176,7 @@ namespace eng {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_SAMPLES, samples);
-        //glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
         //glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
 
 #ifdef ENGINE_GL_DEBUG
