@@ -14,17 +14,26 @@ using namespace eng;
 
 //TODO: add some config file that will act as a persistent storage for options and stuff
 
-//immediate future:
+//less immediate future:
 //TODO: add scroll menu to gui
 //TODO: add basic play button with proper stage change & setup
 //TODO: add cmdline args to launch in debug mode, skip menus, etc.
-
-//TODO: figure out how to generate (nice) button textures - with borders and stuff
-//TODO: add on hover and click button visuals
-//TODO: font resizing to match current window size (mainly in buttons)
-
 //TODO: stage switching, stage transitions (once there's ingame stage controller)
 //TODO: add intro & loading screen (either using stages or in some other way)
+
+//immediate future:
+//TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
+//TODO: move the button texture generation somewhere else
+//TODO: font resizing to match current window size (mainly in buttons)
+
+/*proper button reactions:
+    - on hover - button text turns all white (hover color)
+    - on click down - button is "pushed in" - different texture
+    - on click up - button triggers it's callback
+    - when mouse goes away from the button while it's down -> button isn't clicked
+    - when mouse goes down outside of button, then moves over it and releases -> button isn't clicked either
+    - for button click, mouse has to go both down() and up() on the button
+*/
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it
@@ -33,6 +42,8 @@ using namespace eng;
     - there will be 3 special buttons -> scroll slider (up,down & slider button)
         - can maybe wrap this in one single class
 */
+
+glm::u8vec3* GenerateButtonTexture(int width, int height, bool flipShading);
 
 Game::Game() : App(640, 480, "game") {}
 
@@ -45,7 +56,6 @@ void Game::OnInit() {
         font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", 48);
 
         texture = std::make_shared<Texture>("res/textures/test2.png");
-        btnTexture = std::make_shared<Texture>("res/textures/test_button.png");
         backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
 
         ReloadShaders();
@@ -55,17 +65,25 @@ void Game::OnInit() {
         throw e;
     }
 
-    stageController.Initialize({ 
-        std::make_shared<MainMenuController>(font, btnTexture, backgroundTexture)
-    });
-
     // Window::Get().SetFullscreen(true);
 
-    // int width = 10;
-    // int height = 10;
-    // uint8_t* data = new uint8_t[width * height * 3];
-    // btn = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), data);
-    // delete[] data;
+    
+    //size = window_size * button_size (in menu) - match the size ratio to have nice and even borders
+    int width = 212, height = 48;
+
+    //regular button texture
+    glm::u8vec3* data = GenerateButtonTexture(width, height, false);
+    btnTexture = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), (void*)data);
+    delete[] data;
+
+    //pushed-in button texture
+    data = GenerateButtonTexture(width, height, true);
+    btnTextureClick = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), (void*)data);
+    delete[] data;
+
+    stageController.Initialize({ 
+        std::make_shared<MainMenuController>(font, btnTexture, btnTextureClick, backgroundTexture)
+    });
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
@@ -128,4 +146,71 @@ void Game::OnGUI() {
 void Game::ReloadShaders() {
     shader = std::make_shared<Shader>("res/shaders/test_shader");
     shader->InitTextureSlots(Renderer::TextureSlotsCount());
+}
+
+glm::u8vec3* GenerateButtonTexture(int width, int height, bool flipShading) {
+    glm::u8vec3 fillColor = glm::u8vec3(150,0,0);
+    glm::u8vec3 borderColor = glm::u8vec3(30, 0, 0);
+    glm::u8vec3 lightColorBase = glm::u8vec3(200,0,0);
+    glm::u8vec3 shadowColorBase = glm::u8vec3(100,0,0);
+    glm::u8vec3 darkShadowColor = glm::u8vec3(80, 0, 0);
+
+    glm::u8vec3 lightColor = lightColorBase;
+    glm::u8vec3 shadowColor = shadowColorBase;
+
+    if(flipShading) {
+        fillColor = glm::u8vec3(110, 0, 0);
+        lightColor = darkShadowColor;
+        shadowColor = fillColor;
+    }
+
+    int borderWidth = 3;
+
+    int bw_y = borderWidth;
+    int bw_x = int(borderWidth / Window::Get().Ratio());
+
+    glm::u8vec3* data = new glm::u8vec3[width * height];
+
+    //fill
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            data[y * width + x] = fillColor;
+        }
+    }
+
+    //borders + 3d outlines - top & bottom
+    for(int y = 0; y < bw_y; y++) {
+        for(int x = 0; x < width; x++) {
+            data[y * width + x] = borderColor;
+            data[(height-1-y) * width + x] = borderColor;
+
+            data[(y+bw_y) * width + x] = lightColor;
+            data[(height-1-y-bw_y) * width + x] = shadowColor;
+        }
+    }
+    //borders + 3d outlines - left & right
+    for(int y = bw_y; y < height-bw_y; y++) {
+        for(int x = 0; x < bw_x; x++) {
+            data[y * width + x] = borderColor;
+            data[y * width + width-1-x] = borderColor;
+
+            data[y * width + x+bw_x] = lightColor;
+            data[y * width + width-1-x-bw_x] = shadowColor;
+        }
+    }
+    //3d outlines - corners (botLeft & topRight)
+    for(int y = 0; y < bw_y; y++) {
+        for(int x = 0; x < bw_x; x++) {
+            if(atan2(y, x) > glm::pi<double>() * 0.25) {
+                data[(y+bw_y) * width + width-1-x-bw_x] = shadowColor;
+                data[(height-1-y-bw_y) * width + x+bw_x] = lightColor;
+            }
+            else {
+                data[(y+bw_y) * width + width-1-x-bw_x] = lightColor;
+                data[(height-1-y-bw_y) * width + x+bw_x] = shadowColor;
+            }
+        }
+    }
+
+    return data;
 }

@@ -21,8 +21,8 @@ private:
 
     eng::TextureRef texture;
     eng::TextureRef btnTexture;
+    eng::TextureRef btnTextureClick;
     eng::TextureRef backgroundTexture = nullptr;
-    eng::TextureRef btn;
 
     eng::FontRef font;
 };

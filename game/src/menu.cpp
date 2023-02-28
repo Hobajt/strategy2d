@@ -2,8 +2,8 @@
 
 using namespace eng;
 
-MainMenuController::MainMenuController(const FontRef& font, const TextureRef& btnTexture, const eng::TextureRef& backgroundTexture_) : backgroundTexture(backgroundTexture_) {
-    glm::vec4 txtClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
+MainMenuController::MainMenuController(const FontRef& font, const TextureRef& btnTexture, const eng::TextureRef& btnTextureClick, const eng::TextureRef& backgroundTexture_)
+        : backgroundTexture(backgroundTexture_) {
 
     float bh = 0.1f;                    //button height
     float bw = 0.33f;
@@ -14,34 +14,36 @@ MainMenuController::MainMenuController(const FontRef& font, const TextureRef& bt
     float mwi = 1.f / mw;
     float mhi = 1.f / mh;
 
+    GUI::ElementProperties ep = {};
+    ep.texture = btnTexture;
+    ep.hoverTexture = btnTexture;
+    ep.pressedTexture = btnTextureClick;
+    ep.textColor = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
+    ep.font = font;
+
     main_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
-            font, "Single Player Game", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, ep, "Single Player Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){ 
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
                 menu.SwitchState(MainMenuState::START_GAME);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
-            font, "Multi Player Game", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, ep, "Multi Player Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
-            font, "Replay Introduction", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, ep, "Replay Introduction",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
-            font, "Show Credits", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, ep, "Show Credits",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
             }, 5
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*4), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f),
-            font, "Exit Program", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*4), glm::vec2(bw*mwi, bh), 1.f, ep, "Exit Program",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 Window::Get().Close();
             }, 1
@@ -49,25 +51,21 @@ MainMenuController::MainMenuController(const FontRef& font, const TextureRef& bt
     });
 
     startGame_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.3f, 0.3f, 0.3f, 1.f),
-            font, "New Campaign", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, ep, "New Campaign",
             this, [](GUI::ButtonCallbackHandler* handler, int id){ 
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.7f, 0.7f, 0.7f, 1.f),
-            font, "Load Game", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, ep, "Load Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f),
-            font, "Custom Scenario", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, ep, "Custom Scenario",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, btnTexture, glm::vec4(0.9f, 0.0f, 0.0f, 1.f),
-            font, "Previous Menu", txtClr,
+        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, ep, "Previous Menu",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
                 menu.SwitchState(MainMenuState::MAIN);
@@ -85,10 +83,19 @@ void MainMenuController::Update() {
 
     GUI::Element* selection = activeMenu->ResolveMouseSelection(input.mousePos_n);
     if(selection != nullptr) {
-        if(input.lmb.down())
-            selection->OnClick();
-        else
+        if(input.lmb.pressed()) {
+            if(input.lmb.down())
+                clickedElement = selection;
+            if(selection == clickedElement)
+                selection->OnPressed();
+        }
+        else if(input.lmb.up()) {
+            if(selection == clickedElement) selection->OnUp();
+            clickedElement = nullptr;
+        }
+        else {
             selection->OnHover();
+        }
     }
 }
 

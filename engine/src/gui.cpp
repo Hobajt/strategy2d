@@ -9,6 +9,12 @@
 
 namespace eng::GUI {
 
+    ElementProperties ElementProperties::Menu() {
+        ElementProperties ep = {};
+        ep.color = glm::vec4(glm::vec3(1.f), 0.f);
+        return ep;
+    }
+
     //===== Element =====
 
     Element::Element(Element* parent_, bool recalculate_) {
@@ -17,9 +23,8 @@ namespace eng::GUI {
             Recalculate();
     }
 
-    Element::Element(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
-        const TextureRef& texture_, const glm::vec4& color_, Element* parent_, bool recalculate_)
-        : l_offset(offset_), l_size(size_), l_zOffset(zOffset_), texture(texture_), color(color_) {
+    Element::Element(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const ElementProperties& props, Element* parent_, bool recalculate_)
+        : l_offset(offset_), l_size(size_), l_zOffset(zOffset_), texture(props.texture), color(props.color), hoverTexture(props.hoverTexture), pressedTexture(props.pressedTexture) {
         SetParent(parent_, recalculate_);
         if(recalculate_ && parent == nullptr)
             Recalculate();
@@ -98,8 +103,19 @@ namespace eng::GUI {
             return nullptr;
     }
 
+    void Element::OnHover() {
+        hover = true;
+    }
+
+    void Element::OnPressed() {
+        pressed = true;
+    }
+
     void Element::InnerRender() {
-        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), size, color, texture));
+        TextureRef t = pressed ? pressedTexture : (hover ? hoverTexture : texture);
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), size, color, t));
+        hover = false;
+        pressed = false;
     }
 
     void Element::InnerRecalculate(const glm::vec2& p_position, const glm::vec2& p_size, float p_zIdx) {
@@ -127,15 +143,11 @@ namespace eng::GUI {
 
     //===== Button =====
 
-    Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_, 
+    Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const ElementProperties& props,
                     ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
-        : Element(offset_, size_, zOffset_, texture_, color_, nullptr), handler(handler_), callback(callback_), id(buttonID_) {}
+        : Element(offset_, size_, zOffset_, props, nullptr), handler(handler_), callback(callback_), id(buttonID_) {}
 
-    void Button::OnHover() {
-        // ENG_LOG_FINER("Button HOVER - '{}'", id);
-    }
-
-    void Button::OnClick() {
+    void Button::OnUp() {
         // ENG_LOG_FINER("Button CLICK - '{}'", id);
         if(callback && handler) {
             callback(handler, id);
@@ -144,23 +156,23 @@ namespace eng::GUI {
 
     //===== TextButton =====
 
-    TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_, 
-            FontRef font_, const std::string& text_, const glm::vec4& textColor_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
-        : Button(offset_, size_, zOffset_, texture_, color_, handler_, callback_, buttonID_), font(font_), text(text_), textColor(textColor_), highlightIdx(highlightIdx_) {}
+    TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const ElementProperties& props,
+            const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
+        : Button(offset_, size_, zOffset_, props, handler_, callback_, buttonID_), font(props.font), text(text_), textColor(props.textColor), highlightIdx(highlightIdx_) {}
 
     void TextButton::InnerRender() {
+        glm::vec4 clr = (Hover() || Pressed()) ? hoverColor : textColor;
         Button::InnerRender();
-        font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, textColor, hoverColor, highlightIdx, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, clr, hoverColor, highlightIdx, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
     //===== Menu =====
 
     Menu::Menu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const std::vector<Element*>& content)
-        : Menu(offset_, size_, zOffset_, nullptr, glm::vec4(glm::vec3(1.f), 0.f), content) {}
+        : Menu(offset_, size_, zOffset_, ElementProperties::Menu(), content) {}
 
-    Menu::Menu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_,
-        const std::vector<Element*>& content)
-        : Element(offset_, size_, zOffset_, texture_, color_, nullptr) {
+    Menu::Menu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const ElementProperties& props, const std::vector<Element*>& content)
+        : Element(offset_, size_, zOffset_, props, nullptr) {
         for(Element* el : content) {
             AddChild(el, true);
         }

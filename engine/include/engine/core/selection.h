@@ -34,7 +34,10 @@ namespace eng {
     class ScreenObject {
     public:
         virtual void OnHover() {}
-        virtual void OnClick() {}
+        virtual void OnPressed() {}
+        virtual void OnUp() {}
+
+        virtual void OnScroll() {}
 
         virtual AABB GetAABB() = 0;
 

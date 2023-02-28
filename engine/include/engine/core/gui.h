@@ -24,17 +24,22 @@ namespace eng::GUI {
                     - any text in GUI is rendered slightly in front of its element (z += 0.1 ... -1e-3 in NDC)
    */
 
-   /*
-    NEW GUI REQUIREMENTS:
-        - make working hierarchy
-        - implement mouse select detection through said hierarchy
-        - make it work even with multiple levels, not just that menu has to be root and button has to be child
-        - add that scroll menu for save/load
-        - maybe more robust buttons
-            - add hover code to change visuals
-            - maybe different class for text and textless buttons
+    //TODO: maybe keep properties as smart pointer in the elements ... they mostly just share the same set of values anyway
 
-   */
+    struct ElementProperties {
+        TextureRef texture = nullptr;
+        glm::vec4 color = glm::vec4(1.f);
+
+        TextureRef hoverTexture = nullptr;
+        glm::vec4 hoverColor = glm::vec4(1.f);
+
+        TextureRef pressedTexture = nullptr;
+
+        FontRef font = nullptr;
+        glm::vec4 textColor = glm::vec4(1.f);
+    public:
+        static ElementProperties Menu();
+    };
 
     //===== Element =====
 
@@ -43,7 +48,7 @@ namespace eng::GUI {
     class Element : public ScreenObject {
     public:
         Element(Element* parent = nullptr, bool recalculate = true);
-        Element(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, Element* parent, bool recalculate = true);
+        Element(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, Element* parent, bool recalculate = true);
         virtual ~Element();
 
         //copy disabled
@@ -70,8 +75,14 @@ namespace eng::GUI {
         //Returns element from the hierarchy which is being hovered over.
         //Ignores overlaps among children - returns the first found.
         Element* ResolveMouseSelection(const glm::vec2& mousePos_n);
+
+        virtual void OnHover() override;
+        virtual void OnPressed() override;
     protected:
         virtual void InnerRender();
+
+        bool Hover() const { return hover; }
+        bool Pressed() const { return pressed; }
     private:
         void InnerRecalculate(const glm::vec2& parent_position, const glm::vec2& parent_size, float parent_zIdx);
 
@@ -92,9 +103,14 @@ namespace eng::GUI {
 
         glm::vec4 color = glm::vec4(1.f);
         TextureRef texture = nullptr;
+        TextureRef pressedTexture = nullptr;
+        TextureRef hoverTexture = nullptr;
     private:
         Element* parent = nullptr;
         std::vector<Element*> children;
+
+        bool hover = false;
+        bool pressed = false;
     };
 
     //===== Button =====
@@ -106,12 +122,12 @@ namespace eng::GUI {
 
     class Button : public Element {
     public:
-        Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, 
+        Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
         );
 
-        virtual void OnHover() override;
-        virtual void OnClick() override;
+        // virtual void OnHover() override;
+        virtual void OnUp() override;
     protected:
         glm::vec4 hoverColor = glm::vec4(1.f);
     private:
@@ -124,9 +140,8 @@ namespace eng::GUI {
 
     class TextButton : public Button {
     public:
-        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, 
-            FontRef font, const std::string& text, const glm::vec4& textColor, ButtonCallbackHandler* handler, ButtonCallbackType callback,
-            int highlightIdx = -1, int buttonID = -1
+        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, const std::string& text,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx = -1, int buttonID = -1
         );
     protected:
         virtual void InnerRender() override;
@@ -143,7 +158,7 @@ namespace eng::GUI {
     public:
         Menu() = default;
         Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const std::vector<Element*>& content);
-        Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, const std::vector<Element*>& content);
+        Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, const std::vector<Element*>& content);
     };
 
     //===== ScrollMenu =====
