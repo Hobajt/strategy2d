@@ -16,8 +16,13 @@ public:
     virtual void Render() override;
 
     virtual int GetStageID() const override { return GameStageName::MAIN_MENU; }
+
+    virtual void OnStart(int prevStageID) override;
+    virtual void OnStop() override;
 private:
     void SwitchState(int newState);
+    
+    void KeyPressCallback(int keycode, int modifiers);
 private:
 
     eng::GUI::Menu main_menu;

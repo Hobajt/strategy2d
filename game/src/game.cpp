@@ -17,10 +17,11 @@ using namespace eng;
 //TODO: add basic play button with proper stage change & setup
 //TODO: add cmdline args to launch in debug mode, skip menus, etc.
 
-//TODO: key control in the menu
+//TODO: finalize the screen size stuff - fullsc
 //TODO: figure out how to generate (nice) button textures - with borders and stuff
 //TODO: add on hover and click button visuals
-//TODO: think through how to process key inputs throughout the game - polling or callbacks?
+//TODO: do input key handling through callbacks
+//TODO: stage switching, stage transitions (once there's ingame stage controller)
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it

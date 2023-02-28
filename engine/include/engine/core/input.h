@@ -5,8 +5,8 @@
 
 namespace eng {
 
-    //void KeyPressCallback(int keycode, int modifiers);
-    typedef void(*KeyPressCallbackFn)(int,int);
+    //void KeyPressCallback(int keycode, int modifiers, void* data);
+    typedef void(*KeyPressCallbackFn)(int keycode, int modifiers, void* userData);
 
     //====== InputButton ======
 
@@ -60,9 +60,10 @@ namespace eng {
         void SetFPSInterval(int frameInterval);
 
         //Registers new callback for provided key presses.
+        //Data is stored along with the callback, can be used to pass object reference (watch out for object lifespan).
         //If replace == true, replaces the first found callback for the same key.
         //Use keycode=-1 for any key.
-        void AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace = false);
+        void AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace = false, void* userData = nullptr);
 
         static double CurrentTime();
     private:

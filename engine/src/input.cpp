@@ -38,7 +38,7 @@ namespace eng {
         glm::vec2 prevMousePos = glm::vec2(0.f);
         glm::vec2 scroll = glm::vec2(0.f);
 
-        std::vector<std::pair<int, KeyPressCallbackFn>> keyCallbacks;
+        std::vector<std::pair<int, std::pair<KeyPressCallbackFn, void*>>> keyCallbacks;
 #ifdef INPUT_CALLBACK_CHAINING
         GLFWkeyfun prevKeyCallback = nullptr;
         GLFWscrollfun prevScrollCallback = nullptr;
@@ -69,18 +69,18 @@ namespace eng {
         data.fps.frameCount = 0;
     }
 
-    void Input::AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace) {
+    void Input::AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace, void* userData) {
         if (!replace) {
-            data.keyCallbacks.push_back({ keycode, callback });
+            data.keyCallbacks.push_back({ keycode, { callback, userData } });
         }
         else {
-            for (auto& [kc, cb] : data.keyCallbacks) {
+            for (auto& [kc, cbd] : data.keyCallbacks) {
                 if (kc == keycode) {
-                    cb = callback;
+                    cbd = { callback, userData };
                     return;
                 }
             }
-            data.keyCallbacks.push_back({ keycode, callback });
+            data.keyCallbacks.push_back({ keycode, { callback, userData } });
         }
     }
 
@@ -160,9 +160,10 @@ namespace eng {
     void KeyInputCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
         //only trigger for press signals
         if (action == GLFW_PRESS) {
-            for (auto& [keycode, callback] : data.keyCallbacks) {
+            for (auto& [keycode, cbd] : data.keyCallbacks) {
+                auto& [callback, userData] = cbd;
                 if (keycode == key || keycode == -1) {
-                    callback(key, mods);
+                    callback(key, mods, userData);
                     break;
                 }
             }

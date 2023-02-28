@@ -125,8 +125,8 @@ namespace eng::GUI {
     class TextButton : public Button {
     public:
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, 
-            FontRef font, const std::string& text, const glm::vec4& textColor, ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1,
-            int highlightIdx = -1
+            FontRef font, const std::string& text, const glm::vec4& textColor, ButtonCallbackHandler* handler, ButtonCallbackType callback,
+            int highlightIdx = -1, int buttonID = -1
         );
     protected:
         virtual void InnerRender() override;

@@ -145,7 +145,7 @@ namespace eng::GUI {
     //===== TextButton =====
 
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_, 
-            FontRef font_, const std::string& text_, const glm::vec4& textColor_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int highlightIdx_)
+            FontRef font_, const std::string& text_, const glm::vec4& textColor_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
         : Button(offset_, size_, zOffset_, texture_, color_, handler_, callback_, buttonID_), font(font_), text(text_), textColor(textColor_), highlightIdx(highlightIdx_) {}
 
     void TextButton::InnerRender() {
@@ -156,7 +156,7 @@ namespace eng::GUI {
     //===== Menu =====
 
     Menu::Menu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const std::vector<Element*>& content)
-        : Menu(offset_, size_, zOffset_, nullptr, glm::vec4(1.f), content) {}
+        : Menu(offset_, size_, zOffset_, nullptr, glm::vec4(glm::vec3(1.f), 0.f), content) {}
 
     Menu::Menu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_,
         const std::vector<Element*>& content)
