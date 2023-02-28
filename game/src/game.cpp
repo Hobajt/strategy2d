@@ -10,6 +10,7 @@ using namespace eng;
 
 //TODO: remove SelectionHandler completely - use GUI hierarchy for GUI selection and cells for map selection
 //TODO: think through how to handle resources - for example during menu initializations ... how to pass various things to correct places
+//TODO: do input key handling through callbacks
 
 //TODO: add some config file that will act as a persistent storage for options and stuff
 
@@ -20,7 +21,8 @@ using namespace eng;
 
 //TODO: figure out how to generate (nice) button textures - with borders and stuff
 //TODO: add on hover and click button visuals
-//TODO: do input key handling through callbacks
+//TODO: font resizing to match current window size (mainly in buttons)
+
 //TODO: stage switching, stage transitions (once there's ingame stage controller)
 
 /*scroll menu impl:
@@ -31,7 +33,7 @@ using namespace eng;
         - can maybe wrap this in one single class
 */
 
-Game::Game() : App(640, 640, "game") {}
+Game::Game() : App(640, 480, "game") {}
 
 void Game::OnResize(int width, int height) {
     LOG_INFO("Resize triggered.");
@@ -43,6 +45,7 @@ void Game::OnInit() {
 
         texture = std::make_shared<Texture>("res/textures/test2.png");
         btnTexture = std::make_shared<Texture>("res/textures/test_button.png");
+        // backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
 
         ReloadShaders();
     } catch(std::exception& e) {
@@ -52,14 +55,18 @@ void Game::OnInit() {
     }
 
     stageController.Initialize({ 
-        std::make_shared<MainMenuController>(font, btnTexture)
+        std::make_shared<MainMenuController>(font, btnTexture, backgroundTexture)
     });
 
     // Window::Get().SetFullscreen(true);
+
+    // int width = 10;
+    // int height = 10;
+    // uint8_t* data = new uint8_t[width * height * 3];
+    // btn = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), data);
+    // delete[] data;
 }
 
-static bool rdr = true;
-static InputButton r = InputButton(GLFW_KEY_R);
 static InputButton t = InputButton(GLFW_KEY_T);
 
 void Game::OnUpdate() {
@@ -84,11 +91,6 @@ void Game::OnUpdate() {
         window.SetFullscreen(fullscreen);
     }
 
-    r.Update();
-    if(r.down()) rdr = !rdr;
-
-    LOG_INFO("MOUSE POS = {}", to_string(input.mousePos));
-
     // window.UpdateViewport_full();
     // window.Clear();
     window.UpdateViewport();
@@ -96,7 +98,6 @@ void Game::OnUpdate() {
     stageController.Update();
 
     Renderer::Begin(shader, true);
-    if(rdr) Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f), glm::vec4(1.f))); //white background to check that viewport is set correctly
     stageController.Render();
     Renderer::End();
 }

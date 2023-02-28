@@ -16,10 +16,13 @@ private:
 
     void ReloadShaders();
 private:
+    GameStage stageController;
     eng::ShaderRef shader;
+
     eng::TextureRef texture;
     eng::TextureRef btnTexture;
-    eng::FontRef font;
+    eng::TextureRef backgroundTexture = nullptr;
+    eng::TextureRef btn;
 
-    GameStage stageController;
+    eng::FontRef font;
 };

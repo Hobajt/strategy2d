@@ -30,7 +30,8 @@ namespace eng {
         return instance;
     }
 
-    void Window::Initialize(int width, int height, const char* name, int samples) {
+    void Window::Initialize(int width, int height, const char* name, float ratio_, int samples) {
+        ratio = ratio_;
         if(IsInitialized()) {
             Release();
         }
@@ -79,12 +80,17 @@ namespace eng {
 
     void Window::UpdateSize(int width, int height) {
         real_size = glm::ivec2(width, height);
+        //to keep the screen in given ratio
+        aspect = glm::vec2(1.f / ratio, 1.f);
+        if(real_size.x > int(real_size.y * ratio)) {
+            size = glm::ivec2(real_size.y * ratio, real_size.y);
+            offset = glm::ivec2((real_size.x - real_size.y * ratio) / 2, 0);
+        }
+        else {
+            size = glm::ivec2(real_size.x, real_size.x / ratio);
+            offset = glm::ivec2(0, (real_size.y - real_size.x / ratio) / 2);
+        }
         if(!is_fullscreen) windowed_size = size;
-        //to keep the screen rectangular
-        size = (real_size.x > real_size.y) ? glm::ivec2(real_size.y) : glm::ivec2(real_size.x);
-        aspect = glm::vec2(1.f);
-
-        offset = (real_size.x > real_size.y) ? glm::ivec2((real_size.x - real_size.y) / 2, 0) : glm::ivec2(0, (real_size.y - real_size.x) / 2);
     }
 
     glm::ivec2 Window::CursorPos() const {
@@ -152,6 +158,13 @@ namespace eng {
         }
         
         is_fullscreen = fullscreen;
+    }
+
+    void Window::SetRatio(float r) {
+        ratio = r;
+        if(fabsf(ratio - r) < 1e-3f) {
+            Resize(real_size.x, real_size.y);
+        }
     }
 
     void Window::Release() noexcept {

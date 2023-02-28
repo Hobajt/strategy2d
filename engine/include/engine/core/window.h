@@ -19,7 +19,7 @@ namespace eng {
     public:
         static Window& Get();
     public:
-        void Initialize(int width, int height, const char* name, int samples = 1);
+        void Initialize(int width, int height, const char* name, float ratio = 1.f, int samples = 1);
         bool IsInitialized() const { return window != nullptr; }
 
         //copy disabled
@@ -39,6 +39,7 @@ namespace eng {
         int Width() const { return size[0]; }
         int Height() const { return size[1]; }
         glm::vec2 Aspect() const { return aspect; }
+        float Ratio() const { return ratio; }
 
         GLFWwindow* Handle() const { return window; }
 
@@ -62,6 +63,7 @@ namespace eng {
         glm::vec2 GetMousePos() const;
 
         void SetFullscreen(bool fullscreen);
+        void SetRatio(float r);
     private:
         Window() = default;
         ~Window();
@@ -80,6 +82,7 @@ namespace eng {
         glm::ivec2 windowed_size;   //size in windowed mode - to preserve between fullscreen switching (only preserves the smaller dimension)
         glm::ivec2 real_size;       //real size of window in pixels
         glm::ivec2 offset;          //pixel offset between window corner and screen corner
+        float ratio;                //width : height ratio that the screen should maintain
     };
 
 }//namespace eng

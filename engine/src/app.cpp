@@ -10,7 +10,7 @@ namespace eng {
     App::App(int windowWidth, int windowHeight, const char* windowName) {
         Log::Initialize();
 
-        Window::Get().Initialize(windowWidth, windowHeight, windowName);
+        Window::Get().Initialize(windowWidth, windowHeight, windowName, float(windowWidth) / windowHeight);
         Window::Get().SetResizeCallbackHandler(this);
 
         DBG_GUI::Initialize();

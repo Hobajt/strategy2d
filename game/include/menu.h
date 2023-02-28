@@ -10,7 +10,7 @@ namespace MainMenuState { enum { INVALID, MAIN, START_GAME, OPTIONS }; }
 
 class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
-    MainMenuController(const eng::FontRef& font, const eng::TextureRef& btnTexture);
+    MainMenuController(const eng::FontRef& font, const eng::TextureRef& btnTexture, const eng::TextureRef& backgroundTexture);
 
     virtual void Update() override;
     virtual void Render() override;
@@ -21,13 +21,14 @@ public:
     virtual void OnStop() override;
 private:
     void SwitchState(int newState);
-    
+
     void KeyPressCallback(int keycode, int modifiers);
 private:
-
     eng::GUI::Menu main_menu;
     eng::GUI::Menu startGame_menu;
 
     eng::GUI::Menu* activeMenu = nullptr;
     int activeState = MainMenuState::INVALID;
+
+    eng::TextureRef backgroundTexture = nullptr;
 };
