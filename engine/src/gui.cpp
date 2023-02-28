@@ -145,12 +145,12 @@ namespace eng::GUI {
     //===== TextButton =====
 
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const TextureRef& texture_, const glm::vec4& color_, 
-            FontRef font_, const std::string& text_, const glm::vec4& textColor_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
-        : Button(offset_, size_, zOffset_, texture_, color_, handler_, callback_, buttonID_), font(font_), text(text_), textColor(textColor_) {}
+            FontRef font_, const std::string& text_, const glm::vec4& textColor_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int highlightIdx_)
+        : Button(offset_, size_, zOffset_, texture_, color_, handler_, callback_, buttonID_), font(font_), text(text_), textColor(textColor_), highlightIdx(highlightIdx_) {}
 
     void TextButton::InnerRender() {
         Button::InnerRender();
-        font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, textColor, hoverColor, highlightIdx, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
     //===== Menu =====

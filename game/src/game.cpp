@@ -5,21 +5,36 @@
 using namespace eng;
 
 //TODO: add some precursor to main menu
-//TODO: create more elaborate main(); add cmd arguments to launch in some kind of debug mode (skip menus, test map, etc.)
 //TODO: think through the screen size & resizing -> use square screen like the game?
-//TODO: add scroll menu to gui
 //TODO: add OnDrag() to GUI detection - for map implementation (or some similar name, drag, down, hold, whatever)
 //TODO: make logging initialization through singleton -> static objects cannot really use logging now since they get initialized before the logging
 
 //TODO: remove SelectionHandler completely - use GUI hierarchy for GUI selection and cells for map selection
+//TODO: think through how to handle resources - for example during menu initializations ... how to pass various things to correct places
+
+//immediate future:
+//TODO: add scroll menu to gui
+//TODO: add basic play button with proper stage change & setup
+//TODO: add cmdline args to launch in debug mode, skip menus, etc.
+
+//TODO: key control in the menu
+//TODO: figure out how to generate (nice) button textures - with borders and stuff
+//TODO: add on hover and click button visuals
+//TODO: think through how to process key inputs throughout the game - polling or callbacks?
+
+/*scroll menu impl:
+    - there will be fixed number of buttons in it
+    - buttons themselves won't move, scrolling will just move content among the generated buttons
+        - buttons not moving -> can use regular mouse selection method
+    - there will be 3 special buttons -> scroll slider (up,down & slider button)
+        - can maybe wrap this in one single class
+*/
 
 Game::Game() : App(640, 640, "game") {}
 
 void Game::OnResize(int width, int height) {
     LOG_INFO("Resize triggered.");
 }
-
-// static GUI::Element el = {};
 
 void Game::OnInit() {
     try {
@@ -38,11 +53,6 @@ void Game::OnInit() {
     stageController.Initialize({ 
         std::make_shared<MainMenuController>(font, btnTexture)
     });
-
-    // el = GUI::Element(glm::vec2(0.f), glm::vec2(0.75f), 0.f, nullptr, glm::vec4(1.f), nullptr);
-    // GUI::Element* c = &el;
-    // c = c->AddChild(new GUI::Button(glm::vec2(-1.f), glm::vec2(2.f/3.f), 1.f, nullptr, glm::vec4(1.f, 0.f, 0.f, 1.f), nullptr, nullptr, 1));
-    // c = c->AddChild(new GUI::Button(glm::vec2(1.f), glm::vec2(0.5f), 1.f, nullptr, glm::vec4(0.f, 0.f, 1.f, 1.f), nullptr, nullptr, 2));
 }
 
 static glm::vec2 pos = glm::vec2(0.f);
@@ -62,15 +72,8 @@ void Game::OnUpdate() {
 
     stageController.Update();
 
-    // GUI::Element* e = el.ResolveMouseSelection(input.mousePos_n);
-    // if(e != nullptr) {
-    //     if(input.lmb.down()) e->OnClick();
-    //     else e->OnHover();
-    // }
-
     Renderer::Begin(shader, true);
     stageController.Render();
-    // el.Render();
     Renderer::End();
 }
 

@@ -112,6 +112,8 @@ namespace eng::GUI {
 
         virtual void OnHover() override;
         virtual void OnClick() override;
+    protected:
+        glm::vec4 hoverColor = glm::vec4(1.f);
     private:
         int id = -1;
         ButtonCallbackType callback = nullptr;
@@ -123,7 +125,8 @@ namespace eng::GUI {
     class TextButton : public Button {
     public:
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const TextureRef& texture, const glm::vec4& color, 
-            FontRef font, const std::string& text, const glm::vec4& textColor, ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
+            FontRef font, const std::string& text, const glm::vec4& textColor, ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1,
+            int highlightIdx = -1
         );
     protected:
         virtual void InnerRender() override;
@@ -131,6 +134,7 @@ namespace eng::GUI {
         FontRef font;
         std::string text;
         glm::vec4 textColor;
+        int highlightIdx = -1;
     };
 
     //===== Menu =====
