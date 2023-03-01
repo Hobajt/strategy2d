@@ -11,16 +11,8 @@ namespace eng {
 
     //Axis-aligned bounding box.
     struct AABB {
-        union {
-            struct {
-                glm::vec2 min;
-                glm::vec2 max;
-            };
-            glm::vec2 bounds[2];
-        };
-
-        glm::vec2& operator[](int i);
-        const glm::vec2& operator[](int i) const;
+        glm::vec2 min;
+        glm::vec2 max;
     public:
         AABB();
         AABB(const glm::vec2& m, const glm::vec2& M);
