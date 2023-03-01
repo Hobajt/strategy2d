@@ -46,7 +46,6 @@ namespace eng::GUI {
 
         FontRef font = nullptr;
         glm::vec4 textColor = glm::vec4(1.f);
-        bool def = false;
     public:
         static StyleRef Default();
     };

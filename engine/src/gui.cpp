@@ -14,14 +14,11 @@ namespace eng::GUI {
     StyleRef CreateDefaultStyle() {
         StyleRef s = std::make_shared<Style>();
         s->color = glm::vec4(glm::vec3(1.f), 0.f);
-        s->def = true;
         return s;
     }
 
     StyleRef Style::Default() {
         static StyleRef defStyle = CreateDefaultStyle();
-        // ElementProperties ep = {};
-        // ep.color = glm::vec4(glm::vec3(1.f), 0.f);
         return defStyle;
     }
 

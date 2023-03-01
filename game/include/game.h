@@ -19,10 +19,6 @@ private:
     GameStage stageController;
     eng::ShaderRef shader;
 
-    eng::TextureRef texture;
-    eng::TextureRef btnTexture;
-    eng::TextureRef btnTextureClick;
     eng::TextureRef backgroundTexture = nullptr;
-
     eng::FontRef font;
 };

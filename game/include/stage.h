@@ -24,6 +24,8 @@ public:
 
     //Triggered when switching from this state.
     virtual void OnStop() {}
+
+    virtual void DBG_GUI() {}
 };
 using GameStageControllerRef = std::shared_ptr<GameStageController>;
 
@@ -52,6 +54,8 @@ public:
 
     void Update();
     void Render();
+
+    void DBG_GUI();
 private:
     int currentStageID = GameStageName::INVALID;
     GameStageControllerRef currentStage = nullptr;

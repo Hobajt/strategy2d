@@ -2,51 +2,58 @@
 
 using namespace eng;
 
-MainMenuController::MainMenuController(const FontRef& font, const TextureRef& btnTexture, const eng::TextureRef& btnTextureClick, const eng::TextureRef& backgroundTexture_)
-        : backgroundTexture(backgroundTexture_) {
+MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRef& backgroundTexture_) : backgroundTexture(backgroundTexture_) {
+    //gui sizes in screen space
+    glm::vec2 buttonSize = glm::vec2(0.33f, 0.06f);         //button size
+    glm::vec2 menuSize = glm::vec2(0.5f);                   //menu size
+    float gap = 0.03f;                                      //vertical gap between the buttons
 
-    float bh = 0.1f;                    //button height
-    float bw = 0.33f;
-    float gap = 0.03f;
-    float bg = (bh + gap) * 2.f;      //button gap (*2 to offset menu's size scaling)
-    float mw = 0.5f;
-    float mh = 0.5f;
-    float mwi = 1.f / mw;
-    float mhi = 1.f / mh;
+    float off = -1.f + buttonSize.y;                        //button offset to start at the top of the menu
+    float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
+    glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
+    
+    //==== button textures setup ====
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::ivec2 textureSize = ts * upscaleFactor;
+    int borderWidth = 2 * upscaleFactor;
+    btnTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, false);
+    btnTextureClick = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, true);
 
+    //==== style setup for the GUI buttons ====
     GUI::StyleRef style = std::make_shared<GUI::Style>();
     style->texture = btnTexture;
     style->hoverTexture = btnTexture;
     style->pressedTexture = btnTextureClick;
     style->textColor = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
     style->font = font;
-    // style->pressedOffset = glm::ivec2(3 / Window::Get().Ratio(), 3);
-    style->pressedOffset = glm::ivec2(3);       //= texture border width
-    // style->pressedOffset = glm::ivec2(10);
+    style->pressedOffset = glm::ivec2(borderWidth);       //= texture border width
+
+    //==== sub-menu definitions ====
 
     main_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, style, "Single Player Game",
+        new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, style, "Single Player Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){ 
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
                 menu.SwitchState(MainMenuState::START_GAME);
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, style, "Multi Player Game",
+        new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, style, "Multi Player Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
-                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                //...
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, style, "Replay Introduction",
+        new GUI::TextButton(glm::vec2(0.f, off+step*2), bSize, 1.f, style, "Replay Introduction",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
-                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                //...
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, style, "Show Credits",
+        new GUI::TextButton(glm::vec2(0.f, off+step*3), bSize, 1.f, style, "Show Credits",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
-                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                //...
             }, 5
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*4), glm::vec2(bw*mwi, bh), 1.f, style, "Exit Program",
+        new GUI::TextButton(glm::vec2(0.f, off+step*4), bSize, 1.f, style, "Exit Program",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 Window::Get().Close();
             }, 1
@@ -54,21 +61,22 @@ MainMenuController::MainMenuController(const FontRef& font, const TextureRef& bt
     });
 
     startGame_menu = GUI::Menu(glm::vec2(0.f, 0.5f), glm::vec2(0.5f), 0.f, std::vector<GUI::Element*>{
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*0), glm::vec2(bw*mwi, bh), 1.f, style, "New Campaign",
-            this, [](GUI::ButtonCallbackHandler* handler, int id){ 
-            }, 0
-        ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*1), glm::vec2(bw*mwi, bh), 1.f, style, "Load Game",
+        new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, style, "New Campaign",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
-                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                //...
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*2), glm::vec2(bw*mwi, bh), 1.f, style, "Custom Scenario",
+        new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, style, "Load Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
-                MainMenuController& menu = *static_cast<MainMenuController*>(handler);
+                //...
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f,-1.f+bh+bg*3), glm::vec2(bw*mwi, bh), 1.f, style, "Previous Menu",
+        new GUI::TextButton(glm::vec2(0.f, off+step*2), bSize, 1.f, style, "Custom Scenario",
+            this, [](GUI::ButtonCallbackHandler* handler, int id){
+                //...
+            }, 0
+        ),
+        new GUI::TextButton(glm::vec2(0.f, off+step*3), bSize, 1.f, style, "Previous Menu",
             this, [](GUI::ButtonCallbackHandler* handler, int id){
                 MainMenuController& menu = *static_cast<MainMenuController*>(handler);
                 menu.SwitchState(MainMenuState::MAIN);
@@ -131,6 +139,14 @@ void MainMenuController::OnStart(int prevStageID) {
 
 void MainMenuController::OnStop() {
 
+}
+
+void MainMenuController::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+    ImGui::Begin("Menu controller");
+    btnTexture->DBG_GUI();
+    ImGui::End();
+#endif
 }
 
 void MainMenuController::KeyPressCallback(int keycode, int modifiers) {

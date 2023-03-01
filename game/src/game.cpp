@@ -23,7 +23,7 @@ using namespace eng;
 
 //immediate future:
 //TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
-//TODO: move the button texture generation somewhere else
+//TODO: add highlight for the last selected button (yellow outline)
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it
@@ -34,8 +34,6 @@ using namespace eng;
 */
 
 constexpr float fontScale = 0.055f;
-
-glm::u8vec3* GenerateButtonTexture(int width, int height, bool flipShading);
 
 Game::Game() : App(640, 480, "game") {}
 
@@ -48,7 +46,6 @@ void Game::OnInit() {
     try {
         font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
 
-        texture = std::make_shared<Texture>("res/textures/test2.png");
         backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
 
         ReloadShaders();
@@ -60,22 +57,8 @@ void Game::OnInit() {
 
     // Window::Get().SetFullscreen(true);
 
-    
-    //size = window_size * button_size (in menu) - match the size ratio to have nice and even borders
-    int width = 212, height = 48;
-
-    //regular button texture
-    glm::u8vec3* data = GenerateButtonTexture(width, height, false);
-    btnTexture = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), (void*)data);
-    delete[] data;
-
-    //pushed-in button texture
-    data = GenerateButtonTexture(width, height, true);
-    btnTextureClick = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE), (void*)data);
-    delete[] data;
-
     stageController.Initialize({ 
-        std::make_shared<MainMenuController>(font, btnTexture, btnTextureClick, backgroundTexture)
+        std::make_shared<MainMenuController>(font, backgroundTexture)
     });
 }
 
@@ -113,6 +96,7 @@ void Game::OnGUI() {
 #ifdef ENGINE_ENABLE_GUI
     Audio::DBG_GUI();
     Camera::Get().DBG_GUI();
+    stageController.DBG_GUI();
 
     ImGui::Begin("General");
     ImGui::Text("FPS: %.1f", Input::Get().fps);
@@ -134,71 +118,4 @@ void Game::OnGUI() {
 void Game::ReloadShaders() {
     shader = std::make_shared<Shader>("res/shaders/test_shader");
     shader->InitTextureSlots(Renderer::TextureSlotsCount());
-}
-
-glm::u8vec3* GenerateButtonTexture(int width, int height, bool flipShading) {
-    glm::u8vec3 fillColor = glm::u8vec3(150,0,0);
-    glm::u8vec3 borderColor = glm::u8vec3(30, 0, 0);
-    glm::u8vec3 lightColorBase = glm::u8vec3(200,0,0);
-    glm::u8vec3 shadowColorBase = glm::u8vec3(100,0,0);
-    glm::u8vec3 darkShadowColor = glm::u8vec3(80, 0, 0);
-
-    glm::u8vec3 lightColor = lightColorBase;
-    glm::u8vec3 shadowColor = shadowColorBase;
-
-    if(flipShading) {
-        fillColor = glm::u8vec3(110, 0, 0);
-        lightColor = darkShadowColor;
-        shadowColor = fillColor;
-    }
-
-    int borderWidth = 3;
-
-    int bw_y = borderWidth;
-    int bw_x = int(borderWidth / Window::Get().Ratio());
-
-    glm::u8vec3* data = new glm::u8vec3[width * height];
-
-    //fill
-    for(int y = 0; y < height; y++) {
-        for(int x = 0; x < width; x++) {
-            data[y * width + x] = fillColor;
-        }
-    }
-
-    //borders + 3d outlines - top & bottom
-    for(int y = 0; y < bw_y; y++) {
-        for(int x = 0; x < width; x++) {
-            data[y * width + x] = borderColor;
-            data[(height-1-y) * width + x] = borderColor;
-
-            data[(y+bw_y) * width + x] = lightColor;
-            data[(height-1-y-bw_y) * width + x] = shadowColor;
-        }
-    }
-    //borders + 3d outlines - left & right
-    for(int y = bw_y; y < height-bw_y; y++) {
-        for(int x = 0; x < bw_x; x++) {
-            data[y * width + x] = borderColor;
-            data[y * width + width-1-x] = borderColor;
-
-            data[y * width + x+bw_x] = lightColor;
-            data[y * width + width-1-x-bw_x] = shadowColor;
-        }
-    }
-    //3d outlines - corners (botLeft & topRight)
-    for(int y = 0; y < bw_y; y++) {
-        for(int x = 0; x < bw_x; x++) {
-            if(atan2(y, x) > glm::pi<double>() * 0.25) {
-                data[(y+bw_y) * width + width-1-x-bw_x] = shadowColor;
-                data[(height-1-y-bw_y) * width + x+bw_x] = lightColor;
-            }
-            else {
-                data[(y+bw_y) * width + width-1-x-bw_x] = lightColor;
-                data[(height-1-y-bw_y) * width + x+bw_x] = shadowColor;
-            }
-        }
-    }
-
-    return data;
 }
