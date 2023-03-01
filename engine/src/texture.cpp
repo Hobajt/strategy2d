@@ -100,7 +100,14 @@ namespace eng {
 
     void Texture::DBG_GUI() const {
 #ifdef ENGINE_ENABLE_GUI
-        ImVec2 wsize = ImGui::GetWindowSize();
+        // ImVec2 wsize = ImGui::GetWindowSize();
+        ImVec2 wsize = ImGui::GetContentRegionAvail();
+        
+        //to preserve texture sides ratio while allowing scaling
+        ImVec2 r = ImVec2(wsize.x / params.width, wsize.y / params.height);
+        float ratio = float(params.width) / params.height;
+        wsize = (r.x > r.y) ? ImVec2(wsize.y * ratio, wsize.y) : ImVec2(wsize.x, wsize.x / ratio);
+
         ImGui::Image((ImTextureID)handle, wsize, ImVec2(0, 1), ImVec2(1, 0));
 #endif
     }
