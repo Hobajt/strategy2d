@@ -74,7 +74,7 @@ namespace eng {
         UpdateViewport();
         ENG_LOG_TRACE("Window resize; size = ({}, {}), real_size = ({}, {}), offset = ({}, {})", size.x, size.y, real_size.x, real_size.y, offset.x, offset.y);
         if(resizeHandler != nullptr) {
-            resizeHandler->OnResize(width, height);
+            resizeHandler->OnResize(size.x, size.y);
         }
     }
 

@@ -24,17 +24,6 @@ using namespace eng;
 //immediate future:
 //TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
 //TODO: move the button texture generation somewhere else
-//TODO: font resizing to match current window size (mainly in buttons)
-//TODO: add text movement to button pressed state
-
-/*proper button reactions:
-    - on hover - button text turns all white (hover color)
-    - on click down - button is "pushed in" - different texture
-    - on click up - button triggers it's callback
-    - when mouse goes away from the button while it's down -> button isn't clicked
-    - when mouse goes down outside of button, then moves over it and releases -> button isn't clicked either
-    - for button click, mouse has to go both down() and up() on the button
-*/
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it
@@ -44,17 +33,20 @@ using namespace eng;
         - can maybe wrap this in one single class
 */
 
+constexpr float fontScale = 0.055f;
+
 glm::u8vec3* GenerateButtonTexture(int width, int height, bool flipShading);
 
 Game::Game() : App(640, 480, "game") {}
 
 void Game::OnResize(int width, int height) {
-    LOG_INFO("Resize triggered.");
+    LOG_INFO("Resize triggered ({}x{})", width, height);
+    font->Resize(fontScale * height);
 }
 
 void Game::OnInit() {
     try {
-        font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", 48);
+        font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
 
         texture = std::make_shared<Texture>("res/textures/test2.png");
         backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");

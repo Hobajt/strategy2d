@@ -26,6 +26,8 @@ namespace eng::GUI {
                     - any text in GUI is rendered slightly in front of its element (z += 0.1 ... -1e-3 in NDC)
    */
 
+    //TODO: consider remaking GUI's transform system - it's kinda unintuitive to define sizes relative to parent
+
     //===== Style =====
 
     struct Style;
@@ -47,7 +49,6 @@ namespace eng::GUI {
         bool def = false;
     public:
         static StyleRef Default();
-        ~Style();
     };
 
     //===== Element =====

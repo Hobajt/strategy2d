@@ -25,12 +25,6 @@ namespace eng::GUI {
         return defStyle;
     }
 
-    Style::~Style() {
-        if(def) {
-            ENG_LOG_INFO("[D][D][D][D][D] Default style");
-        }
-    }
-
     //===== Element =====
 
     Element::Element(Element* parent_, bool recalculate_) {

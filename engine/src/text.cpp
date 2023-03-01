@@ -10,7 +10,7 @@
 
 namespace eng {
 
-    Font::Font(const std::string& filepath, int fontHeight_) : fontHeight(fontHeight_), name(GetFilename(filepath)) {
+    Font::Font(const std::string& filepath_, int fontHeight_) : fontHeight(fontHeight_), name(GetFilename(filepath_)), filepath(filepath_) {
         Load(filepath);
         ENG_LOG_TRACE("[C] Font '{}'", name.c_str());
     }
@@ -104,6 +104,13 @@ namespace eng {
 
         glm::vec2 offset = glm::vec2(width / 2 - pxOffset.x, height / 2 + pxOffset.y) / glm::vec2(Window::Get().Size());
         RenderText(text, center - offset, scale, color1, color2, letterIdx, zIndex, info);
+    }
+
+    void Font::Resize(int newHeight) {
+        if(fontHeight != newHeight) {
+            fontHeight = newHeight;
+            Load(filepath);
+        }
     }
 
     void Font::Load(const std::string& filepath) {
