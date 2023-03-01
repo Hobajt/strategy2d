@@ -24,6 +24,7 @@ using namespace eng;
 //immediate future:
 //TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
 //TODO: add highlight for the last selected button (yellow outline)
+//TODO: start adding audio
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it

@@ -17,14 +17,17 @@ MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRe
     float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
     glm::ivec2 textureSize = ts * upscaleFactor;
     int borderWidth = 2 * upscaleFactor;
+
     btnTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, false);
     btnTextureClick = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, true);
+    btnTextureHighlight = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
 
     //==== style setup for the GUI buttons ====
     GUI::StyleRef style = std::make_shared<GUI::Style>();
     style->texture = btnTexture;
     style->hoverTexture = btnTexture;
     style->pressedTexture = btnTextureClick;
+    style->highlightTexture = btnTextureHighlight;
     style->textColor = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
     style->font = font;
     style->pressedOffset = glm::ivec2(borderWidth);       //= texture border width
@@ -96,7 +99,7 @@ void MainMenuController::Update() {
     if(selection != nullptr) {
         if(input.lmb.pressed()) {
             if(input.lmb.down())
-                clickedElement = selection;
+                lastSelected = clickedElement = selection;
             if(selection == clickedElement)
                 selection->OnPressed();
         }
@@ -108,6 +111,9 @@ void MainMenuController::Update() {
             selection->OnHover();
         }
     }
+
+    if(lastSelected != nullptr)
+        lastSelected->Highlight();
 }
 
 void MainMenuController::Render() {

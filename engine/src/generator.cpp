@@ -7,8 +7,9 @@ namespace eng {
     namespace TextureGenerator {
 
         using rgb = glm::u8vec3;
+        using rgba = glm::u8vec4;
 
-        TextureRef ButtonTexture_Clear(int width, int height, int borderWidth, int channel, bool flipShading) {
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int channel, bool flipShading) {
             if(((unsigned int)channel) > 3) {
                 ENG_LOG_ERROR("TextureGenerator - valid channel values are only 0,1,2 (rgb channels)");
                 return nullptr;
@@ -28,9 +29,6 @@ namespace eng {
             shadow[channel] = flipShading ? 150 : 100;
             border[channel] = 30;
 
-            int bw_y = borderWidth;
-            int bw_x = borderWidth;
-            // int bw_x = int(borderWidth / Window::Get().Ratio());
             //--------------------------
 
             //fill
@@ -41,35 +39,35 @@ namespace eng {
             }
 
             //borders + shading outlines - top & bottom
-            for(int y = 0; y < bw_y; y++) {
+            for(int y = 0; y < bw; y++) {
                 for(int x = 0; x < width; x++) {
                     data[y * width + x] = border;
                     data[(height-1-y) * width + x] = border;
 
-                    data[(y+bw_y) * width + x] = light;
-                    data[(height-1-y-bw_y) * width + x] = shadow;
+                    data[(y+bw) * width + x] = light;
+                    data[(height-1-y-bw) * width + x] = shadow;
                 }
             }
             //borders + 3d outlines - left & right
-            for(int y = bw_y; y < height-bw_y; y++) {
-                for(int x = 0; x < bw_x; x++) {
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < bw; x++) {
                     data[y * width + x] = border;
                     data[y * width + width-1-x] = border;
 
-                    data[y * width + x+bw_x] = light;
-                    data[y * width + width-1-x-bw_x] = shadow;
+                    data[y * width + x+bw] = light;
+                    data[y * width + width-1-x-bw] = shadow;
                 }
             }
             //3d outlines - corners (botLeft & topRight)
-            for(int y = 0; y < bw_y; y++) {
-                for(int x = 0; x < bw_x; x++) {
+            for(int y = 0; y < bw; y++) {
+                for(int x = 0; x < bw; x++) {
                     if(atan2(y, x) > glm::pi<double>() * 0.25) {
-                        data[(y+bw_y) * width + width-1-x-bw_x] = shadow;
-                        data[(height-1-y-bw_y) * width + x+bw_x] = light;
+                        data[(y+bw) * width + width-1-x-bw] = shadow;
+                        data[(height-1-y-bw) * width + x+bw] = light;
                     }
                     else {
-                        data[(y+bw_y) * width + width-1-x-bw_x] = light;
-                        data[(height-1-y-bw_y) * width + x+bw_x] = shadow;
+                        data[(y+bw) * width + width-1-x-bw] = light;
+                        data[(height-1-y-bw) * width + x+bw] = shadow;
                     }
                 }
             }
@@ -83,6 +81,48 @@ namespace eng {
 
             TextureRef texture = std::make_shared<Texture>(
                 TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonHighlightTexture(int width, int height, int bw) {
+            rgba* data = new rgba[width * height];
+
+            rgba fill = rgba(255, 255, 255, 0);
+            rgba highlight = rgba(255, 255, 0, 255);
+
+            //--------------------------
+            //fill
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = fill;
+                }
+            }
+
+            //borders - top & bottom
+            for(int y = 0; y < bw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = highlight;
+                    data[(height-1-y) * width + x] = highlight;
+                }
+            }
+            //borders - left & right
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < bw; x++) {
+                    data[y * width + x] = highlight;
+                    data[y * width + width-1-x] = highlight;
+                }
+            }
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnHighlightTex_%dx%d", width, height);
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );

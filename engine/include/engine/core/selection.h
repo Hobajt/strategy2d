@@ -31,6 +31,8 @@ namespace eng {
 
         virtual void OnScroll() {}
 
+        virtual void Highlight() {}
+
         virtual AABB GetAABB() = 0;
 
         //In case screen object wraps around other objects and does the lookup by itself.

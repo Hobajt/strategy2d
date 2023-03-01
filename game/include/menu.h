@@ -33,8 +33,10 @@ private:
     int activeState = MainMenuState::INVALID;
 
     eng::TextureRef backgroundTexture = nullptr;
+    eng::TextureRef btnTextureHighlight = nullptr;
     eng::TextureRef btnTextureClick = nullptr;
     eng::TextureRef btnTexture = nullptr;
 
     eng::GUI::Element* clickedElement = nullptr;
+    eng::GUI::Element* lastSelected = nullptr;
 };

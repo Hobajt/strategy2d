@@ -44,6 +44,8 @@ namespace eng::GUI {
         TextureRef pressedTexture = nullptr;
         glm::ivec2 pressedOffset = glm::ivec2(0);
 
+        TextureRef highlightTexture = nullptr;
+
         FontRef font = nullptr;
         glm::vec4 textColor = glm::vec4(1.f);
     public:
@@ -87,6 +89,8 @@ namespace eng::GUI {
 
         virtual void OnHover() override;
         virtual void OnPressed() override;
+
+        virtual void Highlight() override;
     protected:
         virtual void InnerRender();
 
@@ -117,6 +121,7 @@ namespace eng::GUI {
 
         bool hover = false;
         bool pressed = false;
+        bool highlight = false;
     };
 
     //===== Button =====

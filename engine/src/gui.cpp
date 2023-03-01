@@ -122,11 +122,17 @@ namespace eng::GUI {
         pressed = true;
     }
 
+    void Element::Highlight() {
+        highlight = true;
+    }
+
     void Element::InnerRender() {
         TextureRef t = pressed ? style->pressedTexture : (hover ? style->hoverTexture : style->texture);
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), size, style->color, t));
-        hover = false;
-        pressed = false;
+        if(highlight) {
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), size, glm::vec4(1.f), style->highlightTexture));
+        }
+        hover = pressed = highlight = false;
     }
 
     void Element::InnerRecalculate(const glm::vec2& p_position, const glm::vec2& p_size, float p_zIdx) {
