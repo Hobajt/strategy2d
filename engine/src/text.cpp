@@ -57,8 +57,8 @@ namespace eng {
         RenderText(text, center - offset, scale, color, zIndex, info);
     }
 
-    void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, 
-            const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex, const glm::uvec4& info) {
+    void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, 
+            int letterIdx, float zIndex, const glm::uvec4& info) {
         
         glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
         glm::vec2 pos = topLeft;
@@ -74,8 +74,8 @@ namespace eng {
         }
     }
 
-    void Font::RenderTextCentered(const char* text, const glm::vec2 center, float scale,
-            const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex, const glm::uvec4& info) {
+    void Font::RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, 
+            int letterIdx, float zIndex, const glm::uvec4& info) {
         int width = 0;
         int height = 0;
         for (const char* c = text; *c; c++) {
@@ -87,6 +87,22 @@ namespace eng {
         }
 
         glm::vec2 offset = glm::vec2(width / 2, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, center - offset, scale, color1, color2, letterIdx, zIndex, info);
+    }
+
+    void Font::RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2,
+            int letterIdx, const glm::ivec2& pxOffset, float zIndex, const glm::uvec4& info) {
+        int width = 0;
+        int height = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+            width += ch.advance.x * scale;
+        }
+
+        glm::vec2 offset = glm::vec2(width / 2 - pxOffset.x, height / 2 + pxOffset.y) / glm::vec2(Window::Get().Size());
         RenderText(text, center - offset, scale, color1, color2, letterIdx, zIndex, info);
     }
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <vector>
+#include <string>
 
 #include "engine/utils/mathdefs.h"
 #include "engine/core/texture.h"
@@ -24,9 +26,13 @@ namespace eng::GUI {
                     - any text in GUI is rendered slightly in front of its element (z += 0.1 ... -1e-3 in NDC)
    */
 
-    //TODO: maybe keep properties as smart pointer in the elements ... they mostly just share the same set of values anyway
+    //===== Style =====
 
-    struct ElementProperties {
+    struct Style;
+    using StyleRef = std::shared_ptr<Style>;
+
+    //Container for all the style properties of GUI elements.
+    struct Style {
         TextureRef texture = nullptr;
         glm::vec4 color = glm::vec4(1.f);
 
@@ -34,11 +40,14 @@ namespace eng::GUI {
         glm::vec4 hoverColor = glm::vec4(1.f);
 
         TextureRef pressedTexture = nullptr;
+        glm::ivec2 pressedOffset = glm::ivec2(0);
 
         FontRef font = nullptr;
         glm::vec4 textColor = glm::vec4(1.f);
+        bool def = false;
     public:
-        static ElementProperties Menu();
+        static StyleRef Default();
+        ~Style();
     };
 
     //===== Element =====
@@ -48,7 +57,7 @@ namespace eng::GUI {
     class Element : public ScreenObject {
     public:
         Element(Element* parent = nullptr, bool recalculate = true);
-        Element(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, Element* parent, bool recalculate = true);
+        Element(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, Element* parent, bool recalculate = true);
         virtual ~Element();
 
         //copy disabled
@@ -101,10 +110,7 @@ namespace eng::GUI {
         glm::vec2 size;
         float zIdx;
 
-        glm::vec4 color = glm::vec4(1.f);
-        TextureRef texture = nullptr;
-        TextureRef pressedTexture = nullptr;
-        TextureRef hoverTexture = nullptr;
+        StyleRef style = nullptr;
     private:
         Element* parent = nullptr;
         std::vector<Element*> children;
@@ -122,14 +128,12 @@ namespace eng::GUI {
 
     class Button : public Element {
     public:
-        Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props,
+        Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
         );
 
         // virtual void OnHover() override;
         virtual void OnUp() override;
-    protected:
-        glm::vec4 hoverColor = glm::vec4(1.f);
     private:
         int id = -1;
         ButtonCallbackType callback = nullptr;
@@ -140,15 +144,13 @@ namespace eng::GUI {
 
     class TextButton : public Button {
     public:
-        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, const std::string& text,
+        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx = -1, int buttonID = -1
         );
     protected:
         virtual void InnerRender() override;
     private:
-        FontRef font;
         std::string text;
-        glm::vec4 textColor;
         int highlightIdx = -1;
     };
 
@@ -158,7 +160,7 @@ namespace eng::GUI {
     public:
         Menu() = default;
         Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const std::vector<Element*>& content);
-        Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const ElementProperties& props, const std::vector<Element*>& content);
+        Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::vector<Element*>& content);
     };
 
     //===== ScrollMenu =====

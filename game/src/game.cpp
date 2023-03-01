@@ -25,6 +25,7 @@ using namespace eng;
 //TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
 //TODO: move the button texture generation somewhere else
 //TODO: font resizing to match current window size (mainly in buttons)
+//TODO: add text movement to button pressed state
 
 /*proper button reactions:
     - on hover - button text turns all white (hover color)
