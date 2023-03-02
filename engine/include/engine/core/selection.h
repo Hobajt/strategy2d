@@ -26,7 +26,9 @@ namespace eng {
     class ScreenObject {
     public:
         virtual void OnHover() {}
-        virtual void OnPressed() {}
+
+        virtual void OnDown() {}
+        virtual void OnHold() {}
         virtual void OnUp() {}
 
         virtual void OnScroll() {}

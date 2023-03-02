@@ -10,9 +10,24 @@
 
 namespace eng {
 
+    FontRef MakeDefault() {
+        ENG_LOG_TRACE("[C] Default font (empty)");
+        return std::make_shared<Font>();
+    }
+
+    FontRef Font::Default() {
+        static FontRef defaultFont = MakeDefault();
+        return defaultFont;
+    }
+
+    void Font::UpdateDefault(Font&& f) {
+        (*Default()) = std::move(f);
+        ENG_LOG_TRACE("Default font updated.");
+    }
+
     Font::Font(const std::string& filepath_, int fontHeight_) : fontHeight(fontHeight_), name(GetFilename(filepath_)), filepath(filepath_) {
         Load(filepath);
-        ENG_LOG_TRACE("[C] Font '{}'", name.c_str());
+        ENG_LOG_TRACE("[C] Font '{}' (height = {})", name.c_str(), fontHeight);
     }
 
     Font::~Font() {
@@ -187,13 +202,14 @@ namespace eng {
     void Font::Release() noexcept {
         if(texture != nullptr) {
             texture = nullptr;
-            ENG_LOG_TRACE("[D] Font '{}'", name.c_str());
+            ENG_LOG_TRACE("[D] Font '{}' (height = {})", name.c_str(), fontHeight);
         }
     }
 
     void Font::Move(Font&& f) noexcept {
         texture = std::move(f.texture);
         name = std::move(f.name);
+        filepath = std::move(f.filepath);
         atlasSize_inv = f.atlasSize_inv;
         fontHeight = f.fontHeight;
         memcpy(chars, f.chars, sizeof(chars));

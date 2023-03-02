@@ -1,5 +1,6 @@
 #include "engine/core/gui.h"
 
+#include "engine/core/window.h"
 #include "engine/core/renderer.h"
 #include "engine/core/quad.h"
 
@@ -118,8 +119,8 @@ namespace eng::GUI {
         hover = true;
     }
 
-    void Element::OnPressed() {
-        pressed = true;
+    void Element::OnHold() {
+        hold = true;
     }
 
     void Element::Highlight() {
@@ -127,12 +128,12 @@ namespace eng::GUI {
     }
 
     void Element::InnerRender() {
-        TextureRef t = pressed ? style->pressedTexture : (hover ? style->hoverTexture : style->texture);
+        TextureRef t = hold ? style->holdTexture : (hover ? style->hoverTexture : style->texture);
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), size, style->color, t));
         if(highlight) {
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), size, glm::vec4(1.f), style->highlightTexture));
         }
-        hover = pressed = highlight = false;
+        hover = hold = highlight = false;
     }
 
     void Element::InnerRecalculate(const glm::vec2& p_position, const glm::vec2& p_size, float p_zIdx) {
@@ -158,15 +159,45 @@ namespace eng::GUI {
         }
     }
 
+    //===== TextLabel =====
+
+    TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_) {}
+    
+    void TextLabel::InnerRender() {
+        Element::InnerRender();
+        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+    }
+
     //===== Button =====
 
     Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
                     ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
-        : Element(offset_, size_, zOffset_, style_, nullptr), handler(handler_), callback(callback_), id(buttonID_) {}
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, 0) {}
+    
+    Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
+                    ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int firingType)
+        : Element(offset_, size_, zOffset_, style_, nullptr), handler(handler_), callback(callback_), id(buttonID_),
+        fireOnDown(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_DOWN)), fireOnHold(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_HOLD)) {}
+
+    void Button::OnDown() {
+        // ENG_LOG_FINER("Button DOWN - '{}'", id);
+        if(callback && handler && fireOnDown && !fireOnHold) {
+            callback(handler, id);
+        }
+    }
+
+    void Button::OnHold() {
+        // ENG_LOG_FINEST("Button HOLD - '{}'", id);
+        Element::OnHold();
+        if(callback && handler && fireOnHold) {
+            callback(handler, id);
+        }
+    }
 
     void Button::OnUp() {
-        // ENG_LOG_FINER("Button CLICK - '{}'", id);
-        if(callback && handler) {
+        // ENG_LOG_FINER("Button UP - '{}'", id);
+        if(callback && handler && !fireOnDown && !fireOnHold) {
             callback(handler, id);
         }
     }
@@ -176,10 +207,14 @@ namespace eng::GUI {
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
             const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), text(text_), highlightIdx(highlightIdx_) {}
+    
+    TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
+            const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_, int firingType)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, firingType), text(text_), highlightIdx(highlightIdx_) {}
 
     void TextButton::InnerRender() {
-        glm::vec4 clr = (Hover() || Pressed()) ? style->hoverColor : style->textColor;
-        glm::ivec2 pxOffset = Pressed() ? style->pressedOffset : glm::ivec2(0);
+        glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
+        glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);
         Button::InnerRender();
         style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, 
             clr, style->hoverColor, highlightIdx, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
@@ -197,9 +232,85 @@ namespace eng::GUI {
             AddChild(el, true);
         }
     }
+
+    //===== ScrollBar =====
+
+    ScrollBar::ScrollBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, float btnHeight,
+            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle) 
+        // : Element(offset_, size_, zOffset_, upStyle, nullptr) {
+        : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
+
+        float bh = btnHeight / size_.y;
+        
+        //scroll up button
+        AddChild(new Button(glm::vec2(0.f, -1.f + bh), glm::vec2(1.f, bh), 1.f, upStyle, 
+            handler, [](GUI::ButtonCallbackHandler* handler, int id) {
+                static_cast<ScrollBarHandler*>(handler)->SignalUp();
+            }, -1, ButtonFlags::FIRE_ON_DOWN), true
+        );
+
+        //scroll down button
+        AddChild(new Button(glm::vec2(0.f, 1.f - bh), glm::vec2(1.f, bh), 1.f, downStyle, 
+            handler, [](GUI::ButtonCallbackHandler* handler, int id) {
+                static_cast<ScrollBarHandler*>(handler)->SignalDown();
+            }, -1, ButtonFlags::FIRE_ON_DOWN), true
+        );
+
+        /*need to signal drag event
+            - add OnDrag to ScreenObject
+            - track mouse pos relative to element's position & size
+            - maybe create some DragButton class - will use it's callback in the drag fn (no need to add new callback)
+          scroll btn will then use the drag position to update scroll offset in the menu
+            - this means that scroll bar needs to know how many scroll levels are there - pass a variable (can be modifiable)
+        */
+        
+        //slider
+        AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 1.f, sliderStyle, 
+            handler, [](GUI::ButtonCallbackHandler* handler, int id) {
+                // static_cast<ScrollBarHandler*>(handler)->SignalSlider();
+            }, -1, ButtonFlags::FIRE_ON_HOLD), true
+        );
+        
+        
+
+    }
     
     //===== ScrollMenu =====
 
+    ScrollMenu::ScrollMenu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, int rowCount_, float barWidth, const std::vector<StyleRef>& styles)
+        : Menu(offset_, size_, zOffset_, Style::Default(), {}), rowCount(rowCount_) {
+        ASSERT_MSG(styles.size() >= 4, "Scroll menu requires 4 gui styles (item, up button, down button and slider button)")
 
+        //also need to set total item count and name for each item
+        //can (and probably should) be done manually from outside the class tho (bcs saves can be queried after the menu is constructed)
+
+        //generate children based on item count & add them to the hierarchy
+        float btnHeight = size_.y / rowCount;
+        float off = -1.f + btnHeight / size_.y;
+        float step = (2.f * btnHeight) / size_.y;
+        float bh = btnHeight / size_.y;
+        char buf [256];
+        for(int i = 0; i < rowCount; i++) {
+            snprintf(buf, sizeof(buf), "item_%d", i);
+            AddChild(new TextButton(glm::vec2(0.f, off+step*i), glm::vec2(1.f, bh), 0.1f, styles[0], std::string(buf), 
+                this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                    //update head position of the menu -> should update button texts & ids
+                }, -1, i, ButtonFlags::FIRE_ON_DOWN), true
+            );
+        }
+
+        //generate scrollbar
+        float gap = 0.0f;
+        glm::vec2 bar = glm::vec2(barWidth / size_.x, barWidth / size_.y);
+        AddChild(new ScrollBar(glm::vec2(1.f + gap + bar.x, 0.f), glm::vec2(bar.x, 1.f), 0.f, bar.y, this, styles[1], styles[2], styles[3]), true);
+    }
+
+    void ScrollMenu::SignalUp() {
+        ENG_LOG_INFO("SINGAL UP");
+    }
+
+    void ScrollMenu::SignalDown() {
+        ENG_LOG_INFO("SINGAL DOWN");
+    }
 
 }//namespace eng::GUI

@@ -16,8 +16,14 @@ namespace eng {
         float textureOffset;
     };
 
+    class Font;
+    using FontRef = std::shared_ptr<Font>;
+
     class Font {
     public:
+        static FontRef Default();
+        static void UpdateDefault(Font&& f);
+
         Font(const std::string& filepath, int fontHeight = 48);
 
         Font() = default;
@@ -62,6 +68,5 @@ namespace eng {
 
         glm::vec2 atlasSize_inv;
     };
-    using FontRef = std::shared_ptr<Font>;
 
 }//namespace eng

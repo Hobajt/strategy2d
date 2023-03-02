@@ -33,6 +33,8 @@ namespace eng::GUI {
     struct Style;
     using StyleRef = std::shared_ptr<Style>;
 
+    // namespace TextAlignment { enum { LEFT, CENTER, RIGHT }; }
+
     //Container for all the style properties of GUI elements.
     struct Style {
         TextureRef texture = nullptr;
@@ -41,13 +43,15 @@ namespace eng::GUI {
         TextureRef hoverTexture = nullptr;
         glm::vec4 hoverColor = glm::vec4(1.f);
 
-        TextureRef pressedTexture = nullptr;
-        glm::ivec2 pressedOffset = glm::ivec2(0);
+        TextureRef holdTexture = nullptr;
+        glm::ivec2 holdOffset = glm::ivec2(0);
 
         TextureRef highlightTexture = nullptr;
 
-        FontRef font = nullptr;
+        FontRef font = Font::Default();
         glm::vec4 textColor = glm::vec4(1.f);
+
+        // int textAlignment = TextAlignment::CENTER;
     public:
         static StyleRef Default();
     };
@@ -88,14 +92,13 @@ namespace eng::GUI {
         Element* ResolveMouseSelection(const glm::vec2& mousePos_n);
 
         virtual void OnHover() override;
-        virtual void OnPressed() override;
-
+        virtual void OnHold() override;
         virtual void Highlight() override;
     protected:
         virtual void InnerRender();
 
         bool Hover() const { return hover; }
-        bool Pressed() const { return pressed; }
+        bool Hold() const { return hold; }
     private:
         void InnerRecalculate(const glm::vec2& parent_position, const glm::vec2& parent_size, float parent_zIdx);
 
@@ -120,8 +123,24 @@ namespace eng::GUI {
         std::vector<Element*> children;
 
         bool hover = false;
-        bool pressed = false;
+        bool hold = false;
         bool highlight = false;
+    };
+
+    //===== TextLabel =====
+
+    //Uneditable block of text.
+    class TextLabel : public Element {
+    public:
+        TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void Highlight() override {}
+    protected:
+        virtual void InnerRender() override;
+    private:
+        std::string text;
     };
 
     //===== Button =====
@@ -131,18 +150,31 @@ namespace eng::GUI {
 
     typedef void(*ButtonCallbackType)(ButtonCallbackHandler* handler, int buttonID);
 
+    namespace ButtonFlags {
+        enum {
+            FIRE_ON_DOWN = BIT(0),
+            FIRE_ON_HOLD = BIT(1)
+        };
+    }//namespace ButtonFlags
+
     class Button : public Element {
     public:
         Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
         );
+        Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
+        );
 
-        // virtual void OnHover() override;
+        virtual void OnDown() override;
+        virtual void OnHold() override;
         virtual void OnUp() override;
     private:
         int id = -1;
         ButtonCallbackType callback = nullptr;
         ButtonCallbackHandler* handler = nullptr;
+        bool fireOnDown = false;
+        bool fireOnHold = false;
     };
 
     //===== TextButton =====
@@ -151,6 +183,9 @@ namespace eng::GUI {
     public:
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx = -1, int buttonID = -1
+        );
+        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx, int buttonID, int firingType
         );
     protected:
         virtual void InnerRender() override;
@@ -166,10 +201,44 @@ namespace eng::GUI {
         Menu() = default;
         Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const std::vector<Element*>& content);
         Menu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::vector<Element*>& content);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void Highlight() override {}
+    };
+
+    //===== ScrollBar =====
+
+    class ScrollBarHandler : public ButtonCallbackHandler {
+    public:
+        virtual void SignalUp() = 0;
+        virtual void SignalDown() = 0;
+    };
+
+    class ScrollBar : public Element {
+    public:
+        ScrollBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, float btnHeight, ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void Highlight() override {}
     };
 
     //===== ScrollMenu =====
 
-    // public ScrollMenu : public Menu {};
+    class ScrollMenu : public Menu, public ScrollBarHandler {
+    public:
+        ScrollMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, int rowCount, float barWidth, const std::vector<StyleRef>& styles);
+
+        virtual void SignalUp() override;
+        virtual void SignalDown() override;
+
+        void UpdateContent(const std::vector<std::string>& items);
+    private:
+        int rowCount = -1;
+        int pos = 0;
+
+        std::vector<std::string> items;
+    };
 
 }//namespace eng::GUI

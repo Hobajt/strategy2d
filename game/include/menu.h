@@ -6,7 +6,7 @@
 
 //===== MainMenu =====
 
-namespace MainMenuState { enum { INVALID, MAIN, START_GAME, OPTIONS }; }
+namespace MainMenuState { enum { INVALID, MAIN, START_GAME, OPTIONS, LOAD_GAME }; }
 
 class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
@@ -28,6 +28,7 @@ private:
 private:
     eng::GUI::Menu main_menu;
     eng::GUI::Menu startGame_menu;
+    eng::GUI::Menu loadGame_menu;
 
     eng::GUI::Menu* activeMenu = nullptr;
     int activeState = MainMenuState::INVALID;
