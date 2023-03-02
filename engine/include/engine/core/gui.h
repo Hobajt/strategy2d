@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include "engine/utils/mathdefs.h"
 #include "engine/core/texture.h"
@@ -32,6 +33,7 @@ namespace eng::GUI {
 
     struct Style;
     using StyleRef = std::shared_ptr<Style>;
+    using StyleMap = std::unordered_map<std::string, GUI::StyleRef>;
 
     // namespace TextAlignment { enum { LEFT, CENTER, RIGHT }; }
 

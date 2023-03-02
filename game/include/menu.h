@@ -25,6 +25,10 @@ private:
     void SwitchState(int newState);
 
     void KeyPressCallback(int keycode, int modifiers);
+
+    void InitSubmenu_Main(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
+    void InitSubmenu_StartGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
+    void InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, float scrollButtonSize, float gap, eng::GUI::StyleMap& styles);
 private:
     eng::GUI::Menu main_menu;
     eng::GUI::Menu startGame_menu;
@@ -34,9 +38,6 @@ private:
     int activeState = MainMenuState::INVALID;
 
     eng::TextureRef backgroundTexture = nullptr;
-    eng::TextureRef btnTextureHighlight = nullptr;
-    eng::TextureRef btnTextureClick = nullptr;
-    eng::TextureRef btnTexture = nullptr;
 
     eng::GUI::Element* clickedElement = nullptr;
     eng::GUI::Element* lastSelected = nullptr;

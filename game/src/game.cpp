@@ -24,7 +24,6 @@ using namespace eng;
 //TODO: add basic play button with proper stage change & setup
 //TODO: stage switching, stage transitions (once there's ingame stage controller)
 //TODO: add intro & loading screen (either using stages or in some other way)
-//TODO: organize all the initializations in the main menu
 
 /*scroll menu impl:
     - there will be fixed number of buttons in it
