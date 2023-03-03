@@ -3,6 +3,7 @@
 #include "engine/core/window.h"
 #include "engine/core/renderer.h"
 #include "engine/core/quad.h"
+#include "engine/core/input.h"
 
 #define Z_INDEX_BASE -0.9f
 #define Z_INDEX_MULT 1e-3f
@@ -84,6 +85,10 @@ namespace eng::GUI {
         return child;
     }
 
+    Element* Element::GetChild(int idx) {
+        return children.at(idx);
+    }
+
     AABB Element::GetAABB() {
         return AABB(
             (position + 1.f - size) * 0.5f,
@@ -125,6 +130,16 @@ namespace eng::GUI {
 
     void Element::Highlight() {
         highlight = style->highlightEnabled;
+    }
+
+    void Element::UpdateOffset(const glm::vec2& newOffset, bool recalculate) {
+        l_offset = newOffset;
+        if(recalculate) {
+            if(parent)
+                InnerRecalculate(parent->position, parent->size, parent->zIdx);
+            else
+                Recalculate();
+        }
     }
 
     void Element::InnerRender() {
@@ -212,6 +227,10 @@ namespace eng::GUI {
             const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_, int firingType)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, firingType), text(text_), highlightIdx(highlightIdx_) {}
 
+    void TextButton::Text(const std::string& newText) {
+        text = newText;
+    }
+
     void TextButton::InnerRender() {
         glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
         glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);
@@ -264,18 +283,34 @@ namespace eng::GUI {
             - in handler, convert this to position among the items
                 - items are tracked by position(index) of the topmost visible item
                 - then update text values in all the items to match the current state
+                - also update grip position based on this
         */
         
-        //slider
-        AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 0.0f, sliderStyle, 
+        //slider rails
+        rails = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 0.0f, sliderStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<ScrollBarHandler*>(handler)->SignalSlider(0.f);
+                static_cast<ScrollBarHandler*>(handler)->SignalSlider();
             }, -1, ButtonFlags::FIRE_ON_HOLD), true
         );
 
         //slider grip
-        Element* e = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, bh), 0.1f, sliderGripStyle, nullptr, nullptr, true), true);
-        e->Interactable(false);     //disable interactions so that it doesn't interfere with slider handler
+        slider = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, bh), 0.1f, sliderGripStyle, nullptr, nullptr, true), true);
+        slider->Interactable(false);     //disable interactions so that it doesn't interfere with slider handler
+
+        //values for easier grip positioning
+        sMin = -1.f + 3.f * bh;
+        float sMax = 1.f - 3.f * bh;
+        sRange = sMax - sMin;
+    }
+
+    float ScrollBar::GetClickPos() {
+        AABB bb = rails->GetAABB();
+        float y = (Input::Get().mousePos_n.y - bb.min.y) / (bb.max.y - bb.min.y);
+        return y;
+    }
+
+    void ScrollBar::UpdateSliderPos(float pos) {
+        slider->UpdateOffset(glm::vec2(0.f, sMin + pos * sRange));
     }
     
     //===== ScrollMenu =====
@@ -284,40 +319,75 @@ namespace eng::GUI {
         : Menu(offset_, size_, zOffset_, Style::Default(), {}), rowCount(rowCount_) {
         ASSERT_MSG(styles.size() >= 5, "Scroll menu requires 5 gui styles (item, up button, down button, slider button & slider grip button)")
 
-        //also need to set total item count and name for each item
-        //can (and probably should) be done manually from outside the class tho (bcs saves can be queried after the menu is constructed)
-
         //generate children based on item count & add them to the hierarchy
         float btnHeight = size_.y / rowCount;
         float off = -1.f + btnHeight / size_.y;
         float step = (2.f * btnHeight) / size_.y;
         float bh = btnHeight / size_.y;
         char buf [256];
+        TextButton* btn;
         for(int i = 0; i < rowCount; i++) {
             snprintf(buf, sizeof(buf), "item_%d", i);
-            AddChild(new TextButton(glm::vec2(0.f, off+step*i), glm::vec2(1.f, bh), 0.1f, styles[0], std::string(buf), 
+            btn = (TextButton*)AddChild(new TextButton(glm::vec2(0.f, off+step*i), glm::vec2(1.f, bh), 0.1f, styles[0], std::string(buf), 
                 this, [](GUI::ButtonCallbackHandler* handler, int id) {
                     //update head position of the menu -> should update button texts & ids
                 }, -1, i, ButtonFlags::FIRE_ON_DOWN), true
             );
+            menuBtns.push_back(btn);
         }
 
         //generate scrollbar
         float gap = 0.0f;
         glm::vec2 bar = glm::vec2(barWidth / size_.x, barWidth / size_.y);
-        AddChild(new ScrollBar(glm::vec2(1.f + gap + bar.x, 0.f), glm::vec2(bar.x, 1.f), 0.f, bar.y, this, styles[1], styles[2], styles[3], styles[4]), true);
+        scrollBar = (ScrollBar*)AddChild(
+            new ScrollBar(glm::vec2(1.f + gap + bar.x, 0.f), glm::vec2(bar.x, 1.f), 0.f, bar.y, this, 
+                styles[1], styles[2], styles[3], styles[4]
+            ), true
+        );
     }
 
     void ScrollMenu::SignalUp() {
-        ENG_LOG_INFO("SINGAL UP");
+        if((--pos) < 0)
+            pos = 0;
+        MenuUpdate();
     }
 
     void ScrollMenu::SignalDown() {
-        ENG_LOG_INFO("SINGAL DOWN");
+        if((pos++) >= items.size() - rowCount)
+            pos = std::max(int(items.size() - rowCount), 0);
+        MenuUpdate();
     }
 
-    void ScrollMenu::SignalSlider(float yPos) {
-        ENG_LOG_INFO("SIGNAL SLIDER");
+    void ScrollMenu::SignalSlider() {
+        float yPos = scrollBar->GetClickPos();
+        pos = std::max((int)roundf(yPos * (items.size() - rowCount)), 0);
+        MenuUpdate();
+    }
+
+    void ScrollMenu::UpdateContent(const std::vector<std::string>& items_, bool resetPosition) {
+        items = items_;
+        if(resetPosition)
+            pos = 0;
+        MenuUpdate();
+    }
+
+    void ScrollMenu::ResetPosition() {
+        pos = 0;
+    }
+
+    void ScrollMenu::MenuUpdate() {
+        //update visible text values
+        for(int i = 0; i < rowCount; i++) {
+            if(pos+i < items.size())
+                menuBtns[i]->Text(items[pos+i]);
+            else
+                menuBtns[i]->Text("");
+        }
+
+        //update scrollbar slider position
+        int scrollSize = items.size() - rowCount;
+        float sliderPos = (scrollSize > 0) ? (pos / float(scrollSize)) : 0.f;
+        scrollBar->UpdateSliderPos(sliderPos);
     }
 
 }//namespace eng::GUI

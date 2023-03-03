@@ -82,6 +82,8 @@ namespace eng::GUI {
         void RemoveChild(Element* child, bool recalculate = true);
         Element* AddChild(Element* child, bool recalculate = true);
 
+        Element* GetChild(int idx);
+
         virtual AABB GetAABB() override;
 
         //Renders the element along with all of its children.
@@ -100,6 +102,8 @@ namespace eng::GUI {
         virtual void Highlight() override;
 
         void Interactable(bool state) { interactable = state; }
+
+        void UpdateOffset(const glm::vec2& offset, bool recalculate = true);
     protected:
         virtual void InnerRender();
 
@@ -195,6 +199,8 @@ namespace eng::GUI {
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx, int buttonID, int firingType
         );
+
+        void Text(const std::string& newText);
     protected:
         virtual void InnerRender() override;
     private:
@@ -221,7 +227,7 @@ namespace eng::GUI {
     public:
         virtual void SignalUp() = 0;
         virtual void SignalDown() = 0;
-        virtual void SignalSlider(float yPos) = 0;
+        virtual void SignalSlider() = 0;
     };
 
     class ScrollBar : public Element {
@@ -232,8 +238,15 @@ namespace eng::GUI {
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void Highlight() override {}
+
+        float GetClickPos();
+        void UpdateSliderPos(float pos);
     protected:
         virtual void InnerRender() override {}
+    private:
+        Element* rails = nullptr;
+        Element* slider = nullptr;
+        float sMin, sRange;
     };
 
     //===== ScrollMenu =====
@@ -244,14 +257,20 @@ namespace eng::GUI {
 
         virtual void SignalUp() override;
         virtual void SignalDown() override;
-        virtual void SignalSlider(float yPos) override;
+        virtual void SignalSlider() override;
 
-        void UpdateContent(const std::vector<std::string>& items);
+        void UpdateContent(const std::vector<std::string>& items, bool resetPosition = true);
+        void ResetPosition();
+    private:
+        void MenuUpdate();
     private:
         int rowCount = -1;
         int pos = 0;
 
         std::vector<std::string> items;
+
+        ScrollBar* scrollBar;
+        std::vector<TextButton*> menuBtns;
     };
 
 }//namespace eng::GUI

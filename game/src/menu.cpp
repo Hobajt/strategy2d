@@ -225,6 +225,10 @@ void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const
             }, 0
         ),
     });
+
+    //TODO: dbg only, do this once the menu is opened - query saves folder for items
+    GUI::ScrollMenu* scrollMenu = ((GUI::ScrollMenu*)loadGame_menu.GetChild(1));
+    scrollMenu->UpdateContent({ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_6", "item_7", "item_8", "item_9", "item_10", "item_11", "item_12", "item_13" });
 }
 
 //================================ Style init functions ================================
@@ -327,5 +331,5 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
-    s->highlightTexture = s->texture;
+    s->highlightEnabled = false;
 }
