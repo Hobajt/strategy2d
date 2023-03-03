@@ -33,7 +33,7 @@ MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRe
     InitSubmenu_LoadGame(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, load_scrollMenuItems, styles);
     
 
-    dbg_texture = styles["scroll_up"]->holdTexture;
+    dbg_texture = styles["scroll_grip"]->texture;
 
     SwitchState(MainMenuState::MAIN);
 }
@@ -315,9 +315,9 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->highlightEnabled = false;
 
     s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, false);
+    s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
     s->hoverTexture = s->texture;
-    s->holdTexture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, true);
+    s->holdTexture = s->texture;
     s->highlightEnabled = false;
 
 

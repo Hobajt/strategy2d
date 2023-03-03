@@ -11,6 +11,9 @@ namespace eng {
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading);
         void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up);
+        template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio);
+
+        template<typename T> void fillColor(T* data, int width, int height, const T& color);
 
         //========================================
 
@@ -60,21 +63,19 @@ namespace eng {
             return texture;
         }
 
-        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, bool flipShading) {
-            rgb* data = new rgb[width * height];
+        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio) {
+            rgba* data = new rgba[width * height];
 
-            basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
-            // triangle(data, borderWidth*2, borderWidth*2, width-borderWidth*2, height-borderWidth*3, width, flipShading);
+            fillColor<rgba>(data, width, height, rgba(0));
+            // basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
+            gem<rgba>(data, width, height, borderWidth, borderWidth*2, borderWidth*2, ratio);
 
             //--------------------------
 
-            char buf[256];
-            snprintf(buf, sizeof(buf), "btnTex_gem%s", flipShading ? "_flip" : "");
-
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
                 (void*)data,
-                std::string(buf)
+                std::string("btnTex_gem")
             );
 
             delete[] data;
@@ -125,6 +126,14 @@ namespace eng {
         }
 
         //===============================
+
+        template<typename T> inline void fillColor(T* data, int width, int height, const T& color) {
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = color;
+                }
+            }
+        }
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading) {
             rgb fill = rgb(0);
@@ -232,7 +241,50 @@ namespace eng {
                     data[(top+i)*width + x] = shadow;
                 }
             }
+        }
 
+        float ellipseEQ(float x, float y, float a, float b) {
+            return (x*x)/(a*a) + (y*y)/(b*b);
+        }
+
+        template<typename T> 
+        inline void gem(T* data, int width, int height, int offset, int bw, int gw, float ratio) {
+            //best variable initialization ever
+            T fillGem = T(255); fillGem[0] = 71; fillGem[1] = fillGem[2] = 0;
+            T fillGold = T(255); fillGold[0] = 210; fillGold[1] = 190; fillGold[2] = 28;
+            T fillBorder = T(255); fillBorder[0] = 30; fillBorder[1] = fillBorder[2] = 0;
+            //=====
+
+            glm::vec2 rat = glm::vec2(1.f, ratio);
+
+            glm::vec2 c = glm::vec2(width, height) * 0.5f * rat;
+            glm::vec2 r1 = c - float(offset+bw+gw);
+            glm::vec2 r2 = c - float(offset+bw);
+            glm::vec2 r3 = c - float(offset);
+            
+            //circles rendering
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    T& pixel = data[y * width + x];
+                    
+                    glm::vec2 p = glm::vec2(x, y) * rat;
+                    
+                    //gem (inner circle)
+                    if(ellipseEQ(p.x-c.x, p.y-c.y, r1.x, r1.y) < 1.f) {
+                        pixel = fillGem;
+                    }
+                    //gold fittings
+                    else if(ellipseEQ(p.x-c.x, p.y-c.y, r2.x, r2.y) < 1.f) {
+                        pixel = fillGold;
+                    }
+                    //borders
+                    else if(ellipseEQ(p.x-c.x, p.y-c.y, r3.x, r3.y) < 1.f) {
+                        pixel = fillBorder;
+                    }
+                }
+            }
+
+            //shading
         }
 
     }//namespace TextureGenerator
