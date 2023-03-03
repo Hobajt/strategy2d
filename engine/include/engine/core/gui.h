@@ -35,7 +35,7 @@ namespace eng::GUI {
     using StyleRef = std::shared_ptr<Style>;
     using StyleMap = std::unordered_map<std::string, GUI::StyleRef>;
 
-    // namespace TextAlignment { enum { LEFT, CENTER, RIGHT }; }
+    namespace TextAlignment { enum { LEFT, CENTER, RIGHT }; }
 
     //Container for all the style properties of GUI elements.
     struct Style {
@@ -53,7 +53,8 @@ namespace eng::GUI {
         FontRef font = Font::Default();
         glm::vec4 textColor = glm::vec4(1.f);
 
-        // int textAlignment = TextAlignment::CENTER;
+        int textAlignment = TextAlignment::CENTER;
+        float textScale = 1.f;
     public:
         static StyleRef Default();
     };
@@ -96,6 +97,8 @@ namespace eng::GUI {
         virtual void OnHover() override;
         virtual void OnHold() override;
         virtual void Highlight() override;
+
+        void Interactable(bool state) { interactable = state; }
     protected:
         virtual void InnerRender();
 
@@ -127,6 +130,8 @@ namespace eng::GUI {
         bool hover = false;
         bool hold = false;
         bool highlight = false;
+
+        bool interactable = true;
     };
 
     //===== TextLabel =====
@@ -215,15 +220,19 @@ namespace eng::GUI {
     public:
         virtual void SignalUp() = 0;
         virtual void SignalDown() = 0;
+        virtual void SignalSlider(float yPos) = 0;
     };
 
     class ScrollBar : public Element {
     public:
-        ScrollBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, float btnHeight, ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle);
+        ScrollBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, float btnHeight, 
+            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle);
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void Highlight() override {}
+    protected:
+        virtual void InnerRender() override {}
     };
 
     //===== ScrollMenu =====
@@ -234,6 +243,7 @@ namespace eng::GUI {
 
         virtual void SignalUp() override;
         virtual void SignalDown() override;
+        virtual void SignalSlider(float yPos) override;
 
         void UpdateContent(const std::vector<std::string>& items);
     private:

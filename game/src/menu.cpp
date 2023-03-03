@@ -3,7 +3,9 @@
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);
-void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font);
+void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
+
+static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
 //===== MainMenuController =====
 
@@ -18,16 +20,17 @@ MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRe
     glm::vec2 load_smallBtnSize = glm::vec2(0.1666f, 0.06f);
     glm::vec2 load_scrollMenuSize = glm::vec2(0.45f, 0.35f);
     float load_gap = 0.02f;
+    int load_scrollMenuItems = 8;
     
     //==== styles initialization ====
     GUI::StyleMap styles = {};
     InitStyles_Main(styles, font, main_btnSize);
-    InitStyles_Load(styles, font);
+    InitStyles_Load(styles, font, load_scrollMenuSize, load_scrollMenuItems, load_scrollBtnSize, load_smallBtnSize);
 
     //==== sub-menu initializations ====
     InitSubmenu_Main(main_btnSize, main_menuSize, main_gap, styles["main"]);
     InitSubmenu_StartGame(main_btnSize, main_menuSize, main_gap, styles["main"]);
-    InitSubmenu_LoadGame(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, styles);
+    InitSubmenu_LoadGame(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, load_scrollMenuItems, styles);
     
 
     SwitchState(MainMenuState::MAIN);
@@ -121,6 +124,12 @@ void MainMenuController::KeyPressCallback(int keycode, int modifiers) {
                 case GLFW_KEY_P: SwitchState(MainMenuState::MAIN); break;
             }
             break;
+        case MainMenuState::LOAD_GAME:
+            switch(keycode) {
+                case GLFW_KEY_L: break;
+                case GLFW_KEY_C: SwitchState(MainMenuState::START_GAME); break;
+            }
+            break;
     }
 }
 
@@ -187,7 +196,8 @@ void MainMenuController::InitSubmenu_StartGame(const glm::vec2& buttonSize, cons
     });
 }
 
-void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, float scrollButtonSize, float gap, GUI::StyleMap& styles) {
+void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, 
+        const glm::vec2& smallButtonSize, float scrollButtonSize, float gap, int scrollMenuItems, GUI::StyleMap& styles) {
     float off = -1.f + buttonSize.y / menuSize.y;
     glm::vec2 bSize = buttonSize / menuSize;
     glm::vec2 smSize = scrollMenuSize / menuSize;
@@ -195,11 +205,11 @@ void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const
     float step = (buttonSize.y + gap + scrollMenuSize.y) / menuSize.y;            //step for menu
     float smStep = step + (scrollMenuSize.y + gap + 2.f * buttonSize.y) / menuSize.y;      //step after the menu
 
-    
-
     loadGame_menu = GUI::Menu(glm::vec2(0.f, 0.4f), menuSize, 0.f, {
         new GUI::TextLabel(glm::vec2(0.f, off), bSize, 1.f, styles["label"], "Load Game"),
-        new GUI::ScrollMenu(glm::vec2(0.f, off+step), smSize, 1.f, 8, scrollButtonSize, { styles["scroll_items"], styles["scroll_up"], styles["scroll_down"], styles["scroll_slider"] }),
+        new GUI::ScrollMenu(glm::vec2(0.f, off+step), smSize, 1.f, scrollMenuItems, scrollButtonSize, { 
+            styles["scroll_items"], styles["scroll_up"], styles["scroll_down"], styles["scroll_slider"], styles["scroll_grip"]
+        }),
         new GUI::TextButton(glm::vec2(-0.4f, off+smStep), bSize, 1.f, styles["main"], "Load",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
                 //...
@@ -224,33 +234,86 @@ void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     glm::ivec2 textureSize = ts * upscaleFactor;
     int borderWidth = 2 * upscaleFactor;
 
-    //generate button textures for main style
-    TextureRef btnTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, false);
-    TextureRef btnTextureClick = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, 0, true);
-    TextureRef btnTextureHighlight = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
-
     //main style
     GUI::StyleRef s = styles["main"] = std::make_shared<GUI::Style>();
-    s->texture = btnTexture;
-    s->hoverTexture = btnTexture;
-    s->holdTexture = btnTextureClick;
-    s->highlightTexture = btnTextureHighlight;
-    s->textColor = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
+    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
+    s->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+    s->textColor = textClr;
     s->font = font;
     s->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 }
 
-void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font) {
+void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
     GUI::StyleRef s = nullptr;
 
     //text label style
     s = styles["label"] = std::make_shared<GUI::Style>();
     s->font = font;
+    s->textColor = glm::vec4(1.f);
     s->color = glm::vec4(0.f);
 
-    styles["scroll_items"] = std::make_shared<GUI::Style>();
-    styles["scroll_up"] = std::make_shared<GUI::Style>();
-    styles["scroll_down"] = std::make_shared<GUI::Style>();
-    styles["scroll_slider"] = std::make_shared<GUI::Style>();
-    styles["small_btn"] = std::make_shared<GUI::Style>();
+    //menu item style
+    glm::vec2 buttonSize = glm::vec2(scrollMenuSize.x, scrollMenuSize.y / scrollMenuItems);
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::ivec2 textureSize = ts * upscaleFactor;
+    int shadingWidth = 2 * upscaleFactor;
+
+    s = styles["scroll_items"] = std::make_shared<GUI::Style>();
+    s->font = font;
+    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = s->texture;
+    s->highlightTexture = s->texture;
+    s->textColor = textClr;
+    s->textAlignment = GUI::TextAlignment::LEFT;
+    s->textScale = 0.8f;
+    // s->color = glm::vec4(0.f);
+
+    //small button style
+    buttonSize = smallBtnSize;
+    ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    textureSize = ts * upscaleFactor;
+    shadingWidth = 2 * upscaleFactor;
+
+    s = styles["small_btn"] = std::make_shared<GUI::Style>();
+    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, true);
+    s->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, shadingWidth);
+    s->textColor = textClr;
+    s->font = font;
+    s->holdOffset = glm::ivec2(shadingWidth);       //= texture border width
+
+    //scroll up button style
+    buttonSize = glm::vec2(scrollButtonSize, scrollButtonSize);
+    ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    textureSize = ts * upscaleFactor;
+    shadingWidth = 2 * upscaleFactor;
+    s = styles["scroll_up"] = std::make_shared<GUI::Style>();
+    s->texture = TextureGenerator::ButtonTexture_Up(textureSize.x, textureSize.y, shadingWidth, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = s->texture;
+    s->highlightTexture = s->texture;
+
+    s = styles["scroll_down"] = std::make_shared<GUI::Style>();
+
+    s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
+
+
+    //scroll slider style
+    buttonSize = glm::vec2(scrollButtonSize, scrollMenuSize.y);
+    ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    textureSize = ts * upscaleFactor;
+    shadingWidth = 2 * upscaleFactor;
+    s = styles["scroll_slider"] = std::make_shared<GUI::Style>();
+    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = s->texture;
+    s->highlightTexture = s->texture;
 }

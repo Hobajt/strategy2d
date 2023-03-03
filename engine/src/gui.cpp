@@ -109,7 +109,7 @@ namespace eng::GUI {
                 return selected;
         }
 
-        if(GetAABB().IsInside(mousePos_n))
+        if(GetAABB().IsInside(mousePos_n) && interactable)
             return this;
         else
             return nullptr;
@@ -166,7 +166,7 @@ namespace eng::GUI {
     
     void TextLabel::InnerRender() {
         Element::InnerRender();
-        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
     //===== Button =====
@@ -216,7 +216,7 @@ namespace eng::GUI {
         glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
         glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);
         Button::InnerRender();
-        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), 1.f, 
+        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, 
             clr, style->hoverColor, highlightIdx, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
         );
     }
@@ -236,50 +236,53 @@ namespace eng::GUI {
     //===== ScrollBar =====
 
     ScrollBar::ScrollBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, float btnHeight,
-            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle) 
-        // : Element(offset_, size_, zOffset_, upStyle, nullptr) {
+            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle) 
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
 
         float bh = btnHeight / size_.y;
         
         //scroll up button
-        AddChild(new Button(glm::vec2(0.f, -1.f + bh), glm::vec2(1.f, bh), 1.f, upStyle, 
+        AddChild(new Button(glm::vec2(0.f, -1.f + bh), glm::vec2(1.f, bh), 0.0f, upStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalUp();
             }, -1, ButtonFlags::FIRE_ON_DOWN), true
         );
 
         //scroll down button
-        AddChild(new Button(glm::vec2(0.f, 1.f - bh), glm::vec2(1.f, bh), 1.f, downStyle, 
+        AddChild(new Button(glm::vec2(0.f, 1.f - bh), glm::vec2(1.f, bh), 0.0f, downStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalDown();
             }, -1, ButtonFlags::FIRE_ON_DOWN), true
         );
 
-        /*need to signal drag event
-            - add OnDrag to ScreenObject
-            - track mouse pos relative to element's position & size
-            - maybe create some DragButton class - will use it's callback in the drag fn (no need to add new callback)
-          scroll btn will then use the drag position to update scroll offset in the menu
-            - this means that scroll bar needs to know how many scroll levels are there - pass a variable (can be modifiable)
+        /*tracking the slider:
+            - need to track mouse pos within the button
+                - either do this for every button in OnHold()
+                - or derive a new class for this
+            - then, in slider callback, signal y-coord of this value to the handler
+                - most likely just a float value, unprocessed (range <0,1>)
+            - in handler, convert this to position among the items
+                - items are tracked by position(index) of the topmost visible item
+                - then update text values in all the items to match the current state
         */
         
         //slider
-        AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 1.f, sliderStyle, 
+        AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 0.0f, sliderStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
-                // static_cast<ScrollBarHandler*>(handler)->SignalSlider();
+                static_cast<ScrollBarHandler*>(handler)->SignalSlider(0.f);
             }, -1, ButtonFlags::FIRE_ON_HOLD), true
         );
-        
-        
 
+        //slider grip
+        Element* e = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, bh), 0.1f, sliderGripStyle, nullptr, nullptr, true), true);
+        e->Interactable(false);     //disable interactions so that it doesn't interfere with slider handler
     }
     
     //===== ScrollMenu =====
 
     ScrollMenu::ScrollMenu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, int rowCount_, float barWidth, const std::vector<StyleRef>& styles)
         : Menu(offset_, size_, zOffset_, Style::Default(), {}), rowCount(rowCount_) {
-        ASSERT_MSG(styles.size() >= 4, "Scroll menu requires 4 gui styles (item, up button, down button and slider button)")
+        ASSERT_MSG(styles.size() >= 5, "Scroll menu requires 5 gui styles (item, up button, down button, slider button & slider grip button)")
 
         //also need to set total item count and name for each item
         //can (and probably should) be done manually from outside the class tho (bcs saves can be queried after the menu is constructed)
@@ -302,7 +305,7 @@ namespace eng::GUI {
         //generate scrollbar
         float gap = 0.0f;
         glm::vec2 bar = glm::vec2(barWidth / size_.x, barWidth / size_.y);
-        AddChild(new ScrollBar(glm::vec2(1.f + gap + bar.x, 0.f), glm::vec2(bar.x, 1.f), 0.f, bar.y, this, styles[1], styles[2], styles[3]), true);
+        AddChild(new ScrollBar(glm::vec2(1.f + gap + bar.x, 0.f), glm::vec2(bar.x, 1.f), 0.f, bar.y, this, styles[1], styles[2], styles[3], styles[4]), true);
     }
 
     void ScrollMenu::SignalUp() {
@@ -311,6 +314,10 @@ namespace eng::GUI {
 
     void ScrollMenu::SignalDown() {
         ENG_LOG_INFO("SINGAL DOWN");
+    }
+
+    void ScrollMenu::SignalSlider(float yPos) {
+        ENG_LOG_INFO("SIGNAL SLIDER");
     }
 
 }//namespace eng::GUI

@@ -28,7 +28,8 @@ private:
 
     void InitSubmenu_Main(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
     void InitSubmenu_StartGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
-    void InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, float scrollButtonSize, float gap, eng::GUI::StyleMap& styles);
+    void InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, 
+        float scrollButtonSize, float gap, int scrollMenuItems, eng::GUI::StyleMap& styles);
 private:
     eng::GUI::Menu main_menu;
     eng::GUI::Menu startGame_menu;
