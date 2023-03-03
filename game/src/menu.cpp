@@ -33,6 +33,8 @@ MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRe
     InitSubmenu_LoadGame(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, load_scrollMenuItems, styles);
     
 
+    dbg_texture = styles["scroll_up"]->holdTexture;
+
     SwitchState(MainMenuState::MAIN);
 }
 
@@ -99,9 +101,11 @@ void MainMenuController::OnStop() {
 
 void MainMenuController::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
-    // ImGui::Begin("Menu controller");
-    // btnTexture->DBG_GUI();
-    // ImGui::End();
+    if(dbg_texture != nullptr) {
+        ImGui::Begin("DBG_TEX");
+        dbg_texture->DBG_GUI();
+        ImGui::End();
+    }
 #endif
 }
 
@@ -295,14 +299,22 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     textureSize = ts * upscaleFactor;
     shadingWidth = 2 * upscaleFactor;
     s = styles["scroll_up"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Up(textureSize.x, textureSize.y, shadingWidth, false);
+    s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
     s->hoverTexture = s->texture;
-    s->holdTexture = s->texture;
+    s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
     s->highlightTexture = s->texture;
 
     s = styles["scroll_down"] = std::make_shared<GUI::Style>();
+    s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+    s->highlightTexture = s->texture;
 
     s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
+    s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, false);
+    s->hoverTexture = s->texture;
+    s->holdTexture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, true);
+    s->highlightTexture = s->texture;
 
 
     //scroll slider style

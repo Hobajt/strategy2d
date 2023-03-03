@@ -10,7 +10,7 @@ namespace eng {
         using rgba = glm::u8vec4;
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading);
-        void triangle(rgb* data, int xs, int ys, int width, int height, bool flipShading);
+        void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up);
 
         //========================================
 
@@ -35,6 +35,48 @@ namespace eng {
                 (void*)data,
                 std::string(buf)
             );
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Triangle(int width, int height, int borderWidth, bool flipShading, bool up) {
+            rgb* data = new rgb[width * height];
+
+            basicButton(data, width, height, 0, borderWidth, borderWidth*2, flipShading);
+            triangle(data, width, height, borderWidth*4, borderWidth*5, borderWidth*4, borderWidth*5, flipShading, up);
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnTex_triangle_%s%s", up ? "up" : "down", flipShading ? "_flip" : "");
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, bool flipShading) {
+            rgb* data = new rgb[width * height];
+
+            basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
+            // triangle(data, borderWidth*2, borderWidth*2, width-borderWidth*2, height-borderWidth*3, width, flipShading);
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnTex_gem%s", flipShading ? "_flip" : "");
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+
             delete[] data;
             return texture;
         }
@@ -74,27 +116,6 @@ namespace eng {
 
             TextureRef texture = std::make_shared<Texture>(
                 TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
-                (void*)data,
-                std::string(buf)
-            );
-
-            delete[] data;
-            return texture;
-        }
-
-        TextureRef ButtonTexture_Up(int width, int height, int borderWidth, bool flipShading) {
-            rgb* data = new rgb[width * height];
-
-            basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
-            triangle(data, borderWidth*2, borderWidth*2, width-borderWidth*2, height-borderWidth*3, false);
-
-            //--------------------------
-
-            char buf[256];
-            snprintf(buf, sizeof(buf), "btnTex_up_%s", flipShading ? "_flip" : "");
-
-            TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -169,15 +190,49 @@ namespace eng {
             }            
         }
 
-        void triangle(rgb* data, int xs, int ys, int width, int height, bool flipShading) {
-            rgb fill = flipShading ? rgb(189, 160, 79) : rgb(247, 210, 106);
-            rgb light = flipShading ? rgb(186, 169, 123) : rgb(250, 228, 167);
+        void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up) {
+            rgb fill = flipShading ? rgb(171, 143, 19) : rgb(191, 167, 23);
+            rgb light = flipShading ? rgb(212, 196, 31) : rgb(225, 203, 30);
+            rgb shadow = flipShading ? rgb(145, 122, 16) : rgb(176, 154, 19);
+
+            if(flipShading) {
+                int tmp = left;
+                left = right;
+                right = tmp;
+
+                tmp = top;
+                top = bottom;
+                bottom = top;
+            }
+
+            //r=range,c=center
+            int rx = width - right - left;
+            int ry = height - top - bottom;
+            int cx = rx / 2;
+            float step = float(cx)/ry;      //step in x per one move in y
+            int sh = rx / 8;
+            int sho = rx / 16;
             
-            for(int y = ys; y < height; y++) {
-                for(int x  = xs; x < width; x++) {
-                    
+            for(int i = 0; i < ry; i++) {
+                int istep = int(step * (i*up + (ry-1-i)*(1-up)));
+                int xs = left+cx-istep;
+                int xe = left+cx+istep;
+
+                //triangle
+                for(int x = xs; x < xe; x++) {
+                    data[(top+i)*width + x] = fill;
+                }
+
+                //shading
+                int se = std::min(xs+sh+sho, xe);
+                for(int x = xs + sho; x < se; x++) {
+                    data[(top+i)*width + x] = light;
+                }
+                for(int x = se; x < std::min(se+sho,xe); x++) {
+                    data[(top+i)*width + x] = shadow;
                 }
             }
+
         }
 
     }//namespace TextureGenerator

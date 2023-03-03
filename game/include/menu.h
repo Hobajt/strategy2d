@@ -42,4 +42,6 @@ private:
 
     eng::GUI::Element* clickedElement = nullptr;
     eng::GUI::Element* lastSelected = nullptr;
+
+    eng::TextureRef dbg_texture = nullptr;
 };
