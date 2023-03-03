@@ -130,7 +130,7 @@ namespace eng {
             instance.inProgress = false;
 
             Flush();
-            //ENG_LOG_INFO("Draw calls: {}", instance.stats.drawCalls);
+            // ENG_LOG_INFO("Draw calls: {}", instance.stats.drawCalls);
         }
 
         void Flush() {
@@ -152,9 +152,10 @@ namespace eng {
                 glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(QuadIndices) * instance.idx, instance.indexBuffer);
 
                 //bind all used textures into proper slots
+                // ENG_LOG_INFO("Draw call textures:");
                 for (int i = 0; i < MAX_TEXTURE_COUNT; i++) {
                     instance.textures[i]->Bind(i);
-                    // ENG_LOG_INFO"[{}] - '{}'", i, instance.textures[i]->Name().c_str());
+                    // ENG_LOG_INFO("[{}] - '{}' ({})", i, instance.textures[i]->Name(), instance.textures[i]->Handle());
                 }
                 // ENG_LOG_INFO("----");
 
@@ -173,10 +174,12 @@ namespace eng {
         //======================
 
         void RenderQuad(const Quad& quad) {
+            //resolve needs to be done before adding to buffers, since it can trigger Flush()
+            uint32_t texIdx = ResolveTextureIdx(quad.tex);
+
             instance.quadBuffer[instance.idx] = quad.vertices;
             instance.indexBuffer[instance.idx] = QuadIndices(instance.idx);
 
-            uint32_t texIdx = ResolveTextureIdx(quad.tex);
             instance.quadBuffer[instance.idx].UpdateTextureIdx(texIdx);
 
             instance.idx++;
@@ -253,7 +256,8 @@ namespace eng {
 
             if(texture != nullptr) {
                 //search for the texture in already queued textures
-                for (int i = 0; i < MAX_TEXTURE_COUNT; i++) {
+                //search only the textures queued in this draw call (higher index textures might get overriden)
+                for (int i = 0; i < instance.texIdx; i++) {
                     if (*(instance.textures[i]) == *texture) {
                         idx = uint32_t(i);
                         break;
