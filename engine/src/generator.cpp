@@ -202,7 +202,7 @@ namespace eng {
 
                 tmp = top;
                 top = bottom;
-                bottom = top;
+                bottom = tmp;
             }
 
             //r=range,c=center

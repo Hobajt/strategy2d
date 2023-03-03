@@ -124,7 +124,7 @@ namespace eng::GUI {
     }
 
     void Element::Highlight() {
-        highlight = true;
+        highlight = style->highlightEnabled;
     }
 
     void Element::InnerRender() {
@@ -181,14 +181,14 @@ namespace eng::GUI {
         fireOnDown(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_DOWN)), fireOnHold(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_HOLD)) {}
 
     void Button::OnDown() {
-        // ENG_LOG_FINER("Button DOWN - '{}'", id);
+        ENG_LOG_FINER("Button DOWN - '{}'", id);
         if(callback && handler && fireOnDown && !fireOnHold) {
             callback(handler, id);
         }
     }
 
     void Button::OnHold() {
-        // ENG_LOG_FINEST("Button HOLD - '{}'", id);
+        ENG_LOG_FINEST("Button HOLD - '{}'", id);
         Element::OnHold();
         if(callback && handler && fireOnHold) {
             callback(handler, id);
@@ -196,7 +196,7 @@ namespace eng::GUI {
     }
 
     void Button::OnUp() {
-        // ENG_LOG_FINER("Button UP - '{}'", id);
+        ENG_LOG_FINER("Button UP - '{}'", id);
         if(callback && handler && !fireOnDown && !fireOnHold) {
             callback(handler, id);
         }
@@ -245,7 +245,7 @@ namespace eng::GUI {
         AddChild(new Button(glm::vec2(0.f, -1.f + bh), glm::vec2(1.f, bh), 0.0f, upStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalUp();
-            }, -1, ButtonFlags::FIRE_ON_DOWN), true
+            }, 69, ButtonFlags::FIRE_ON_DOWN), true
         );
 
         //scroll down button

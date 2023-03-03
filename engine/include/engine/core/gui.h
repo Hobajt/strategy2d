@@ -49,6 +49,7 @@ namespace eng::GUI {
         glm::ivec2 holdOffset = glm::ivec2(0);
 
         TextureRef highlightTexture = nullptr;
+        bool highlightEnabled = true;
 
         FontRef font = Font::Default();
         glm::vec4 textColor = glm::vec4(1.f);

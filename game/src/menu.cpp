@@ -302,19 +302,19 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
     s->hoverTexture = s->texture;
     s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
-    s->highlightTexture = s->texture;
+    s->highlightEnabled = false;
 
     s = styles["scroll_down"] = std::make_shared<GUI::Style>();
     s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
     s->hoverTexture = s->texture;
     s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
-    s->highlightTexture = s->texture;
+    s->highlightEnabled = false;
 
     s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
     s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, false);
     s->hoverTexture = s->texture;
     s->holdTexture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, true);
-    s->highlightTexture = s->texture;
+    s->highlightEnabled = false;
 
 
     //scroll slider style
