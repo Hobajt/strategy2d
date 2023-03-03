@@ -128,8 +128,8 @@ namespace eng::GUI {
         hold = true;
     }
 
-    void Element::Highlight() {
-        highlight = style->highlightEnabled;
+    void Element::OnHighlight() {
+        highlight = (style->highlightMode != HighlightMode::NONE);
     }
 
     void Element::UpdateOffset(const glm::vec2& newOffset, bool recalculate) {
@@ -145,8 +145,8 @@ namespace eng::GUI {
     void Element::InnerRender() {
         TextureRef t = hold ? style->holdTexture : (hover ? style->hoverTexture : style->texture);
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), size, style->color, t));
-        if(highlight) {
-            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), size, glm::vec4(1.f), style->highlightTexture));
+        if(highlight && style->highlightMode == HighlightMode::TEXTURE) {
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(position.x, -position.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), size, style->highlightColor, style->highlightTexture));
         }
         hover = hold = highlight = false;
     }
@@ -196,14 +196,14 @@ namespace eng::GUI {
         fireOnDown(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_DOWN)), fireOnHold(HAS_FLAG(firingType, ButtonFlags::FIRE_ON_HOLD)) {}
 
     void Button::OnDown() {
-        ENG_LOG_FINER("Button DOWN - '{}'", id);
+        // ENG_LOG_FINER("Button DOWN - '{}'", id);
         if(callback && handler && fireOnDown && !fireOnHold) {
             callback(handler, id);
         }
     }
 
     void Button::OnHold() {
-        ENG_LOG_FINEST("Button HOLD - '{}'", id);
+        // ENG_LOG_FINEST("Button HOLD - '{}'", id);
         Element::OnHold();
         if(callback && handler && fireOnHold) {
             callback(handler, id);
@@ -211,7 +211,7 @@ namespace eng::GUI {
     }
 
     void Button::OnUp() {
-        ENG_LOG_FINER("Button UP - '{}'", id);
+        // ENG_LOG_FINER("Button UP - '{}'", id);
         if(callback && handler && !fireOnDown && !fireOnHold) {
             callback(handler, id);
         }
@@ -233,8 +233,10 @@ namespace eng::GUI {
 
     void TextButton::InnerRender() {
         glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
+        clr = (Highlight() && style->highlightMode == HighlightMode::TEXT) ? style->highlightColor : clr;
         glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);
         Button::InnerRender();
+
         style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, 
             clr, style->hoverColor, highlightIdx, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
         );
@@ -273,18 +275,6 @@ namespace eng::GUI {
                 static_cast<ScrollBarHandler*>(handler)->SignalDown();
             }, -1, ButtonFlags::FIRE_ON_DOWN), true
         );
-
-        /*tracking the slider:
-            - need to track mouse pos within the button
-                - either do this for every button in OnHold()
-                - or derive a new class for this
-            - then, in slider callback, signal y-coord of this value to the handler
-                - most likely just a float value, unprocessed (range <0,1>)
-            - in handler, convert this to position among the items
-                - items are tracked by position(index) of the topmost visible item
-                - then update text values in all the items to match the current state
-                - also update grip position based on this
-        */
         
         //slider rails
         rails = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 0.0f, sliderStyle, 
@@ -330,7 +320,7 @@ namespace eng::GUI {
             snprintf(buf, sizeof(buf), "item_%d", i);
             btn = (TextButton*)AddChild(new TextButton(glm::vec2(0.f, off+step*i), glm::vec2(1.f, bh), 0.1f, styles[0], std::string(buf), 
                 this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                    //update head position of the menu -> should update button texts & ids
+                    static_cast<ScrollMenu*>(handler)->UpdateSelection(id);
                 }, -1, i, ButtonFlags::FIRE_ON_DOWN), true
             );
             menuBtns.push_back(btn);
@@ -367,12 +357,29 @@ namespace eng::GUI {
     void ScrollMenu::UpdateContent(const std::vector<std::string>& items_, bool resetPosition) {
         items = items_;
         if(resetPosition)
-            pos = 0;
+            ResetPosition();
         MenuUpdate();
     }
 
     void ScrollMenu::ResetPosition() {
         pos = 0;
+        selectedItem = 0;
+    }
+
+    void ScrollMenu::UpdateSelection(int btnIdx) {
+        selectedItem = pos + btnIdx;
+    }
+
+    void ScrollMenu::InnerRender() {
+        Element::InnerRender();
+
+        //override highlights to only highlight the selected item
+        int selectedBtn = selectedItem - pos;
+        for(TextButton* btn : menuBtns)
+            btn->SetHighlight(false);
+        if(selectedBtn >= 0 && selectedBtn < menuBtns.size()) {
+            menuBtns[selectedBtn]->SetHighlight(true);
+        }
     }
 
     void ScrollMenu::MenuUpdate() {

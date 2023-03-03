@@ -27,8 +27,6 @@ namespace eng::GUI {
                     - any text in GUI is rendered slightly in front of its element (z += 0.1 ... -1e-3 in NDC)
    */
 
-    //TODO: consider remaking GUI's transform system - it's kinda unintuitive to define sizes relative to parent
-
     //===== Style =====
 
     struct Style;
@@ -36,6 +34,7 @@ namespace eng::GUI {
     using StyleMap = std::unordered_map<std::string, GUI::StyleRef>;
 
     namespace TextAlignment { enum { LEFT, CENTER, RIGHT }; }
+    namespace HighlightMode { enum { NONE, TEXTURE, TEXT }; }
 
     //Container for all the style properties of GUI elements.
     struct Style {
@@ -49,7 +48,8 @@ namespace eng::GUI {
         glm::ivec2 holdOffset = glm::ivec2(0);
 
         TextureRef highlightTexture = nullptr;
-        bool highlightEnabled = true;
+        glm::vec4 highlightColor = glm::vec4(1.f);
+        int highlightMode = HighlightMode::TEXTURE;
 
         FontRef font = Font::Default();
         glm::vec4 textColor = glm::vec4(1.f);
@@ -99,16 +99,19 @@ namespace eng::GUI {
 
         virtual void OnHover() override;
         virtual void OnHold() override;
-        virtual void Highlight() override;
+        virtual void OnHighlight() override;
 
         void Interactable(bool state) { interactable = state; }
 
         void UpdateOffset(const glm::vec2& offset, bool recalculate = true);
+
+        void SetHighlight(bool active) { highlight = active; }
     protected:
         virtual void InnerRender();
 
         bool Hover() const { return hover; }
         bool Hold() const { return hold; }
+        bool Highlight() const { return highlight; }
     private:
         void InnerRecalculate(const glm::vec2& parent_position, const glm::vec2& parent_size, float parent_zIdx);
 
@@ -148,7 +151,7 @@ namespace eng::GUI {
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
-        virtual void Highlight() override {}
+        virtual void OnHighlight() override {}
     protected:
         virtual void InnerRender() override;
     private:
@@ -218,7 +221,7 @@ namespace eng::GUI {
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
-        virtual void Highlight() override {}
+        virtual void OnHighlight() override {}
     };
 
     //===== ScrollBar =====
@@ -237,7 +240,7 @@ namespace eng::GUI {
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
-        virtual void Highlight() override {}
+        virtual void OnHighlight() override {}
 
         float GetClickPos();
         void UpdateSliderPos(float pos);
@@ -261,11 +264,16 @@ namespace eng::GUI {
 
         void UpdateContent(const std::vector<std::string>& items, bool resetPosition = true);
         void ResetPosition();
+
+        void UpdateSelection(int btnIdx);
+    protected:
+        virtual void InnerRender() override;
     private:
         void MenuUpdate();
     private:
         int rowCount = -1;
         int pos = 0;
+        int selectedItem = 0;
 
         std::vector<std::string> items;
 

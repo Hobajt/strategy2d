@@ -62,7 +62,7 @@ void MainMenuController::Update() {
     }
 
     if(lastSelected != nullptr)
-        lastSelected->Highlight();
+        lastSelected->OnHighlight();
 }
 
 void MainMenuController::Render() {
@@ -275,9 +275,11 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
     s->highlightTexture = s->texture;
+    s->highlightMode = GUI::HighlightMode::TEXT;
     s->textColor = textClr;
     s->textAlignment = GUI::TextAlignment::LEFT;
     s->textScale = 0.8f;
+    s->hoverColor = textClr;
     // s->color = glm::vec4(0.f);
 
     //small button style
@@ -306,19 +308,19 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
     s->hoverTexture = s->texture;
     s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
-    s->highlightEnabled = false;
+    s->highlightMode = GUI::HighlightMode::NONE;
 
     s = styles["scroll_down"] = std::make_shared<GUI::Style>();
     s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
     s->hoverTexture = s->texture;
     s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
-    s->highlightEnabled = false;
+    s->highlightMode = GUI::HighlightMode::NONE;
 
     s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
     s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
-    s->highlightEnabled = false;
+    s->highlightMode = GUI::HighlightMode::NONE;
 
 
     //scroll slider style
@@ -331,5 +333,5 @@ void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
-    s->highlightEnabled = false;
+    s->highlightMode = GUI::HighlightMode::NONE;
 }

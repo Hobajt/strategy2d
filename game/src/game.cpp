@@ -5,8 +5,8 @@
 using namespace eng;
 
 //TODO: add some precursor to main menu
-//TODO: add OnDrag() to GUI detection - for map implementation (or some similar name, drag, down, hold, whatever)
 //TODO: make logging initialization through singleton -> static objects cannot really use logging now since they get initialized before the logging
+//TODO: consider remaking GUI's transform system - it's kinda unintuitive to define sizes relative to parent
 
 //TODO: remove SelectionHandler completely - use GUI hierarchy for GUI selection and cells for map selection
 //TODO: think through how to handle resources - for example during menu initializations ... how to pass various things to correct places
@@ -20,21 +20,12 @@ using namespace eng;
 //TODO: start adding audio
 
 //immediate future:
-//TODO: add scroll menu to gui
 //TODO: add basic play button with proper stage change & setup
 //TODO: stage switching, stage transitions (once there's ingame stage controller)
 //TODO: add intro & loading screen (either using stages or in some other way)
 //TODO: merge generated textures into a single atlas (to optimize render calls)
-
 //TODO: maybe add text rendering method that works for bounding box - easier text alignment management
-
-/*scroll menu impl:
-    - there will be fixed number of buttons in it
-    - buttons themselves won't move, scrolling will just move content among the generated buttons
-        - buttons not moving -> can use regular mouse selection method
-    - there will be 3 special buttons -> scroll slider (up,down & slider button)
-        - can maybe wrap this in one single class
-*/
+//TODO: implement GUI text alignment - might need different text rendering approach (bounding box)
 
 constexpr float fontScale = 0.055f;
 

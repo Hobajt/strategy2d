@@ -33,7 +33,7 @@ namespace eng {
 
         virtual void OnScroll() {}
 
-        virtual void Highlight() {}
+        virtual void OnHighlight() {}
 
         virtual AABB GetAABB() = 0;
 
