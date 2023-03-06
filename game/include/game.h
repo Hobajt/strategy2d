@@ -20,5 +20,6 @@ private:
     eng::ShaderRef shader;
 
     eng::TextureRef backgroundTexture = nullptr;
+    eng::TextureRef gameLogoTexture = nullptr;
     eng::FontRef font;
 };

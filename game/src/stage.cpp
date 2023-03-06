@@ -2,18 +2,48 @@
 
 using namespace eng;
 
-//===== GameStageTransitionHandler =====
+//===== TransitionHandler =====
 
-bool GameStageTransitionHandler::Update() {
+TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int data_, bool autoFadeIn_)
+    : duration(duration_), type(transitionType_), nextStage(nextStageID_), data(data_), autoFadeIn(autoFadeIn_) {}
+
+bool TransitionHandler::Update() {
     float currentTime = Input::CurrentTime();
     if(active) {
-        float t =  (currentTime - startTime) / (endTime - startTime);
-        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, t)));
-        if(endTime >= currentTime) {
-            //...
+        //fade-in/out transition; render black quad with alpha channel interpolated based on time
+        float t = std::min((currentTime - startTime) / (endTime - startTime), 1.f);
+        t = fadingOut ? t : (1.f - t);
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, -1.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, t)));
+
+        //transition done
+        if(endTime <= currentTime) {
+            fadedOut = fadingOut;
             active = false;
             return true;
         }
+    }
+    else if(fadedOut) {
+        //render black quad when transition ends in faded out state
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, -1.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, 1.f)));
+    }
+    return false;
+}
+
+void TransitionHandler::AutoFadeIn() {
+    if(params.autoFadeIn && params.type == TransitionType::FADE_OUT) {
+        params.type = TransitionType::FADE_IN;
+        InitTransition(params);
+    }
+}
+
+bool TransitionHandler::InitTransition(const TransitionParameters& params_) {
+    if(!active) {
+        active = true;
+        params = params_;
+        startTime = Input::Get().CurrentTime();
+        endTime = startTime + params.duration;
+        fadingOut = (params.type != TransitionType::FADE_IN);
+        return true;
     }
     return false;
 }
@@ -24,11 +54,13 @@ void GameStage::Initialize(const std::vector<GameStageControllerRef>& stages_, i
     for(const GameStageControllerRef& stage : stages_) {
         ASSERT_MSG(stages.count(stage->GetStageID()) == 0, "GameStage - Duplicate game stage controllers for stage {}", stage->GetStageID());
         stages.insert({ stage->GetStageID(), stage });
+        stage->SetupTransitionHandler(&transitionHandler);
     }
 
+    transitionHandler.ForceFadeOut();
     currentStage = stages_[initialStageIdx];
     currentStageID = currentStage->GetStageID();
-    currentStage->OnStart(GameStageName::INVALID);
+    currentStage->OnPreStart(GameStageName::INVALID, -1);
 }
 
 void GameStage::Update() {
@@ -37,11 +69,16 @@ void GameStage::Update() {
 
 void GameStage::Render() {
     currentStage->Render();
-    if(transition.Update()) {
+    if(transitionHandler.Update()) {
         currentStage->OnStop();
-        currentStage = stages[transition.NextStageID()];
-        currentStage->OnStart(currentStageID);
-        currentStageID = transition.NextStageID();
+        currentStage = stages[transitionHandler.NextStageID()];
+        if(transitionHandler.IsFadedOut())
+            currentStage->OnPreStart(currentStageID, transitionHandler.NextStageData());
+        else
+            currentStage->OnStart(currentStageID, transitionHandler.NextStageData());
+        currentStageID = transitionHandler.NextStageID();
+        
+        transitionHandler.AutoFadeIn();
     }
 }
 

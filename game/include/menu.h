@@ -17,7 +17,8 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::MAIN_MENU; }
 
-    virtual void OnStart(int prevStageID) override;
+    virtual void OnPreStart(int prevStageID, int data) override;
+    virtual void OnStart(int prevStageID, int data) override;
     virtual void OnStop() override;
 
     virtual void DBG_GUI() override;

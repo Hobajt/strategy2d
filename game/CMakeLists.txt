@@ -6,7 +6,8 @@ option(GAME_DEBUG_GUI "Enables debugging GUI." OFF)
 
 #######################
 
-add_executable(${TARGET_NAME} "src/main.cpp" "include/game.h" "src/game.cpp" "include/stage.h" "src/stage.cpp" "include/menu.h" "src/menu.cpp")
+add_executable(${TARGET_NAME} "src/main.cpp" "include/game.h" "src/game.cpp" "include/stage.h" "src/stage.cpp" "include/menu.h" "src/menu.cpp"
+"include/intro.h" "src/intro.cpp")
 
 target_include_directories(${TARGET_NAME} PRIVATE include)
 

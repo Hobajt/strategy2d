@@ -1,5 +1,7 @@
 #include "menu.h"
 
+#include "intro.h"
+
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);
@@ -49,8 +51,10 @@ void MainMenuController::Update() {
             lastSelected = clickedElement = selection;
             selection->OnDown();
         }
-        else if(input.lmb.pressed() && selection == clickedElement) {
-            selection->OnHold();
+        else if(input.lmb.pressed()) {
+            //nested if in order to prevent OnHover calls while lmb is pressed
+            if(selection == clickedElement)
+                selection->OnHold();
         }
         else if(input.lmb.up()) {
             if(selection == clickedElement) selection->OnUp();
@@ -89,7 +93,11 @@ void MainMenuController::SwitchState(int newState) {
     activeState = newState;
 }
 
-void MainMenuController::OnStart(int prevStageID) {
+void MainMenuController::OnPreStart(int prevStageID, int data) {
+    LOG_INFO("GameStage = MainMenu");
+}
+
+void MainMenuController::OnStart(int prevStageID, int data) {
     Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* data){
         static_cast<MainMenuController*>(data)->KeyPressCallback(keycode, modifiers);
     }, true, this);
@@ -155,7 +163,9 @@ void MainMenuController::InitSubmenu_Main(const glm::vec2& buttonSize, const glm
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*2), bSize, 1.f, style, "Replay Introduction",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                //...
+                static_cast<MainMenuController*>(handler)->GetTransitionHandler()->InitTransition(
+                    TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC, true)
+                );
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*3), bSize, 1.f, style, "Show Credits",
