@@ -12,6 +12,10 @@ void IntroController::Update() {
     TransitionHandler* th = GetTransitionHandler();
     float currentTime = Input::Get().CurrentTime();
 
+    //to also skip intros with mouse button clicks
+    Input& input = Input::Get();
+    interrupted |= (input.lmb.down() || input.rmb.down());
+
     float duration = interrupted ? TransitionDuration::SHORT : TransitionDuration::MID;
 
     switch(state) {
