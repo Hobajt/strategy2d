@@ -46,7 +46,7 @@ public:
     void AutoFadeIn();
 
     //Initializes new transition. Returns false on failure (other transition already in progress).
-    bool InitTransition(const TransitionParameters& params);
+    bool InitTransition(const TransitionParameters& params, bool forceOverride = false);
 
     void ForceFadeOut() { fadedOut = true; }
 private:

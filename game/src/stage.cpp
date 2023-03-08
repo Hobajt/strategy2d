@@ -36,8 +36,8 @@ void TransitionHandler::AutoFadeIn() {
     }
 }
 
-bool TransitionHandler::InitTransition(const TransitionParameters& params_) {
-    if(!active) {
+bool TransitionHandler::InitTransition(const TransitionParameters& params_, bool forceOverride) {
+    if(!active || forceOverride) {
         active = true;
         params = params_;
         startTime = Input::Get().CurrentTime();

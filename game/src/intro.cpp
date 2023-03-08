@@ -4,7 +4,7 @@
 
 using namespace eng;
 
-static std::string stage_names[] = { "INVALID", "GAME_START", "COMPANY_LOGO", "CINEMATIC", "GAME_LOGO", "CINEMATIC_REPLAY" };
+static std::string stage_names[] = { "INVALID", "GAME_START", "COMPANY_LOGO", "CINEMATIC", "GAME_LOGO", "CINEMATIC_REPLAY", "COUNT" };
 
 IntroController::IntroController(const eng::TextureRef& gameLogoTexture_) : state(IntroState::GAME_START), gameLogoTexture(gameLogoTexture_) {}
 
@@ -14,30 +14,28 @@ void IntroController::Update() {
 
     float duration = interrupted ? TransitionDuration::SHORT : TransitionDuration::MID;
 
-    //TODO: force override transition when interrupted (to allow skipping even while the fade-in is still in progress)
-
     switch(state) {
         case IntroState::COMPANY_LOGO:
             //TODO: only trigger after the video is almost at the end
             if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC, true));
+                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC, true), interrupted);
             }
             break;
         case IntroState::CINEMATIC:
             //TODO: only trigger after the video is almost at the end
             if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::GAME_LOGO, true));
+                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::GAME_LOGO, true), interrupted);
             }
             break;
         case IntroState::GAME_LOGO:
             if(interrupted || (timeStart + GAME_LOGO_DISPLAY_TIME < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true));
+                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true), interrupted);
             }
             break;
         case IntroState::CINEMATIC_REPLAY:
             //same stuff as in cinematic, but skip over to the main menu instead
             if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true));
+                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true), interrupted);
             }
             break;
     }
