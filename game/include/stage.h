@@ -13,7 +13,7 @@ namespace TransitionDuration {
     constexpr inline float LONG = 1.f;
 }
 
-namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, INGAME }; }
+namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, RECAP, INGAME }; }
 
 struct TransitionParameters {
     float duration;
@@ -26,6 +26,10 @@ struct TransitionParameters {
 public:
     TransitionParameters() = default;
     TransitionParameters(float duration, int transitionType, int nextStageID, int data, bool autoFadeIn);
+
+    bool EqualsTo(const TransitionParameters& other, float durationOverride = -1.f);
+
+    TransitionParameters WithDuration(float d);
 };
 
 //===== TransitionHandler =====
@@ -47,6 +51,8 @@ public:
 
     //Initializes new transition. Returns false on failure (other transition already in progress).
     bool InitTransition(const TransitionParameters& params, bool forceOverride = false);
+
+    bool CompareTransitions(const TransitionParameters& other, float durationOverride = -1.f) { return params.EqualsTo(other, durationOverride); }
 
     void ForceFadeOut() { fadedOut = true; }
 private:

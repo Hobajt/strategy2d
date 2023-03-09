@@ -7,6 +7,18 @@ using namespace eng;
 TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int data_, bool autoFadeIn_)
     : duration(duration_), type(transitionType_), nextStage(nextStageID_), data(data_), autoFadeIn(autoFadeIn_) {}
 
+bool TransitionParameters::EqualsTo(const TransitionParameters& o, float durationOverride) {
+    bool res = type == o.type && nextStage == o.nextStage && data == o.data && autoFadeIn == o.autoFadeIn;
+    res &= (durationOverride < 0.f) ? (duration == o.duration) : (duration == durationOverride);
+    return res;
+}
+
+TransitionParameters TransitionParameters::WithDuration(float d) {
+    TransitionParameters params = *this;
+    params.duration = d;
+    return params;
+}
+
 bool TransitionHandler::Update() {
     float currentTime = Input::CurrentTime();
     if(active) {

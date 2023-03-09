@@ -4,7 +4,7 @@
 
 #include "stage.h"
 
-namespace IntroState { enum { INVALID, GAME_START, COMPANY_LOGO, CINEMATIC, GAME_LOGO, CINEMATIC_REPLAY, COUNT }; }
+namespace IntroState { enum { INVALID = -2, GAME_START = -1, COMPANY_LOGO = 0, CINEMATIC, GAME_LOGO, CINEMATIC_REPLAY, COUNT }; }
 
 //Manages both intro screens, starting cinematic as well as credits.
 class IntroController : public GameStageController {

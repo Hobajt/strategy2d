@@ -2,6 +2,8 @@
 
 #include "intro.h"
 #include "menu.h"
+#include "recap.h"
+#include "ingame.h"
 
 using namespace eng;
 
@@ -24,18 +26,13 @@ using namespace eng;
 //TODO: maybe add text rendering method that works for bounding box - easier text alignment management
 //TODO: implement GUI text alignment - might need different text rendering approach (bounding box)
 
-//immediate future:
 //TODO: add basic play button with proper stage change & setup
-//TODO: stage switching, stage transitions (once there's ingame stage controller)
-//TODO: add intro & loading screen (either using stages or in some other way)
 
 //TODO: add some support to pass structs in between game stages (through transition) - try avoiding dynamic allocation for it
-//TODO: figure out proper way to play video files - for intro cinematic
 
 /*TODO: - introController
-    - video playing
+    - figure out proper way to play video files - for intro cinematic
     - conditionally skip the cinematic (based on value from configs - if it's not a first launch)
-    - key controls - press anything to skip to the next stage
 */
 
 constexpr float fontScale = 0.055f;
@@ -69,6 +66,8 @@ void Game::OnInit() {
     stageController.Initialize({ 
         std::make_shared<IntroController>(gameLogoTexture),
         std::make_shared<MainMenuController>(font, backgroundTexture),
+        std::make_shared<RecapController>(),
+        std::make_shared<IngameController>(),
     });
 }
 

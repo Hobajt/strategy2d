@@ -6,7 +6,7 @@
 
 //===== MainMenu =====
 
-namespace MainMenuState { enum { INVALID, MAIN, START_GAME, OPTIONS, LOAD_GAME }; }
+namespace MainMenuState { enum { INVALID, MAIN, SINGLE, SINGLE_CAMPAIGN, SINGLE_LOAD, SINGLE_CUSTOM }; }
 
 class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
@@ -28,13 +28,13 @@ private:
     void KeyPressCallback(int keycode, int modifiers);
 
     void InitSubmenu_Main(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
-    void InitSubmenu_StartGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
-    void InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, 
+    void InitSubmenu_Single(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleRef style);
+    void InitSubmenu_Single_Load(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, const glm::vec2& smallButtonSize, 
         float scrollButtonSize, float gap, int scrollMenuItems, eng::GUI::StyleMap& styles);
+    void InitSubmenu_Single_Campaign(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleMap& styles);
+    void InitSubmenu_Single_Custom(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleMap& styles);
 private:
-    eng::GUI::Menu main_menu;
-    eng::GUI::Menu startGame_menu;
-    eng::GUI::Menu loadGame_menu;
+    std::unordered_map<int, eng::GUI::Menu> menu;
 
     eng::GUI::Menu* activeMenu = nullptr;
     int activeState = MainMenuState::INVALID;

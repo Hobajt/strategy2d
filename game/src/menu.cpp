@@ -5,7 +5,7 @@
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);
-void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
+void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
 
 static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
@@ -27,13 +27,14 @@ MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRe
     //==== styles initialization ====
     GUI::StyleMap styles = {};
     InitStyles_Main(styles, font, main_btnSize);
-    InitStyles_Load(styles, font, load_scrollMenuSize, load_scrollMenuItems, load_scrollBtnSize, load_smallBtnSize);
+    InitStyles_Single_Load(styles, font, load_scrollMenuSize, load_scrollMenuItems, load_scrollBtnSize, load_smallBtnSize);
 
     //==== sub-menu initializations ====
     InitSubmenu_Main(main_btnSize, main_menuSize, main_gap, styles["main"]);
-    InitSubmenu_StartGame(main_btnSize, main_menuSize, main_gap, styles["main"]);
-    InitSubmenu_LoadGame(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, load_scrollMenuItems, styles);
-    
+    InitSubmenu_Single(main_btnSize, main_menuSize, main_gap, styles["main"]);
+    InitSubmenu_Single_Load(load_btnSize, load_menuSize, load_scrollMenuSize, load_smallBtnSize, load_scrollBtnSize, load_gap, load_scrollMenuItems, styles);
+    InitSubmenu_Single_Campaign(main_btnSize, main_menuSize, main_gap, styles);
+    InitSubmenu_Single_Custom(main_btnSize, main_menuSize, main_gap, styles);
 
     dbg_texture = styles["scroll_grip"]->texture;
 
@@ -76,20 +77,12 @@ void MainMenuController::Render() {
 }
 
 void MainMenuController::SwitchState(int newState) {
-    switch(newState) {
-        default:
-            LOG_WARN("MainMenu - Unrecognized menu state ({}), switching to main submenu.", newState);
-            newState = MainMenuState::MAIN;
-        case MainMenuState::MAIN:
-            activeMenu = &main_menu;
-            break;
-        case MainMenuState::START_GAME:
-            activeMenu = &startGame_menu;
-            break;
-        case MainMenuState::LOAD_GAME:
-            activeMenu = &loadGame_menu;
-            break;
+    if(menu.count(newState) == 0) {
+        LOG_WARN("MainMenu - Unrecognized menu state ({}), switching to main submenu.", newState);
+        newState = MainMenuState::MAIN;
     }
+
+    activeMenu = &menu[newState];
     activeState = newState;
 }
 
@@ -121,25 +114,25 @@ void MainMenuController::KeyPressCallback(int keycode, int modifiers) {
     switch(activeState) {
         case MainMenuState::MAIN:
             switch(keycode) {
-                case GLFW_KEY_S: SwitchState(MainMenuState::START_GAME); break;
+                case GLFW_KEY_S: SwitchState(MainMenuState::SINGLE); break;
                 case GLFW_KEY_M: break;
                 case GLFW_KEY_R: break;
                 case GLFW_KEY_C: break;
                 case GLFW_KEY_X: Window::Get().Close(); break;
             }
             break;
-        case MainMenuState::START_GAME:
+        case MainMenuState::SINGLE:
             switch(keycode) {
                 case GLFW_KEY_N: break;
-                case GLFW_KEY_L: SwitchState(MainMenuState::LOAD_GAME); break;
+                case GLFW_KEY_L: SwitchState(MainMenuState::SINGLE_LOAD); break;
                 case GLFW_KEY_C: break;
                 case GLFW_KEY_P: SwitchState(MainMenuState::MAIN); break;
             }
             break;
-        case MainMenuState::LOAD_GAME:
+        case MainMenuState::SINGLE_LOAD:
             switch(keycode) {
                 case GLFW_KEY_L: break;
-                case GLFW_KEY_C: SwitchState(MainMenuState::START_GAME); break;
+                case GLFW_KEY_C: SwitchState(MainMenuState::SINGLE); break;
             }
             break;
     }
@@ -150,10 +143,10 @@ void MainMenuController::InitSubmenu_Main(const glm::vec2& buttonSize, const glm
     float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
     glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
 
-    main_menu = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
+    menu[MainMenuState::MAIN] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
         new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, style, "Single Player Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id) { 
-                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::START_GAME);
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, style, "Multi Player Game",
@@ -181,25 +174,25 @@ void MainMenuController::InitSubmenu_Main(const glm::vec2& buttonSize, const glm
     });
 }
 
-void MainMenuController::InitSubmenu_StartGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, GUI::StyleRef style) {
+void MainMenuController::InitSubmenu_Single(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, GUI::StyleRef style) {
     float off = -1.f + buttonSize.y / menuSize.y;           //button offset to start at the top of the menu
     float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
     glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
 
-    startGame_menu = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
+    menu[MainMenuState::SINGLE] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
         new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, style, "New Campaign",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                //...
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_CAMPAIGN);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, style, "Load Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::LOAD_GAME);
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*2), bSize, 1.f, style, "Custom Scenario",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                //...
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_CUSTOM);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*3), bSize, 1.f, style, "Previous Menu",
@@ -210,7 +203,7 @@ void MainMenuController::InitSubmenu_StartGame(const glm::vec2& buttonSize, cons
     });
 }
 
-void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, 
+void MainMenuController::InitSubmenu_Single_Load(const glm::vec2& buttonSize, const glm::vec2& menuSize, const glm::vec2& scrollMenuSize, 
         const glm::vec2& smallButtonSize, float scrollButtonSize, float gap, int scrollMenuItems, GUI::StyleMap& styles) {
     float off = -1.f + buttonSize.y / menuSize.y;
     glm::vec2 bSize = buttonSize / menuSize;
@@ -219,7 +212,7 @@ void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const
     float step = (buttonSize.y + gap + scrollMenuSize.y) / menuSize.y;            //step for menu
     float smStep = step + (scrollMenuSize.y + gap + 2.f * buttonSize.y) / menuSize.y;      //step after the menu
 
-    loadGame_menu = GUI::Menu(glm::vec2(0.f, 0.4f), menuSize, 0.f, {
+    menu[MainMenuState::SINGLE_LOAD] = GUI::Menu(glm::vec2(0.f, 0.4f), menuSize, 0.f, {
         new GUI::TextLabel(glm::vec2(0.f, off), bSize, 1.f, styles["label"], "Load Game"),
         new GUI::ScrollMenu(glm::vec2(0.f, off+step), smSize, 1.f, scrollMenuItems, scrollButtonSize, { 
             styles["scroll_items"], styles["scroll_up"], styles["scroll_down"], styles["scroll_slider"], styles["scroll_grip"]
@@ -231,14 +224,62 @@ void MainMenuController::InitSubmenu_LoadGame(const glm::vec2& buttonSize, const
         ),
         new GUI::TextButton(glm::vec2(1.f - sbSize.x + 0.1f, off+smStep), sbSize, 1.f, styles["small_btn"], "Cancel", 
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::START_GAME);
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE);
             }, 0
         ),
     });
 
     //TODO: dbg only, do this once the menu is opened - query saves folder for items
-    GUI::ScrollMenu* scrollMenu = ((GUI::ScrollMenu*)loadGame_menu.GetChild(1));
+    GUI::ScrollMenu* scrollMenu = ((GUI::ScrollMenu*)menu[MainMenuState::SINGLE_LOAD].GetChild(1));
     scrollMenu->UpdateContent({ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_6", "item_7", "item_8", "item_9", "item_10", "item_11", "item_12", "item_13" });
+}
+
+void MainMenuController::InitSubmenu_Single_Campaign(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleMap& styles) {
+    float off = -1.f + buttonSize.y / menuSize.y;           //button offset to start at the top of the menu
+    float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
+    glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
+
+    menu[MainMenuState::SINGLE_CAMPAIGN] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
+        new GUI::TextLabel(glm::vec2(0.f, off+step*-1), bSize, 1.f, styles["label"], "Tides of Darkness"),
+        new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, styles["main"], "Orc Campaign",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                // static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
+            }, 0
+        ),
+        new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, styles["main"], "Human Campaign",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                // static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
+            }, 0
+        ),
+        new GUI::TextButton(glm::vec2(0.f, off+step*2.5f), bSize, 1.f, styles["main"], "Previous Menu",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE);
+            }, 0
+        ),
+    });
+}
+
+void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleMap& styles) {
+    float off = -1.f + buttonSize.y / menuSize.y;           //button offset to start at the top of the menu
+    float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
+    glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
+
+    //TODO: add scenario options - race, resources, tileset, opponents, units
+    //TODO: add map selection option
+
+    menu[MainMenuState::SINGLE_CUSTOM] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
+        new GUI::TextLabel(glm::vec2(0.f, off+step*-1), bSize, 1.f, styles["label"], "Custom game setup"),
+        new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, styles["main"], "START",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                // static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
+            }, 0
+        ),
+        new GUI::TextButton(glm::vec2(0.f, off+step*2.5f), bSize, 1.f, styles["main"], "Previous Menu",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE);
+            }, 0
+        ),
+    });
 }
 
 //================================ Style init functions ================================
@@ -263,7 +304,7 @@ void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
     s->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 }
 
-void InitStyles_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
+void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
     GUI::StyleRef s = nullptr;
 
     //text label style

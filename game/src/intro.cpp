@@ -16,32 +16,33 @@ void IntroController::Update() {
     Input& input = Input::Get();
     interrupted |= (input.lmb.down() || input.rmb.down());
 
-    float duration = interrupted ? TransitionDuration::SHORT : TransitionDuration::MID;
+    static TransitionParameters transitions[IntroState::COUNT] = {
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC, true),     //company logo
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::GAME_LOGO, true),     //cinematic
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true),                    //game logo
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true),                    //cinematic replay
+    };
 
+    bool condition = false;
     switch(state) {
         case IntroState::COMPANY_LOGO:
-            //TODO: only trigger after the video is almost at the end
-            if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC, true), interrupted);
-            }
-            break;
+        case IntroState::CINEMATIC_REPLAY:
         case IntroState::CINEMATIC:
-            //TODO: only trigger after the video is almost at the end
-            if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::GAME_LOGO, true), interrupted);
-            }
+            //TODO: trigger instead when the video is almost at the end
+            condition = timeStart + 2.f < currentTime;
             break;
         case IntroState::GAME_LOGO:
-            if(interrupted || (timeStart + GAME_LOGO_DISPLAY_TIME < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true), interrupted);
-            }
+            condition = timeStart + GAME_LOGO_DISPLAY_TIME < currentTime;
             break;
-        case IntroState::CINEMATIC_REPLAY:
-            //same stuff as in cinematic, but skip over to the main menu instead
-            if(interrupted || (timeStart + 2.f < currentTime && !th->TransitionInProgress())) {
-                th->InitTransition(TransitionParameters(duration, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, -1, true), interrupted);
-            }
-            break;
+    }
+
+    if(interrupted && !th->CompareTransitions(transitions[state], TransitionDuration::SHORT)) {
+        //key/mouse interrupt -> override transition (unless override already happened)
+        th->InitTransition(transitions[state].WithDuration(TransitionDuration::SHORT), true);
+    }
+    else if(condition && !th->TransitionInProgress()) {
+        //state switching condition met -> trigger transition
+        th->InitTransition(transitions[state]);
     }
 
     interrupted = false;
