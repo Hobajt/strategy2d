@@ -5,6 +5,9 @@
 #include <memory>
 #include <map>
 
+//Identifies individual game stages.
+namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, RECAP, INGAME }; }
+
 namespace TransitionType { enum { FADE_OUT, FADE_IN }; }
 
 namespace TransitionDuration {
@@ -13,22 +16,25 @@ namespace TransitionDuration {
     constexpr inline float LONG = 1.f;
 }
 
-namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, RECAP, INGAME }; }
+//===== TransitionParameters =====
 
 struct TransitionParameters {
     float duration;
     int type = TransitionType::FADE_OUT;
 
     int nextStage = GameStageName::INVALID;
-    int data = -1;
+    int info = -1;
+    void* data = nullptr;
 
     bool autoFadeIn = false;
 public:
     TransitionParameters() = default;
-    TransitionParameters(float duration, int transitionType, int nextStageID, int data, bool autoFadeIn);
+    TransitionParameters(float duration, int transitionType, int nextStageID, int info, bool autoFadeIn);
+    TransitionParameters(float duration, int transitionType, int nextStageID, int info, void* data, bool autoFadeIn);
 
     bool EqualsTo(const TransitionParameters& other, float durationOverride = -1.f);
 
+    //Clones this params object and replaces duration with provided value.
     TransitionParameters WithDuration(float d);
 };
 
@@ -41,7 +47,8 @@ public:
     bool Update();
 
     int NextStageID() const { return params.nextStage; }
-    int NextStageData() const { return params.data; }
+    int Info() const { return params.info; }
+    void* Data() const { return params.data; }
 
     bool TransitionInProgress() const { return active; }
     bool IsFadedOut() const { return fadedOut; }
@@ -82,11 +89,11 @@ public:
 
     //Triggered when switching into this state - when screen fades out.
     //Use to initialize visuals, so that there's stuff on screen when fading in.
-    virtual void OnPreStart(int prevStageID, int data) {}
+    virtual void OnPreStart(int prevStageID, int info, void* data) {}
 
     //Triggered when switching into this state - when screen fades in.
     //Use to initialize controls & game logic.
-    virtual void OnStart(int prevStageID, int data) {}
+    virtual void OnStart(int prevStageID, int info, void* data) {}
 
     //Triggered when switching from this state.
     virtual void OnStop() {}
@@ -117,4 +124,11 @@ private:
     std::map<int, GameStageControllerRef> stages;
 
     TransitionHandler transitionHandler;
+};
+
+//===== GameInitParams =====
+
+//Contains all the data needed to initialize the ingame state.
+struct GameInitParams {
+
 };

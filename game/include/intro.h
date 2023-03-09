@@ -16,8 +16,8 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::INTRO; }
 
-    virtual void OnPreStart(int prevStageID, int data) override;
-    virtual void OnStart(int prevStageID, int data) override;
+    virtual void OnPreStart(int prevStageID, int info, void* data) override;
+    virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 private:
     void KeyPressCallback(int keycode, int modifiers);

@@ -4,11 +4,14 @@ using namespace eng;
 
 //===== TransitionHandler =====
 
-TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int data_, bool autoFadeIn_)
-    : duration(duration_), type(transitionType_), nextStage(nextStageID_), data(data_), autoFadeIn(autoFadeIn_) {}
+TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, bool autoFadeIn_)
+    : TransitionParameters(duration_, transitionType_, nextStageID_, info_, nullptr, autoFadeIn_) {}
+
+TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, void* data_, bool autoFadeIn_)
+    : duration(duration_), type(transitionType_), nextStage(nextStageID_), info(info_), autoFadeIn(autoFadeIn_), data(data_) {}
 
 bool TransitionParameters::EqualsTo(const TransitionParameters& o, float durationOverride) {
-    bool res = type == o.type && nextStage == o.nextStage && data == o.data && autoFadeIn == o.autoFadeIn;
+    bool res = type == o.type && nextStage == o.nextStage && info == o.info && autoFadeIn == o.autoFadeIn;
     res &= (durationOverride < 0.f) ? (duration == o.duration) : (duration == durationOverride);
     return res;
 }
@@ -72,7 +75,7 @@ void GameStage::Initialize(const std::vector<GameStageControllerRef>& stages_, i
     transitionHandler.ForceFadeOut();
     currentStage = stages_[initialStageIdx];
     currentStageID = currentStage->GetStageID();
-    currentStage->OnPreStart(GameStageName::INVALID, -1);
+    currentStage->OnPreStart(GameStageName::INVALID, -1, nullptr);
 }
 
 void GameStage::Update() {
@@ -85,9 +88,9 @@ void GameStage::Render() {
         currentStage->OnStop();
         currentStage = stages[transitionHandler.NextStageID()];
         if(transitionHandler.IsFadedOut())
-            currentStage->OnPreStart(currentStageID, transitionHandler.NextStageData());
+            currentStage->OnPreStart(currentStageID, transitionHandler.Info(), transitionHandler.Data());
         else
-            currentStage->OnStart(currentStageID, transitionHandler.NextStageData());
+            currentStage->OnStart(currentStageID, transitionHandler.Info(), transitionHandler.Data());
         currentStageID = transitionHandler.NextStageID();
         
         transitionHandler.AutoFadeIn();

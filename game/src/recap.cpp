@@ -10,11 +10,11 @@ void RecapController::Render() {
 
 }
 
-void RecapController::OnPreStart(int prevStageID, int data) {
+void RecapController::OnPreStart(int prevStageID, int info, void* data) {
 
 }
 
-void RecapController::OnStart(int prevStageID, int data) {
+void RecapController::OnStart(int prevStageID, int info, void* data) {
     LOG_INFO("GameStage = Recap");
 }
 

@@ -4,6 +4,8 @@
 
 #include "stage.h"
 
+namespace GameStartType { enum { INVALID, CAMPAIGN, CUSTOM, LOAD }; }
+
 class IngameController : public GameStageController {
 public:
     IngameController();
@@ -13,8 +15,8 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::INGAME; }
 
-    virtual void OnPreStart(int prevStageID, int data) override;
-    virtual void OnStart(int prevStageID, int data) override;
+    virtual void OnPreStart(int prevStageID, int info, void* data) override;
+    virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 private:
 

@@ -17,13 +17,14 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::MAIN_MENU; }
 
-    virtual void OnPreStart(int prevStageID, int data) override;
-    virtual void OnStart(int prevStageID, int data) override;
+    virtual void OnPreStart(int prevStageID, int info, void* data) override;
+    virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 
     virtual void DBG_GUI() override;
 private:
     void SwitchState(int newState);
+    void SwitchStage(int stageID, int info);
 
     void KeyPressCallback(int keycode, int modifiers);
 
@@ -45,4 +46,6 @@ private:
     eng::GUI::Element* lastSelected = nullptr;
 
     eng::TextureRef dbg_texture = nullptr;
+
+    GameInitParams gameInitParams;
 };

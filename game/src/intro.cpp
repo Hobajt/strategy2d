@@ -71,7 +71,7 @@ void IntroController::Render() {
     }
 }
 
-void IntroController::OnPreStart(int prevStageID, int data) {
+void IntroController::OnPreStart(int prevStageID, int info, void* data) {
     TransitionHandler* th = GetTransitionHandler();
     
     switch(prevStageID) {
@@ -83,7 +83,7 @@ void IntroController::OnPreStart(int prevStageID, int data) {
             break;
         case GameStageName::INTRO:
             //intro stage triggered by itself - run next substage
-            state = data;
+            state = info;
             break;
         case GameStageName::MAIN_MENU:
             //intro stage triggered from main menu - replay cinematic issued
@@ -91,14 +91,14 @@ void IntroController::OnPreStart(int prevStageID, int data) {
             break;
     }
 
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* data){
-        static_cast<IntroController*>(data)->KeyPressCallback(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
+        static_cast<IntroController*>(handler)->KeyPressCallback(keycode, modifiers);
     }, true, this);
 
     LOG_INFO("GameStage = Intro (substage: {})", stage_names[state]);
 }
 
-void IntroController::OnStart(int prevStageID, int data) {
+void IntroController::OnStart(int prevStageID, int info, void* data) {
     timeStart = Input::Get().CurrentTime();
 }
 
