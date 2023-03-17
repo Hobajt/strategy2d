@@ -2,6 +2,7 @@
 
 #include "intro.h"
 #include "ingame.h"
+#include "recap.h"
 
 using namespace eng;
 
@@ -87,24 +88,20 @@ void MainMenuController::SwitchState(int newState) {
     activeState = newState;
 }
 
-void MainMenuController::SwitchStage(int stageID, int info) {
-    TransitionHandler& th = *GetTransitionHandler();
+void MainMenuController::StartCampaign(bool asOrc) {
+    gameInitParams = {};
+    gameInitParams.race = GameParams::Race::HUMAN + int(asOrc);
+    gameInitParams.campaignIdx = 0;
+    
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::RECAP, RecapState::OBJECTIVES, (void*)&gameInitParams, true)
+    );
+}
 
-    switch(stageID) {
-        case GameStageName::INTRO:
-            th.InitTransition(
-                TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC_REPLAY, true)
-            );
-            break;
-        case GameStageName::INGAME:
-            th.InitTransition(
-                TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, info, (void*)&gameInitParams, true)
-            );
-            break;
-        default:
-            LOG_WARN("MainMenu::SwitchStage - invalid stageID");
-            break;
-    }
+void MainMenuController::StartCustomGame() {
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::CUSTOM, (void*)&gameInitParams, true)
+    );
 }
 
 void MainMenuController::OnPreStart(int prevStageID, int info, void* data) {
@@ -177,7 +174,9 @@ void MainMenuController::InitSubmenu_Main(const glm::vec2& buttonSize, const glm
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*2), bSize, 1.f, style, "Replay Introduction",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<MainMenuController*>(handler)->SwitchStage(GameStageName::INTRO, IntroState::CINEMATIC_REPLAY);
+                static_cast<MainMenuController*>(handler)->GetTransitionHandler()->InitTransition(
+                    TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INTRO, IntroState::CINEMATIC_REPLAY, true)
+                );
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*3), bSize, 1.f, style, "Show Credits",
@@ -262,12 +261,12 @@ void MainMenuController::InitSubmenu_Single_Campaign(const glm::vec2& buttonSize
         new GUI::TextLabel(glm::vec2(0.f, off+step*-1), bSize, 1.f, styles["label"], "Tides of Darkness"),
         new GUI::TextButton(glm::vec2(0.f, off+step*0), bSize, 1.f, styles["main"], "Orc Campaign",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                // static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
+                static_cast<MainMenuController*>(handler)->StartCampaign(true);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, styles["main"], "Human Campaign",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                // static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE_LOAD);
+                static_cast<MainMenuController*>(handler)->StartCampaign(false);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*2.5f), bSize, 1.f, styles["main"], "Previous Menu",
@@ -290,7 +289,8 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
         new GUI::TextLabel(glm::vec2(0.f, off+step*-1), bSize, 1.f, styles["label"], "Custom game setup"),
         new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, styles["main"], "START",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<MainMenuController*>(handler)->SwitchStage(GameStageName::INGAME, GameStartType::CUSTOM);
+                static_cast<MainMenuController*>(handler)->StartCustomGame();
+
             }, 0
         ),
         new GUI::TextButton(glm::vec2(0.f, off+step*2.5f), bSize, 1.f, styles["main"], "Previous Menu",

@@ -24,7 +24,9 @@ public:
     virtual void DBG_GUI() override;
 private:
     void SwitchState(int newState);
-    void SwitchStage(int stageID, int info);
+
+    void StartCampaign(bool asOrc);
+    void StartCustomGame();
 
     void KeyPressCallback(int keycode, int modifiers);
 

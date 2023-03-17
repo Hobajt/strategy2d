@@ -4,6 +4,8 @@
 
 #include "stage.h"
 
+namespace RecapState { enum { INVALID, OBJECTIVES }; }
+
 class RecapController : public GameStageController {
 public:
     RecapController();
@@ -17,5 +19,5 @@ public:
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 private:
-
+    int state = RecapState::INVALID;
 };

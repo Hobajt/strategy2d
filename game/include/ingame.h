@@ -4,7 +4,7 @@
 
 #include "stage.h"
 
-namespace GameStartType { enum { INVALID, CAMPAIGN, CUSTOM, LOAD }; }
+namespace GameStartType { enum { INVALID, CAMPAIGN = 0, CUSTOM, LOAD }; }
 
 class IngameController : public GameStageController {
 public:

@@ -3,6 +3,7 @@
 #include <engine/engine.h>
 
 #include <memory>
+#include <string>
 #include <map>
 
 //Identifies individual game stages.
@@ -128,7 +129,23 @@ private:
 
 //===== GameInitParams =====
 
+namespace GameParams {
+    namespace Race { enum { DEFAULT, RANDOM, HUMAN, ORC }; }
+    namespace Resources { enum { DEFAULT, RANDOM, LOW, MEDIUM, HIGH }; }
+    namespace Tileset { enum { DEFAULT, RANDOM, FOREST, WINTER, WASTELAND, ORC_SWAMP }; }
+    namespace Units { enum { DEFAULT, ONE_PEASANT_ONLY }; }
+}
+
 //Contains all the data needed to initialize the ingame state.
 struct GameInitParams {
+    int resources = GameParams::Resources::DEFAULT;
+    int tileset = GameParams::Tileset::DEFAULT;
+    int opponents = -1;
+    int units = GameParams::Units::DEFAULT;
 
+    int race = GameParams::Race::DEFAULT;
+
+    std::string filepath = "";
+
+    int campaignIdx = -1;
 };
