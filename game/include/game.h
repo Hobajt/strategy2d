@@ -7,6 +7,7 @@
 class Game : public eng::App {
 public:
     Game();
+    ~Game();
 
     virtual void OnResize(int width, int height) override;
 private:
@@ -17,9 +18,6 @@ private:
     void ReloadShaders();
 private:
     GameStage stageController;
-    eng::ShaderRef shader;
 
-    eng::TextureRef backgroundTexture = nullptr;
-    eng::TextureRef gameLogoTexture = nullptr;
-    eng::FontRef font;
+    eng::ShaderRef shader;
 };

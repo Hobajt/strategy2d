@@ -5,6 +5,8 @@
 #include "recap.h"
 #include "ingame.h"
 
+#include "resources.h"
+
 using namespace eng;
 
 //TODO: add some precursor to main menu
@@ -35,26 +37,24 @@ using namespace eng;
     - conditionally skip the cinematic (based on value from configs - if it's not a first launch)
 */
 
-constexpr float fontScale = 0.055f;
+
 
 Game::Game() : App(640, 480, "game") {}
 
+Game::~Game() {
+    Resources::Release();
+}
+
 void Game::OnResize(int width, int height) {
     LOG_INFO("Resize triggered ({}x{})", width, height);
-    Font::Default()->Resize(fontScale * height);
-    font->Resize(fontScale * height);
+    Resources::OnResize(width, height);
 }
 
 void Game::OnInit() {
     try {
-        Font::UpdateDefault(Font("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height())));
-        
-        font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
-
-        backgroundTexture = std::make_shared<Texture>("res/textures/TitleMenu_BNE.png");
-        gameLogoTexture = std::make_shared<Texture>("res/textures/Title_Rel_BNE.png");
-
+        Resources::Initialize();
         ReloadShaders();
+
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");
@@ -64,8 +64,8 @@ void Game::OnInit() {
     // Window::Get().SetFullscreen(true);
 
     stageController.Initialize({ 
-        std::make_shared<IntroController>(gameLogoTexture),
-        std::make_shared<MainMenuController>(font, backgroundTexture),
+        std::make_shared<IntroController>(),
+        std::make_shared<MainMenuController>(),
         std::make_shared<RecapController>(),
         std::make_shared<IngameController>(),
     });
@@ -138,6 +138,5 @@ void Game::OnGUI() {
 }
 
 void Game::ReloadShaders() {
-    shader = std::make_shared<Shader>("res/shaders/test_shader");
-    shader->InitTextureSlots(Renderer::TextureSlotsCount());
+    shader = Resources::LoadShader("test_shader", true);
 }

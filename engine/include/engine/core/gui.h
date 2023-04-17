@@ -51,7 +51,7 @@ namespace eng::GUI {
         glm::vec4 highlightColor = glm::vec4(1.f);
         int highlightMode = HighlightMode::TEXTURE;
 
-        FontRef font = Font::Default();
+        FontRef font = nullptr;
         glm::vec4 textColor = glm::vec4(1.f);
 
         int textAlignment = TextAlignment::CENTER;

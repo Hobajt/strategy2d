@@ -181,6 +181,7 @@ namespace eng::GUI {
     
     void TextLabel::InnerRender() {
         Element::InnerRender();
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
         style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
@@ -232,6 +233,8 @@ namespace eng::GUI {
     }
 
     void TextButton::InnerRender() {
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+
         glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
         clr = (Highlight() && style->highlightMode == HighlightMode::TEXT) ? style->highlightColor : clr;
         glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);

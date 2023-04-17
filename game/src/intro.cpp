@@ -1,12 +1,14 @@
 #include "intro.h"
 
+#include "resources.h"
+
 #define GAME_LOGO_DISPLAY_TIME 2.f
 
 using namespace eng;
 
 static std::string stage_names[] = { "INVALID", "GAME_START", "COMPANY_LOGO", "CINEMATIC", "GAME_LOGO", "CINEMATIC_REPLAY", "COUNT" };
 
-IntroController::IntroController(const eng::TextureRef& gameLogoTexture_) : state(IntroState::GAME_START), gameLogoTexture(gameLogoTexture_) {}
+IntroController::IntroController() : state(IntroState::GAME_START), gameLogoTexture(Resources::LoadTexture("Title_Rel_BNE.png")) {}
 
 void IntroController::Update() {
     TransitionHandler* th = GetTransitionHandler();
@@ -49,7 +51,7 @@ void IntroController::Update() {
 }
 
 void IntroController::Render() {
-    FontRef font = Font::Default();
+    FontRef font = Resources::DefaultFont();
 
     switch(state) {
         default:

@@ -10,21 +10,6 @@
 
 namespace eng {
 
-    FontRef MakeDefault() {
-        ENG_LOG_TRACE("[C] Default font (empty)");
-        return std::make_shared<Font>();
-    }
-
-    FontRef Font::Default() {
-        static FontRef defaultFont = MakeDefault();
-        return defaultFont;
-    }
-
-    void Font::UpdateDefault(Font&& f) {
-        (*Default()) = std::move(f);
-        ENG_LOG_TRACE("Default font updated.");
-    }
-
     Font::Font(const std::string& filepath_, int fontHeight_) : fontHeight(fontHeight_), name(GetFilename(filepath_)), filepath(filepath_) {
         Load(filepath);
         ENG_LOG_TRACE("[C] Font '{}' (height = {})", name.c_str(), fontHeight);

@@ -10,7 +10,7 @@ namespace MainMenuState { enum { INVALID, MAIN, SINGLE, SINGLE_CAMPAIGN, SINGLE_
 
 class MainMenuController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
-    MainMenuController(const eng::FontRef& font, const eng::TextureRef& backgroundTexture);
+    MainMenuController();
 
     virtual void Update() override;
     virtual void Render() override;

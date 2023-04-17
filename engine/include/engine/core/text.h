@@ -21,9 +21,6 @@ namespace eng {
 
     class Font {
     public:
-        static FontRef Default();
-        static void UpdateDefault(Font&& f);
-
         Font(const std::string& filepath, int fontHeight = 48);
 
         Font() = default;

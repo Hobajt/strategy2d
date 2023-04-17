@@ -4,6 +4,8 @@
 #include "ingame.h"
 #include "recap.h"
 
+#include "resources.h"
+
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);
@@ -13,7 +15,9 @@ static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
 //===== MainMenuController =====
 
-MainMenuController::MainMenuController(const FontRef& font, const eng::TextureRef& backgroundTexture_) : backgroundTexture(backgroundTexture_) {
+MainMenuController::MainMenuController() : backgroundTexture(Resources::LoadTexture("TitleMenu_BNE.png")) {
+    FontRef font = Resources::DefaultFont();
+
     glm::vec2 main_btnSize = glm::vec2(0.33f, 0.06f);
     glm::vec2 main_menuSize = glm::vec2(0.5f);
     float main_gap = 0.03f;

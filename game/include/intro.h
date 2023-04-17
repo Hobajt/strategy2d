@@ -9,7 +9,7 @@ namespace IntroState { enum { INVALID = -2, GAME_START = -1, COMPANY_LOGO = 0, C
 //Manages both intro screens, starting cinematic as well as credits.
 class IntroController : public GameStageController {
 public:
-    IntroController(const eng::TextureRef& gameLogoTexture);
+    IntroController();
 
     virtual void Update() override;
     virtual void Render() override;
