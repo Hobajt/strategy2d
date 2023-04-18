@@ -63,12 +63,17 @@ public:
     bool CompareTransitions(const TransitionParameters& other, float durationOverride = -1.f) { return params.EqualsTo(other, durationOverride); }
 
     void ForceFadeOut() { fadedOut = true; }
+
+    //Returns true once after a transition was initialized.
+    //Don't use outside of GameStage.
+    bool TransitionStarted();
 private:
     float startTime;
     float endTime;
 
     bool active = false;
     bool fadedOut = false;
+    bool startedFlag = false;
     TransitionParameters params;
 
     bool fadingOut;
@@ -87,6 +92,10 @@ public:
 
     //Value identifying this specific controller type (should be the same for multiple instances of the same controller).
     virtual int GetStageID() const = 0;
+
+    //Triggered when transition into this state begins.
+    //Use for async assets preloading.
+    virtual void OnPreLoad(int prevStageID, int info, void* data) {}
 
     //Triggered when switching into this state - when screen fades out.
     //Use to initialize visuals, so that there's stuff on screen when fading in.

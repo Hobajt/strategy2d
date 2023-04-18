@@ -11,4 +11,6 @@ namespace eng {
     std::string to_string(const glm::vec2& v);
     std::string to_string(const glm::vec3& v);
 
+    glm::vec4 clr_interpolate(const glm::vec4& a, const glm::vec4& b, float t);
+
 }//namespace eng

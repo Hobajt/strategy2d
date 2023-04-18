@@ -77,10 +77,13 @@ namespace Resources {
         return data.shaders.at(name);
     }
 
-    eng::TextureRef LoadTexture(const std::string& name) {
+    eng::TextureRef LoadTexture(const std::string& name, bool skipCache) {
         if(!data.textures.count(name)) {
             std::string filepath = std::string("res/textures/") + name;
-            data.textures.insert({ name, std::make_shared<Texture>(filepath) });
+            TextureRef tex = std::make_shared<Texture>(filepath);
+            if(!skipCache)
+                data.textures.insert({ name, tex });
+            return tex;
         }
 
         return data.textures.at(name);

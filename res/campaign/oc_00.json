@@ -1,0 +1,10 @@
+{
+    "act": {
+        "background": "orcact4.png",
+        "text": "Act I"
+    },
+    "obj": {
+        "background": "slash.png",
+        "text": ""
+    }
+}

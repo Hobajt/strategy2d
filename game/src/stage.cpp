@@ -53,7 +53,7 @@ void TransitionHandler::AutoFadeIn() {
 
 bool TransitionHandler::InitTransition(const TransitionParameters& params_, bool forceOverride) {
     if(!active || forceOverride) {
-        active = true;
+        startedFlag = active = true;
         params = params_;
         startTime = Input::Get().CurrentTime();
         endTime = startTime + params.duration;
@@ -61,6 +61,12 @@ bool TransitionHandler::InitTransition(const TransitionParameters& params_, bool
         return true;
     }
     return false;
+}
+
+bool TransitionHandler::TransitionStarted() { 
+    bool sf = startedFlag; 
+    startedFlag = false;
+    return sf;
 }
 
 //===== GameStage =====
@@ -80,6 +86,10 @@ void GameStage::Initialize(const std::vector<GameStageControllerRef>& stages_, i
 
 void GameStage::Update() {
     currentStage->Update();
+
+    if(transitionHandler.TransitionStarted() && currentStageID != transitionHandler.NextStageID()) {
+        stages[transitionHandler.NextStageID()]->OnPreLoad(currentStageID, transitionHandler.Info(), transitionHandler.Data());
+    }
 }
 
 void GameStage::Render() {

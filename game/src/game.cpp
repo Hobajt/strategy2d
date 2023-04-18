@@ -37,6 +37,7 @@ using namespace eng;
     - conditionally skip the cinematic (based on value from configs - if it's not a first launch)
 */
 
+//TODO: try replacing the void* in game stage transitions
 
 
 Game::Game() : App(640, 480, "game") {}

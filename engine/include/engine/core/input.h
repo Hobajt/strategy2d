@@ -88,7 +88,7 @@ namespace eng {
         glm::vec2 mousePos, mouseDelta, scroll;
         glm::vec2 mousePos_n;
 
-        bool alt, shift, ctrl, space;
+        bool alt, shift, ctrl, space, enter;
     };
 
 }//namespace eng

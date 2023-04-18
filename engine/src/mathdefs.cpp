@@ -15,4 +15,13 @@ namespace eng {
         return std::string(buf);
     }
 
+    glm::vec4 clr_interpolate(const glm::vec4& a, const glm::vec4& b, float t) {
+        return glm::vec4(
+            (1.f - t) * a.x + t * b.x,
+            (1.f - t) * a.y + t * b.y,
+            (1.f - t) * a.z + t * b.z,
+            (1.f - t) * a.w + t * b.w
+        );
+    }
+
 }//namespace eng

@@ -51,12 +51,14 @@ namespace eng {
     #define ENG_LOG_FINE(...)
 
     #define ENG_LOG_TRACE(...)
+    #define ENG_LOG_DEBUG(...)
     #define ENG_LOG_INFO(...)
     #define ENG_LOG_WARN(...)
     #define ENG_LOG_ERROR(...)
     #define ENG_LOG_CRITICAL(...)
 
     #define LOG_TRACE(...)
+    #define LOG_DEBUG(...)
     #define LOG_INFO(...)
     #define LOG_WARN(...)
     #define LOG_ERROR(...)

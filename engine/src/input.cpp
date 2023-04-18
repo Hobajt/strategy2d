@@ -99,6 +99,7 @@ namespace eng {
         shift  = window.GetKeyState(GLFW_KEY_LEFT_SHIFT);
         ctrl   = window.GetKeyState(GLFW_KEY_LEFT_CONTROL);
         space  = window.GetKeyState(GLFW_KEY_SPACE);
+        enter  = window.GetKeyState(GLFW_KEY_ENTER);
 
         bool w = window.GetKeyState(GLFW_KEY_W);
         bool a = window.GetKeyState(GLFW_KEY_A);

@@ -23,7 +23,7 @@ namespace Resources {
 
     eng::ShaderRef LoadShader(const std::string& name, bool forceReload = false);
 
-    eng::TextureRef LoadTexture(const std::string& name);
+    eng::TextureRef LoadTexture(const std::string& name, bool skipCache = false);
 
     eng::FontRef LoadFont(const std::string& name);
     eng::FontRef DefaultFont();
