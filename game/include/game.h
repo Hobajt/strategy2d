@@ -6,7 +6,7 @@
 
 class Game : public eng::App {
 public:
-    Game();
+    Game(int argc, char** argv);
     ~Game();
 
     virtual void OnResize(int width, int height) override;
@@ -20,4 +20,7 @@ private:
     GameStage stageController;
 
     eng::ShaderRef shader;
+
+    DBGONLY(int dbg_stageIdx = -1);
+    DBGONLY(int dbg_stageStateIdx = -1);
 };

@@ -1,5 +1,7 @@
 #include "stage.h"
 
+#include <algorithm>
+
 using namespace eng;
 
 //===== TransitionHandler =====
@@ -49,6 +51,10 @@ void TransitionHandler::AutoFadeIn() {
         params.type = TransitionType::FADE_IN;
         InitTransition(params);
     }
+}
+
+void TransitionHandler::CancelTransition() {
+    startedFlag = active = false;
 }
 
 bool TransitionHandler::InitTransition(const TransitionParameters& params_, bool forceOverride) {
@@ -113,4 +119,42 @@ void GameStage::DBG_GUI() {
         ctrl->DBG_GUI();
     }
 #endif
+}
+
+#ifdef ENGINE_DEBUG
+void GameStage::DBG_SetStage(int stageIdx, int stageStateIdx) {
+    if(stageIdx >= stages.size()) {
+        LOG_DEBUG("GameStage::DBG_SetStage - Invalid stageIdx provided.");
+        return;
+    }
+
+    LOG_DEBUG("GameStage::DBG_SetStage - switching to stage '{}'", idx2name(stageIdx));
+    transitionHandler.CancelTransition();
+    currentStage = stages[stageIdx];
+    currentStageID = currentStage->GetStageID();
+    currentStage->DBG_StageSwitch(stageStateIdx);
+}
+#endif
+
+int GameStage::name2idx(std::string name) {
+    static std::unordered_map<std::string, int> mapping = {
+        { "INVALID", GameStageName::INVALID },
+        { "INTRO", GameStageName::INTRO },
+        { "MAIN_MENU", GameStageName::MAIN_MENU },
+        { "RECAP", GameStageName::RECAP },
+        { "INGAME", GameStageName::INGAME },
+    };
+    std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+    if(mapping.count(name))
+        return mapping[name];
+    else
+        return -1;
+}
+
+std::string GameStage::idx2name(int idx) {
+    static std::string names[] = { "INVALID", "INTRO", "MAIN_MENU", "RECAP", "INGAME", "WRONG IDX" };
+    if(idx >= GameStageName::COUNT)
+        return names[GameStageName::COUNT];
+    else
+        return names[idx];
 }

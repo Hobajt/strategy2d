@@ -9,7 +9,6 @@
 
 using namespace eng;
 
-//TODO: add some precursor to main menu
 //TODO: make logging initialization through singleton -> static objects cannot really use logging now since they get initialized before the logging
 //TODO: consider remaking GUI's transform system - it's kinda unintuitive to define sizes relative to parent
 
@@ -20,7 +19,6 @@ using namespace eng;
 //TODO: add some config file that will act as a persistent storage for options and stuff
 
 //less immediate future:
-//TODO: add cmdline args to launch in debug mode, skip menus, etc.
 //TODO: figure out how to generate (nice) button textures - with borders and marble like (or whatever it is they have)
 //TODO: start adding audio
 
@@ -38,9 +36,28 @@ using namespace eng;
 */
 
 //TODO: try replacing the void* in game stage transitions
+//TODO: fix font scaling - probably generate font at max required scale (act text size?) and then scale all other texts down
 
 
-Game::Game() : App(640, 480, "game") {}
+Game::Game(int argc, char** argv) : App(640, 480, "game") {
+#ifdef ENGINE_DEBUG
+    try {
+        for(int i = 1; i < argc-1; i++) {
+            if(strncmp(argv[i], "--stage", 7) == 0) {
+                dbg_stageIdx = GameStage::name2idx(std::string(argv[++i]));
+            }
+            else if (strncmp(argv[i], "--state", 7) == 0) {
+                dbg_stageStateIdx = std::stoi(argv[++i]);
+            }
+        }
+    } catch(std::exception&) {
+        LOG_DEBUG("invalid cmdline args, skipping...");
+        dbg_stageIdx = dbg_stageStateIdx = -1;
+    }
+    //stage = game stage idx, state = info for the stage controller 
+    LOG_DEBUG("args: stage: {}, state: {}", dbg_stageIdx, dbg_stageStateIdx);
+#endif
+}
 
 Game::~Game() {
     Resources::Release();
@@ -70,6 +87,12 @@ void Game::OnInit() {
         std::make_shared<RecapController>(),
         std::make_shared<IngameController>(),
     });
+
+#ifdef ENGINE_DEBUG
+    if(dbg_stageIdx != -1) {
+        stageController.DBG_SetStage(dbg_stageIdx, dbg_stageStateIdx);
+    }
+#endif
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);

@@ -4,8 +4,6 @@
 
 #include "stage.h"
 
-#include <future>
-
 struct ScenarioInfo {
     int campaignIdx = -1;
     bool isOrc;
@@ -37,6 +35,8 @@ public:
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
+
+    DBGONLY(virtual void DBG_StageSwitch(int stateIdx) override);
 private:
     //reset state variables for proper stage functioning
     void ActIntro_Reset(bool isOrc);
@@ -56,8 +56,6 @@ private:
     GameInitParams* gameInitData = nullptr;
 
     ScenarioInfo scenario;
-
-    std::future<bool> scenarioLoad_future;
 };
 
 

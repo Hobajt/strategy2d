@@ -20,7 +20,7 @@ void RecapController::Update() {
     float currentTime = Input::CurrentTime();
 
     Input& input = Input::Get();
-    interrupted |= (input.lmb.down() || input.rmb.down() || input.enter || input.space);
+    interrupted = (input.lmb.down() || input.rmb.down() || input.enter || input.space);
 
     switch(state) {
         case RecapState::ACT_INTRO:
@@ -84,7 +84,7 @@ void RecapController::Render() {
         }
         case RecapState::OBJECTIVES:
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f), scenario.obj_background));
-            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.56f, -0.56f, -1e-3f), glm::vec2(0.4f, 0.3f), glm::vec4(1.f)));
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.56f, -0.53f, -1e-3f), glm::vec2(0.4f, 0.3f), glm::vec4(glm::vec3(0.f), 0.5f)));
             //TODO: render rolling text
             break;
     }
@@ -158,6 +158,22 @@ void RecapController::OnStart(int prevStageID, int info, void* data) {
 }
 
 void RecapController::OnStop() {}
+
+#ifdef ENGINE_DEBUG
+void RecapController::DBG_StageSwitch(int stateIdx) {
+
+    //normally passing pointer to object in MenuController
+    static GameInitParams params = {};
+    params.campaignIdx = 0;
+    params.race = GameParams::Race::ORC;
+    OnPreStart(GameStageName::MAIN_MENU, RecapState::OBJECTIVES, (void*)&params);
+
+    //need to setup new transition
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_IN, GameStageName::RECAP, RecapState::OBJECTIVES, (void*)&params, false)
+    );
+}
+#endif
 
 void RecapController::ActIntro_Reset(bool isOrc) {
     flag = 0;

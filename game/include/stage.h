@@ -7,7 +7,7 @@
 #include <map>
 
 //Identifies individual game stages.
-namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, RECAP, INGAME }; }
+namespace GameStageName { enum { INVALID, INTRO, MAIN_MENU, RECAP, INGAME, COUNT }; }
 
 namespace TransitionType { enum { FADE_OUT, FADE_IN }; }
 
@@ -64,6 +64,8 @@ public:
 
     void ForceFadeOut() { fadedOut = true; }
 
+    void CancelTransition();
+
     //Returns true once after a transition was initialized.
     //Don't use outside of GameStage.
     bool TransitionStarted();
@@ -110,6 +112,8 @@ public:
 
     virtual void DBG_GUI() {}
     
+    DBGONLY(virtual void DBG_StageSwitch(int stateIdx) {})
+
     void SetupTransitionHandler(TransitionHandler* handler) { transitionHandler = handler; }
     TransitionHandler* GetTransitionHandler() { return transitionHandler; }
 private:
@@ -127,6 +131,11 @@ public:
     void Render();
 
     void DBG_GUI();
+
+    DBGONLY(void DBG_SetStage(int stageIdx, int stageStateIdx));
+
+    static int name2idx(std::string name);
+    std::string idx2name(int idx);
 private:
     int currentStageID = GameStageName::INVALID;
     GameStageControllerRef currentStage = nullptr;
