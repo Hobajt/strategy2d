@@ -39,6 +39,8 @@ namespace eng {
 
         CharInfo& GetChar(char c) { return operator[](c); }
 
+        int GetRowHeight() { return rowHeight; }
+
         glm::vec2 AtlasSize_Inv() const { return atlasSize_inv; }
 
         void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
@@ -62,6 +64,8 @@ namespace eng {
         int fontHeight;
         CharInfo chars[128];
         TextureRef texture = nullptr;
+
+        int rowHeight;
 
         glm::vec2 atlasSize_inv;
     };

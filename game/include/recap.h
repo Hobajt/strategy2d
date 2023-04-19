@@ -4,15 +4,21 @@
 
 #include "stage.h"
 
+#include <string>
+#include <unordered_map>
+
 struct ScenarioInfo {
     int campaignIdx = -1;
     bool isOrc;
 
+    std::string obj_title;
     std::string obj_text;
     eng::TextureRef obj_background = nullptr;
+    std::vector<std::string> obj_objectives;
     
     bool act = false;
-    std::string act_text;
+    std::string act_text1;
+    std::string act_text2;
     eng::TextureRef act_background = nullptr;
 
     bool cinematic = false;
@@ -23,7 +29,7 @@ namespace RecapState { enum { INVALID, ACT_INTRO, OBJECTIVES, GAME_RECAP, CREDIT
 
 //==========================================
 
-class RecapController : public GameStageController {
+class RecapController : public GameStageController, public eng::GUI::ButtonCallbackHandler {
 public:
     RecapController();
 
@@ -51,11 +57,12 @@ private:
     int flag = 0;
 
     glm::vec4 textColor = glm::vec4(1.f, 0.f, 0.f, 1.f);
-    eng::GUI::Menu objectivesMenu;
 
-    GameInitParams* gameInitData = nullptr;
+    eng::GUI::TextButton btn;
+    eng::GUI::SelectionHandler selection = {};
 
     ScenarioInfo scenario;
+    GameInitParams* gameInitData = nullptr;
 };
 
 

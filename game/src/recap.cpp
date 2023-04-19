@@ -12,19 +12,48 @@ using namespace eng;
 
 RecapController::RecapController() {
 
+
     //init objectives menu
 
+    /*TODO Next:
+        - objectives:
+            - add title & scrolling text
+            - add timing and end condition
+    */
+
+    //continue button setup
+
+    glm::vec2 buttonSize = glm::vec2(0.16f, 0.05f);
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::ivec2 textureSize = ts * upscaleFactor;
+    int borderWidth = 2 * upscaleFactor;
+
+    GUI::StyleRef btnStyle = std::make_shared<GUI::Style>();
+    btnStyle->textColor = glm::vec4(1.f);
+    btnStyle->font = Resources::DefaultFont();
+    btnStyle->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+    btnStyle->hoverTexture = btnStyle->texture;
+    btnStyle->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
+    btnStyle->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+    btnStyle->holdOffset = glm::ivec2(borderWidth);
+
+    btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 
+        this, [](GUI::ButtonCallbackHandler* handler, int id) {
+            static_cast<RecapController*>(handler)->interrupted = true;
+        }
+    );
 }
 
 void RecapController::Update() {
     float currentTime = Input::CurrentTime();
 
     Input& input = Input::Get();
-    interrupted = (input.lmb.down() || input.rmb.down() || input.enter || input.space);
 
     switch(state) {
         case RecapState::ACT_INTRO:
         {
+            interrupted |= (input.lmb.down() || input.rmb.down() || input.enter || input.space);
             bool conditionMet = false;
 
             switch(flag) {
@@ -58,9 +87,10 @@ void RecapController::Update() {
         case RecapState::OBJECTIVES:
             //TODO: text rolling updates + stop condition
 
-            //do objectiveMenu GUI update
-            //either copy the selection logic from MainMenuCtrl or move it to an independent class
-            //-class is probably better
+            interrupted |= (input.enter || input.space);
+
+            selection.Update(&btn);
+            btn.OnHighlight();
 
             bool conditionMet = false;
             if(interrupted || conditionMet) {
@@ -70,6 +100,8 @@ void RecapController::Update() {
             }
             break;
     }
+
+    interrupted = false;
 }
 
 void RecapController::Render() {
@@ -78,13 +110,26 @@ void RecapController::Render() {
     switch(state) {
         case RecapState::ACT_INTRO:
         {
+            float fh = (5.f * font->GetRowHeight()) / Window::Get().Height();
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, t), scenario.act_background));
-            font->RenderTextCentered("Act I", glm::vec2(0.f), 10.f, clr_interpolate(glm::vec4(1.f), textColor, t));
+            font->RenderTextCentered(scenario.act_text1.c_str(), glm::vec2(0.f, 0.1f), 4.f, clr_interpolate(glm::vec4(1.f), textColor, t));
+            font->RenderTextCentered(scenario.act_text2.c_str(), glm::vec2(0.f, 0.1f-fh), 5.f, clr_interpolate(glm::vec4(1.f), textColor, t));
             break;
         }
         case RecapState::OBJECTIVES:
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f), scenario.obj_background));
+            font->RenderTextCentered(scenario.obj_title.c_str(), glm::vec2(0.33f, 0.86f), 1.5f, glm::vec4(1.f));
+
+            //objectives window
+            float fh = (1.f * font->GetRowHeight()) / Window::Get().Height();
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.56f, -0.53f, -1e-3f), glm::vec2(0.4f, 0.3f), glm::vec4(glm::vec3(0.f), 0.5f)));
+            glm::vec2 pos = glm::vec2(0.17f, -0.23f - fh);
+            font->RenderText("Objectives:", pos, 1.f);
+            for(int i = 0; i < (int)scenario.obj_objectives.size(); i++) {
+                font->RenderText(scenario.obj_objectives[i].c_str(), glm::vec2(pos.x, pos.y - fh*1.1f - i*fh), 1.f);
+            }
+            btn.Render();
+
             //TODO: render rolling text
             break;
     }
@@ -205,7 +250,12 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
     if(data.count("obj")) {
         auto& obj = data.at("obj");
         scenario.obj_text = obj.at("text");
+        scenario.obj_title = obj.at("title");
         scenario.obj_background = Resources::LoadTexture(obj.at("background"), true);
+        scenario.obj_objectives.clear();
+        for(auto& o : obj.at("objectives")) {
+            scenario.obj_objectives.push_back(o);
+        }
     }
     else {
         //use default
@@ -216,7 +266,8 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
     if(data.count("act")) {
         scenario.act = true;
         auto& act = data.at("act");
-        scenario.act_text = act.at("text");
+        scenario.act_text1 = act.at("text1");
+        scenario.act_text2 = act.at("text2");
         scenario.act_background = Resources::LoadTexture(act.at("background"), true);
     }
 

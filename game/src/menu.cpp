@@ -49,31 +49,7 @@ MainMenuController::MainMenuController() : backgroundTexture(Resources::LoadText
 
 void MainMenuController::Update() {
     ASSERT_MSG(activeMenu != nullptr, "There should always be active submenu in the main menu.");
-
-    Input& input = Input::Get();
-
-    GUI::Element* selection = activeMenu->ResolveMouseSelection(input.mousePos_n);
-    if(selection != nullptr) {
-        if(input.lmb.down()) {
-            lastSelected = clickedElement = selection;
-            selection->OnDown();
-        }
-        else if(input.lmb.pressed()) {
-            //nested if in order to prevent OnHover calls while lmb is pressed
-            if(selection == clickedElement)
-                selection->OnHold();
-        }
-        else if(input.lmb.up()) {
-            if(selection == clickedElement) selection->OnUp();
-            clickedElement = nullptr;
-        }
-        else {
-            selection->OnHover();
-        }
-    }
-
-    if(lastSelected != nullptr)
-        lastSelected->OnHighlight();
+    selection.Update(activeMenu);
 }
 
 void MainMenuController::Render() {

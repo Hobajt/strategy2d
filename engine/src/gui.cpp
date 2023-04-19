@@ -174,6 +174,33 @@ namespace eng::GUI {
         }
     }
 
+    void SelectionHandler::Update(Element* gui) {
+        Input& input = Input::Get();
+
+        GUI::Element* selection = gui->ResolveMouseSelection(input.mousePos_n);
+        if(selection != nullptr) {
+            if(input.lmb.down()) {
+                lastSelected = clickedElement = selection;
+                selection->OnDown();
+            }
+            else if(input.lmb.pressed()) {
+                //nested if in order to prevent OnHover calls while lmb is pressed
+                if(selection == clickedElement)
+                    selection->OnHold();
+            }
+            else if(input.lmb.up()) {
+                if(selection == clickedElement) selection->OnUp();
+                clickedElement = nullptr;
+            }
+            else {
+                selection->OnHover();
+            }
+        }
+
+        if(lastSelected != nullptr)
+            lastSelected->OnHighlight();
+    }
+
     //===== TextLabel =====
 
     TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)

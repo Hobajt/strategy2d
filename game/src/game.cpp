@@ -38,6 +38,8 @@ using namespace eng;
 //TODO: try replacing the void* in game stage transitions
 //TODO: fix font scaling - probably generate font at max required scale (act text size?) and then scale all other texts down
 
+//TODO: GUI - rescale button hold offset when resizing (offset way too big in small screen)
+
 
 Game::Game(int argc, char** argv) : App(640, 480, "game") {
 #ifdef ENGINE_DEBUG

@@ -142,6 +142,17 @@ namespace eng::GUI {
         bool interactable = true;
     };
 
+    //===== SelectionHandler =====
+
+    //Helper class for GUI updates & event signaling.
+    struct SelectionHandler {
+        Element* lastSelected;
+        Element* clickedElement;
+    public:
+        //Uses current mouse pos to detect & signal clicks/hovers/holds in given gui subtree.
+        void Update(Element* gui);
+    };
+
     //===== TextLabel =====
 
     //Uneditable block of text.
@@ -174,6 +185,7 @@ namespace eng::GUI {
 
     class Button : public Element {
     public:
+        Button() = default;
         Button(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
         );
@@ -196,6 +208,7 @@ namespace eng::GUI {
 
     class TextButton : public Button {
     public:
+        TextButton() = default;
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx = -1, int buttonID = -1
         );

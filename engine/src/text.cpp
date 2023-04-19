@@ -182,6 +182,8 @@ namespace eng {
         //library cleanup
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
+
+        rowHeight = atlasHeight;
     }
 
     void Font::Release() noexcept {
