@@ -427,4 +427,258 @@ namespace eng::GUI {
         scrollBar->UpdateSliderPos(sliderPos);
     }
 
+    //===== ScrollText =====
+
+    ScrollText::ScrollText(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_) 
+        : Element(offset_, size_, zOffset_, style_, nullptr), lineSize(glm::vec2(0.f)), visibleLinesCount(0.f), text(text_), font(nullptr) {
+        
+        if(style != nullptr && style->font != nullptr) {
+            font = style->font;
+            ResizeLines(LineHeight());
+            ProcessText(text);
+        }
+    }
+
+    void ScrollText::SetPosition(float line) {
+        pos = line;
+    }
+
+    float ScrollText::GetPositionNormalized() const {
+        return (pos+visibleLinesCount) / (lines.size() + 0.5f + visibleLinesCount);
+    }
+
+    bool ScrollText::IsScrolledUp() const {
+        return pos <= -visibleLinesCount;
+    }
+    
+    bool ScrollText::IsScrolledDown() const {
+        return pos >= lines.size() + 0.5f;
+    }
+
+    bool ScrollText::ScrollUpdate(float t) {
+        pos += t;
+        return IsScrolledDown();
+    }
+
+    void ScrollText::SetPositionPreset(int type) {
+        switch(type) {
+            case ScrollTextPosition::TOP:               //first line visible at the top border (nothing else hidden above)
+                pos = 0.f;
+                break;
+            case ScrollTextPosition::BOT:               //last line visible at the bottom border (nothing else hidden below)
+                pos = lines.size() - visibleLinesCount;
+                break;
+            case ScrollTextPosition::FIRST_LINE_GONE:   //completely scrolled (first line not yet visible)
+                pos = -visibleLinesCount;
+                break;
+            case ScrollTextPosition::FIRST_LINE_BOT:    //first line visible at the bottom border
+                pos = -visibleLinesCount+1;
+                break;
+            case ScrollTextPosition::LAST_LINE_TOP:     //last line visible at the top border
+                pos = lines.size() - 1;
+                break;
+            case ScrollTextPosition::LAST_LINE_GONE:    //completely scrolled (last line left through the top)
+                pos = lines.size() + 0.5f;
+                break;
+        }
+    }
+
+    void ScrollText::SetPositionNormalized(float t) {
+        pos = -visibleLinesCount + t * (lines.size() + 0.5f + visibleLinesCount);
+    }
+
+    void ScrollText::SetLineGap(float gap) {
+        if(lineGapMult != gap) {
+            lineGapMult = gap;
+            ResizeLines(LineHeight());
+            ProcessText(text);
+        }
+    }
+
+    void ScrollText::UpdateText(const std::string& newText) {
+        text = newText;
+        ProcessText(text);
+    }
+
+    void ScrollText::ProcessText(const std::string& text) {
+        lines.clear();
+        ENG_LOG_TRACE("ScrollText::ProcessText triggered");
+
+        //minimal word length needed to start splitting the word (% of line width)
+        constexpr float longWordThresh = 1.f;
+
+        //convert to pixels, so that character width's don't have to be divided lower in the code
+        float lineWidth = lineSize.x * Window::Get().Width();
+
+        if(lineSize.y < 1e-3f || lineWidth < 1e-3f) {
+            // ENG_LOG_TRACE("ScrollText - Area too small.");
+            return;
+        }
+
+        float currentLineLength = 0.f;
+        float currentWordLength = 0.f;
+
+        const char* c = text.c_str();
+        const char* lastSpace = nullptr;
+        const char* lineStart = c;
+
+        // ENG_LOG_INFO("Text to process:");
+        // ENG_LOG_INFO("{}", text);
+        // ENG_LOG_INFO("===================");
+
+        //TODO: process last line!!
+
+        while(*c != '\0') {
+            switch(*c) {
+                case ' ':
+                case '\n':
+                    if(currentLineLength + currentWordLength <= lineWidth) {
+                        //line can contain this word
+                        currentLineLength += currentWordLength + CharWidth(' ');
+                        currentWordLength = 0.f;
+                        lastSpace = c;
+
+                        if(*c == '\n') {
+                            lines.push_back(text.substr(lineStart - text.c_str(), c - lineStart));
+                            currentLineLength = currentWordLength = 0.f;
+                            lineStart = lastSpace = c+1;
+                        }
+                    }
+                    else if(currentWordLength >= lineWidth * longWordThresh) {
+                        //word that's longer than line - have to split it
+                        float hyphenLength = CharWidth('-');
+                            float wordLength = hyphenLength;
+
+                        for(const char* c2 = lastSpace; c2 < c; c2++) {
+                            int cLength = CharWidth(*c2);
+                            if(currentLineLength + wordLength + cLength > lineWidth) {
+                                if(c2+1 == c && (currentLineLength + wordLength + cLength - hyphenLength < lineWidth))
+                                    lines.push_back(text.substr(lineStart - text.c_str(), c2+1 - lineStart));
+                                else
+                                    lines.push_back(text.substr(lineStart - text.c_str(), c2 - lineStart) + "-");
+                                currentLineLength = 0.f;
+                                lineStart = c2;
+                                lastSpace = c2-1;
+                                currentWordLength -= wordLength - hyphenLength;
+                                wordLength = cLength + hyphenLength;
+                            }
+                            else {
+                                wordLength += cLength;
+                            }
+                        }
+
+                        if(currentLineLength + currentWordLength <= lineWidth) {
+                            currentLineLength += currentWordLength + CharWidth(' ');
+                            currentWordLength = 0.f;
+                            lastSpace = c;
+
+                            if(*c == '\n') {
+                                lines.push_back(text.substr(lineStart - text.c_str(), c - lineStart));
+                                currentLineLength = currentWordLength = 0.f;
+                                lineStart = lastSpace = c+1;
+                            }
+                        }
+                    }
+                    else {
+                        //line can't contain this word, but word can fit onto a new line
+                        lines.push_back(text.substr(lineStart - text.c_str(), lastSpace - lineStart));
+                        lineStart = lastSpace+1;
+
+                        //add the word to new line
+                        currentLineLength = currentWordLength + CharWidth(' ');
+                        currentWordLength = 0.f;
+                        lastSpace = c;
+
+                        if(*c == '\n') {
+                            lines.push_back(text.substr(lineStart - text.c_str(), c - lineStart));
+                            currentLineLength = currentWordLength = 0.f;
+                            lineStart = lastSpace = c+1;
+                        }
+                    }
+                    break;
+                default:
+                    currentWordLength += CharWidth(*c);
+                    break;
+            }
+
+            c++;
+        }
+
+        //last line (if it doesn't end with '\n')
+        if(currentLineLength > 0.f || currentWordLength > 0.f) {
+            lines.push_back(text.substr(lineStart - text.c_str(), c - lineStart));
+            currentLineLength = currentWordLength = 0.f;
+            lineStart = lastSpace = c+1;
+        }
+
+        // ENG_LOG_INFO("ScrollText::ProcessText:");
+        // for(std::string& s : lines) {
+        //     ENG_LOG_INFO("{}", s);
+        // }
+        // ENG_LOG_INFO("===================");
+
+        /*how:
+            - each '\n' spawns new line
+            - fold line when it reaches certain length
+                - don't split words, fold on spaces
+                - max length given by width of the scroll area - need to work with character sizes
+        */
+    }
+
+    float ScrollText::CharWidth(char c) {
+        CharInfo& ch = (c >= 32 && c < 128) ? font->GetChar(c) : font->GetChar(' ');
+        return ch.advance.x * style->textScale;
+    }
+
+    float ScrollText::LineHeight() {
+        return (style->textScale * lineGapMult * style->font->GetRowHeight()) / Window::Get().Height();
+    }
+
+    void ScrollText::ResizeLines(float lineHeight) {
+        lineSize = glm::vec2(size.x * 2.f, lineHeight);
+        visibleLinesCount = (lineHeight > 1e-4f) ? (size.y * 2.f) / lineHeight : 0.f;
+        // ENG_LOG_TRACE("ScrollText::ResizeLines triggered");
+    }
+
+    void ScrollText::InnerRender() {
+        Element::InnerRender();
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+
+        //recompute when font changes
+        float lh = LineHeight();
+        if(std::abs(lineSize.y - lh) > 1e-3f || font != style->font) {
+            ENG_LOG_TRACE("ScrollText::Resize - triggered from InnerRender ({} | {})", lh, lineSize.y);
+            font = style->font;
+            ResizeLines(lh);
+            ProcessText(text);
+        }
+
+        //element top-left corner (-lineHeight, bcs text treats it as bottom-left coord)
+        glm::vec2 corner = glm::vec2(position.x - size.x, -position.y + size.y - lineSize.y);
+        int startIdx = int(pos);
+        int endIdx = int(pos) + visibleLinesCount;
+        float off = pos - int(pos);
+
+        // render first line + the line above (with clipping) - line above to render letters like y,q,g,...
+        // glm::vec4 clr = glm::vec4(1.f, 0.f, 0.f, 1.f);
+        for(int i = std::max(startIdx-1, 0); i < std::min(startIdx+1, (int)lines.size()); i++) {
+            float off = pos - i;
+            float y = corner.y + lineSize.y * off;
+            font->RenderTextClippedTop(lines[i].c_str(), glm::vec2(corner.x, y), style->textScale, off, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        }
+
+        //render whole lines
+        for(int i = std::max(startIdx+1, 0); i < std::min(endIdx-1, (int)lines.size()); i++) {
+            float y = corner.y - lineSize.y * (i-startIdx-off);
+            font->RenderText(lines[i].c_str(), glm::vec2(corner.x, y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        }
+
+        //render last 2 lines (with clipping)
+        // clr = glm::vec4(0.f, 1.f, 0.f, 1.f);
+        for(int i = std::max(endIdx-1, 0); i < std::min(endIdx+1, (int)lines.size()); i++) {
+            float y = corner.y - lineSize.y * (i-startIdx-off);
+            font->RenderTextClippedBot(lines[i].c_str(), glm::vec2(corner.x, y), style->textScale, pos+visibleLinesCount-i, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        }
+    }
+
 }//namespace eng::GUI

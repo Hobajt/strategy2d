@@ -21,3 +21,8 @@ set(EDITOR_NAME "editor")
 add_subdirectory(engine)
 add_subdirectory(game)
 add_subdirectory(editor)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/sandbox")
+    message(STATUS "==== building sandbox ====")
+    add_subdirectory(sandbox)
+endif()

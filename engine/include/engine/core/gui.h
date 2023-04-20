@@ -158,6 +158,7 @@ namespace eng::GUI {
     //Uneditable block of text.
     class TextLabel : public Element {
     public:
+        TextLabel() = default;
         TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text);
 
         virtual void OnHover() override {}
@@ -292,6 +293,66 @@ namespace eng::GUI {
 
         ScrollBar* scrollBar;
         std::vector<TextButton*> menuBtns;
+    };
+
+    //===== ScrollText =====
+
+    namespace ScrollTextPosition { enum { TOP, BOT, LAST_LINE_TOP, LAST_LINE_GONE, FIRST_LINE_BOT, FIRST_LINE_GONE }; }//namespace ScrollTextPosition
+
+    //A text area with scrolling option (no scroll bar element).
+    class ScrollText : public Element {
+    public:
+        ScrollText() = default;
+        ScrollText(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void OnHighlight() override {}
+
+        size_t NumLines() const { return lines.size(); }
+        float NumVisibleLines() const { return visibleLinesCount; }
+        
+        float GetPosition() const { return pos; }
+        float GetPositionNormalized() const;
+
+        //Returns true when FIRST_LINE_GONE.
+        bool IsScrolledUp() const;
+        //Returns true when LAST_LINE_GONE.
+        bool IsScrolledDown() const;
+
+        //Update position (scrolling text down). Returns true once IsScrolledDown.
+        bool ScrollUpdate(float increment);
+
+        //Given line will be at the top of the element (lines indexed from the top).
+        void SetPosition(float line);
+
+        //Use ScrollTextPosition enum values.
+        void SetPositionPreset(int type);
+
+        //t=<0,1>, 0 - FIRST_LINE_GONE, 1 - LAST_LINE_GONE (from empty to empty)
+        void SetPositionNormalized(float t);
+
+        void SetLineGap(float gap);
+
+        void UpdateText(const std::string& text);
+    protected:
+        virtual void InnerRender() override;
+    private:
+        void ProcessText(const std::string& text);
+        void ResizeLines(float lineHeight);
+
+        float CharWidth(char c);
+        float LineHeight();
+    private:
+        std::vector<std::string> lines;
+        std::string text;
+        FontRef font = nullptr;
+
+        float lineGapMult = 1.1f;
+
+        glm::vec2 lineSize = glm::vec2(0.f);
+        float visibleLinesCount = 0.f;
+        float pos = 0.f;
     };
 
 }//namespace eng::GUI

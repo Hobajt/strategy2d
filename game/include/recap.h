@@ -58,6 +58,7 @@ private:
 
     glm::vec4 textColor = glm::vec4(1.f, 0.f, 0.f, 1.f);
 
+    eng::GUI::ScrollText text;
     eng::GUI::TextButton btn;
     eng::GUI::SelectionHandler selection = {};
 

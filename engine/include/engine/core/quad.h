@@ -93,6 +93,8 @@ namespace eng {
         static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
 
         static Quad Char(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z = 0.f);
+        static Quad CharClippedTop(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int clipPos);
+        static Quad CharClippedBot(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int clipPos);
 
         static glm::uvec4 DefaultInfo() { return glm::uvec4(0); }
     };

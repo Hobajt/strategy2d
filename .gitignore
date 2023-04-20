@@ -5,5 +5,6 @@ out/
 **/build/
 
 devlog/
+sandbox/
 
 imgui.ini

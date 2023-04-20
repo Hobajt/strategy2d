@@ -42,6 +42,36 @@ namespace eng {
         }
     }
 
+    void Font::RenderTextClippedTop(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
+        glm::vec2 pos = topLeft;
+
+        int clipPos = int((1.f-cutPos) * rowHeight);
+
+        for(const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+
+            Renderer::RenderQuad(Quad::CharClippedTop(info, ch, pos, size_mult, atlasSize_inv, color, texture, zIndex, clipPos));
+
+            pos += glm::vec2(ch.advance) * size_mult;
+        }
+    }
+
+    void Font::RenderTextClippedBot(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
+        glm::vec2 pos = topLeft;
+
+        int clipPos = int((1.f-cutPos) * rowHeight);
+
+        for(const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+
+            Renderer::RenderQuad(Quad::CharClippedBot(info, ch, pos, size_mult, atlasSize_inv, color, texture, zIndex, clipPos));
+
+            pos += glm::vec2(ch.advance) * size_mult;
+        }
+    }
+
     void Font::RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
         int width = 0;
         int height = 0;
@@ -155,7 +185,16 @@ namespace eng {
         texture->Bind(0);
         atlasSize_inv = glm::vec2(1.f / atlasWidth, 1.f / atlasHeight);
 
+        //zero the texture out to get rid of the noise - not sure if required or not
+        uint8_t* data = new uint8_t[atlasWidth * atlasHeight];
+        for(int i = 0; i < atlasWidth * atlasHeight; i++) data[i] = 0;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, atlasWidth, atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+        delete[] data;
+
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+
+        rowHeight = 0;
 
         //load each glyph into the texture
         int x = 0;
@@ -173,6 +212,8 @@ namespace eng {
                 float(x)
             };
 
+            rowHeight = std::max(rowHeight, chars[c].bearing.y);
+
             x += g->bitmap.width;
         }
 
@@ -182,8 +223,6 @@ namespace eng {
         //library cleanup
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
-
-        rowHeight = atlasHeight;
     }
 
     void Font::Release() noexcept {

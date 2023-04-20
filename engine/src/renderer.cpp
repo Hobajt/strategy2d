@@ -164,6 +164,7 @@ namespace eng {
                 instance.stats.drawCalls++;
                 instance.stats.totalQuads += instance.idx;
                 instance.stats.wastedQuads += instance.lastFlush_wastedQuads;
+                instance.stats.numTextures += instance.texIdx-1;
                 instance.lastFlush_wastedQuads = BATCH_SIZE - instance.idx;
             }
 

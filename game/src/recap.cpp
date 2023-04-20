@@ -10,6 +10,9 @@ using namespace eng;
 #define ACT_INTRO_FADEIN_TIME 2.f
 #define ACT_INTRO_SOUND_DURATION 1.f
 
+#define OBJ_SCROLL_SPEED 1.f
+#define OBJ_AFTERSROLL_DELAY 2.f
+
 RecapController::RecapController() {
 
 
@@ -43,6 +46,15 @@ RecapController::RecapController() {
             static_cast<RecapController*>(handler)->interrupted = true;
         }
     );
+
+    GUI::StyleRef textStyle = std::make_shared<GUI::Style>();
+    textStyle->font = Resources::DefaultFont();
+    textStyle->textColor = glm::vec4(1.f);
+    textStyle->color = glm::vec4(0.f);
+    // textStyle->textColor = glm::vec4(1.f, 0.f, 1.f, 1.f);
+    // textStyle->color = glm::vec4(1.f);
+
+    text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
 }
 
 void RecapController::Update() {
@@ -85,14 +97,19 @@ void RecapController::Update() {
             break;
         }
         case RecapState::OBJECTIVES:
-            //TODO: text rolling updates + stop condition
+            if(text.ScrollUpdate(input.deltaTime * OBJ_SCROLL_SPEED) && flag == 0) {
+                timing = currentTime;
+                flag = 1;
+                LOG_TRACE("RecapState::OBJECTIVES - scroll over");
+            }
+
+            bool conditionMet = (flag == 1 && currentTime >= timing + OBJ_AFTERSROLL_DELAY);
 
             interrupted |= (input.enter || input.space);
 
             selection.Update(&btn);
             btn.OnHighlight();
 
-            bool conditionMet = false;
             if(interrupted || conditionMet) {
                 GetTransitionHandler()->InitTransition(
                     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, 0, (void*)gameInitData, true)
@@ -129,8 +146,7 @@ void RecapController::Render() {
                 font->RenderText(scenario.obj_objectives[i].c_str(), glm::vec2(pos.x, pos.y - fh*1.1f - i*fh), 1.f);
             }
             btn.Render();
-
-            //TODO: render rolling text
+            text.Render();
             break;
     }
     /*
@@ -177,6 +193,9 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
                     ActIntro_Reset(scenario.isOrc);
                 }
             }
+            else {
+
+            }
         }
             break;
         case RecapState::GAME_RECAP:
@@ -198,6 +217,10 @@ void RecapController::OnStart(int prevStageID, int info, void* data) {
         case RecapState::ACT_INTRO:
             timing = Input::CurrentTime();
             flag = 1;
+            break;
+        case RecapState::OBJECTIVES:
+            timing = Input::CurrentTime();
+            flag = 0;
             break;
     }
 }
@@ -224,6 +247,8 @@ void RecapController::ActIntro_Reset(bool isOrc) {
     flag = 0;
     t = 0.f;
     textColor = isOrc ? glm::vec4(1.f, 0.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f);
+    text.UpdateText(scenario.obj_text);
+    text.SetPositionPreset(GUI::ScrollTextPosition::FIRST_LINE_GONE);
 }
 
 bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {

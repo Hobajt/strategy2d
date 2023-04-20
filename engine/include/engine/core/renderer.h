@@ -15,6 +15,7 @@ namespace eng {
             int totalQuads = 0;
             
             int wastedQuads = 0;        //unused capacity of the internal quad buffer (ignoring the last call; high number = too many textures)
+            int numTextures = 0;
         };
 
         //Fetches renderer stats structure of ongoing/last rendering session.

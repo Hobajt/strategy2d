@@ -40,6 +40,8 @@ using namespace eng;
 
 //TODO: GUI - rescale button hold offset when resizing (offset way too big in small screen)
 
+//TODO: move shader->InitTextureSlots somewhere so that it's done automatically - spent an hour debugging malfunctioning textures only to find out i forgot to call this
+
 
 Game::Game(int argc, char** argv) : App(640, 480, "game") {
 #ifdef ENGINE_DEBUG
@@ -158,6 +160,10 @@ void Game::OnGUI() {
             }
             LOG_INFO("Shaders reloaded.");
         }
+        ImGui::End();
+
+        ImGui::Begin("font");
+        Resources::DefaultFont()->GetTexture()->DBG_GUI();
         ImGui::End();
     }
 #endif

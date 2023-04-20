@@ -46,12 +46,18 @@ namespace eng {
         void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
+        //clipped = top/bottom parts of the letters are cut off; cutPos.x = fromTop, .y = fromBottom
+        void RenderTextClippedTop(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        void RenderTextClippedBot(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+
         //renders one letter in different color
         void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, const glm::ivec2& pxOffset, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
         void Resize(int newHeight);
+
+        TextureRef GetTexture() { return texture; }
     private:
         void Load(const std::string& filepath);
         

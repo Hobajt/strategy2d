@@ -166,4 +166,59 @@ namespace eng {
         return q;
     }
 
+    Quad Quad::CharClippedTop(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int cp) {
+        Quad q = {};
+        q.tex = texture;
+
+        float x = pos.x + c.bearing.x * size_mult.x;
+        float y = pos.y - (c.size.y - c.bearing.y) * size_mult.y;
+
+        int cut = std::max(c.size.y - c.bearing.y + cp, 0);
+
+        float w = c.size.x * size_mult.x;
+        float h = std::min(c.size.y, cut) * size_mult.y;
+
+        float tx = c.textureOffset;
+        float ow = c.size.x;
+        float oh = c.size.y;
+
+        float ch = std::max(c.size.y - cut, 0);
+
+        q.vertices[0] = Vertex(glm::vec3(x  , y  , z), color, glm::vec2(tx   , oh) * texSize_inv, info);
+        q.vertices[1] = Vertex(glm::vec3(x  , y+h, z), color, glm::vec2(tx   , ch) * texSize_inv, info);
+        q.vertices[2] = Vertex(glm::vec3(x+w, y  , z), color, glm::vec2(tx+ow, oh) * texSize_inv, info);
+        q.vertices[3] = Vertex(glm::vec3(x+w, y+h, z), color, glm::vec2(tx+ow, ch) * texSize_inv, info);
+        q.vertices.SetAlphaFromTexture(true);
+
+        return q;
+    }
+
+    Quad Quad::CharClippedBot(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int cp) {
+        Quad q = {};
+        q.tex = texture;
+
+        float floor = pos.y + cp * size_mult.y;
+
+        float x = pos.x + c.bearing.x * size_mult.x;
+        float y = pos.y - (c.size.y - c.bearing.y) * size_mult.y;
+
+        float w = c.size.x * size_mult.x;
+        float h = c.size.y * size_mult.y;
+
+        float yl = std::max(y, floor);
+        float yh = std::max(y+h, floor);
+
+        float tx = c.textureOffset;
+        float ow = c.size.x;
+        float oh = std::max(c.size.y - c.size.y + c.bearing.y, cp) - std::max(-c.size.y + c.bearing.y, cp);
+
+        q.vertices[0] = Vertex(glm::vec3(x  , yl, z), color, glm::vec2(tx   , oh ) * texSize_inv, info);
+        q.vertices[1] = Vertex(glm::vec3(x  , yh, z), color, glm::vec2(tx   , 0.f) * texSize_inv, info);
+        q.vertices[2] = Vertex(glm::vec3(x+w, yl, z), color, glm::vec2(tx+ow, oh ) * texSize_inv, info);
+        q.vertices[3] = Vertex(glm::vec3(x+w, yh, z), color, glm::vec2(tx+ow, 0.f) * texSize_inv, info);
+        q.vertices.SetAlphaFromTexture(true);
+
+        return q;
+    }
+
 }//namespace eng
