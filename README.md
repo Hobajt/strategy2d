@@ -1,6 +1,6 @@
 # Strategy 2d
 
-My attempts as a 2D strategy game, inspired by Warcraft II.
+My attempts at a 2D strategy game, inspired by Warcraft II.
 
 **3rd party libraries:**
 * <a href="https://github.com/glfw/glfw">GLFW</a> (3.4)

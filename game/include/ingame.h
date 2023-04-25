@@ -15,6 +15,7 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::INGAME; }
 
+    virtual void OnPreLoad(int prevStageID, int info, void* data) override;
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;

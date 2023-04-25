@@ -14,18 +14,6 @@ using namespace eng;
 #define OBJ_AFTERSROLL_DELAY 2.f
 
 RecapController::RecapController() {
-
-
-    //init objectives menu
-
-    /*TODO Next:
-        - objectives:
-            - add title & scrolling text
-            - add timing and end condition
-    */
-
-    //continue button setup
-
     glm::vec2 buttonSize = glm::vec2(0.16f, 0.05f);
     glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
     float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
@@ -51,8 +39,6 @@ RecapController::RecapController() {
     textStyle->font = Resources::DefaultFont();
     textStyle->textColor = glm::vec4(1.f);
     textStyle->color = glm::vec4(0.f);
-    // textStyle->textColor = glm::vec4(1.f, 0.f, 1.f, 1.f);
-    // textStyle->color = glm::vec4(1.f);
 
     text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
 }
@@ -97,6 +83,7 @@ void RecapController::Update() {
             break;
         }
         case RecapState::OBJECTIVES:
+            //scroll until all the text is gone
             if(text.ScrollUpdate(input.deltaTime * OBJ_SCROLL_SPEED) && flag == 0) {
                 timing = currentTime;
                 flag = 1;
@@ -104,12 +91,12 @@ void RecapController::Update() {
             }
 
             bool conditionMet = (flag == 1 && currentTime >= timing + OBJ_AFTERSROLL_DELAY);
-
             interrupted |= (input.enter || input.space);
 
             selection.Update(&btn);
             btn.OnHighlight();
 
+            //transition to game on key interrupt or when all the text is gone
             if(interrupted || conditionMet) {
                 GetTransitionHandler()->InitTransition(
                     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, 0, (void*)gameInitData, true)
@@ -192,9 +179,6 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
                     state = RecapState::ACT_INTRO;
                     ActIntro_Reset(scenario.isOrc);
                 }
-            }
-            else {
-
             }
         }
             break;

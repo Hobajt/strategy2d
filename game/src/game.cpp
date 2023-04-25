@@ -42,6 +42,8 @@ using namespace eng;
 
 //TODO: move shader->InitTextureSlots somewhere so that it's done automatically - spent an hour debugging malfunctioning textures only to find out i forgot to call this
 
+//TODO: probably preload ingame assets on game start
+
 
 Game::Game(int argc, char** argv) : App(640, 480, "game") {
 #ifdef ENGINE_DEBUG
