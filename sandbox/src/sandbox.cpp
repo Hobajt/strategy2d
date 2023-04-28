@@ -48,7 +48,21 @@ void Sandbox::OnInit() {
     snprintf(buf, sizeof(char)*BUF_LEN, "%s", text.c_str());
 
     gui = GUI::ScrollText(glm::vec2(0.f), glm::vec2(0.5f, 0.25f), 0.f, guiStyle, text);
-    tstGui = GUI::TextLabel(glm::vec2(0.25f, 0.75f), glm::vec2(0.1f, 0.1f), 0.f, guiStyle, "RENDER YOU PIECE OF ______.");
+    tstGui = GUI::TextLabel(glm::vec2(0.25f, 0.75f), glm::vec2(0.1f, 0.1f), 0.f, guiStyle, "RENDER YOU PIECE OF SHEET.");
+
+    SpritesheetData ssData = {};
+    ssData.texture = tex;
+    ssData.name = "test_spriteshseet";
+    for(int i = 0; i < 4; i++) {
+        SpriteData sd = {};
+        sd.name = std::string("sprite_") + std::to_string(i);
+        sd.size = glm::ivec2(256);
+        sd.offset = glm::ivec2(256*(i%2), 256*(i/2));
+        ssData.sprites.insert({ sd.name, Sprite(tex, sd) });
+    }
+    spritesheet = std::make_shared<Spritesheet>(ssData);
+
+    sg = SpriteGroup(spritesheet->begin()->second);
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
@@ -91,6 +105,17 @@ void Sandbox::OnUpdate() {
     tstGui.Render();
 
     font->RenderTextCentered("KUNDA SEM, KUNDA TAM", glm::vec2(-0.25f, 0.75f), 2.f, glm::vec4(1.f));
+
+    int i = 0;
+    for(auto& [a, b] : (*spritesheet)) {
+        b.Render(glm::uvec4(0), glm::vec3(0.25f - 0.75f * (i%2), 0.25f - 0.75f * (i/2), -0.999f), glm::vec2(0.5f));
+        i++;
+    }
+
+    static glm::vec2 world_pos = glm::vec2(0.f, 0.f);
+    static glm::vec2 size = glm::vec2(0.5f);
+
+    sg.Render(glm::vec3((world_pos - camera.Position()) * camera.Mult(), -0.9999f), size * camera.Mult(), glm::uvec4(0));
     
     Renderer::End();
 }
@@ -178,6 +203,10 @@ void Sandbox::OnGUI() {
             gui.UpdateText(text);
         }
 
+        ImGui::End();
+
+        ImGui::Begin("Spritesheet");
+        spritesheet->DBG_GUI();
         ImGui::End();
     }
 #endif

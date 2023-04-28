@@ -22,4 +22,7 @@ private:
     eng::GUI::ScrollText gui;
     eng::GUI::TextLabel tstGui;
     eng::TextureRef tex;
+
+    eng::SpriteGroup sg;
+    eng::SpritesheetRef spritesheet;
 };

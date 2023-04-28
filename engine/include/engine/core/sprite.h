@@ -1,0 +1,164 @@
+#pragma once
+
+#include <memory>
+#include <vector>
+#include <string>
+#include <map>
+
+#include "engine/utils/mathdefs.h"
+
+#include "engine/core/texture.h"
+
+
+namespace eng {
+    
+    //===== SpriteData =====
+
+    //Sprite data container
+    struct SpriteData {
+        //Locates block of images in the texture atlas that the sprite works with.
+        struct FrameBlock {
+            int line_length = 1;
+            int line_count = 1;
+            int start_frame = 0;
+            int offset = 0;
+        };
+    public:
+        glm::ivec2 offset;
+        glm::ivec2 size;
+        FrameBlock frames;
+        std::vector<glm::ivec2> pts;
+
+        std::string name;
+    };
+
+    //===== Sprite =====
+
+    //2D graphics object. Wrapper for a group of images in a texture atlas.
+    class Sprite {
+    public:
+        Sprite() = default;
+        Sprite(const TextureRef& texture, const SpriteData& data);
+
+        //Render sprite at given screen coords. frameIdx and orientation are horizontal and vertical indices into the sprite's frames.
+        void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0);
+
+        //Alternate render call with additional options (modify color/use texture as alpha).
+        void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0);
+
+        //Update texture coordinates. Call when spritesheet or sprite's offset/size changes.
+        void RecomputeTexCoords();
+
+        std::string Name() const { return data.name; }
+        glm::ivec2 Size() const { return data.size; }
+        glm::ivec2 Point(int i) const { return data.pts[i]; }
+        size_t PointCount() const { return data.pts.size(); }
+
+        int FrameCount() const { return data.frames.line_length; }
+        int FirstFrame() const { return data.frames.start_frame; }
+
+        void DBG_GUI();
+    private:
+        //To compute texture coordinates of selected frame of the sprite.
+        TexCoords TexOffset(const glm::ivec2& offset);
+    private:
+        SpriteData data;
+        TextureRef texture = nullptr;
+        TexCoords texCoords;
+    };
+    using SpriteRef = std::shared_ptr<Sprite>;
+
+    //===== SpritesheetData =====
+
+    //Spritesheet data container.
+    struct SpritesheetData {
+        TextureRef texture = nullptr;
+        std::map<std::string, Sprite> sprites;
+        std::string name;
+    };
+
+    //===== Spritesheet =====
+
+    //Larger image containing multiple sprites, essentially a sprite database.
+    class Spritesheet {
+        using SpriteMap = std::map<std::string, Sprite>;
+    public:
+        //Flags parameter is for the texture loading.
+        Spritesheet(const SpritesheetData& data);
+
+        Spritesheet() = default;
+        ~Spritesheet();
+
+        //copy disabled
+        Spritesheet(const Spritesheet&) = delete;
+        Spritesheet& operator=(const Spritesheet&) = delete;
+
+        //move enabled
+        Spritesheet(Spritesheet&&) noexcept;
+        Spritesheet& operator=(Spritesheet&&) noexcept;
+
+        //=== sprite fetch methods ===
+
+        Sprite operator()(const std::string& name) const { return Get(name); }
+        Sprite Get(const std::string& name) const;
+        bool TryGet(const std::string& name, Sprite& out_sprite) const;
+
+        //=== iterators ===
+
+        SpriteMap::iterator begin() { return data.sprites.begin(); }
+        SpriteMap::iterator end() { return data.sprites.end(); }
+        SpriteMap::const_iterator begin() const { return data.sprites.begin(); }
+        SpriteMap::const_iterator end() const { return data.sprites.end(); }
+
+        //=== other ===
+
+        void DBG_GUI();
+    private:
+        void Release() noexcept;
+        void Move(Spritesheet&&) noexcept;
+    private:
+        SpritesheetData data;
+    };
+    using SpritesheetRef = std::shared_ptr<Spritesheet>;
+
+    //===== SpriteGroupData =====
+
+    //SpriteGroup data container.
+    struct SpriteGroupData {
+        std::string name;
+        int id;
+
+        std::vector<Sprite> sprites;
+
+        bool repeat = true;
+        float duration = 1.f;
+
+        int frameCount = 1;
+        int firstFrame = 0;
+    };
+
+    //===== SpriteGroup =====
+
+    //Groups together multiple sprites, to render them as one object.
+    class SpriteGroup {
+    public:
+        SpriteGroup() = default;
+        SpriteGroup(const Sprite& sprite);
+        SpriteGroup(const SpriteGroupData& data);
+
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int orientation = 0, int frameIdx = 0);
+        void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int orientation = 0, int frameIdx = 0);
+
+        int ID() const { return data.id; }
+        bool Repeat() const { return data.repeat; }
+        float Duration() const { return data.duration; }
+        int FrameCount() const { return data.frameCount; }
+        int FirstFrame() const { return data.firstFrame; }
+
+        int FrameIdx(float f) const { return int(data.frameCount * (f / data.duration)); }
+        float FirstFrameF() const { return data.firstFrame / (float)data.frameCount;}
+    private:
+        SpriteGroupData data;
+    };
+
+}//namespace eng

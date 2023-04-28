@@ -18,6 +18,7 @@
 #include "core/texture.h"
 #include "core/renderer.h"
 #include "core/framebuffer.h"
+#include "core/sprite.h"
 
 #include "game/app.h"
 #include "game/camera.h"
