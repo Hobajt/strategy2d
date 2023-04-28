@@ -18,6 +18,8 @@ set(EDITOR_NAME "editor")
 
 ##########################
 
+add_subdirectory(vendor/nativefiledialog)
+
 add_subdirectory(engine)
 add_subdirectory(game)
 add_subdirectory(editor)

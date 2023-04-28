@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-add_executable(${EDITOR_NAME} "src/main.cpp")
+add_executable(${EDITOR_NAME} "src/main.cpp" "include/editor.h" "src/editor.cpp" "include/menu.h" "src/menu.cpp")
 
 target_include_directories(${EDITOR_NAME} PRIVATE include)
 
 #==== link the engine ====
 target_link_libraries(${EDITOR_NAME} ${LIB_NAME})
+
+#==== link file dialog library ====
+target_include_directories(${EDITOR_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/vendor/nativefiledialog/src/include")
+target_link_libraries(${EDITOR_NAME} nfd)

@@ -1,6 +1,5 @@
-#include <stdio.h>
+#include "editor.h"
 
 int main(int argc, char** argv) {
-    printf("Editor execuitable.\n");
-    return 0;
+    return Editor(argc, argv).Run();
 }
