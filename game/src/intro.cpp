@@ -1,7 +1,5 @@
 #include "intro.h"
 
-#include "resources.h"
-
 #define GAME_LOGO_DISPLAY_TIME 2.f
 
 using namespace eng;

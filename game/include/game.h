@@ -7,7 +7,6 @@
 class Game : public eng::App {
 public:
     Game(int argc, char** argv);
-    ~Game();
 
     virtual void OnResize(int width, int height) override;
 private:

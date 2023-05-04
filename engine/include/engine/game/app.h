@@ -19,7 +19,7 @@ namespace eng {
 
         int Run();
 
-        virtual void OnResize(int width, int height) override {}
+        virtual void OnResize(int width, int height) override;
     private:
         virtual void OnInit() {}
         virtual void OnUpdate() = 0;

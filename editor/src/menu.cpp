@@ -6,6 +6,8 @@ using namespace eng;
 
 #define BUF_SIZE 1024
 
+//===== FileMenu =====
+
 FileMenu::FileMenu() {
     filepath = new char[BUF_SIZE];
     Reset();
@@ -83,19 +85,22 @@ void FileMenu::SignalError(const std::string& msg) {
 }
 
 int FileMenu::Submenu_New() {
+#ifdef ENGINE_ENABLE_GUI
     ImGui::Text("New Terrain");
     if(ImGui::DragInt2("Size", (int*)&terrainSize)) {
         if(terrainSize.x < 1) terrainSize.x = 1;
         if(terrainSize.y < 1) terrainSize.y = 1;
     }
-    //TODO: add tileset option
+
     if(ImGui::Button("Generate")) {
         return FileMenuSignal::NEW;
     }
+#endif
     return FileMenuSignal::NOTHING;
 }
 
 int FileMenu::Submenu_Load() {
+#ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Load from File (expects absolute filepath)");
     ImGui::InputText("", filepath, sizeof(char) * BUF_SIZE);
     ImGui::SameLine();
@@ -106,11 +111,12 @@ int FileMenu::Submenu_Load() {
     if(ImGui::Button("Load")) {
         return FileMenuSignal::LOAD;
     }
-
+#endif
     return FileMenuSignal::NOTHING;
 }
 
 int FileMenu::Submenu_Save() {
+#ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Save Terrain (expects absolute filepath)");
     ImGui::InputText("", filepath, sizeof(char) * BUF_SIZE);
     ImGui::SameLine();
@@ -121,15 +127,18 @@ int FileMenu::Submenu_Save() {
     if(ImGui::Button("Save")) {
         return FileMenuSignal::SAVE;
     }
+#endif
     return FileMenuSignal::NOTHING;
 }
 
 void FileMenu::Submenu_Error() {
+#ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Operation could not be completed due to an error.");
     ImGui::Text("Reason: %s", errMsg.c_str());
     if(ImGui::Button("OK")) {
         err = false;
     }
+#endif
 }
 
 void FileMenu::FileDialog() {
@@ -159,4 +168,31 @@ void FileMenu::FileDialog() {
     else {
         ENG_LOG_WARN("NFD: Error: {}", NFD_GetError());
     }
+}
+
+//===== LevelInfoMenu =====
+
+LevelInfoMenu::LevelInfoMenu() {
+    levelName = new char[BUF_SIZE];
+    snprintf(levelName, sizeof(char) * BUF_SIZE, "%s", "unnamed_level");
+}
+
+LevelInfoMenu::~LevelInfoMenu() {
+    delete[] levelName;
+}
+
+void LevelInfoMenu::Update() {
+#ifdef ENGINE_ENABLE_GUI
+    ImGui::Begin("Level Info");
+
+    if(level == nullptr)
+        return;
+
+    ImGui::Text("Level info");
+    ImGui::InputText("Name", levelName, sizeof(char) * BUF_SIZE);
+    // glm::ivec2& size = level->map.tiles.size;
+    // ImGui::Text("Size: [%d x %d]", size.x, size.y);
+
+    ImGui::End();
+#endif
 }

@@ -5,6 +5,8 @@
 #include "engine/core/renderer.h"
 #include "engine/core/audio.h"
 
+#include "engine/game/resources.h"
+
 namespace eng {
 
     App::App(int windowWidth, int windowHeight, const char* windowName) {
@@ -21,6 +23,7 @@ namespace eng {
     }
 
     App::~App() {
+        Resources::Release();
         Renderer::Release();
         Audio::Release();
         DBG_GUI::Release();
@@ -51,6 +54,10 @@ namespace eng {
 
         ENG_LOG_INFO("App::Terminating");
         return 0;
+    }
+
+    void App::OnResize(int width, int height) {
+        Resources::OnResize(width, height);
     }
 
 }//namespace eng

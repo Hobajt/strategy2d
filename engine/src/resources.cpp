@@ -1,12 +1,11 @@
-#include "resources.h"
+#include "engine/game/resources.h"
 
-#include <engine/engine.h>
+#include "engine/core/window.h"
+#include "engine/core/renderer.h"
 
 constexpr float DEFAULT_FONT_SCALE = 0.055f;
 
-using namespace eng;
-
-namespace Resources {
+namespace eng::Resources {
 
     struct Data {
         float fontScale = DEFAULT_FONT_SCALE;
@@ -22,24 +21,6 @@ namespace Resources {
     void ResizeFonts(int windowHeight);
 
     //============
-
-    void Initialize() {
-        //TODO: generate GUI textures & bake them into single texture
-        //will need to use something like sprites to access them tho
-
-        /*spritesheets won't be managed by this manager at all
-            - spritesheets will be separate for individual units
-            - will bake all used objects into a single spritesheet on game start
-            - this will be handled by some other class
-            - 
-        */
-
-       /*name2path - there probably is no need for this
-            - will just use filenames as names
-            - directory path can be inferred based on data type (texture/shared/font/...)
-       */
-        
-    }
 
     void Release() {
         data = {};
@@ -102,6 +83,15 @@ namespace Resources {
         return LoadFont("PermanentMarker-Regular.ttf");
     }
 
+    SpritesheetRef Spritesheet(const std::string& name) {
+        return nullptr;
+    }
+
+    SpritesheetRef DefaultSpritesheet() {
+        return nullptr;
+    }
+
+
     //============
 
     void ResizeFonts(int windowHeight) {
@@ -110,4 +100,4 @@ namespace Resources {
         }
     }
 
-}//namespace Resources
+}//namespace eng::Resources

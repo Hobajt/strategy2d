@@ -20,5 +20,5 @@ public:
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 private:
-
+    eng::Level level;
 };

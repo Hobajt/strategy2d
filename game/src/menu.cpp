@@ -4,8 +4,6 @@
 #include "ingame.h"
 #include "recap.h"
 
-#include "resources.h"
-
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);

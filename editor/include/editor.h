@@ -27,4 +27,7 @@ private:
     bool guiEnabled = true;
 
     FileMenu fileMenu;
+    LevelInfoMenu infoMenu;
+
+    eng::Level level;
 };

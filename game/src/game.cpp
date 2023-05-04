@@ -5,8 +5,6 @@
 #include "recap.h"
 #include "ingame.h"
 
-#include "resources.h"
-
 using namespace eng;
 
 //TODO: make logging initialization through singleton -> static objects cannot really use logging now since they get initialized before the logging
@@ -65,18 +63,16 @@ Game::Game(int argc, char** argv) : App(640, 480, "game") {
 #endif
 }
 
-Game::~Game() {
-    Resources::Release();
-}
-
 void Game::OnResize(int width, int height) {
+    App::OnResize(width, height);
     LOG_INFO("Resize triggered ({}x{})", width, height);
-    Resources::OnResize(width, height);
 }
 
 void Game::OnInit() {
     try {
-        Resources::Initialize();
+        //TODO: add resources method that generates textures & possibly preloads stuff
+        //don't call it initialize, to distinct it from init methods in Renderer, Audio, etc.
+
         ReloadShaders();
 
     } catch(std::exception& e) {

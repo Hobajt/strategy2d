@@ -48,17 +48,3 @@ namespace eng {
     }
 
 }//namespace eng
-
-// class MapTiles {
-// public:
-// private:
-//     int* tiles;
-//     glm::ivec2 size;
-//     SpritesheetRef tileset;
-// };
-
-// class MapFile {};
-
-// class Map {
-//     MapTiles tiles;
-// };

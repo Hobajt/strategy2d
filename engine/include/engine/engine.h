@@ -21,6 +21,10 @@
 #include "core/sprite.h"
 
 #include "game/app.h"
+#include "game/resources.h"
 #include "game/camera.h"
+#include "game/level.h"
+#include "game/faction.h"
+#include "game/gameobject.h"
 
 #include "utils/generator.h"

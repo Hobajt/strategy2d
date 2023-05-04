@@ -3,12 +3,13 @@
 #include <string>
 #include <memory>
 
-#include <engine/engine.h>
+#include "engine/core/texture.h"
+#include "engine/core/text.h"
+#include "engine/core/shader.h"
+#include "engine/core/sprite.h"
 
 //Basic resources manager. Nothing fancy, mostly for resource sharing and name2path translation.
-namespace Resources {
-
-    void Initialize();
+namespace eng::Resources {
 
     void Release();
 
@@ -21,11 +22,15 @@ namespace Resources {
     //forceResize - triggers font resizing even if the scale matches previous scale.
     void SetFontScale(float scale, bool forceResize = false);
 
-    eng::ShaderRef LoadShader(const std::string& name, bool forceReload = false);
+    ShaderRef LoadShader(const std::string& name, bool forceReload = false);
 
-    eng::TextureRef LoadTexture(const std::string& name, bool skipCache = false);
+    TextureRef LoadTexture(const std::string& name, bool skipCache = false);
 
-    eng::FontRef LoadFont(const std::string& name);
-    eng::FontRef DefaultFont();
+    FontRef LoadFont(const std::string& name);
+    FontRef DefaultFont();
 
-}//namespace Resources
+    SpritesheetRef Spritesheet(const std::string& name);
+    SpritesheetRef DefaultSpritesheet();
+
+}//namespace eng::Resources
+
