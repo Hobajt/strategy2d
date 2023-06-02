@@ -3,11 +3,15 @@
 #include "engine/utils/log.h"
 #include "engine/utils/utils.h"
 #include "engine/utils/dbg_gui.h"
+#include "engine/utils/json.h"
 
 #include "engine/core/quad.h"
 #include "engine/core/renderer.h"
 
 namespace eng {
+
+    SpritesheetData ParseConfig_Spritesheet(const std::string& config_filepath, int flags);
+    SpriteData ParseConfig_Sprite(const nlohmann::json& config);
 
     //===== Sprite =====
 
@@ -15,13 +19,13 @@ namespace eng {
         RecomputeTexCoords();
     }
 
-    void Sprite::Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) {
-        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), data.size.y * (orientation % data.frames.line_count));
+    void Sprite::Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) const {
+        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), (data.size.y + data.frames.offset) * (orientation % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset));
         Renderer::RenderQuad(quad);
     }
 
-    void Sprite::RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) {
+    void Sprite::RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) const {
         glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), data.size.y * (orientation % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, color, texture, TexOffset(texOffset));
         quad.vertices.SetAlphaFromTexture(noTexture);
@@ -62,7 +66,7 @@ namespace eng {
 #endif
     }
 
-    TexCoords Sprite::TexOffset(const glm::ivec2& added_offset) {
+    TexCoords Sprite::TexOffset(const glm::ivec2& added_offset) const {
         const glm::ivec2& of = data.offset + added_offset;
         const glm::ivec2& sz = data.size;
         const glm::vec2  tsz = glm::vec2(texture->Size());
@@ -78,6 +82,10 @@ namespace eng {
     //===== Spritesheet =====
 
     Spritesheet::Spritesheet(const SpritesheetData& data_) : data(data_) {
+        ENG_LOG_TRACE("[C] Spritesheet '{}' ({})", data.name, (int)data.sprites.size());
+    }
+
+    Spritesheet::Spritesheet(const std::string& config_filepath, int flags) : data(ParseConfig_Spritesheet(config_filepath, flags)) {
         ENG_LOG_TRACE("[C] Spritesheet '{}' ({})", data.name, (int)data.sprites.size());
     }
 
@@ -159,6 +167,77 @@ namespace eng {
         for (Sprite& sprite : data.sprites) {
             sprite.RenderAlt(glm::uvec4(inf, i++), color, noTexture, screen_pos, screen_size, orientation, frameIdx);
         }
+    }
+
+    //====================================================================
+
+    SpritesheetData ParseConfig_Spritesheet(const std::string& config_filepath, int flags) {
+        using json = nlohmann::json;
+
+        SpritesheetData data = {};
+
+        //load the config and parse it as json file
+        json config = json::parse(ReadFile(config_filepath.c_str()));
+
+        try {
+            //get spritesheet texture path & load the texture
+            std::string texture_filepath = config.at("texture_filepath");
+            data.texture = std::make_shared<Texture>(texture_filepath, flags);
+
+            //iterate & parse 'sprites' array
+            auto& sprites_json = config.at("sprites");
+            for(auto& sprite_json : sprites_json) {
+                SpriteData spriteData = ParseConfig_Sprite(sprite_json);
+                data.sprites.insert({ spriteData.name, Sprite(data.texture, spriteData) });
+            }
+        }
+        catch(json::exception& e) {
+            ENG_LOG_WARN("Failed to parse '{}' config file - {}", config_filepath.c_str(), e.what());
+            throw e;
+        }
+
+        //extract spritesheet name (from configfile name)
+        data.name = GetFilename(config_filepath, true);
+
+        return data;
+    }
+
+    SpriteData ParseConfig_Sprite(const nlohmann::json& config) {
+        using json = nlohmann::json;
+
+        SpriteData data = {};
+
+        //parse name, size & offset fields
+        data.name = config.at("name");
+        data.size = eng::json::parse_ivec2(config.at("size"));
+        data.offset = eng::json::parse_ivec2(config.at("offset"));
+
+        //parse the array of control points ('pts')
+        if(config.count("pts")) {
+            auto& pts_json = config.at("pts");
+            for(auto& pt_json : pts_json) {
+                glm::ivec2 pt = eng::json::parse_ivec2(pt_json);
+                pt.y = data.size.y - pt.y;
+                data.pts.push_back(pt);
+            }
+        }
+        else {
+            //auto-generate 2 control points
+            data.pts.push_back(glm::ivec2(0, 0));
+            data.pts.push_back(glm::ivec2(data.size.x, data.size.y));
+        }
+
+        //parse frames data
+        if(config.count("frames")) {
+            auto& frames_json = config.at("frames");
+
+            if(frames_json.count("line_length")) data.frames.line_length   = frames_json.at("line_length");
+            if(frames_json.count("line_count"))  data.frames.line_count    = frames_json.at("line_count");
+            if(frames_json.count("start_frame")) data.frames.start_frame   = frames_json.at("start_frame");
+            if(frames_json.count("offset"))      data.frames.offset        = frames_json.at("offset");
+        }
+
+        return data;
     }
 
 }//namespace eng

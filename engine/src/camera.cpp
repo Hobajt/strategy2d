@@ -34,6 +34,9 @@ namespace eng {
         else if(zoom_log > CAM_ZOOM_LOG_RANGE) zoom_log = CAM_ZOOM_LOG_RANGE;
         zoom = std::pow(10, zoom_log);
         UpdateMultiplier();
+
+        if(checkForBounds)
+            BoundariesCheck();
     }
 
     void Camera::UpdateMultiplier() {
@@ -64,6 +67,10 @@ namespace eng {
             position = center_target;
         }
 
+        ImGui::Separator();
+        ImGui::Checkbox("boundaries", &checkForBounds);
+        ImGui::DragFloat2("bounds", (float*)&bounds);
+
         ImGui::End();
 #endif
     }
@@ -78,6 +85,28 @@ namespace eng {
         zoom_log = zoom_log_;
         zoom = std::pow(10, zoom_log);
         UpdateMultiplier();
+    }
+
+    void Camera::BoundariesCheck() {
+        glm::vec2 screen_half = 1.f / mult;
+        glm::vec2 b = bounds - screen_half - 0.5f;
+
+        glm::vec2 v = screen_half * 2.f;
+        if(v.x < bounds.x && v.y < bounds.y) {
+            if(position.x > b.x)
+                position.x = b.x;
+            else if (position.x < screen_half.x - 0.5f)
+                position.x = screen_half.x - 0.5f;
+
+            if(position.y > b.y)
+                position.y = b.y;
+            else if (position.y < screen_half.y - 0.5f)
+                position.y = screen_half.y - 0.5f;
+        }
+        else {
+            //zoomed too far out - entire bounding box visible (setting fixed position)
+            position = bounds * 0.5f - 0.5f;
+        }
     }
 
 }//namespace eng

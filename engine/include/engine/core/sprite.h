@@ -41,10 +41,10 @@ namespace eng {
         Sprite(const TextureRef& texture, const SpriteData& data);
 
         //Render sprite at given screen coords. frameIdx and orientation are horizontal and vertical indices into the sprite's frames.
-        void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0);
+        void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;
 
         //Alternate render call with additional options (modify color/use texture as alpha).
-        void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0);
+        void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;
 
         //Update texture coordinates. Call when spritesheet or sprite's offset/size changes.
         void RecomputeTexCoords();
@@ -60,7 +60,7 @@ namespace eng {
         void DBG_GUI();
     private:
         //To compute texture coordinates of selected frame of the sprite.
-        TexCoords TexOffset(const glm::ivec2& offset);
+        TexCoords TexOffset(const glm::ivec2& offset) const;
     private:
         SpriteData data;
         TextureRef texture = nullptr;
@@ -85,6 +85,7 @@ namespace eng {
     public:
         //Flags parameter is for the texture loading.
         Spritesheet(const SpritesheetData& data);
+        Spritesheet(const std::string& config_filepath, int flags = 0);
 
         Spritesheet() = default;
         ~Spritesheet();

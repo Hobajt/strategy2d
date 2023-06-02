@@ -36,14 +36,22 @@ namespace eng {
 
         void Zoom(float zoom_);
         void ZoomLog(float zoom_log_);
+
+        void EnableBoundaries(bool enabled) { checkForBounds = enabled; }
+        void SetBounds(const glm::vec2& bounds_) { bounds = bounds; }
     private:
         Camera() = default;
+
+        void BoundariesCheck();
     private:
         glm::vec2 position = glm::vec2(0.f);
         glm::vec2 mult = glm::vec2(1.f);
         
         float zoom = 1.f;
         float zoom_log = 0.f;
+
+        bool checkForBounds = true;
+        glm::vec2 bounds = glm::vec2(10.f);
     };
 
 }//namespace eng

@@ -8,6 +8,8 @@
 #include "engine/core/shader.h"
 #include "engine/core/sprite.h"
 
+#include "engine/game/map.h"
+
 //Basic resources manager. Nothing fancy, mostly for resource sharing and name2path translation.
 namespace eng::Resources {
 
@@ -29,8 +31,11 @@ namespace eng::Resources {
     FontRef LoadFont(const std::string& name);
     FontRef DefaultFont();
 
-    SpritesheetRef Spritesheet(const std::string& name);
+    SpritesheetRef LoadSpritesheet(const std::string& name);
     SpritesheetRef DefaultSpritesheet();
+
+    TilesetRef LoadTileset(const std::string& name);
+    TilesetRef DefaultTileset();
 
 }//namespace eng::Resources
 

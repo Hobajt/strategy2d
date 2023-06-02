@@ -16,13 +16,6 @@ private:
 private:
     eng::ShaderRef shader;
     eng::FontRef font;
-
-    eng::GUI::StyleRef guiStyle;
-
-    eng::GUI::ScrollText gui;
-    eng::GUI::TextLabel tstGui;
-    eng::TextureRef tex;
-
-    eng::SpriteGroup sg;
-    eng::SpritesheetRef spritesheet;
+    
+    eng::Map map;
 };

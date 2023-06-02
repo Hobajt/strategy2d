@@ -13,6 +13,9 @@ namespace eng::Resources {
         std::unordered_map<std::string, FontRef> fonts;
         std::unordered_map<std::string, ShaderRef> shaders;
         std::unordered_map<std::string, TextureRef> textures;
+
+        std::unordered_map<std::string, SpritesheetRef> spritesheets;
+        std::unordered_map<std::string, TilesetRef> tilesets;
     };
     static Data data = {};
 
@@ -83,14 +86,30 @@ namespace eng::Resources {
         return LoadFont("PermanentMarker-Regular.ttf");
     }
 
-    SpritesheetRef Spritesheet(const std::string& name) {
+    SpritesheetRef LoadSpritesheet(const std::string& name) {
+        //TODO:
         return nullptr;
     }
 
     SpritesheetRef DefaultSpritesheet() {
+        //TODO:
         return nullptr;
     }
 
+    TilesetRef LoadTileset(const std::string& name) {
+        if(!data.tilesets.count(name)) {
+            char buf[2048];
+            snprintf(buf, sizeof(buf), "res/json/tilemaps/%s.json", name.c_str());
+            std::string filepath = std::string(buf);
+
+            data.tilesets.insert({ name, std::make_shared<Tileset>(filepath) });
+        }
+        return data.tilesets.at(name);
+    }
+
+    TilesetRef DefaultTileset() {
+        return LoadTileset("summer");
+    }
 
     //============
 
