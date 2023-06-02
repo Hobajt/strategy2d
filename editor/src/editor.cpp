@@ -4,25 +4,18 @@ using namespace eng;
 
 Editor::Editor(int argc, char** argv) : App(1200, 900, "Editor") {}
 
-constexpr float fontScale = 0.055f;
-
 void Editor::OnResize(int width, int height) {
     LOG_INFO("Resize triggered ({}x{})", width, height);
-    font->Resize(fontScale * height);
 }
 
-
-//TODO: ???
-static std::string text = "";
-#define BUF_LEN (1 << 20)
-static char* buf = new char[BUF_LEN];
-
 void Editor::OnInit() {
+    infoMenu.SetLevelRef(&level);
+
     try {
         shader = std::make_shared<Shader>("res/shaders/test_shader");
         shader->InitTextureSlots(Renderer::TextureSlotsCount());
 
-        font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
+        Terrain_SetupNew();
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");
@@ -31,8 +24,6 @@ void Editor::OnInit() {
 
     btn_toggleFullscreen = InputButton(GLFW_KEY_T);
     btn_toggleGUI = InputButton(GLFW_KEY_P);
-
-    infoMenu.SetLevelRef(&level);
 }
 
 void Editor::OnUpdate() {
@@ -145,6 +136,13 @@ void Editor::Terrain_SetupNew() {
     //TODO:
 
     //init terrain based on values from FileMenu, reset the camera
+    TilesetRef tileset = fileMenu.tilesetName != nullptr ? Resources::LoadTileset(fileMenu.tilesetName) : Resources::DefaultTileset();
+    level = Level(fileMenu.terrainSize, tileset);
+
+    Camera& camera = Camera::Get();
+    camera.SetBounds(fileMenu.terrainSize);
+    camera.Position(glm::vec2(fileMenu.terrainSize) * 0.5f);
+    camera.ZoomToFit(glm::vec2(fileMenu.terrainSize) + 1.f);
 }
 
 int Editor::Terrain_Load() {
@@ -156,3 +154,5 @@ int Editor::Terrain_Save() {
     //TODO:
     return 1;
 }
+
+

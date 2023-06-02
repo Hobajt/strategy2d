@@ -2,6 +2,19 @@
 
 #include <engine/engine.h>
 
+#include <vector>
+#include <string>
+
+struct TilesetChoices {
+    std::vector<std::string> names;
+    std::vector<const char*> names_ptr;
+public:
+    const char* Default();
+    void ReloadTilesets();
+    void GUI_Combo(const char*& selection);
+};
+
+
 //===== FileMenu =====
 
 namespace FileMenuSignal { enum { QUIT=-1, NOTHING=0, NEW, LOAD, SAVE }; }
@@ -26,11 +39,13 @@ private:
 public:
     glm::ivec2 terrainSize;
     char* filepath;
+    const char* tilesetName = nullptr;
 private:
     int submenu = 0;
     bool err = false;
     std::string errMsg = "---";
 
+    TilesetChoices tilesets;
 };
 
 //===== ToolsMenu =====

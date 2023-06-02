@@ -37,8 +37,10 @@ namespace eng {
         void Zoom(float zoom_);
         void ZoomLog(float zoom_log_);
 
+        void ZoomToFit(const glm::vec2& bounds);
+
         void EnableBoundaries(bool enabled) { checkForBounds = enabled; }
-        void SetBounds(const glm::vec2& bounds_) { bounds = bounds; }
+        void SetBounds(const glm::vec2& bounds_) { bounds = bounds_; }
     private:
         Camera() = default;
 

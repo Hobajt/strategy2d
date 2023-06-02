@@ -16,7 +16,7 @@ namespace eng {
     // Level::Level(const Savefile& savefile) {}
 
     void Level::Render() {
-        
+        map.Render();
     }
 
 }//namespace eng

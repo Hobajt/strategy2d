@@ -19,7 +19,6 @@ private:
     int Terrain_Save();
 private:
     eng::ShaderRef shader;
-    eng::FontRef font;
 
     eng::InputButton btn_toggleFullscreen;
     eng::InputButton btn_toggleGUI;

@@ -1,15 +1,64 @@
 #include "menu.h"
 
 #include <nfd.h>
+#include <filesystem>
 
 using namespace eng;
 
 #define BUF_SIZE 1024
 
+const char* TilesetChoices::Default() {
+    for(size_t i = 0; i < names_ptr.size(); i++) {
+        if(strcmp(names_ptr[i], "summer") == 0)
+            return names_ptr[i];
+    }
+    return nullptr;
+}
+
+void TilesetChoices::ReloadTilesets() {
+    names_ptr.clear();
+    names.clear();
+
+    //iterate over tilesets directory & load the names of all JSON files
+    std::string dir_path = "res/json/tilemaps";
+    for(const auto& entry : std::filesystem::directory_iterator(dir_path)) {
+        if(entry.is_directory() || !entry.path().has_extension())
+            continue;
+        
+        if(entry.path().extension() == ".json") {
+            names.push_back(GetFilename(entry.path().string(), true));
+            // ENG_LOG_TRACE("TILESET: {}", names.back());
+        }
+    }
+
+    for(std::string& s : names)
+        names_ptr.push_back(s.c_str());
+}
+
+void TilesetChoices::GUI_Combo(const char*& selection) {
+    if (ImGui::BeginCombo("##combo", selection)) {
+        for(size_t i = 0; i < names_ptr.size(); i++) {
+            bool is_selected = selection == names_ptr[i];
+            if(ImGui::Selectable(names_ptr[i], is_selected)) {
+                selection = names_ptr[i];
+            }
+            if(is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("RELOAD")) {
+        ReloadTilesets();
+        selection = Default();
+    }
+}
+
 //===== FileMenu =====
 
 FileMenu::FileMenu() {
     filepath = new char[BUF_SIZE];
+    tilesets.ReloadTilesets();
     Reset();
 }
 
@@ -77,6 +126,7 @@ void FileMenu::Reset() {
     terrainSize = glm::ivec2(10, 10);
     errMsg = "---";
     err = false;
+    tilesetName = tilesets.Default();
 }
 
 void FileMenu::SignalError(const std::string& msg) {
@@ -91,6 +141,7 @@ int FileMenu::Submenu_New() {
         if(terrainSize.x < 1) terrainSize.x = 1;
         if(terrainSize.y < 1) terrainSize.y = 1;
     }
+    tilesets.GUI_Combo(tilesetName);
 
     if(ImGui::Button("Generate")) {
         return FileMenuSignal::NEW;

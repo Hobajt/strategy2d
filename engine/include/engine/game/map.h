@@ -9,25 +9,36 @@
 namespace eng {
 
     namespace TileType { 
-        enum { 
-            GROUND = 0, MUD, WATER, 
-            ROCK, ROCK_BROKEN, 
-            WALL_HU, WALL_HU_DAMAGED, 
-            WALL_OC, WALL_OC_DAMAGED, WALL_BROKEN, 
-            TREES, TREES_FELLED,
+        enum {
+            //traversable ground
+            GROUND = 0,
+            MUD,
+            WALL_BROKEN,
+            ROCK_BROKEN,
+            TREES_FELLED,
+
+            //water
+            WATER,
+
+            //obstacle tiles
+            ROCK,
+            WALL_HU,
+            WALL_HU_DAMAGED, 
+            WALL_OC,
+            WALL_OC_DAMAGED, 
+            TREES, 
+
             COUNT
         }; 
     }//namespace TileType
 
     struct TileData {
-        int type;
-        int variation;
-        glm::ivec2 idx;
+        int type;           //tile type identifier (enum value)
+        int variation;      //for visual modifications (if given tile type has any)
+        glm::ivec2 idx;     //index of visuals in tilemap sprite
     };
 
     //===== Tileset =====
-
-    
 
     class Tileset {
     public:
@@ -86,16 +97,15 @@ namespace eng {
         void RenderRange(int x, int y, int w, int h);
 
         void ChangeTileset(const TilesetRef& tilesetNew);
-
     private:
         int coord2idx(int y, int x) const { return y * size.x + x; }
 
         void Move(Map&&) noexcept;
         void Release() noexcept;
     private:
-        glm::ivec2 size;
-        TileData* tiles;
         TilesetRef tileset;
+        TileData* tiles;
+        glm::ivec2 size;
     };
 
 }//namespace eng

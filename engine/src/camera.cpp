@@ -87,6 +87,11 @@ namespace eng {
         UpdateMultiplier();
     }
 
+    void Camera::ZoomToFit(const glm::vec2& bounds) {
+        glm::vec2 v = 2.f / (bounds * Window::Get().Aspect());
+        Zoom(std::min(v.x, v.y));
+    }
+
     void Camera::BoundariesCheck() {
         glm::vec2 screen_half = 1.f / mult;
         glm::vec2 b = bounds - screen_half - 0.5f;

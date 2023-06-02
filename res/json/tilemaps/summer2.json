@@ -1,0 +1,25 @@
+{
+    "texture_filepath": "res/textures/tilesets/summer.png",
+    "tile_count": [19, 20],
+    "tile_size": [32, 32],
+    "offset": 1,
+    "tile_info": [
+        [5, 13],
+        [5, 10],
+        [5, 16],
+        
+        [14, 8],
+        [5, 8],
+
+        [16, 0],
+        [14, 2],
+
+        [15, 1],
+        [13, 3],
+
+        [12, 4],
+
+        [13, 5],
+        [12, 6]
+    ]
+}
