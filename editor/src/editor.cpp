@@ -133,16 +133,15 @@ void Editor::OnGUI() {
 */
 
 void Editor::Terrain_SetupNew() {
-    //TODO:
-
     //init terrain based on values from FileMenu, reset the camera
-    TilesetRef tileset = fileMenu.tilesetName != nullptr ? Resources::LoadTileset(fileMenu.tilesetName) : Resources::DefaultTileset();
-    level = Level(fileMenu.terrainSize, tileset);
+    level = Level(fileMenu.terrainSize, fileMenu.tileset.LoadTilesetOrDefault());
 
     Camera& camera = Camera::Get();
     camera.SetBounds(fileMenu.terrainSize);
     camera.Position(glm::vec2(fileMenu.terrainSize) * 0.5f);
     camera.ZoomToFit(glm::vec2(fileMenu.terrainSize) + 1.f);
+
+    infoMenu.NewLevelCreated();
 }
 
 int Editor::Terrain_Load() {

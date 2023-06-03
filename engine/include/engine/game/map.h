@@ -55,12 +55,14 @@ namespace eng {
         struct Data {
             Sprite tilemap;
             std::array<TileDescription, TileType::COUNT> tileDesc;
+            std::string name;
         };
     public:
         Tileset() = default;
         Tileset(const std::string& config_filepath, int flags = 0);
 
         const Sprite& Tilemap() const { return data.tilemap; }
+        std::string Name() const { return data.name; }
 
         //Updates tile.idx fields to use proper image for each tile (based on tile type & variations).
         void UpdateTileIndices(TileData* tiles, int count);
@@ -97,6 +99,8 @@ namespace eng {
         void RenderRange(int x, int y, int w, int h);
 
         void ChangeTileset(const TilesetRef& tilesetNew);
+
+        std::string GetTilesetName() const { return (tileset != nullptr) ? tileset->Name() : "none"; }
     private:
         int coord2idx(int y, int x) const { return y * size.x + x; }
 

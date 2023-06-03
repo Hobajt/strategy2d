@@ -7,9 +7,15 @@ using namespace eng;
 
 #define BUF_SIZE 1024
 
+TilesetChoices TilesetChoice::choices = {};
+
 const char* TilesetChoices::Default() {
+    return FindName("summer");
+}
+
+const char* TilesetChoices::FindName(const char* name) {
     for(size_t i = 0; i < names_ptr.size(); i++) {
-        if(strcmp(names_ptr[i], "summer") == 0)
+        if(strcmp(names_ptr[i], name) == 0)
             return names_ptr[i];
     }
     return nullptr;
@@ -35,12 +41,23 @@ void TilesetChoices::ReloadTilesets() {
         names_ptr.push_back(s.c_str());
 }
 
-void TilesetChoices::GUI_Combo(const char*& selection) {
+TilesetChoice::TilesetChoice() {
+    choices.ReloadTilesets();
+    selection = choices.Default();
+}
+
+void TilesetChoice::Reset() {
+    selection = choices.Default();
+}
+
+bool TilesetChoice::GUI_Combo() {
+    bool res = false;
     if (ImGui::BeginCombo("##combo", selection)) {
-        for(size_t i = 0; i < names_ptr.size(); i++) {
-            bool is_selected = selection == names_ptr[i];
-            if(ImGui::Selectable(names_ptr[i], is_selected)) {
-                selection = names_ptr[i];
+        for(size_t i = 0; i < choices.names_ptr.size(); i++) {
+            bool is_selected = selection == choices.names_ptr[i];
+            if(ImGui::Selectable(choices.names_ptr[i], is_selected)) {
+                selection = choices.names_ptr[i];
+                res = true;
             }
             if(is_selected)
                 ImGui::SetItemDefaultFocus();
@@ -49,16 +66,20 @@ void TilesetChoices::GUI_Combo(const char*& selection) {
     }
     ImGui::SameLine();
     if(ImGui::Button("RELOAD")) {
-        ReloadTilesets();
-        selection = Default();
+        choices.ReloadTilesets();
+        selection = choices.Default();
     }
+    return res;
+}
+
+eng::TilesetRef TilesetChoice::LoadTilesetOrDefault(bool forceReload) {
+    return (selection != nullptr) ? Resources::LoadTileset(selection, forceReload) : Resources::DefaultTileset();
 }
 
 //===== FileMenu =====
 
 FileMenu::FileMenu() {
     filepath = new char[BUF_SIZE];
-    tilesets.ReloadTilesets();
     Reset();
 }
 
@@ -126,7 +147,7 @@ void FileMenu::Reset() {
     terrainSize = glm::ivec2(10, 10);
     errMsg = "---";
     err = false;
-    tilesetName = tilesets.Default();
+    tileset.Reset();
 }
 
 void FileMenu::SignalError(const std::string& msg) {
@@ -141,7 +162,7 @@ int FileMenu::Submenu_New() {
         if(terrainSize.x < 1) terrainSize.x = 1;
         if(terrainSize.y < 1) terrainSize.y = 1;
     }
-    tilesets.GUI_Combo(tilesetName);
+    tileset.GUI_Combo();
 
     if(ImGui::Button("Generate")) {
         return FileMenuSignal::NEW;
@@ -241,9 +262,20 @@ void LevelInfoMenu::Update() {
 
     ImGui::Text("Level info");
     ImGui::InputText("Name", levelName, sizeof(char) * BUF_SIZE);
-    // glm::ivec2& size = level->map.tiles.size;
-    // ImGui::Text("Size: [%d x %d]", size.x, size.y);
+    glm::ivec2& size = level->MapSize();
+    ImGui::Text("Size: [%d x %d]", size.x, size.y);
+    ImGui::Separator();
+    ImGui::Text("Tileset");
+    if(tileset.GUI_Combo()) {
+        level->map.ChangeTileset(tileset.LoadTilesetOrDefault(tileset_forceReload));
+    }
+    ImGui::Checkbox("Forced reload", &tileset_forceReload);
+    ImGui::Separator();
 
     ImGui::End();
 #endif
+}
+
+void LevelInfoMenu::NewLevelCreated() {
+    tileset.selection = tileset.choices.FindName(level->map.GetTilesetName().c_str());
 }

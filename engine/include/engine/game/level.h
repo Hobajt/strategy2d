@@ -22,7 +22,9 @@ namespace eng {
 
         void Update();
         void Render();
-    private:
+
+        glm::ivec2 MapSize() const { return map.Size(); }
+    public:
         Map map;
         ObjectPool objects;
         std::vector<FactionControllerRef> factions;

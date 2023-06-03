@@ -27,6 +27,7 @@ namespace eng::Resources {
     ShaderRef LoadShader(const std::string& name, bool forceReload = false);
 
     TextureRef LoadTexture(const std::string& name, bool skipCache = false);
+    TextureRef LoadTexture(const std::string& name, const TextureParams& params, int flags, bool skipCache = false);
 
     FontRef LoadFont(const std::string& name);
     FontRef DefaultFont();
@@ -34,7 +35,7 @@ namespace eng::Resources {
     SpritesheetRef LoadSpritesheet(const std::string& name);
     SpritesheetRef DefaultSpritesheet();
 
-    TilesetRef LoadTileset(const std::string& name);
+    TilesetRef LoadTileset(const std::string& name, bool forceReload = false);
     TilesetRef DefaultTileset();
 
 }//namespace eng::Resources

@@ -115,6 +115,7 @@ namespace eng {
         using json = nlohmann::json;
 
         Tileset::Data data = {};
+        data.name = GetFilename(config_filepath, true);
 
         //load the config and parse it as json file
         json config = json::parse(ReadFile(config_filepath.c_str()));
@@ -123,11 +124,12 @@ namespace eng {
             //get texture path & load the texture
             std::string texture_filepath = config.at("texture_filepath");
             // TextureRef spritesheet = std::make_shared<Texture>(texture_filepath, flags);
-            TextureRef spritesheet = std::make_shared<Texture>(texture_filepath, TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE), flags);
+            // TextureRef spritesheet = std::make_shared<Texture>(texture_filepath, TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE), flags);
+            TextureRef spritesheet = Resources::LoadTexture(texture_filepath, TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE), flags);
 
             //parse other spritesheet data
             SpriteData spriteData = {};
-            spriteData.name = "tilemap_" + GetFilename(config_filepath, true);
+            spriteData.name = "tilemap_" + data.name;
 
             spriteData.size = eng::json::parse_ivec2(config.at("tile_size"));
             spriteData.offset = glm::ivec2(0);

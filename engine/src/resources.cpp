@@ -73,6 +73,18 @@ namespace eng::Resources {
         return data.textures.at(name);
     }
 
+    eng::TextureRef LoadTexture(const std::string& name, const TextureParams& params, int flags, bool skipCache) {
+        if(!data.textures.count(name)) {
+            std::string filepath = std::string("res/textures/") + name;
+            TextureRef tex = std::make_shared<Texture>(filepath, params, flags);
+            if(!skipCache)
+                data.textures.insert({ name, tex });
+            return tex;
+        }
+
+        return data.textures.at(name);
+    }
+
     eng::FontRef LoadFont(const std::string& name) {
         if(!data.fonts.count(name)) {
             std::string filepath = std::string("res/fonts/") + name;
@@ -96,8 +108,8 @@ namespace eng::Resources {
         return nullptr;
     }
 
-    TilesetRef LoadTileset(const std::string& name) {
-        if(!data.tilesets.count(name)) {
+    TilesetRef LoadTileset(const std::string& name, bool forceReload) {
+        if(!data.tilesets.count(name) || forceReload) {
             char buf[2048];
             snprintf(buf, sizeof(buf), "res/json/tilemaps/%s.json", name.c_str());
             std::string filepath = std::string(buf);
