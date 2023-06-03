@@ -41,6 +41,13 @@ namespace eng {
 
         void EnableBoundaries(bool enabled) { checkForBounds = enabled; }
         void SetBounds(const glm::vec2& bounds_) { bounds = bounds_; }
+
+        //Mapping from screen space to map coords. mousePos_n should be in NDC (<-1,1> range).
+        glm::vec2 GetMapCoords(const glm::vec2& mousePos_ndc) const;
+        glm::vec2 GetMapCoords(const glm::vec2& position, const glm::vec2& mousePos_ndc) const;
+
+        //Sets camera position based on offset of given position from the anchor. Anchor is in map coords.
+        void PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now);
     private:
         Camera() = default;
 

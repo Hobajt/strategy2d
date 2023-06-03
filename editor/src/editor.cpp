@@ -9,7 +9,9 @@ void Editor::OnResize(int width, int height) {
 }
 
 void Editor::OnInit() {
+    inputHandler.Init();
     infoMenu.SetLevelRef(&level);
+    Camera::Get().EnableBoundaries(false);
 
     try {
         shader = std::make_shared<Shader>("res/shaders/test_shader");
@@ -33,6 +35,7 @@ void Editor::OnUpdate() {
 
     input.Update();
     camera.Update();
+    inputHandler.Update();
 
     Renderer::StatsReset();
 
@@ -68,43 +71,101 @@ void Editor::OnGUI() {
         ImGui::End();
 
         infoMenu.Update();
+        RenderHotkeysTab();
+        FileMenu_Update();
 
-        //==== file menu update & callbacks (new/load/save map) ====
-        switch(fileMenu.Update()) {
-            case FileMenuSignal::NEW:
-                Terrain_SetupNew();
-                break;
-            case FileMenuSignal::LOAD:
-            {
-                int res = Terrain_Load();
-                if(res == 0)
-                    fileMenu.Reset();
-                else
-                    fileMenu.SignalError("File not found.");
-                break;
-            }
-            case FileMenuSignal::SAVE:
-            {
-                int res = Terrain_Save();
-                if(res == 0)
-                    fileMenu.Reset();
-                else
-                    fileMenu.SignalError("No clue.");
-                break;
-            }
-            case FileMenuSignal::QUIT:
-                Window::Get().Close();
-                break;
-        }
-
-
+        //TODO: move to custom classes & use macros from menu.cpp for naming
+        ImGui::Begin("Techtree"); ImGui::End();
+        ImGui::Begin("Diplomacy"); ImGui::End();
+        ImGui::Begin("Tools"); ImGui::End();
     }
 #endif
 }
 
-/*NOTES:
-    - TODO: add menu tab with map settings - default tileset, max number of players, etc.
+void Editor::FileMenu_Update() {
+    switch(fileMenu.Update()) {
+        case FileMenuSignal::NEW:
+            Terrain_SetupNew();
+            break;
+        case FileMenuSignal::LOAD:
+        {
+            int res = Terrain_Load();
+            if(res == 0)
+                fileMenu.Reset();
+            else
+                fileMenu.SignalError("File not found.");
+            break;
+        }
+        case FileMenuSignal::SAVE:
+        {
+            int res = Terrain_Save();
+            if(res == 0)
+                fileMenu.Reset();
+            else
+                fileMenu.SignalError("No clue.");
+            break;
+        }
+        case FileMenuSignal::QUIT:
+            Window::Get().Close();
+            break;
+    }
+}
 
+//TODO: render starting locations
+//TODO: add starting locations overlap checks (or solve in some other way)
+//TODO: savefile impl
+
+//TODO: as many things to be controlled through hotkeys
+
+/* HOTKEYS:
+    ESC   - selection tool
+    WASD  - camera movement (also through alt + LMB drag)
+    scroll - zoom
+    1     - painting tool
+    2     - obj placement tool
+    3     - techtree tab
+    4     - diplomacy tab
+    5     - level info tab
+    6     - file tab
+    ?     - help tab (hotkeys) - toggle (2nd press returns to previous tab)
+
+    auto switch to selection tool when switching to different tabs
+
+    TODO: will have to disable hotkeys whenever there's a text input (map name for example)
+*/
+
+
+
+/*What to save:
+    - map info
+    - max players/starting locations
+    - techree
+    - faction objects
+*/
+
+/*EDITOR TOOLSET & CAPABILITIES:
+    - undo/redo capability - will need struct to describe operations & keep em in a stack
+        - probably just track tile painting & object placements (no need to track techtree changes for example)
+
+    - tile painting tool
+        - changes tile types
+        - option to change brush size (and maybe shape as well)
+        - option to randomize tile variations while painting (checkbox)
+        - highlight brush boundaries when hovering over the map
+    - techtree editor
+        - purely in GUI, to modify techtree struct of each faction (probably just checkboxes)
+        - faction count == max players?
+    - starting location movement
+        - either as separate tool or add buttons next to the location print in GUI
+    - object placement/erase tool
+    - diplomacy tab
+    - general selection tool
+        - on click selection
+        - select tile -> shows tile info (type & variation) + options to change it
+        - select object -> show it's info (stats, if resource then amount left, etc.)
+*/
+
+/*NOTES:
     - would like to be able to create maps even for campaigns here
 
     - what will the map file contain:
@@ -138,7 +199,7 @@ void Editor::Terrain_SetupNew() {
 
     Camera& camera = Camera::Get();
     camera.SetBounds(fileMenu.terrainSize);
-    camera.Position(glm::vec2(fileMenu.terrainSize) * 0.5f);
+    camera.Position(glm::vec2(fileMenu.terrainSize) * 0.5f - 0.5f);
     camera.ZoomToFit(glm::vec2(fileMenu.terrainSize) + 1.f);
 
     infoMenu.NewLevelCreated();
@@ -153,5 +214,4 @@ int Editor::Terrain_Save() {
     //TODO:
     return 1;
 }
-
 

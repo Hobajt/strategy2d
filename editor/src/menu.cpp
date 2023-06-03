@@ -7,6 +7,16 @@ using namespace eng;
 
 #define BUF_SIZE 1024
 
+#define MIN_PLAYERS_LIMIT 2
+#define MAX_PLAYERS_LIMIT 8
+
+#define TABNAME_FILE            "File"
+#define TABNAME_LEVELINFO       "Level Info"
+#define TABNAME_TECHTREE        "Techtree"
+#define TABNAME_DIPLOMACY       "Diplomacy"
+#define TABNAME_TOOL            "Tools"
+#define TABNAME_HOTKEYS         "Hotkeys"
+
 TilesetChoices TilesetChoice::choices = {};
 
 const char* TilesetChoices::Default() {
@@ -90,7 +100,7 @@ FileMenu::~FileMenu() {
 int FileMenu::Update() {
     int signal = FileMenuSignal::NOTHING;
 #ifdef ENGINE_ENABLE_GUI
-    ImGui::Begin("File");
+    ImGui::Begin(TABNAME_FILE);
 
     if(ImGui::Button("New", ImVec2(ImGui::GetWindowSize().x * 0.3f, 0.f))) {
         submenu = (submenu != 1) ? 1 : 0;
@@ -247,6 +257,11 @@ void FileMenu::FileDialog() {
 LevelInfoMenu::LevelInfoMenu() {
     levelName = new char[BUF_SIZE];
     snprintf(levelName, sizeof(char) * BUF_SIZE, "%s", "unnamed_level");
+
+    maxPlayers = 2;
+    for(int i = 0; i < 8; i++) {
+        startingLocations.push_back(glm::ivec2(i, 0));
+    }
 }
 
 LevelInfoMenu::~LevelInfoMenu() {
@@ -255,7 +270,7 @@ LevelInfoMenu::~LevelInfoMenu() {
 
 void LevelInfoMenu::Update() {
 #ifdef ENGINE_ENABLE_GUI
-    ImGui::Begin("Level Info");
+    ImGui::Begin(TABNAME_LEVELINFO);
 
     if(level == nullptr)
         return;
@@ -271,6 +286,33 @@ void LevelInfoMenu::Update() {
     }
     ImGui::Checkbox("Forced reload", &tileset_forceReload);
     ImGui::Separator();
+    ImGui::Text("Player count & starting locations");
+    if(ImGui::SliderInt("Max players", &maxPlayers, MIN_PLAYERS_LIMIT, MAX_PLAYERS_LIMIT)) {
+        if(maxPlayers < MIN_PLAYERS_LIMIT) maxPlayers = MIN_PLAYERS_LIMIT;
+        else if(maxPlayers > MAX_PLAYERS_LIMIT) maxPlayers = MAX_PLAYERS_LIMIT;
+    }
+    if(ImGui::CollapsingHeader("Starting locations")) {
+        ImGui::PushID(&startingLocations);
+        for(int i = 0; i < maxPlayers; i++) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "player[%d]", i);
+            if(ImGui::DragInt2(buf, (int*)&startingLocations[i])) {
+                if(startingLocations[i].x < 0)
+                    startingLocations[i].x = 0;
+                else if(startingLocations[i].x >= level->map.Width())
+                    startingLocations[i].x = level->map.Width()-1;
+
+                if(startingLocations[i].y < 0)
+                    startingLocations[i].y = 0;
+                else if(startingLocations[i].y >= level->map.Height())
+                    startingLocations[i].y = level->map.Height()-1;
+
+                //TODO: add starting location overlap checks
+            }
+        }
+        ImGui::PopID();
+    }
+    ImGui::Checkbox("Render locations", &renderStartingLocations);
 
     ImGui::End();
 #endif
@@ -278,4 +320,115 @@ void LevelInfoMenu::Update() {
 
 void LevelInfoMenu::NewLevelCreated() {
     tileset.selection = tileset.choices.FindName(level->map.GetTilesetName().c_str());
+}
+
+//===== InputHandler =====
+
+void InputHandler::Init() {
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* userData) {
+        static_cast<InputHandler*>(userData)->InputCallback(keycode, modifiers);
+    }, true, this);
+}
+
+void InputHandler::InputCallback(int keycode, int modifiers) {
+    if(suppressed)
+        return;
+
+    switch(keycode) {
+        case GLFW_KEY_ESCAPE:
+            ENG_LOG_TRACE("SELECTION TOOL");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
+            tool = ToolName::SELECT;
+            break;
+        case GLFW_KEY_1:        //painting tool
+            ENG_LOG_TRACE("PAINTING TOOL");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
+            tool = ToolName::TILE_PAINT;
+            break;
+        case GLFW_KEY_2:        //object placement tool
+            ENG_LOG_TRACE("OBJECT PLACEMENT TOOL");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
+            tool = ToolName::OBJECT_PLACEMENT;
+            break;
+        case GLFW_KEY_3:        //techtree tab
+            ENG_LOG_TRACE("TECHTREE TAB");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TECHTREE));
+            tool = ToolName::SELECT;
+            break;
+        case GLFW_KEY_4:        //diplomacy tab
+            ENG_LOG_TRACE("DIPLOMACY TAB");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_DIPLOMACY));
+            tool = ToolName::SELECT;
+            break;
+        case GLFW_KEY_5:        //level info tab
+            ENG_LOG_TRACE("LEVEL INFO TAB");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_LEVELINFO));
+            tool = ToolName::SELECT;
+            break;
+        case GLFW_KEY_6:        //file tab
+            ENG_LOG_TRACE("FILE TAB");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_FILE));
+            tool = ToolName::SELECT;
+            break;
+        case GLFW_KEY_H:        //hotkeys tab
+            ENG_LOG_TRACE("HOTKEYS TAB");
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_HOTKEYS));
+            tool = ToolName::SELECT;
+            break;
+    }
+}
+
+void InputHandler::Update() {
+    Input& input = Input::Get();
+    Camera& camera = Camera::Get();
+
+    switch(input.lmb.state) {
+        case 1:     //down
+            //alt - switch between camera & tool control
+            lmb_alt = input.alt;
+            //track starting click pos for camera movement
+            lmb_startingPos = camera.Position();
+            lmb_startingMousePos = input.mousePos_n * 2.f - 1.f;
+        case 2:     //pressed
+            if(lmb_alt) {
+                camera.PositionFromMouse(lmb_startingPos, lmb_startingMousePos, input.mousePos_n * 2.f - 1.f);
+            }
+            else {
+                ENG_LOG_INFO("LMB - TOOL CONTROL");
+                // currentTool->OnLMB(input.lmb.state, lmb_startingPos);
+                //TODO: current tool LMB dispatch
+            }
+            break;
+        case -1:    //up
+        case 0:     //released
+            lmb_alt = false;
+            break;
+    }
+}
+
+void RenderHotkeysTab() {
+#ifdef ENGINE_ENABLE_GUI
+    ImGui::Begin(TABNAME_HOTKEYS);
+    float f = 0.1f * ImGui::GetWindowSize().x;
+
+    ImGui::Text("1 - tile painting tool");
+    ImGui::Text("2 - object placement tool");
+    ImGui::Text("3 - techtree tab");
+    ImGui::Text("4 - diplomacy tab");
+    ImGui::Text("5 - level info tab");
+    ImGui::Text("6 - file tab");
+    ImGui::Text("h - hotkeys hint (this tab)");
+    ImGui::Separator();
+
+    ImGui::Text("ESC - selection tool");
+    ImGui::Text("camera movement");
+    ImGui::Indent(f);
+    ImGui::Text("- WASD");
+    ImGui::Text("- alt + LMB drag");
+    ImGui::Unindent(f);
+    ImGui::Text("scroll - zoom");
+    ImGui::Text("ctrl + scroll - brush size");
+
+    ImGui::End();
+#endif
 }

@@ -48,3 +48,9 @@
     #define ASSERT(x)
     #define ASSERT_MSG(x, ...)
 #endif
+
+#ifdef ENGINE_ENABLE_GUI
+#   define ENGINE_IF_GUI(...) __VA_ARGS__
+#else
+#   define ENGINE_IF_GUI(...)
+#endif

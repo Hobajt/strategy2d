@@ -25,6 +25,7 @@ public:
     eng::TilesetRef LoadTilesetOrDefault(bool forceReload = false);
 };
 
+void RenderHotkeysTab();
 
 //===== FileMenu =====
 
@@ -58,12 +59,6 @@ private:
     std::string errMsg = "---";
 };
 
-//===== ToolsMenu =====
-
-class ToolsMenu {
-
-};
-
 //===== LevelInfoMenu =====
 
 //Menu to display/modify general level info - tileset, number of players
@@ -83,4 +78,28 @@ private:
 
     TilesetChoice tileset;
     bool tileset_forceReload = false;
+
+    int maxPlayers = 2;
+    std::vector<glm::ivec2> startingLocations;
+    bool renderStartingLocations = true;
+};
+
+//===== InputHandler =====
+
+namespace ToolName { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT }; }
+
+class InputHandler {
+public:
+    void Init();
+
+    void Update();
+
+    void InputCallback(int keycode, int modifiers);
+private:
+    bool suppressed = false;
+    int tool = ToolName::SELECT;
+
+    bool lmb_alt = false;
+    glm::vec2 lmb_startingPos;
+    glm::vec2 lmb_startingMousePos;
 };

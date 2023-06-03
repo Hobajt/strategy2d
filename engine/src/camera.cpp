@@ -92,6 +92,19 @@ namespace eng {
         Zoom(std::min(v.x, v.y));
     }
 
+    glm::vec2 Camera::GetMapCoords(const glm::vec2& mousePos_ndc) const {
+        return GetMapCoords(position, mousePos_ndc);
+    }
+
+    glm::vec2 Camera::GetMapCoords(const glm::vec2& position, const glm::vec2& mousePos_ndc) const {
+        glm::vec2 n = glm::vec2(mousePos_ndc.x, -mousePos_ndc.y);
+        return position + n / mult;
+    }
+
+    void Camera::PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now) {
+        position = GetMapCoords(anchor, mousePos_start - mousePos_now);
+    }
+
     void Camera::BoundariesCheck() {
         glm::vec2 screen_half = 1.f / mult;
         glm::vec2 b = bounds - screen_half - 0.5f;

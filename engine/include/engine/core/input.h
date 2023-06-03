@@ -56,7 +56,7 @@ namespace eng {
 
         void Update();
 
-        //Changes FPS update interval (value represents number of frames, not time).
+        //Changes FPS measurement interval (value represents number of frames, not time).
         void SetFPSInterval(int frameInterval);
 
         //Registers new callback for provided key presses.

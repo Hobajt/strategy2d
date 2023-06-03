@@ -17,6 +17,8 @@ private:
     void Terrain_SetupNew();
     int Terrain_Load();
     int Terrain_Save();
+
+    void FileMenu_Update();
 private:
     eng::ShaderRef shader;
 
@@ -29,4 +31,6 @@ private:
     LevelInfoMenu infoMenu;
 
     eng::Level level;
+
+    InputHandler inputHandler;
 };
