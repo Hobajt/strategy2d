@@ -9,7 +9,7 @@ void Editor::OnResize(int width, int height) {
 }
 
 void Editor::OnInit() {
-    inputHandler.Init();
+    inputHandler.Init(toolsMenu);
     infoMenu.SetLevelRef(&level);
     Camera::Get().EnableBoundaries(false);
 
@@ -71,13 +71,13 @@ void Editor::OnGUI() {
         ImGui::End();
 
         infoMenu.Update();
+        toolsMenu.Update();
         RenderHotkeysTab();
         FileMenu_Update();
 
         //TODO: move to custom classes & use macros from menu.cpp for naming
         ImGui::Begin("Techtree"); ImGui::End();
         ImGui::Begin("Diplomacy"); ImGui::End();
-        ImGui::Begin("Tools"); ImGui::End();
     }
 #endif
 }
@@ -116,25 +116,6 @@ void Editor::FileMenu_Update() {
 //TODO: savefile impl
 
 //TODO: as many things to be controlled through hotkeys
-
-/* HOTKEYS:
-    ESC   - selection tool
-    WASD  - camera movement (also through alt + LMB drag)
-    scroll - zoom
-    1     - painting tool
-    2     - obj placement tool
-    3     - techtree tab
-    4     - diplomacy tab
-    5     - level info tab
-    6     - file tab
-    ?     - help tab (hotkeys) - toggle (2nd press returns to previous tab)
-
-    auto switch to selection tool when switching to different tabs
-
-    TODO: will have to disable hotkeys whenever there's a text input (map name for example)
-*/
-
-
 
 /*What to save:
     - map info

@@ -28,9 +28,10 @@ private:
     bool guiEnabled = true;
 
     FileMenu fileMenu;
+    ToolsMenu toolsMenu;
     LevelInfoMenu infoMenu;
+    InputHandler inputHandler;
 
     eng::Level level;
 
-    InputHandler inputHandler;
 };

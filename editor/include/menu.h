@@ -84,22 +84,68 @@ private:
     bool renderStartingLocations = true;
 };
 
-//===== InputHandler =====
+//===== EditorTool =====
+
+class EditorTool {
+public:
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) = 0;
+    virtual void Update() = 0;
+};
+
+class PaintingTool : public EditorTool {
+public:
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void Update() override;
+};
+
+class SelectionTool : public EditorTool {
+public:
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void Update() override;
+};
+
+class ObjectPlacementTool : public EditorTool {
+public:
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void Update() override;
+};
 
 namespace ToolName { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT }; }
 
+struct EditorTools {
+    PaintingTool painting;
+    SelectionTool selection;
+    ObjectPlacementTool placement;
+
+    EditorTool* currentTool = nullptr;
+    int toolName = ToolName::SELECT;
+};
+
+//===== ToolsMenu =====
+
+class ToolsMenu {
+public:
+    void Update();
+public:
+    EditorTools tools;
+};
+
+//===== InputHandler =====
+
 class InputHandler {
 public:
-    void Init();
+    void Init(ToolsMenu& toolsMenu);
 
     void Update();
 
     void InputCallback(int keycode, int modifiers);
 private:
     bool suppressed = false;
-    int tool = ToolName::SELECT;
 
     bool lmb_alt = false;
     glm::vec2 lmb_startingPos;
     glm::vec2 lmb_startingMousePos;
+
+    EditorTools* tools = nullptr;
 };
+

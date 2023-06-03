@@ -322,12 +322,56 @@ void LevelInfoMenu::NewLevelCreated() {
     tileset.selection = tileset.choices.FindName(level->map.GetTilesetName().c_str());
 }
 
+//===== EditorTool =====
+
+void SelectionTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
+    ENG_LOG_INFO("SelectionTool::OnLMB");
+}
+
+void SelectionTool::Update() {
+    ImGui::Text("Selection Tool");
+    ImGui::Separator();
+}
+
+void PaintingTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
+    ENG_LOG_INFO("PaintingTool::OnLMB");
+}
+
+void PaintingTool::Update() {
+    ImGui::Text("Tile Painting Tool");
+    ImGui::Separator();
+}
+
+void ObjectPlacementTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
+    ENG_LOG_INFO("ObjectPlacementTool::OnLMB");
+}
+
+void ObjectPlacementTool::Update() {
+    ImGui::Text("Object Placement Tool");
+    ImGui::Separator();
+}
+
+//===== ToolsMenu =====
+
+void ToolsMenu::Update() {
+    ImGui::Begin(TABNAME_TOOL);
+
+    if(tools.currentTool != nullptr) {
+        tools.currentTool->Update();
+    }
+
+    ImGui::End();
+}
+
 //===== InputHandler =====
 
-void InputHandler::Init() {
+void InputHandler::Init(ToolsMenu& toolsMenu) {
     Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* userData) {
         static_cast<InputHandler*>(userData)->InputCallback(keycode, modifiers);
     }, true, this);
+
+    tools = &toolsMenu.tools;
+    InputCallback(GLFW_KEY_ESCAPE, 0);
 }
 
 void InputHandler::InputCallback(int keycode, int modifiers) {
@@ -338,42 +382,50 @@ void InputHandler::InputCallback(int keycode, int modifiers) {
         case GLFW_KEY_ESCAPE:
             ENG_LOG_TRACE("SELECTION TOOL");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
         case GLFW_KEY_1:        //painting tool
             ENG_LOG_TRACE("PAINTING TOOL");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
-            tool = ToolName::TILE_PAINT;
+            tools->currentTool = &tools->painting;
+            tools->toolName = ToolName::TILE_PAINT;
             break;
         case GLFW_KEY_2:        //object placement tool
             ENG_LOG_TRACE("OBJECT PLACEMENT TOOL");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TOOL));
-            tool = ToolName::OBJECT_PLACEMENT;
+            tools->currentTool = &tools->placement;
+            tools->toolName = ToolName::OBJECT_PLACEMENT;
             break;
         case GLFW_KEY_3:        //techtree tab
             ENG_LOG_TRACE("TECHTREE TAB");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_TECHTREE));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
         case GLFW_KEY_4:        //diplomacy tab
             ENG_LOG_TRACE("DIPLOMACY TAB");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_DIPLOMACY));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
         case GLFW_KEY_5:        //level info tab
             ENG_LOG_TRACE("LEVEL INFO TAB");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_LEVELINFO));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
         case GLFW_KEY_6:        //file tab
             ENG_LOG_TRACE("FILE TAB");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_FILE));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
         case GLFW_KEY_H:        //hotkeys tab
             ENG_LOG_TRACE("HOTKEYS TAB");
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TABNAME_HOTKEYS));
-            tool = ToolName::SELECT;
+            tools->currentTool = &tools->selection;
+            tools->toolName = ToolName::SELECT;
             break;
     }
 }
@@ -393,10 +445,8 @@ void InputHandler::Update() {
             if(lmb_alt) {
                 camera.PositionFromMouse(lmb_startingPos, lmb_startingMousePos, input.mousePos_n * 2.f - 1.f);
             }
-            else {
-                ENG_LOG_INFO("LMB - TOOL CONTROL");
-                // currentTool->OnLMB(input.lmb.state, lmb_startingPos);
-                //TODO: current tool LMB dispatch
+            else if(tools->currentTool != nullptr) {
+                tools->currentTool->OnLMB(input.lmb.state, lmb_startingPos);
             }
             break;
         case -1:    //up
