@@ -83,7 +83,7 @@ namespace eng {
         for(int y = 0; y < size.y; y++) {
             for(int x = 0; x < size.x; x++) {
                 int i = coord2idx(y, x);
-                glm::vec3 pos = glm::vec3((glm::vec2(x, y) - 0.5f - cam.Position()) * cam.Mult(), 0.f);
+                glm::vec3 pos = glm::vec3(cam.map2screen(glm::vec2(x, y)), 0.f);
                 tileset->Tilemap().Render(glm::uvec4(0), pos, cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
             }
         }

@@ -20,6 +20,9 @@ namespace eng {
         //Camera update method. Relies on values from Input class.
         void Update();
 
+        //Update zoom based on scroll input.
+        void ZoomUpdate(bool forced = false);
+
         void UpdateMultiplier();
         void UpdateMultiplier(const glm::vec2& aspect);
 
@@ -46,6 +49,8 @@ namespace eng {
         glm::vec2 GetMapCoords(const glm::vec2& mousePos_ndc) const;
         glm::vec2 GetMapCoords(const glm::vec2& position, const glm::vec2& mousePos_ndc) const;
 
+        glm::vec2 map2screen(const glm::vec2& pos_map) const;
+
         //Sets camera position based on offset of given position from the anchor. Anchor is in map coords.
         void PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now);
     private:
@@ -58,6 +63,7 @@ namespace eng {
         
         float zoom = 1.f;
         float zoom_log = 0.f;
+        bool enableZoomUpdates = false;
 
         bool checkForBounds = true;
         glm::vec2 bounds = glm::vec2(10.f);

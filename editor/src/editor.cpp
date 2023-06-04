@@ -10,6 +10,7 @@ void Editor::OnResize(int width, int height) {
 
 void Editor::OnInit() {
     inputHandler.Init(toolsMenu);
+    toolsMenu.Init(level);
     infoMenu.SetLevelRef(&level);
     Camera::Get().EnableBoundaries(false);
 
@@ -35,7 +36,6 @@ void Editor::OnUpdate() {
 
     input.Update();
     camera.Update();
-    inputHandler.Update();
 
     Renderer::StatsReset();
 
@@ -54,6 +54,7 @@ void Editor::OnUpdate() {
     }
 
     Renderer::Begin(shader, true);
+    inputHandler.Update();
     level.Render();
     Renderer::End();
 }
@@ -110,6 +111,13 @@ void Editor::FileMenu_Update() {
             break;
     }
 }
+
+/*TODO: tile painting tool progress
+    - add onHover() callback to all tools from InputHandler - for brush highlights
+    - figure out how should the tool interact with respect to inputs (when to update the tile, etc)
+    - implement tileset transitions
+    - tool GUI - tile type selection, variations logic
+*/
 
 //TODO: render starting locations
 //TODO: add starting locations overlap checks (or solve in some other way)

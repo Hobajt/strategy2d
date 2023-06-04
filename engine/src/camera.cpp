@@ -29,14 +29,23 @@ namespace eng {
 
         position += (input.move1 * input.deltaTime * CAM_MOVE_SPEED) / zoom;
 
-        zoom_log += input.scroll.y * input.deltaTime * 10.f;
-        if(zoom_log < -CAM_ZOOM_LOG_RANGE) zoom_log = -CAM_ZOOM_LOG_RANGE;
-        else if(zoom_log > CAM_ZOOM_LOG_RANGE) zoom_log = CAM_ZOOM_LOG_RANGE;
-        zoom = std::pow(10, zoom_log);
-        UpdateMultiplier();
+        ZoomUpdate();
 
         if(checkForBounds)
             BoundariesCheck();
+    }
+
+    void Camera::ZoomUpdate(bool forced) {
+        Input& input = Input::Get();
+
+        if(enableZoomUpdates || forced) {
+            zoom_log += input.scroll.y * input.deltaTime * 10.f;
+            if(zoom_log < -CAM_ZOOM_LOG_RANGE) zoom_log = -CAM_ZOOM_LOG_RANGE;
+            else if(zoom_log > CAM_ZOOM_LOG_RANGE) zoom_log = CAM_ZOOM_LOG_RANGE;
+            zoom = std::pow(10, zoom_log);
+        }
+
+        UpdateMultiplier();
     }
 
     void Camera::UpdateMultiplier() {
@@ -58,6 +67,7 @@ namespace eng {
             Zoom(zoom);
         }
         ImGui::SliderFloat("zoom_log", &zoom_log, -CAM_ZOOM_LOG_RANGE, CAM_ZOOM_LOG_RANGE, "%.4f");
+        ImGui::Checkbox("scroll to zoom", &enableZoomUpdates);
 
         ImGui::Separator();
         static glm::vec2 center_target = glm::vec2(0.f);
@@ -99,6 +109,10 @@ namespace eng {
     glm::vec2 Camera::GetMapCoords(const glm::vec2& position, const glm::vec2& mousePos_ndc) const {
         glm::vec2 n = glm::vec2(mousePos_ndc.x, -mousePos_ndc.y);
         return position + n / mult;
+    }
+
+    glm::vec2 Camera::map2screen(const glm::vec2& pos_map) const {
+        return (pos_map - 0.5f - position) * mult;
     }
 
     void Camera::PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now) {

@@ -88,26 +88,44 @@ private:
 
 class EditorTool {
 public:
-    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) = 0;
     virtual void Update() = 0;
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) = 0;
+    virtual void OnHover() = 0;
+
+    virtual void SignalUp() {}
+    virtual void SignalDown() {}
+public:
+    eng::Level* level = nullptr;
 };
 
 class PaintingTool : public EditorTool {
 public:
-    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
     virtual void Update() override;
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void OnHover() override;
+
+    virtual void SignalUp() override;
+    virtual void SignalDown() override;
+private:
+    void UpdateBrushSize(int newSize);
+private:
+    int brushSize = 1;
+    int bl = 0;
+    int br = 1;
 };
 
 class SelectionTool : public EditorTool {
 public:
-    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
     virtual void Update() override;
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void OnHover() override;
 };
 
 class ObjectPlacementTool : public EditorTool {
 public:
-    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
     virtual void Update() override;
+    virtual void OnLMB(int lmbState, const glm::vec2& lmb_startPos) override;
+    virtual void OnHover() override;
 };
 
 namespace ToolName { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT }; }
@@ -125,6 +143,8 @@ struct EditorTools {
 
 class ToolsMenu {
 public:
+    void Init(eng::Level& level);
+
     void Update();
 public:
     EditorTools tools;

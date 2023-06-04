@@ -328,6 +328,8 @@ void SelectionTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
     ENG_LOG_INFO("SelectionTool::OnLMB");
 }
 
+void SelectionTool::OnHover() {}
+
 void SelectionTool::Update() {
     ImGui::Text("Selection Tool");
     ImGui::Separator();
@@ -337,14 +339,58 @@ void PaintingTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
     ENG_LOG_INFO("PaintingTool::OnLMB");
 }
 
+void PaintingTool::OnHover() {
+    Camera& cam = Camera::Get();
+    glm::ivec2 ms = level->map.Size();
+
+    //hovering tile map coord
+    glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
+
+    //highlight corners
+    int xm = std::max(0, coord.x-bl);
+    int xM = std::min(coord.x+br, ms.x);
+    int ym = std::max(0, coord.y-bl);
+    int yM = std::min(coord.y+br, ms.y);
+
+    float width = 0.1f;
+    float zIdx = -0.1f;
+    glm::vec4 clr = glm::vec4(1.f, 0.f, 0.f, 1.f);
+    
+    //render quads as highlight borders
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, ym)), zIdx), glm::vec2(xM - xm + width, width) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, yM)), zIdx), glm::vec2(xM - xm + width, width) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, ym)), zIdx), glm::vec2(width, yM - ym) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xM, ym)), zIdx), glm::vec2(width, yM - ym) * cam.Mult(), clr));
+}
+
+void PaintingTool::SignalUp() {
+    UpdateBrushSize(brushSize+1);
+}
+
+void PaintingTool::SignalDown() {
+    UpdateBrushSize(brushSize-1);
+}
+
 void PaintingTool::Update() {
     ImGui::Text("Tile Painting Tool");
     ImGui::Separator();
+    if(ImGui::DragInt("Brush size", &brushSize)) {
+        UpdateBrushSize(brushSize);
+    }
+}
+
+void PaintingTool::UpdateBrushSize(int newSize) {
+    brushSize = newSize;
+    if(brushSize < 1) brushSize = 1;
+    br = (brushSize+1) / 2;
+    bl = brushSize - br;
 }
 
 void ObjectPlacementTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
     ENG_LOG_INFO("ObjectPlacementTool::OnLMB");
 }
+
+void ObjectPlacementTool::OnHover() {}
 
 void ObjectPlacementTool::Update() {
     ImGui::Text("Object Placement Tool");
@@ -352,6 +398,12 @@ void ObjectPlacementTool::Update() {
 }
 
 //===== ToolsMenu =====
+
+void ToolsMenu::Init(Level& level) {
+    tools.painting.level = &level;
+    tools.placement.level = &level;
+    tools.selection.level = &level;
+}
 
 void ToolsMenu::Update() {
     ImGui::Begin(TABNAME_TOOL);
@@ -427,6 +479,14 @@ void InputHandler::InputCallback(int keycode, int modifiers) {
             tools->currentTool = &tools->selection;
             tools->toolName = ToolName::SELECT;
             break;
+        case GLFW_KEY_KP_ADD:
+            if(tools->currentTool != nullptr)
+                tools->currentTool->SignalUp();
+            break;
+        case GLFW_KEY_KP_SUBTRACT:
+            if(tools->currentTool != nullptr)
+                tools->currentTool->SignalDown();
+            break;
     }
 }
 
@@ -452,7 +512,22 @@ void InputHandler::Update() {
         case -1:    //up
         case 0:     //released
             lmb_alt = false;
+            if(tools->currentTool != nullptr) {
+                tools->currentTool->OnHover();
+            }
             break;
+    }
+
+    if(input.scroll.y) {
+        if(input.ctrl && tools->currentTool != nullptr) {
+            if(input.scroll.y > 0)
+                tools->currentTool->SignalUp();
+            else
+                tools->currentTool->SignalDown();
+        }
+        else {
+            camera.ZoomUpdate(true);
+        }
     }
 }
 
@@ -477,7 +552,12 @@ void RenderHotkeysTab() {
     ImGui::Text("- alt + LMB drag");
     ImGui::Unindent(f);
     ImGui::Text("scroll - zoom");
-    ImGui::Text("ctrl + scroll - brush size");
+
+    ImGui::Text("brush size");
+    ImGui::Indent(f);
+    ImGui::Text("numpad-/numpad+");
+    ImGui::Text("ctrl + scroll");
+    ImGui::Unindent(f);
 
     ImGui::End();
 #endif
