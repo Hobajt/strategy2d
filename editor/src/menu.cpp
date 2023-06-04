@@ -17,6 +17,8 @@ using namespace eng;
 #define TABNAME_TOOL            "Tools"
 #define TABNAME_HOTKEYS         "Hotkeys"
 
+std::string tileIdx2name(int idx);
+
 TilesetChoices TilesetChoice::choices = {};
 
 const char* TilesetChoices::Default() {
@@ -336,7 +338,58 @@ void SelectionTool::Update() {
 }
 
 void PaintingTool::OnLMB(int lmbState, const glm::vec2& lmb_startPos) {
-    ENG_LOG_INFO("PaintingTool::OnLMB");
+    Camera& cam = Camera::Get();
+    glm::ivec2 ms = level->map.Size();
+
+    if(lmbState == 1) {
+        currentPaint.clear();
+    }
+    else {
+         //hovering tile map coord
+        glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
+
+        //brush corners
+        int xm = std::max(0, coord.x-bl);
+        int xM = std::min(coord.x+br, ms.x);
+        int ym = std::max(0, coord.y-bl);
+        int yM = std::min(coord.y+br, ms.y);
+
+        // for(int y = ym; y < yM; y++) {
+        //     for(int x = xm; x < xM; x++) {
+        //         int idx = y*ms.x + x;
+        //         if(!currentPaint.count(idx)) {
+        //             // currentPaint.insert({ idx,  });
+
+        //         }
+        //     }
+        // }
+    }
+
+    /*TODO:
+        - duplicate map struct
+            - one in level
+            - 2nd in editor tools
+            - the one in editor tools will be "live" - displayed on the screen
+                - to be able to see tool editing live
+                - after operation is finalized, changes are committed to level map
+                - after each operation, both maps should be the same
+            - maybe also duplicate objects - cuz the other tool works with those
+                - or maybe not, if the other tool can create a single object per operation
+                - 
+    */
+    
+    /*
+    lmb == down:
+        - cleanup - flush all previous variables
+    lmb == pressed:
+        - keep track of marked tiles
+    */
+
+   /*
+    - apply changes directly into the level data
+    - need to make sure that there's no way an operation can be interrupted without submission into the op stack
+    - 
+   */
 }
 
 void PaintingTool::OnHover() {
@@ -371,13 +424,31 @@ void PaintingTool::SignalDown() {
     UpdateBrushSize(brushSize-1);
 }
 
+void PaintingTool::Finalize(OpStack& opStack) {
+    //TODO: submit operation to the stack
+}
+
 void PaintingTool::Update() {
     ImGui::Text("Tile Painting Tool");
+    ImGui::Separator();
+
+    ImGui::PushID(0);
+    if(ImGui::BeginListBox("Tile to paint:")) {
+        for(int i = 0; i < TileType::COUNT; i++) {
+            if(ImGui::Selectable(tileIdx2name(i).c_str(), selection == i)) {
+                selection = i;
+            }
+        }
+        ImGui::EndListBox();
+    }
+    ImGui::PopID();
+
     ImGui::Separator();
     if(ImGui::DragInt("Brush size", &brushSize)) {
         UpdateBrushSize(brushSize);
     }
 }
+
 
 void PaintingTool::UpdateBrushSize(int newSize) {
     brushSize = newSize;
@@ -510,6 +581,9 @@ void InputHandler::Update() {
             }
             break;
         case -1:    //up
+            if(tools->currentTool != nullptr)
+                tools->currentTool->Finalize(tools->opStack);
+            break;
         case 0:     //released
             lmb_alt = false;
             if(tools->currentTool != nullptr) {
@@ -561,4 +635,18 @@ void RenderHotkeysTab() {
 
     ImGui::End();
 #endif
+}
+
+std::string tileIdx2name(int idx) {
+    static std::string names[] = {
+        "GROUND", "MUD",
+        "WALL_BROKEN", "ROCK_BROKEN", "TREES_FELLED",
+        "WATER",
+        "ROCK", "WALL_HU", "WALL_HU_DAMAGED", "WALL_OC", "WALL_OC_DAMAGED",
+        "TREES"
+    };
+    if(idx >= TileType::COUNT)
+        return std::string("INVALID TILE TYPE");
+    else
+        return names[idx];
 }

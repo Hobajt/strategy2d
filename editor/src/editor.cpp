@@ -113,7 +113,6 @@ void Editor::FileMenu_Update() {
 }
 
 /*TODO: tile painting tool progress
-    - add onHover() callback to all tools from InputHandler - for brush highlights
     - figure out how should the tool interact with respect to inputs (when to update the tile, etc)
     - implement tileset transitions
     - tool GUI - tile type selection, variations logic
@@ -131,6 +130,8 @@ void Editor::FileMenu_Update() {
     - techree
     - faction objects
 */
+
+
 
 /*EDITOR TOOLSET & CAPABILITIES:
     - undo/redo capability - will need struct to describe operations & keep em in a stack

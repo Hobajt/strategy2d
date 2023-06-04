@@ -84,6 +84,19 @@ private:
     bool renderStartingLocations = true;
 };
 
+struct EditorOperation {
+    struct Entry {
+        glm::vec2 pos;
+        int id;
+    };
+    bool painting;
+    std::vector<Entry> entries;
+};
+
+class OpStack {
+    //TODO: circular buffer
+};
+
 //===== EditorTool =====
 
 class EditorTool {
@@ -94,6 +107,8 @@ public:
 
     virtual void SignalUp() {}
     virtual void SignalDown() {}
+
+    virtual void Finalize(OpStack& opStack) {}
 public:
     eng::Level* level = nullptr;
 };
@@ -106,12 +121,17 @@ public:
 
     virtual void SignalUp() override;
     virtual void SignalDown() override;
+
+    virtual void Finalize(OpStack& opStack) override;
 private:
     void UpdateBrushSize(int newSize);
 private:
     int brushSize = 1;
     int bl = 0;
     int br = 1;
+
+    int selection = eng::TileType::GROUND;
+    std::unordered_map<int,int> currentPaint;
 };
 
 class SelectionTool : public EditorTool {
@@ -137,6 +157,8 @@ struct EditorTools {
 
     EditorTool* currentTool = nullptr;
     int toolName = ToolName::SELECT;
+
+    OpStack opStack;
 };
 
 //===== ToolsMenu =====
