@@ -2,7 +2,7 @@
 
 #include <engine/engine.h>
 
-#include "menu.h"
+#include "context.h"
 
 class Editor : public eng::App {
 public:
@@ -13,25 +13,10 @@ private:
     virtual void OnInit() override;
     virtual void OnUpdate() override;
     virtual void OnGUI() override;
-
-    void Terrain_SetupNew();
-    int Terrain_Load();
-    int Terrain_Save();
-
-    void FileMenu_Update();
 private:
     eng::ShaderRef shader;
 
     eng::InputButton btn_toggleFullscreen;
-    eng::InputButton btn_toggleGUI;
 
-    bool guiEnabled = true;
-
-    FileMenu fileMenu;
-    ToolsMenu toolsMenu;
-    LevelInfoMenu infoMenu;
-    InputHandler inputHandler;
-
-    eng::Level level;
-
+    EditorContext context;
 };

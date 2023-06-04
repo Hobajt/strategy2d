@@ -109,6 +109,16 @@ namespace eng {
         }
     }
 
+    Map Map::Clone() const {
+        return Map(*this);
+    }
+
+    Map::Map(const Map& m) noexcept : size(m.size), tileset(m.tileset) {
+        tiles = new TileData[size.x * size.y];
+        for(int i = 0; i < size.x * size.y; i++)
+            tiles[i] = m.tiles[i];
+    }
+
     //===================================================================================
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags) {

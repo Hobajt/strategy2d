@@ -77,8 +77,7 @@ namespace eng {
     public:
         Map(const glm::ivec2& size = glm::ivec2(10), const TilesetRef& tileset = nullptr);
         ~Map();
-
-        Map(const Map&) = delete;
+        
         Map& operator=(const Map&) = delete;
 
         Map(Map&&) noexcept;
@@ -101,8 +100,12 @@ namespace eng {
         void ChangeTileset(const TilesetRef& tilesetNew);
 
         std::string GetTilesetName() const { return (tileset != nullptr) ? tileset->Name() : "none"; }
+
+        Map Clone() const;
     private:
         int coord2idx(int y, int x) const { return y * size.x + x; }
+
+        Map(const Map&) noexcept;
 
         void Move(Map&&) noexcept;
         void Release() noexcept;

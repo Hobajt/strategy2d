@@ -9,16 +9,11 @@ void Editor::OnResize(int width, int height) {
 }
 
 void Editor::OnInit() {
-    inputHandler.Init(toolsMenu);
-    toolsMenu.Init(level);
-    infoMenu.SetLevelRef(&level);
-    Camera::Get().EnableBoundaries(false);
-
     try {
         shader = std::make_shared<Shader>("res/shaders/test_shader");
         shader->InitTextureSlots(Renderer::TextureSlotsCount());
 
-        Terrain_SetupNew();
+        context.Terrain_SetupNew(glm::ivec2(10), Resources::DefaultTileset());
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");
@@ -26,24 +21,17 @@ void Editor::OnInit() {
     }
 
     btn_toggleFullscreen = InputButton(GLFW_KEY_T);
-    btn_toggleGUI = InputButton(GLFW_KEY_P);
 }
 
 void Editor::OnUpdate() {
     Window& window = Window::Get();
-    Input& input = Input::Get();
-    Camera& camera = Camera::Get();
 
-    input.Update();
-    camera.Update();
+    context.input.Update();
 
     Renderer::StatsReset();
 
-#ifdef ENGINE_ENABLE_GUI
-    btn_toggleGUI.Update();
-    if(btn_toggleGUI.down())
-        guiEnabled = !guiEnabled;
-#endif
+    if(window.GetKeyState(GLFW_KEY_Q))
+        window.Close();
 
     btn_toggleFullscreen.Update();
     if(btn_toggleFullscreen.down()) {
@@ -54,62 +42,26 @@ void Editor::OnUpdate() {
     }
 
     Renderer::Begin(shader, true);
-    inputHandler.Update();
-    level.Render();
+    context.level.displayMap.Render();
+    context.tools.Render();
     Renderer::End();
 }
 
 void Editor::OnGUI() {
 #ifdef ENGINE_ENABLE_GUI
-    if(guiEnabled) {
-        Audio::DBG_GUI();
-        Camera::Get().DBG_GUI();
+    Audio::DBG_GUI();
+    Camera::Get().DBG_GUI();
 
-        ImGui::Begin("General");
-        ImGui::Text("FPS: %.1f", Input::Get().fps);
-        ImGui::Text("Draw calls: %d | Total quads: %d (%d wasted)", Renderer::Stats().drawCalls, Renderer::Stats().totalQuads, Renderer::Stats().wastedQuads);
-        ImGui::Text("Textures: %d", Renderer::Stats().numTextures);
-        ImGui::End();
+    ImGui::Begin("General");
+    ImGui::Text("FPS: %.1f", Input::Get().fps);
+    ImGui::Text("Draw calls: %d | Total quads: %d (%d wasted)", Renderer::Stats().drawCalls, Renderer::Stats().totalQuads, Renderer::Stats().wastedQuads);
+    ImGui::Text("Textures: %d", Renderer::Stats().numTextures);
+    ImGui::End();
 
-        infoMenu.Update();
-        toolsMenu.Update();
-        RenderHotkeysTab();
-        FileMenu_Update();
-
-        //TODO: move to custom classes & use macros from menu.cpp for naming
-        ImGui::Begin("Techtree"); ImGui::End();
-        ImGui::Begin("Diplomacy"); ImGui::End();
+    for(auto& comp : context.components) {
+        comp->GUI_Update();
     }
 #endif
-}
-
-void Editor::FileMenu_Update() {
-    switch(fileMenu.Update()) {
-        case FileMenuSignal::NEW:
-            Terrain_SetupNew();
-            break;
-        case FileMenuSignal::LOAD:
-        {
-            int res = Terrain_Load();
-            if(res == 0)
-                fileMenu.Reset();
-            else
-                fileMenu.SignalError("File not found.");
-            break;
-        }
-        case FileMenuSignal::SAVE:
-        {
-            int res = Terrain_Save();
-            if(res == 0)
-                fileMenu.Reset();
-            else
-                fileMenu.SignalError("No clue.");
-            break;
-        }
-        case FileMenuSignal::QUIT:
-            Window::Get().Close();
-            break;
-    }
 }
 
 /*TODO: tile painting tool progress
@@ -182,26 +134,4 @@ void Editor::FileMenu_Update() {
         - have option in editor to change tileset (without modifying the default) - for visualization
     
 */
-
-void Editor::Terrain_SetupNew() {
-    //init terrain based on values from FileMenu, reset the camera
-    level = Level(fileMenu.terrainSize, fileMenu.tileset.LoadTilesetOrDefault());
-
-    Camera& camera = Camera::Get();
-    camera.SetBounds(fileMenu.terrainSize);
-    camera.Position(glm::vec2(fileMenu.terrainSize) * 0.5f - 0.5f);
-    camera.ZoomToFit(glm::vec2(fileMenu.terrainSize) + 1.f);
-
-    infoMenu.NewLevelCreated();
-}
-
-int Editor::Terrain_Load() {
-    //TODO:
-    return 0;
-}
-
-int Editor::Terrain_Save() {
-    //TODO:
-    return 1;
-}
 

@@ -10,6 +10,8 @@ namespace eng {
 
     //====== InputButton ======
 
+    namespace InputButtonState { enum { UP = -1, RELEASED = 0, DOWN = 1, PRESSED = 2 }; }
+
     //Wrapper for button management, tracks key presses and generates up/down/hold signals from it.
     struct InputButton {
         int state = 0;
