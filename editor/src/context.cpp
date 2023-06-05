@@ -90,10 +90,10 @@ void EditorMap::DBG_VIZ(bool stroke_path, bool stroke_limits) {
     viz_state = int(stroke_path) + int(stroke_limits) * 2;
 }
 
-OperationStack::Operation EditorMap::CreateOpRecord() {
+OperationRecord EditorMap::CreateOpRecord() {
     ASSERT_MSG(data != nullptr, "EditorMap wasn't properly initialized.");
 
-    OperationStack::Operation op = {};
+    OperationRecord op = {};
     op.paint = true;
 
     int w = map.Width();
@@ -101,12 +101,25 @@ OperationStack::Operation EditorMap::CreateOpRecord() {
         for(int x = session_min.x; x < session_max.x; x++) {
             if(bitmap[y*w+x]) {
                 const TileData& td = data->GetTile(y, x);
-                op.actions.push_back(OperationStack::Operation::Entry(glm::ivec2(x, y), td.type, td.variation));
+                op.actions.push_back(OperationRecord::Entry(glm::ivec2(x, y), td.type, td.variation));
             }
         }
     }
 
     return op;
+}
+
+void EditorMap::RevertOperation(OperationRecord& op) {
+    ASSERT_MSG(op.paint == true, "UndoPaintChanges - invalid operation type.");
+
+    for(OperationRecord::Entry& entry : op.actions) {
+        map.ModifyTile(entry.pos.y, entry.pos.x, entry.idx, entry.var);
+
+        //invert the operation (can be used for redo)
+        const TileData& td = data->GetTile(entry.pos.y, entry.pos.x);
+        entry.idx = td.type;
+        entry.var = td.variation;
+    }
 }
 
 void EditorMap::SyncToLevelData(eng::Map& data) {
@@ -156,8 +169,13 @@ void EditorMap::Release() noexcept {
 
 //===== EditorLevel =====
 
-void EditorLevel::CommitChanges() {
+void EditorLevel::CommitPaintChanges() {
     map.SyncToLevelData(level.map);
+}
+
+void EditorLevel::UndoPaintChanges(OperationRecord& op) {
+    map.RevertOperation(op);
+    CommitPaintChanges();
 }
 
 

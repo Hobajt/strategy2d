@@ -28,3 +28,4 @@
 #include "game/gameobject.h"
 
 #include "utils/generator.h"
+#include "utils/ring_buffer.hpp"

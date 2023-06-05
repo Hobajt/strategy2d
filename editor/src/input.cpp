@@ -57,6 +57,14 @@ void EditorInputHandler::InputCallback(int keycode, int modifiers) {
         case GLFW_KEY_KP_SUBTRACT:
             context.tools.CustomSignal(-1);
             break;
+        case GLFW_KEY_Z:
+            if(Input::Get().ctrl) {
+                if(!Input::Get().shift)
+                    context.tools.Undo();
+                else
+                    context.tools.Redo();
+            }
+            break;
     }
 }
 

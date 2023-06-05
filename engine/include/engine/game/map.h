@@ -33,9 +33,9 @@ namespace eng {
     }//namespace TileType
 
     struct TileData {
-        int type;           //tile type identifier (enum value)
-        int variation;      //for visual modifications (if given tile type has any)
-        glm::ivec2 idx;     //index of visuals in tilemap sprite
+        int type = 0;                       //tile type identifier (enum value)
+        int variation = 0;                  //for visual modifications (if given tile type has any)
+        glm::ivec2 idx = glm::ivec2(0);     //index of visuals in tilemap sprite
     };
 
     //===== Tileset =====

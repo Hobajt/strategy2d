@@ -3,6 +3,8 @@
 
 using namespace eng;
 
+#define OP_STACK_SIZE 16
+
 const char* toolType2str(int toolType) {
     static const char* names[ToolType::COUNT] = { "SELECT", "TILE_PAINT", "OBJECT_PLACEMENT" };
     return (toolType < ToolType::COUNT) ? names[toolType] : "INVALID";
@@ -133,7 +135,7 @@ void PaintTool::OnLMB(int state) {
             break;
         case InputButtonState::UP:
             context.tools.PushOperation(map.CreateOpRecord());
-            context.level.CommitChanges();
+            context.level.CommitPaintChanges();
             break;
     }
 }
@@ -166,38 +168,10 @@ void ObjectPlacementTool::OnLMB(int state) {
     //TODO:
 }
 
-//===== OperationStack =====
-
-OperationStack::OperationStack() : OperationStack(8) {}
-
-OperationStack::OperationStack(int capacity_) : capacity(capacity_), head(0), size(0) {
-    buffer = new Operation[capacity];
-}
-
-OperationStack::~OperationStack() {
-    delete[] buffer;
-}
-
-void OperationStack::Push(Operation&& op) {
-    buffer[head] = std::move(op);
-    head = (head+1) % capacity;
-    if((++size) > capacity)
-        size = capacity;
-}
-
-OperationStack::Operation OperationStack::Pop() {
-    if(size > 0) {
-        head = (head-1+capacity) % capacity;
-        size--;
-            
-        return buffer[head];
-    }
-    throw std::out_of_range("OperationStack is empty.");
-}
-
 //===== EditorTools =====
 
-EditorTools::EditorTools(EditorContext& context_) : context(context_), ops(OperationStack(16)) {
+EditorTools::EditorTools(EditorContext& context_)
+    : context(context_), ops_undo(RingBuffer<OperationRecord>(OP_STACK_SIZE)), ops_redo(RingBuffer<OperationRecord>(OP_STACK_SIZE)) {
     tools.insert({ ToolType::SELECT, new SelectionTool(context_) });
     tools.insert({ ToolType::TILE_PAINT, new PaintTool(context_) });
     tools.insert({ ToolType::OBJECT_PLACEMENT, new ObjectPlacementTool(context_) });
@@ -253,6 +227,37 @@ bool EditorTools::IsToolSelected(int toolType) const {
     return tools.at(toolType) == currentTool;
 }
 
-void EditorTools::PushOperation(OperationStack::Operation&& op) {
-    ops.Push(std::move(op));
+void EditorTools::PushOperation(OperationRecord&& op) {
+    ops_undo.Push(std::move(op));
+    ops_redo.Clear();
+}
+
+void EditorTools::Undo() {
+    LOG_TRACE("Editor::Undo");
+    if(ops_undo.Size() > 0) {
+        OperationRecord op = ops_undo.Pop();
+        
+        if(op.paint) {
+            context.level.UndoPaintChanges(op);
+            ops_redo.Push(op);
+        }
+        else {
+            //TODO: undo for placement op
+        }
+    }
+}
+
+void EditorTools::Redo() {
+    LOG_TRACE("Editor::Redo");
+    if(ops_redo.Size() > 0) {
+        OperationRecord op = ops_redo.Pop();
+        
+        if(op.paint) {
+            context.level.UndoPaintChanges(op);
+            ops_undo.Push(op);
+        }
+        else {
+            //TODO: redo for placement op
+        }
+    }
 }

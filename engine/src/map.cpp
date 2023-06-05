@@ -20,7 +20,7 @@ namespace eng {
         //TODO:
         for(int i = 0; i < count; i++) {
             // tiles[i].idx = glm::ivec2(0, 0);
-            tiles[i].idx = data.tileDesc[3].idx;
+            tiles[i].idx = data.tileDesc[tiles[i].type].idx;
         }
     }
 

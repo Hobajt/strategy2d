@@ -85,43 +85,21 @@ public:
 
 //===== OperationStack =====
 
-class OperationStack {
-public:
-    struct Operation {
-        struct Entry {
-            glm::ivec2 pos;
-            //painting  = prev_type, prev_variation
-            //placement = obj_idx, action_id (add/remove)
-            int idx;
-            int var;
-        public:
-            Entry() = default;
-            Entry(const glm::ivec2& pos_, int idx_, int var_) : pos(pos_), idx(idx_), var(var_) {}
-        };
-        bool paint;
-        std::vector<Entry> actions;
+struct OperationRecord {
+    struct Entry {
+        glm::ivec2 pos;
+        int idx;
+        int var;
+        
+        //painting  = prev_type, prev_variation
+        //placement = obj_idx, action_id (add/remove)
+    public:
+        Entry() = default;
+        Entry(const glm::ivec2& pos_, int idx_, int var_) : pos(pos_), idx(idx_), var(var_) {}
     };
 public:
-    OperationStack();
-    OperationStack(int capacity);
-    ~OperationStack();
-
-    OperationStack(const OperationStack&) = delete;
-    OperationStack& operator=(const OperationStack&) = delete;
-
-    OperationStack(OperationStack&&) = delete;
-    OperationStack& operator=(OperationStack&&) = delete;
-
-    void Push(Operation&& op);
-    Operation Pop();
-
-    int Size() const { return size; }
-private:
-    Operation* buffer = nullptr;
-    int capacity;
-    
-    int head;
-    int size;
+    bool paint;
+    std::vector<Entry> actions;
 };
 
 //===== EditorTools =====
@@ -145,12 +123,16 @@ public:
     const std::unordered_map<int,EditorTool*>& GetTools() const;
     bool IsToolSelected(int toolType) const;
 
-    void PushOperation(OperationStack::Operation&& op);
+    void PushOperation(OperationRecord&& op);
+
+    void Undo();
+    void Redo();
 private:
     EditorContext& context;
 
     std::unordered_map<int,EditorTool*> tools;
     EditorTool* currentTool = nullptr;
 
-    OperationStack ops;
+    eng::RingBuffer<OperationRecord> ops_undo;
+    eng::RingBuffer<OperationRecord> ops_redo;
 };

@@ -30,7 +30,8 @@ public:
 
     void DBG_VIZ(bool stroke_path, bool stroke_limits);
 
-    OperationStack::Operation CreateOpRecord();
+    OperationRecord CreateOpRecord();
+    void RevertOperation(OperationRecord& op);
 
     void SyncToLevelData(eng::Map& data);
 private:
@@ -58,7 +59,8 @@ struct EditorLevel {
     eng::Level level;
     EditorMap map;
 public:
-    void CommitChanges();
+    void CommitPaintChanges();
+    void UndoPaintChanges(OperationRecord& op);
 };
 
 //===== EditorContext =====

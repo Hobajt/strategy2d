@@ -65,10 +65,7 @@ void Editor::OnGUI() {
 }
 
 /*TODO: tile painting tool progress
-    - add undo/redo hotkeys & calling
-    - add redo stack - insert inverted operations from undo stack when calling undo
-    - implement undo opration
-
+    - maybe add operation cancel option (esc?)
     - implement tileset transitions
 */
 
