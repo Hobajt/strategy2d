@@ -24,6 +24,10 @@ namespace eng {
         }
     }
 
+    glm::ivec2 Tileset::GetIdxFor(int tileType) {
+        return data.tileDesc[tileType].idx;
+    }
+
     //===== Map =====
 
     Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : size(size_) {
@@ -111,6 +115,27 @@ namespace eng {
 
     Map Map::Clone() const {
         return Map(*this);
+    }
+
+    void Map::ModifyTile(int y, int x, int type, int variation) {
+        TileData& tile = tiles[y*size.x + x];
+        if(type != tile.type) {
+            tile.type = type;
+            //TODO: trigger idx recomputation (UpdateTileIndices(), but only for this & neighboring tiles)
+            tile.idx = tileset->GetIdxFor(type);
+        }
+        tile.variation = variation;
+    }
+
+    void Map::OverrideMapData(eng::Map& other) {
+        if(size != other.size) {
+            ENG_LOG_ERROR("Map::OverrideMapData - map sizes do not match.\n");
+            throw std::runtime_error("Map::OverrideMapData - map sizes do not match.");
+        }
+        
+        for(int i = 0; i < Area(); i++) {
+            tiles[i] = other.tiles[i];
+        }
     }
 
     Map::Map(const Map& m) noexcept : size(m.size), tileset(m.tileset) {

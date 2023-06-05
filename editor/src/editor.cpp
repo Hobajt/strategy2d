@@ -42,7 +42,7 @@ void Editor::OnUpdate() {
     }
 
     Renderer::Begin(shader, true);
-    context.level.displayMap.Render();
+    context.level.map.Render();
     context.tools.Render();
     Renderer::End();
 }
@@ -65,9 +65,11 @@ void Editor::OnGUI() {
 }
 
 /*TODO: tile painting tool progress
-    - figure out how should the tool interact with respect to inputs (when to update the tile, etc)
+    - add undo/redo hotkeys & calling
+    - add redo stack - insert inverted operations from undo stack when calling undo
+    - implement undo opration
+
     - implement tileset transitions
-    - tool GUI - tile type selection, variations logic
 */
 
 //TODO: render starting locations

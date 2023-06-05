@@ -67,6 +67,21 @@ void PaintTool::GUI_Update() {
     if(ImGui::DragInt("Brush size", &brushSize)) {
         UpdateBrushSize(brushSize);
     }
+
+    ImGui::Separator();
+    ImGui::Checkbox("Randomize variations", &randomVariations);
+    if(!randomVariations) {
+        if(ImGui::DragInt("Variation value", &variationValue)) {
+            if(variationValue < 0) variationValue = 0;
+            else if(variationValue > 100) variationValue = 100;
+        }
+    }
+
+    ImGui::Separator();
+    if(ImGui::Checkbox("visualize stroke path", &viz_stroke))
+        context.level.map.DBG_VIZ(viz_stroke, viz_limits);
+    if(ImGui::Checkbox("visualize stroke bounds", &viz_limits))
+        context.level.map.DBG_VIZ(viz_stroke, viz_limits);
 #endif
 }
 
@@ -77,7 +92,7 @@ void PaintTool::CustomSignal(int state, int id) {
 void PaintTool::Render() {
     if(hover) {
         Camera& cam = Camera::Get();
-        glm::ivec2 ms = context.level.displayMap.Size();
+        glm::ivec2 ms = context.level.map.Map().Size();
 
         //hovering tile coordinate (in map space)
         glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
@@ -103,7 +118,24 @@ void PaintTool::Render() {
 }
 
 void PaintTool::OnLMB(int state) {
-    //TODO:
+    Camera& cam = Camera::Get();
+    EditorMap& map = context.level.map;
+    glm::ivec2 bounds = map.Map().Size();
+
+    glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
+
+    switch(state) {
+        case InputButtonState::DOWN:
+            map.ClearPaint();
+        case InputButtonState::PRESSED:
+            map.PaintRegion(coord, bl, br, selectedTileType, randomVariations, variationValue);
+            hover = true;
+            break;
+        case InputButtonState::UP:
+            context.tools.PushOperation(map.CreateOpRecord());
+            context.level.CommitChanges();
+            break;
+    }
 }
 
 void PaintTool::UpdateBrushSize(int newSize) {
@@ -134,9 +166,38 @@ void ObjectPlacementTool::OnLMB(int state) {
     //TODO:
 }
 
+//===== OperationStack =====
+
+OperationStack::OperationStack() : OperationStack(8) {}
+
+OperationStack::OperationStack(int capacity_) : capacity(capacity_), head(0), size(0) {
+    buffer = new Operation[capacity];
+}
+
+OperationStack::~OperationStack() {
+    delete[] buffer;
+}
+
+void OperationStack::Push(Operation&& op) {
+    buffer[head] = std::move(op);
+    head = (head+1) % capacity;
+    if((++size) > capacity)
+        size = capacity;
+}
+
+OperationStack::Operation OperationStack::Pop() {
+    if(size > 0) {
+        head = (head-1+capacity) % capacity;
+        size--;
+            
+        return buffer[head];
+    }
+    throw std::out_of_range("OperationStack is empty.");
+}
+
 //===== EditorTools =====
 
-EditorTools::EditorTools(EditorContext& context_) : context(context_) {
+EditorTools::EditorTools(EditorContext& context_) : context(context_), ops(OperationStack(16)) {
     tools.insert({ ToolType::SELECT, new SelectionTool(context_) });
     tools.insert({ ToolType::TILE_PAINT, new PaintTool(context_) });
     tools.insert({ ToolType::OBJECT_PLACEMENT, new ObjectPlacementTool(context_) });
@@ -190,4 +251,8 @@ const std::unordered_map<int,EditorTool*>& EditorTools::GetTools() const {
 
 bool EditorTools::IsToolSelected(int toolType) const {
     return tools.at(toolType) == currentTool;
+}
+
+void EditorTools::PushOperation(OperationStack::Operation&& op) {
+    ops.Push(std::move(op));
 }

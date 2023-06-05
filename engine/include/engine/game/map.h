@@ -66,6 +66,8 @@ namespace eng {
 
         //Updates tile.idx fields to use proper image for each tile (based on tile type & variations).
         void UpdateTileIndices(TileData* tiles, int count);
+
+        glm::ivec2 GetIdxFor(int tileType);
     private:
         Tileset::Data data;
     };
@@ -99,9 +101,17 @@ namespace eng {
 
         void ChangeTileset(const TilesetRef& tilesetNew);
 
+        //==== Methods for editor ====
+
         std::string GetTilesetName() const { return (tileset != nullptr) ? tileset->Name() : "none"; }
 
         Map Clone() const;
+
+        void ModifyTile(int y, int x, int type, int variation);
+
+        void OverrideMapData(eng::Map& other);
+
+        const TileData& GetTile(int y, int x) const { return tiles[y*size.x + x]; }
     private:
         int coord2idx(int y, int x) const { return y * size.x + x; }
 
