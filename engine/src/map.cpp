@@ -6,6 +6,8 @@
 #include "engine/utils/utils.h"
 #include "engine/utils/json.h"
 
+#include <random>
+
 namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
@@ -16,12 +18,21 @@ namespace eng {
         data = ParseConfig_Tileset(config_filepath, flags);
     }
 
-    void Tileset::UpdateTileIndices(TileData* tiles, int count) {
+    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size) {
         //TODO:
-        for(int i = 0; i < count; i++) {
-            // tiles[i].idx = glm::ivec2(0, 0);
+        // for(int i = 0; i < count; i++) {
+        //     // tiles[i].idx = glm::ivec2(0, 0);
+        //     tiles[i].idx = data.tileDesc[tiles[i].type].idx;
+        // }
+
+        for(int i = 0; i < size.x * size.y; i++)
             tiles[i].idx = data.tileDesc[tiles[i].type].idx;
-        }
+    }
+
+    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x) {
+        //TODO:
+        int i = y*size.x + x;
+        tiles[i].idx = data.tileDesc[tiles[i].type].idx;
     }
 
     glm::ivec2 Tileset::GetIdxFor(int tileType) {
@@ -109,7 +120,7 @@ namespace eng {
         TilesetRef ts = (tilesetNew != nullptr) ? tilesetNew : Resources::DefaultTileset();
         if(tileset != tilesetNew) {
             tileset = tilesetNew;
-            tileset->UpdateTileIndices(tiles, Area());
+            tileset->UpdateTileIndices(tiles, size);
         }
     }
 
@@ -117,25 +128,45 @@ namespace eng {
         return Map(*this);
     }
 
-    void Map::ModifyTile(int y, int x, int type, int variation) {
+    void Map::ModifyTile(int y, int x, int type, int variation, bool update_indices) {
         TileData& tile = tiles[y*size.x + x];
         if(type != tile.type) {
             tile.type = type;
-            //TODO: trigger idx recomputation (UpdateTileIndices(), but only for this & neighboring tiles)
-            tile.idx = tileset->GetIdxFor(type);
         }
         tile.variation = variation;
+
+        if(update_indices) {
+            UpdateTileIndices(y, x);
+        }
     }
 
-    void Map::OverrideMapData(eng::Map& other) {
-        if(size != other.size) {
-            ENG_LOG_ERROR("Map::OverrideMapData - map sizes do not match.\n");
-            throw std::runtime_error("Map::OverrideMapData - map sizes do not match.");
+    void Map::ModifyTiles(bool* bitmap, int type, bool randomVariation, int variation) {
+        std::mt19937 gen = std::mt19937(std::random_device{}());
+        std::uniform_int_distribution<int> dist = std::uniform_int_distribution(100);
+
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                if(bitmap[y*size.x+x]) {
+                    TileData& tile = tiles[y*size.x + x];
+                    if(type != tile.type) {
+                        tile.type = type;
+                    }
+                    int var = randomVariation ? dist(gen) : variation;
+                    tile.variation = variation;
+                }
+                bitmap[y*size.x+x] = false;
+            }
         }
-        
-        for(int i = 0; i < Area(); i++) {
-            tiles[i] = other.tiles[i];
-        }
+
+        UpdateTileIndices();
+    }
+
+    void Map::UpdateTileIndices() {
+        tileset->UpdateTileIndices(tiles, size);
+    }
+
+    void Map::UpdateTileIndices(int y, int x) {
+        tileset->UpdateTileIndices(tiles, size, y, x);
     }
 
     Map::Map(const Map& m) noexcept : size(m.size), tileset(m.tileset) {

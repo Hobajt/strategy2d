@@ -10,6 +10,25 @@ class EditorContext;
 namespace ToolType { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT, COUNT }; }
 const char* toolType2str(int toolType);
 
+//===== OperationRecord =====
+
+struct OperationRecord {
+    struct Entry {
+        glm::ivec2 pos;
+        int idx;
+        int var;
+        
+        //painting  = prev_type, prev_variation
+        //placement = obj_idx, action_id (add/remove)
+    public:
+        Entry() = default;
+        Entry(const glm::ivec2& pos_, int idx_, int var_) : pos(pos_), idx(idx_), var(var_) {}
+    };
+public:
+    bool paint;
+    std::vector<Entry> actions;
+};
+
 //===== EditorTool =====
 
 class EditorTool {
@@ -24,6 +43,11 @@ public:
 
     virtual void OnLMB(int state) = 0;
     virtual void OnHover() { hover = true; }
+
+    virtual void NewLevelCreated(const glm::ivec2& size) {}
+
+    //Return true when operation matches given tool (and was successfully undone).
+    virtual bool UndoOperation(OperationRecord& op) { return false; }
 protected:
     EditorContext& context;
     bool hover = false;
@@ -47,6 +71,10 @@ public:
 class PaintTool : public EditorTool {
 public:
     PaintTool(EditorContext& tools);
+    ~PaintTool();
+
+    PaintTool(const PaintTool&) = delete;
+    PaintTool(PaintTool&&) = delete;
 
     virtual void GUI_Update() override;
 
@@ -54,19 +82,41 @@ public:
     virtual void Render() override;
 
     virtual void OnLMB(int state) override;
+
+    virtual void NewLevelCreated(const glm::ivec2& size) override;
+
+    virtual bool UndoOperation(OperationRecord& op) override;
 private:
     void UpdateBrushSize(int newSize);
+
+    void OnStrokeStart();
+    void Stroke_MarkRegion(const glm::ivec2& coords, int brushLeft, int brushRight);
+    void OnStrokeFinish();
+
+    void ClearPaint();
+    void ClearAllPaint();
+
+    void ApplyPaint();
+    OperationRecord CreateOpRecord();
 private:
+    bool* paint = nullptr;
+    glm::ivec2 size;
+
+    glm::ivec2 session_min;
+    glm::ivec2 session_max;
+    bool painting = false;
+
+    //==== options ====
+
     int brushSize = 1;
     int bl = 0;
     int br = 1;
 
-    int selectedTileType = eng::TileType::GROUND;
+    int tileType = eng::TileType::GROUND1;
 
     bool randomVariations = true;
     int variationValue = 0;
 
-    bool viz_stroke = false;
     bool viz_limits = false;
 };
 
@@ -83,25 +133,6 @@ public:
     virtual void OnLMB(int state) override;
 };
 
-//===== OperationStack =====
-
-struct OperationRecord {
-    struct Entry {
-        glm::ivec2 pos;
-        int idx;
-        int var;
-        
-        //painting  = prev_type, prev_variation
-        //placement = obj_idx, action_id (add/remove)
-    public:
-        Entry() = default;
-        Entry(const glm::ivec2& pos_, int idx_, int var_) : pos(pos_), idx(idx_), var(var_) {}
-    };
-public:
-    bool paint;
-    std::vector<Entry> actions;
-};
-
 //===== EditorTools =====
 
 struct EditorTools {
@@ -113,6 +144,8 @@ public:
     void GUI_Update();
 
     void SwitchTool(int toolType);
+
+    void NewLevelCreated(const glm::ivec2& size);
 
     void CustomSignal(int state, int id = 0);
     void Render();

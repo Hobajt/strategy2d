@@ -66,7 +66,12 @@ void Editor::OnGUI() {
 
 /*TODO: tile painting tool progress
     - maybe add operation cancel option (esc?)
-    - implement tileset transitions
+    - implement valid tileset transitions
+*/
+
+/*Map logic checks:
+    - valid tile type transitions (water -> mud; not grass directly) - only if I decide to enforce this
+    - building placement validity (not just when placing, also when updating tiles -> can cause building removal)
 */
 
 //TODO: render starting locations

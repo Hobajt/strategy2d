@@ -313,7 +313,7 @@ void InfoMenu::GUI_Update() {
 #ifdef ENGINE_ENABLE_GUI
     ImGui::Begin(InfoMenu::TabName());
 
-    Level& level = context.level.level;
+    Level& level = context.level;
 
     ImGui::Text("Level info");
     ImGui::InputText("Name", levelName, sizeof(char) * BUF_SIZE);
@@ -359,7 +359,7 @@ void InfoMenu::GUI_Update() {
 }
 
 void InfoMenu::NewLevelCreated() {
-    tileset.selection = tileset.choices.FindName(context.level.level.map.GetTilesetName().c_str());
+    tileset.selection = tileset.choices.FindName(context.level.map.GetTilesetName().c_str());
 }
 
 //===== ToolsMenu =====

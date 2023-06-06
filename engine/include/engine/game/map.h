@@ -11,8 +11,10 @@ namespace eng {
     namespace TileType { 
         enum {
             //traversable ground
-            GROUND = 0,
-            MUD,
+            GROUND1 = 0,
+            GROUND2,
+            MUD1,
+            MUD2,
             WALL_BROKEN,
             ROCK_BROKEN,
             TREES_FELLED,
@@ -44,13 +46,13 @@ namespace eng {
     public:
         struct TileDescription {
             // int type;
+            glm::ivec2 idx;
             // int cornerType;
             // std::vector<> nb_top;
             // std::vector<> nb_bot;
             // std::vector<> nb_left;
             // std::vector<> nb_right;
 
-            glm::ivec2 idx;
         };
         struct Data {
             Sprite tilemap;
@@ -65,7 +67,8 @@ namespace eng {
         std::string Name() const { return data.name; }
 
         //Updates tile.idx fields to use proper image for each tile (based on tile type & variations).
-        void UpdateTileIndices(TileData* tiles, int count);
+        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size);
+        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x);
 
         glm::ivec2 GetIdxFor(int tileType);
     private:
@@ -107,9 +110,11 @@ namespace eng {
 
         Map Clone() const;
 
-        void ModifyTile(int y, int x, int type, int variation);
+        void ModifyTile(int y, int x, int type, int variation, bool update_indices = true);
+        void ModifyTiles(bool* bitmap, int type, bool randomVariations, int variation);
 
-        void OverrideMapData(eng::Map& other);
+        void UpdateTileIndices();
+        void UpdateTileIndices(int y, int x);
 
         const TileData& GetTile(int y, int x) const { return tiles[y*size.x + x]; }
     private:
