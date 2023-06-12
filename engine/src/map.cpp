@@ -12,31 +12,87 @@ namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
 
+    int c2i(const glm::ivec2& size, int y, int x);
+    int c2i_b(const glm::ivec2& size, int y, int x);
+
+    int GetBorderType(TileData* tiles, const glm::ivec2& size, int y, int x);
+    int GetBorderType_b(TileData* tiles, const glm::ivec2& size, int y, int x);
+
+    //an element of tmp array, used during tileset parsing
+    struct TileDescription {
+        int tileType = -1;
+        std::vector<int> borderTypes;
+    };
+
+    //===== TileGraphics =====
+
+    glm::ivec2 TileGraphics::GetTileIdx(int borderType, int variation) const {
+        if(mapping.count(borderType)) {
+            const std::vector<glm::ivec2>& indices = mapping.at(borderType);
+            return indices.at(std::min((size_t)variation, indices.size()-1));
+        }
+
+        //TODO: what to do if given border type isn't specified?
+        //  - can pick closest existing borderType (based on hamming distance)
+        //  - can return some default index (maybe insert magenta tile at (0,0)??)
+        //  - or???
+
+        throw std::runtime_error("");
+    }
+
+    void TileGraphics::Extend(int x, int y, const std::vector<int>& borderTypes) {
+        glm::ivec2 idx = glm::ivec2(x, y);
+        for(int bt : borderTypes) {
+            mapping[bt].push_back(idx);
+        }
+    }
+
     //===== Tileset =====
 
     Tileset::Tileset(const std::string& config_filepath, int flags) {
         data = ParseConfig_Tileset(config_filepath, flags);
     }
 
-    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size) {
-        //TODO:
-        // for(int i = 0; i < count; i++) {
-        //     // tiles[i].idx = glm::ivec2(0, 0);
-        //     tiles[i].idx = data.tileDesc[tiles[i].type].idx;
+    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size) const {
+        for(int y = 1; y < size.y-1; y++) {
+            for(int x = 1; x < size.x-1; x++) {
+                TileData& tile = tiles[y*size.x+x];
+                int border = GetBorderType(tiles, size, y, x);
+
+                //resolve border
+                // if(border != ((1<<8)-1)) {
+                //     if(data.tileDesc[tile.type].borders.count(border)) {
+                //         //tile type has given border type visuals
+                //         tile.idx = data.tileDesc[tile.type].borders.at(border);
+                //         continue;
+                //     }
+                // }
+                // tile.idx = data.tiles[tile.type].GetTileIdx(borderType, tile.variation);
+            }
+        }
+
+        //TODO: do the same for tiles on map borders
+        // for(int x = 1; x < size.x-1; x++) {
+        //     int border;
+
+        //     border = GetBorderType_b(tiles, size, 0, x);
+        //     //...
+
+        //     border = GetBorderType_b(tiles, size, size.y-1, x);
+        //     //...
         // }
-
-        for(int i = 0; i < size.x * size.y; i++)
-            tiles[i].idx = data.tileDesc[tiles[i].type].idx;
     }
 
-    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x) {
-        //TODO:
+    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x) const {
+        //TODO: update tile idx & it's neighbors
+
         int i = y*size.x + x;
-        tiles[i].idx = data.tileDesc[tiles[i].type].idx;
+        // tiles[i].idx = data.tileDesc[tiles[i].type].idx;
     }
 
-    glm::ivec2 Tileset::GetIdxFor(int tileType) {
-        return data.tileDesc[tileType].idx;
+    glm::ivec2 Tileset::GetTileIdx(int tileType, int borderType, int variation) {
+        ASSERT_MSG((unsigned int(tileType) < TileType::COUNT), "Attempting to use invalid tile type.");
+        return data.tiles.at(tileType).GetTileIdx(borderType, variation);
     }
 
     //===== Map =====
@@ -210,18 +266,48 @@ namespace eng {
             //assemble the tilemap sprite
             data.tilemap = Sprite(spritesheet, spriteData);
 
-            //load tile descriptions
-            //TODO: rework to also include tile transitions, etc.
-            json info = config.at("tile_info");
-            for(int i = 0; i < std::min(info.size(), data.tileDesc.size()); i++) {
-                data.tileDesc[i] = Tileset::TileDescription{ eng::json::parse_ivec2(info.at(i)) };
+            //create tmp array with tile descriptions
+            TileDescription* tiles = new TileDescription[tile_count.x * tile_count.y];
+
+            //load tile types
+            json& info = config.at("tile_types");
+            for(int typeIdx = 0; typeIdx < std::min((int)info.size(), (int)(TileType::COUNT)); typeIdx++) {
+                //each entry contains list of ranges
+                auto& desc = info.at(typeIdx);
+                for(auto& entry : desc) {
+                    //each range marks tiles with this type
+                    glm::ivec2 range = eng::json::parse_ivec2(entry);
+                    for(int idx = range[0]; idx < range[1]; idx++) {
+                        tiles[idx].tileType = typeIdx;
+                    }
+                }
             }
-            if(info.size() > data.tileDesc.size()) {
-                ENG_LOG_DEBUG("Tileset '{}' has more tile definitions than there are tiletypes.", config_filepath);
+
+            //load border types
+            json& borders = config.at("border_types");
+            for(auto& entry : borders.items()) {
+                int borderType = std::stoi(entry.key());
+                for(int idx : entry.value()) {
+                    tiles[idx].borderTypes.push_back(borderType);
+                }
             }
-            else if(info.size() < data.tileDesc.size()) {
+
+            //parse TileGraphics descriptions from tmp array
+            for(int y = 0; y < tile_count.y; y++) {
+                for(int x = 0; x < tile_count.x; x++) {
+                    TileDescription& td = tiles[y*tile_count.x+x];
+                    if(td.tileType >= 0)
+                        data.tiles[td.tileType].Extend(x, y, td.borderTypes);
+                }
+            }
+
+            delete[] tiles;
+
+            //warning msgs, possibly malformed tileset description
+            if(info.size() > data.tiles.size())
+                ENG_LOG_WARN("Tileset '{}' has more tile definitions than there are tiletypes.", config_filepath);
+            else if(info.size() < data.tiles.size())
                 ENG_LOG_WARN("Tileset '{}' is missing some tile definitions.", config_filepath);
-            }
         }
         catch(json::exception& e) {
             ENG_LOG_WARN("Failed to parse '{}' config file - {}", config_filepath.c_str(), e.what());
@@ -229,6 +315,50 @@ namespace eng {
         }
 
         return data;
+    }
+
+    int c2i(const glm::ivec2& size, int y, int x) {
+        return y*size.x + x;
+    }
+
+    int c2i_b(const glm::ivec2& size, int y, int x) {
+        return std::clamp(y, 0, size.y)*size.x + std::clamp(x, 0, size.x);
+    }
+
+    int GetBorderType(TileData* tiles, const glm::ivec2& size, int y, int x) {
+        int res = 0;
+        int type = tiles[c2i(size, y, x)].type;
+
+        res |= int(tiles[c2i(size, y-1, x-1)].type == type) << 0;
+        res |= int(tiles[c2i(size, y-1, x-0)].type == type) << 1;
+        res |= int(tiles[c2i(size, y-1, x+1)].type == type) << 2;
+
+        res |= int(tiles[c2i(size, y-0, x-1)].type == type) << 3;
+        res |= int(tiles[c2i(size, y-0, x+1)].type == type) << 4;
+
+        res |= int(tiles[c2i(size, y+1, x-1)].type == type) << 5;
+        res |= int(tiles[c2i(size, y+1, x-0)].type == type) << 6;
+        res |= int(tiles[c2i(size, y+1, x+1)].type == type) << 7;
+
+        return res;
+    }
+
+    int GetBorderType_b(TileData* tiles, const glm::ivec2& size, int y, int x) {
+        int res = 0;
+        int type = tiles[c2i(size, y, x)].type;
+
+        res |= int(tiles[c2i_b(size, y-1, x-1)].type == type) << 0;
+        res |= int(tiles[c2i_b(size, y-1, x-0)].type == type) << 1;
+        res |= int(tiles[c2i_b(size, y-1, x+1)].type == type) << 2;
+
+        res |= int(tiles[c2i_b(size, y-0, x-1)].type == type) << 3;
+        res |= int(tiles[c2i_b(size, y-0, x+1)].type == type) << 4;
+
+        res |= int(tiles[c2i_b(size, y+1, x-1)].type == type) << 5;
+        res |= int(tiles[c2i_b(size, y+1, x-0)].type == type) << 6;
+        res |= int(tiles[c2i_b(size, y+1, x+1)].type == type) << 7;
+
+        return res;
     }
 
 }//namespace eng

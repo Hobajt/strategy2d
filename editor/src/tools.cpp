@@ -175,7 +175,7 @@ bool PaintTool::UndoOperation(OperationRecord& op) {
         int idx = td.type;
         int var = td.variation;
 
-        map.ModifyTile(entry.pos.y, entry.pos.x, entry.idx, entry.var);
+        map.ModifyTile(entry.pos.y, entry.pos.x, entry.idx, entry.var, false);
 
         //invert the operation (can be used for redo)
         entry.idx = idx;

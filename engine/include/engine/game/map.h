@@ -34,30 +34,32 @@ namespace eng {
         }; 
     }//namespace TileType
 
+    //Live representation of a tile.
     struct TileData {
         int type = 0;                       //tile type identifier (enum value)
         int variation = 0;                  //for visual modifications (if given tile type has any)
         glm::ivec2 idx = glm::ivec2(0);     //index of visuals in tilemap sprite
     };
 
+    //Groups together all tiles of given TileType, sorted by their border type.
+    //Tiles are described as tileset indices.
+    class TileGraphics {
+    public:
+        glm::ivec2 GetTileIdx(int borderType, int variation) const;
+        void Extend(int x, int y, const std::vector<int>& borderTypes);
+    private:
+        //maps borderType to tile indices
+        std::unordered_map<int, std::vector<glm::ivec2>> mapping;
+    };
+
     //===== Tileset =====
 
     class Tileset {
     public:
-        struct TileDescription {
-            // int type;
-            glm::ivec2 idx;
-            // int cornerType;
-            // std::vector<> nb_top;
-            // std::vector<> nb_bot;
-            // std::vector<> nb_left;
-            // std::vector<> nb_right;
-
-        };
         struct Data {
-            Sprite tilemap;
-            std::array<TileDescription, TileType::COUNT> tileDesc;
             std::string name;
+            Sprite tilemap;
+            std::array<TileGraphics, TileType::COUNT> tiles;
         };
     public:
         Tileset() = default;
@@ -67,10 +69,10 @@ namespace eng {
         std::string Name() const { return data.name; }
 
         //Updates tile.idx fields to use proper image for each tile (based on tile type & variations).
-        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size);
-        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x);
+        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size) const;
+        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size, int y, int x) const;
 
-        glm::ivec2 GetIdxFor(int tileType);
+        glm::ivec2 GetTileIdx(int tileType, int borderType, int variation);
     private:
         Tileset::Data data;
     };
