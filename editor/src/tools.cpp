@@ -49,10 +49,6 @@ void SelectionTool::OnLMB(int state) {
 
 PaintTool::PaintTool(EditorContext& context_) : EditorTool(context_) {}
 
-PaintTool::~PaintTool() {
-    delete[] paint;
-}
-
 void PaintTool::GUI_Update() {
 #ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Tile Painting Tool");
@@ -84,7 +80,8 @@ void PaintTool::GUI_Update() {
     }
 
     ImGui::Separator();
-    ImGui::Checkbox("visualize stroke bounds", &viz_limits);
+    ImGui::Checkbox("Visualize stroke bounds", &viz_limits);
+    ImGui::Checkbox("Visualize paint reach", &viz_paintReach);
 #endif
 }
 
@@ -101,9 +98,9 @@ void PaintTool::Render() {
 
         //corner points for the highlights
         int xm = std::max(0, coord.x-bl);
-        int xM = std::min(coord.x+br, size.x);
+        int xM = std::min(coord.x+br, paint.Size().x);
         int ym = std::max(0, coord.y-bl);
-        int yM = std::min(coord.y+br, size.y);
+        int yM = std::min(coord.y+br, paint.Size().y);
 
         //highlight rectangle parameters
         float width = 0.1f;
@@ -127,12 +124,25 @@ void PaintTool::Render() {
 
     //highlight tiles selected by current stroke
     float zIdx = -0.05f;
-    glm::vec4 clr = glm::vec4(1.f, 0.f, 0.f, 0.3f);
-    for(int y = 0; y < size.y; y++) {
-        for(int x = 0; x < size.x; x++) {
-            if(paint[y*size.x+x]) {
-                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr));
+    glm::vec4 clr_paint = glm::vec4(1.f, 0.f, 0.f, 0.3f);
+    glm::vec4 clr_reach = glm::vec4(0.f, 0.f, 1.f, 0.3f);
+    glm::vec4 clr_debug = glm::vec4(.4f, 1.f, .2f, 0.3f);
+
+    for(int y = 0; y < paint.Size().y; y++) {
+        for(int x = 0; x < paint.Size().x; x++) {
+            if(HAS_FLAG(paint(y, x), PaintFlags::MARKED_FOR_PAINT)) {
+                //highlight current stroke selection
+                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_paint));
             }
+            else if (viz_paintReach && HAS_FLAG(paint(y, x), PaintFlags::FINALIZED)) {
+                //highlight affected tiles from the last stroke
+                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_reach));
+            }
+
+            // if(HAS_FLAG(paint(y, x), PaintFlags::DEBUG)) {
+            //     //highlight current stroke selection
+            //     Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_debug));
+            // }
         }
     }
 }
@@ -155,34 +165,14 @@ void PaintTool::OnLMB(int state) {
 }
 
 void PaintTool::NewLevelCreated(const glm::ivec2& size_) {
-    delete[] paint;
-
-    size = size_;
-    int area = size.x * size.y;
-
-    paint = new bool[area];
-    for(int i = 0; i < area; i++) 
-        paint[i] = false;
+    paint = PaintBitmap(size_);
 }
 
 bool PaintTool::UndoOperation(OperationRecord& op) {
     if(!op.paint)
         return false;
 
-    Map& map = context.level.map;
-    for(OperationRecord::Entry& entry : op.actions) {
-        const TileData& td = map.GetTile(entry.pos.y, entry.pos.x);
-        int idx = td.type;
-        int var = td.variation;
-
-        map.ModifyTile(entry.pos.y, entry.pos.x, entry.idx, entry.var, false);
-
-        //invert the operation (can be used for redo)
-        entry.idx = idx;
-        entry.var = var;
-    }
-
-    map.UpdateTileIndices();
+    context.level.map.UndoChanges(op.actions);
     return true;
 }
 
@@ -195,67 +185,37 @@ void PaintTool::UpdateBrushSize(int newSize) {
 }
 
 void PaintTool::OnStrokeStart() {
-    ClearPaint();
+    paint.Clear();
     painting = true;
 }
 
 void PaintTool::Stroke_MarkRegion(const glm::ivec2& coords, int brushLeft, int brushRight) {
     glm::ivec2 min = glm::max(coords - brushLeft, glm::ivec2(0));
-    glm::ivec2 max = glm::min(coords + brushRight, size);
+    glm::ivec2 max = glm::min(coords + brushRight, paint.Size());
 
     session_min = glm::min(session_min, min);
     session_max = glm::max(session_max, max);
 
     for(int y = min.y; y < max.y; y++) {
         for(int x = min.x; x < max.x; x++) {
-            paint[y*size.x+x] = true;
+            paint(y, x) = PaintFlags::MARKED_FOR_PAINT;
         }
     }
 }
 
 void PaintTool::OnStrokeFinish() {
     ApplyPaint();
-    context.tools.PushOperation(CreateOpRecord());
     painting = false;
 }
 
-void PaintTool::ClearPaint() {
-    for(int y = session_min.y; y < session_max.y; y++) {
-        for(int x = session_min.x; x < session_max.x; x++) {
-            paint[y*size.x+x] = false;
-        }
-    }
-    session_min = size;
-    session_max = glm::ivec2(0);
-}
-
-void PaintTool::ClearAllPaint() {
-    for(int i = 0; i < size.x * size.y; i++)
-        paint[i] = false;
-    session_min = size;
-    session_max = glm::ivec2(0);
-}
-
 void PaintTool::ApplyPaint() {
-    context.level.map.ModifyTiles(paint, tileType, randomVariations, variationValue);
-    session_min = size;
-    session_max = glm::ivec2(0);
-}
-
-OperationRecord PaintTool::CreateOpRecord() {
     OperationRecord op = {};
     op.paint = true;
 
-    Map& map = context.level.map;
-    for(int y = session_min.y; y < session_max.y; y++) {
-        for(int x = session_min.x; x < session_max.x; x++) {
-            if(paint[y*size.x+x]) {
-                const TileData& td = map.GetTile(y, x);
-                op.actions.push_back(OperationRecord::Entry(glm::ivec2(x, y), td.type, td.variation));
-            }
-        }
-    }
-    return op;
+    context.level.map.ModifyTiles(paint, tileType, randomVariations, variationValue, &op.actions);
+    context.tools.PushOperation(std::move(op));
+    if(!viz_paintReach)
+        paint.Clear();
 }
 
 //===== ObjectPlacementTool =====

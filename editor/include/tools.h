@@ -13,20 +13,12 @@ const char* toolType2str(int toolType);
 //===== OperationRecord =====
 
 struct OperationRecord {
-    struct Entry {
-        glm::ivec2 pos;
-        int idx;
-        int var;
-        
-        //painting  = prev_type, prev_variation
-        //placement = obj_idx, action_id (add/remove)
-    public:
-        Entry() = default;
-        Entry(const glm::ivec2& pos_, int idx_, int var_) : pos(pos_), idx(idx_), var(var_) {}
-    };
+    //TileRecord fields:
+    //  paint == true  -> original meaning
+    //  paint == false -> tileType=obj_idx, variation=action_id (action=add or remove)
 public:
     bool paint;
-    std::vector<Entry> actions;
+    std::vector<eng::TileRecord> actions;
 };
 
 //===== EditorTool =====
@@ -93,14 +85,9 @@ private:
     void Stroke_MarkRegion(const glm::ivec2& coords, int brushLeft, int brushRight);
     void OnStrokeFinish();
 
-    void ClearPaint();
-    void ClearAllPaint();
-
     void ApplyPaint();
-    OperationRecord CreateOpRecord();
 private:
-    bool* paint = nullptr;
-    glm::ivec2 size;
+    eng::PaintBitmap paint;
 
     glm::ivec2 session_min;
     glm::ivec2 session_max;
@@ -118,6 +105,7 @@ private:
     int variationValue = 0;
 
     bool viz_limits = false;
+    bool viz_paintReach = true;
 };
 
 //===== ObjectPlacementTool =====
