@@ -105,7 +105,7 @@ private:
     int variationValue = 0;
 
     bool viz_limits = false;
-    bool viz_paintReach = true;
+    bool viz_paintReach = false;
 };
 
 //===== ObjectPlacementTool =====

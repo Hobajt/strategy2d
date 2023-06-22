@@ -13,8 +13,9 @@ namespace eng {
 
     namespace TileType { 
         /*NOTE - THINGS THAT DEPEND ON ORDER/VALUES HERE:
-            - Map::ResolveCornerConflict::resolutionTypes
-            - Map::HasValidCorners::allowed_corners
+            - Map::CornersValidationCheck::resolutionTypes
+            - Map::CornersValidationCheck::transition_types
+            - Map::GetTransitionTileType::transition_corners
             - Map::ResolveCornerType()
             - IsWallTile() (local fn, map.cpp)
         */
@@ -91,6 +92,10 @@ namespace eng {
     public:
         glm::ivec2 GetTileIdx(int borderType, int variation) const;
         void Extend(int x, int y, int borderType);
+    public:
+        int type = -1;
+        bool cornerless = false;
+        glm::ivec2 defaultIdx = glm::ivec2(0);
     private:
         //maps borderType to tile indices
         std::unordered_map<int, std::vector<glm::ivec2>> mapping;
@@ -190,10 +195,24 @@ namespace eng {
 
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
     private:
-        void ApplyPaint_FloodFill(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType);
-        void ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int cornerType, int depth);
-        bool HasValidCorners(const glm::ivec4& corners) const;
-        int ResolveCornerType(int tileType) const;
+        //Flood-fill; Adds all tiles that are marked for painting or are neighboring with a marked tile (starting at the specified location (y,x)).
+        //Corner type of marked tiles is overriden with the new type (old type is stored in it's TileMod entry in the modified vec).
+        //After the call, modified vector should contain all directly marked tiles as well as their direct neighbors. These tiles should also have VISITED flag set in the paint bitmap.
+        void DetectAffectedTiles(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType);
+        //Checks if given tile has valid combination of corner types.
+        //If it doesn't, corner types are updated and neighboring tiles are added for processing too.
+        //Returns new tile type, that should be assigned to this tile.
+        int ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int dominantCornerType, int depth);
+        //Checks if given corner type combination makes a valid transition tile.
+        //Returns transition tile index if it does or -1 if it doesn't.
+        int GetTransitionTileType(int cornerType1, int cornerType2) const;
+        //Checks provided corner combination, returns true if the combination is legal.
+        //  dominantCornerType       - corner type, that should be preserved in case of a conflict.
+        //  out_resolutionCornerType - corner type, that should replace the invalid ones in case of a conflict (forms valid transition with the dominant type).
+        //  out_newTileType          - what tile type to assign to this tile.
+        bool CornersValidationCheck(const glm::ivec4& corners, int dominantCornerType, int& out_resolutionCornerType, int& out_newTileType) const;
+        //Defines what corner type to write when painting given tileType.
+        int ResolveCornerType(int paintedTileType) const;
 
         TileData& at(int y, int x);
         const TileData& at(int y, int x) const;

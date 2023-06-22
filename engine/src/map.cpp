@@ -8,6 +8,8 @@
 
 #include <random>
 
+static constexpr int TRANSITION_TILE_OPTIONS = 6;
+
 namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
@@ -26,19 +28,32 @@ namespace eng {
     //===== TileGraphics =====
 
     glm::ivec2 TileGraphics::GetTileIdx(int borderType, int variation) const {
+        if(cornerless) {
+            return defaultIdx;
+        }
+
         if(mapping.count(borderType)) {
             const std::vector<glm::ivec2>& indices = mapping.at(borderType);
-            return indices.at(std::min((size_t)variation, indices.size()-1));
+            ASSERT_MSG(indices.size() > 0, "TileGraphics - there should be at least 1 tile index in the mapping");
+
+            int idx = 0;
+            if(indices.size() != 1) {
+                //variation -> 0-50 = 1st option
+                variation = std::min(variation, 100);
+                idx = (variation / 50) * ((variation-50) % (indices.size()-1));
+            }
+            return indices.at(idx);
         }
 
         //TODO: what to do if given border type isn't specified?
-        //  - can pick closest existing borderType (based on hamming distance)
-        //  - can return some default index (maybe insert magenta tile at (0,0)??)
-        //  - or???
+        //  - don't throw exception
+        //  - debug   - draw special tile (add magenta tile at every tileset's (0,0))
+        //  - release - find the closest matching visuals (hamming distance between the corner encoding)
 
-        ENG_LOG_ERROR("Missing tileset index for borderType={}", borderType);
+
+        ENG_LOG_ERROR("Missing tileset index for borderType={} (tile type={})", borderType, type);
         // throw std::runtime_error("");
-        return glm::ivec2(0, 0);
+        return defaultIdx;
     }
 
     void TileGraphics::Extend(int x, int y, int borderType) {
@@ -69,10 +84,13 @@ namespace eng {
                     a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
                 }
                 else {
-                    //wall tile -> pick index based on neighboring tiles
-                    //TODO:
-                    ENG_LOG_ERROR("NOT IMPLEMENTED!!!");
-                    throw std::runtime_error("");
+                    //wall tile -> pick index based on neighboring tile types
+                    int t = (y > 0) ? (int)IsWallTile(tiles[c2i(y-1, x, size)].tileType) : 0;
+                    int l = (int)IsWallTile(b->tileType);
+                    int b = (int)IsWallTile(c->tileType);
+                    int r = (x > 0) ? (int)IsWallTile(tiles[c2i(y, x-1, size)].tileType) : 0;
+                    int borderType = GetBorderType(1, t, r, b, l);
+                    a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
                 }
 
                 
@@ -235,15 +253,12 @@ namespace eng {
         ASSERT_MSG(paint.Size() == size, "PaintBitmap size doesn't match the map size!");
 
         std::mt19937 gen = std::mt19937(std::random_device{}());
-        std::uniform_int_distribution<int> dist = std::uniform_int_distribution(100);
+        std::uniform_int_distribution<int> dist = std::uniform_int_distribution(0, 100);
 
-        if(history != nullptr)
-            history->clear();
+        std::vector<TileMod> affectedTiles;
+        std::vector<TileRecord> modified;
 
-        int affectedCount = 0;
-        std::vector<TileMod> modified;
-
-        //the same as tileTpye, except for walls (walls use grass)
+        //the same as tileType, except for walls (walls use grass)
         int cornerType = ResolveCornerType(tileType);
 
         //iterate through the paint and retrieve all marked tiles & their direct neighbors
@@ -252,30 +267,23 @@ namespace eng {
                 int& flag = paint(y, x);
 
                 if(HAS_FLAG(flag, PaintFlags::MARKED_FOR_PAINT) && !HAS_FLAG(flag, PaintFlags::VISITED)) {
-                    ApplyPaint_FloodFill(paint, y, x, modified, cornerType);
+                    DetectAffectedTiles(paint, y, x, affectedTiles, cornerType);
                 }
             }
         }
 
         //iterate through the list of affected tiles
-        for(size_t i = 0; i < modified.size(); i++) {
-            TileMod& m = modified[i];
+        for(size_t i = 0; i < affectedTiles.size(); i++) {
+            TileMod& m = affectedTiles[i];
             TileData& td = at(m.y, m.x);
 
-            //skip entries with tiles that are already marked as completed
+            //skip entries with tiles that are already marked as completed (in case there're duplicate entries in the list)
             if(HAS_FLAG(paint(m.y, m.x), PaintFlags::FINALIZED))
                 continue;
             paint(m.y, m.x) |= PaintFlags::FINALIZED;
 
-            affectedCount++;
-
-            //non-zero depth means that entry was generated through conflict resolution
-            int cType = (m.depth == 0) ? cornerType : m.dominantCornerType;
-
             //write into history
-            if(history != nullptr) {
-                history->push_back(TileRecord(td, m.prevCornerType, m.y, m.x));
-            }
+            modified.push_back(TileRecord(td, m.prevCornerType, m.y, m.x));
 
             //tile type resolution
             if(m.painted) {
@@ -284,21 +292,43 @@ namespace eng {
                 td.variation = randomVariation ? dist(gen) : variationValue;
             }
             else {
-                // paint(m.y, m.x) |= PaintFlags::DEBUG;
+                //border tile; may have been indirectly affected (will become transition tile)
 
-                //border tile, may have been indirectly modified
-                ResolveCornerConflict(m, modified, cType, m.depth);
+                //non-zero depth means that entry was generated through conflict resolution -> use different dominantCornerType
+                int cType = (m.depth == 0) ? cornerType : m.dominantCornerType;
+
+                // paint(m.y, m.x) |= PaintFlags::DEBUG;
+                int tileType = ResolveCornerConflict(m, affectedTiles, cType, m.depth);
+                td.variation = randomVariation ? dist(gen) : variationValue;
+
+                //don't replace tiles that use different corner type
+                int cornerType = ResolveCornerType(td.tileType);
+                if(cornerType != td.tileType && tileType == cornerType) {
+                    tileType = td.tileType;
+                }
+                td.tileType = tileType;
             }
         }
 
-        //TODO: update tile types (include walls handling)
-
+        //update tile visuals
         tileset->UpdateTileIndices(tiles, size);
 
-        ENG_LOG_TRACE("Map::ModifyTiles - number of affected tiles = {} ({})", affectedCount, modified.size());
+        ENG_LOG_TRACE("Map::ModifyTiles - number of affected tiles = {} ({})", modified.size(), affectedTiles.size());
+
+        if(history != nullptr)
+            *history = std::move(modified);
+        
+        printf("MAP:\n");
+        for(int y = 0; y <= size.y; y++) {
+            for(int x = 0; x <= size.x; x++) {
+                printf("%d ", at(size.y-y, x).tileType);
+            }
+            printf("\n");
+        }
+        printf("-------\n\n");
     }
 
-    void Map::ApplyPaint_FloodFill(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType) {
+    void Map::DetectAffectedTiles(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType) {
         size_t start = modified.size();
 
         //add starting tile
@@ -346,28 +376,11 @@ namespace eng {
         }
     }
     
-    void Map::ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int cornerType, int depth) {
-        static int resolutionTypes[TileType::COUNT] = {
-            TileType::MUD1,
-            TileType::GROUND1,
-            TileType::GROUND1,
-            TileType::MUD1,
-            TileType::GROUND1,
-            TileType::MUD1,
-            TileType::GROUND1,
-            TileType::MUD1,
-            TileType::MUD1,
-            TileType::GROUND1,
-            TileType::GROUND1,
-            TileType::GROUND1,
-            TileType::GROUND1,
-            TileType::GROUND1, 
-        };
-
+    int Map::ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int dominantCornerType, int depth) {
         //boundary tile (used for corner value only), can skip resolution
         if(m.y >= size.y || m.x >= size.x) {
-            at(m.y, m.x).cornerType = (at(m.y, m.x).cornerType != cornerType) ? resolutionTypes[cornerType] : cornerType;
-            return;
+            at(m.y, m.x).cornerType = dominantCornerType;
+            return at(m.y, m.x).cornerType;
         }
 
         //this tile's corners
@@ -378,33 +391,37 @@ namespace eng {
             at(m.y+1, m.x+1).cornerType
         );
 
-        if(!HasValidCorners(corners)) {
-            int resType = resolutionTypes[cornerType];
-            at(m.y+0, m.x+0).cornerType = (at(m.y+0, m.x+0).cornerType != cornerType) ? resType : cornerType;
-            at(m.y+0, m.x+1).cornerType = (at(m.y+0, m.x+1).cornerType != cornerType) ? resType : cornerType;
-            at(m.y+1, m.x+0).cornerType = (at(m.y+1, m.x+0).cornerType != cornerType) ? resType : cornerType;
-            at(m.y+1, m.x+1).cornerType = (at(m.y+1, m.x+1).cornerType != cornerType) ? resType : cornerType;
+        int newTileType, resolutionCornerType;
+        bool hasValidCorners = CornersValidationCheck(corners, dominantCornerType, resolutionCornerType, newTileType);
+        if(!hasValidCorners) {
+            //invalid corner combination -> override corners that aren't dominant corner type with new, resolution type
+            at(m.y+0, m.x+0).cornerType = (at(m.y+0, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+0, m.x+1).cornerType = (at(m.y+0, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+1, m.x+0).cornerType = (at(m.y+1, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+1, m.x+1).cornerType = (at(m.y+1, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
 
-            //mark neighbors for corner conflict checkup too
+            //mark neighboring tiles for corner conflict checkup too
             if(m.y > 0) {
-                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y-1, m.x-1, at(m.y-1, m.x-1).cornerType, resType, depth+1));
-                                  modified.push_back(TileMod::FromResolution(m.y-1, m.x+0, at(m.y-1, m.x+0).cornerType, resType, depth+1));
-                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y-1, m.x+1, at(m.y-1, m.x+1).cornerType, resType, depth+1));
+                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y-1, m.x-1, at(m.y-1, m.x-1).cornerType, resolutionCornerType, depth+1));
+                                  modified.push_back(TileMod::FromResolution(m.y-1, m.x+0, at(m.y-1, m.x+0).cornerType, resolutionCornerType, depth+1));
+                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y-1, m.x+1, at(m.y-1, m.x+1).cornerType, resolutionCornerType, depth+1));
             }
 
-            if(m.x > 0)           modified.push_back(TileMod::FromResolution(m.y+0, m.x-1, at(m.y+0, m.x-1).cornerType, resType, depth+1));
-            if(m.x < size.x)      modified.push_back(TileMod::FromResolution(m.y+0, m.x+1, at(m.y+0, m.x+1).cornerType, resType, depth+1));
+            if(m.x > 0)           modified.push_back(TileMod::FromResolution(m.y+0, m.x-1, at(m.y+0, m.x-1).cornerType, resolutionCornerType, depth+1));
+            if(m.x < size.x)      modified.push_back(TileMod::FromResolution(m.y+0, m.x+1, at(m.y+0, m.x+1).cornerType, resolutionCornerType, depth+1));
 
             if(m.y < size.y) {
-                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y+1, m.x-1, at(m.y+1, m.x-1).cornerType, resType, depth+1));
-                                  modified.push_back(TileMod::FromResolution(m.y+1, m.x+0, at(m.y+1, m.x+0).cornerType, resType, depth+1));
-                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y+1, m.x+1, at(m.y+1, m.x+1).cornerType, resType, depth+1));
+                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y+1, m.x-1, at(m.y+1, m.x-1).cornerType, resolutionCornerType, depth+1));
+                                  modified.push_back(TileMod::FromResolution(m.y+1, m.x+0, at(m.y+1, m.x+0).cornerType, resolutionCornerType, depth+1));
+                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y+1, m.x+1, at(m.y+1, m.x+1).cornerType, resolutionCornerType, depth+1));
             }
         }
+        return newTileType;
     }
 
-    bool Map::HasValidCorners(const glm::ivec4& c) const {
-        static std::vector<glm::ivec2> allowed_corners = std::vector<glm::ivec2> {
+    int Map::GetTransitionTileType(int cornerType1, int cornerType2) const {
+        //lookup table, defines what corner type combinations are allowed for transition tiles
+        static constexpr std::array<glm::ivec2, TRANSITION_TILE_OPTIONS> transition_corners = std::array<glm::ivec2, TRANSITION_TILE_OPTIONS> {
             glm::ivec2(TileType::GROUND1, TileType::GROUND2),
             glm::ivec2(TileType::GROUND1, TileType::MUD1),
             glm::ivec2(TileType::GROUND1, TileType::TREES),
@@ -413,6 +430,51 @@ namespace eng {
             glm::ivec2(TileType::MUD1, TileType::WATER)
         };
 
+        glm::ivec2 vec = glm::ivec2(std::min(cornerType1, cornerType2), std::max(cornerType1, cornerType2));
+        auto pos = std::find(transition_corners.begin(), transition_corners.end(), vec);
+        if(pos != transition_corners.end())
+            return (pos - transition_corners.begin());
+        else
+            return -1;
+    }
+
+    bool Map::CornersValidationCheck(const glm::ivec4& c, int dominantCornerType, int& out_resolutionCornerType, int& out_newTileType) const {
+        // auto [resType, replaceTileType] = resolutionTypes[cornerType];
+
+        // //replaceTileType: true -> use resolutionType as tileType for this transition tile (otherwise, use the other type)
+        // int transitionTileType = replaceTileType ? resType : cornerType;
+
+        // return isTransitionTile ? transitionTileType : at(m.y, m.x).tileType;
+
+        //defines what tileType to assign to the transition tile (indices match array in Map::GetTransitionTileType)
+        static constexpr std::array<int, TRANSITION_TILE_OPTIONS> transition_types = {
+            TileType::GROUND2,
+            TileType::MUD1,
+            TileType::TREES,
+            TileType::MUD2,
+            TileType::ROCK,
+            TileType::WATER
+        };
+
+        //defines what corner type can input corner type transition to
+        static constexpr int resolutionTypes[TileType::COUNT] = {
+            TileType::MUD1,
+            TileType::GROUND1,
+            TileType::GROUND1,
+            TileType::MUD1,
+            TileType::GROUND1,
+            TileType::MUD1,
+            TileType::GROUND1,
+            TileType::MUD1,
+            TileType::MUD1,
+            TileType::GROUND1,
+            TileType::GROUND1,
+            TileType::GROUND1,
+            TileType::GROUND1,
+            TileType::GROUND1,
+        };
+
+        //corner types checkup - 'i' indicates how many unique corner types does the tile have
         int i = 1;
         glm::ivec3 v = glm::ivec3(c[0], c[0], -1);
         if(i < 3 && c[1] != v[0] && c[1] != v[1]) v[i++] = c[1];
@@ -420,24 +482,39 @@ namespace eng {
         if(i < 3 && c[3] != v[0] && c[3] != v[1]) v[i++] = c[3];
         
         switch(i) {
-            case 1:
-                //all corners have the same type
+            case 1:         //all corners have the same type
+                out_resolutionCornerType = dominantCornerType;
+                out_newTileType = dominantCornerType;
                 return true;
-            case 2:
+            case 2:         //exactly 2 corner types, need to check if the combination is allowed
             {
-                //exactly 2 corner types, need to check if the combination is allowed
-                glm::ivec2 vec = glm::ivec2(std::min(v[0], v[1]), std::max(v[0], v[1]));
-                return (std::find(allowed_corners.begin(), allowed_corners.end(), vec) != allowed_corners.end());
+                out_resolutionCornerType = resolutionTypes[dominantCornerType];
+                int idx = GetTransitionTileType(v[0], v[1]);
+                if(idx >= 0) {
+                    out_newTileType = transition_types[idx];
+                    return true;
+                }
+                else {
+                    idx = GetTransitionTileType(dominantCornerType, out_resolutionCornerType);
+                    ASSERT_MSG(idx >= 0, "Corner type combination from resolutionTypes[] doesn't form a valid transition tile (transition_corners[] mismatch).");
+                    out_newTileType = transition_types[idx];
+                    return false;
+                }
             }
-            default:
-                //more than 2 corner types
+            default:        //more than 2 corner types
+            {
+                out_resolutionCornerType = resolutionTypes[dominantCornerType];
+                int idx = GetTransitionTileType(dominantCornerType, out_resolutionCornerType);
+                ASSERT_MSG(idx >= 0, "Corner type combination from resolutionTypes[] doesn't form a valid transition tile (transition_corners[] mismatch).");
+                out_newTileType = transition_types[idx];
                 return false;
+            }
         }
     }
 
     int Map::ResolveCornerType(int tileType) const {
         if((tileType >= TileType::WALL_BROKEN && tileType <= TileType::TREES_FELLED) || (tileType >= TileType::WALL_HU && tileType <= TileType::WALL_OC_DAMAGED))
-            return TileType::GROUND1;
+            return (tileType != TileType::ROCK_BROKEN) ? TileType::GROUND1 : TileType::MUD1;
         else
             return tileType;
     }
@@ -495,14 +572,30 @@ namespace eng {
             //load tile types
             json& info = config.at("tile_types");
             for(int typeIdx = 0; typeIdx < std::min((int)info.size(), (int)(TileType::COUNT)); typeIdx++) {
+                int count = 0;
                 //each entry contains list of ranges
                 auto& desc = info.at(typeIdx);
                 for(auto& entry : desc) {
                     //each range marks tiles with this type
                     glm::ivec2 range = eng::json::parse_ivec2(entry);
+                    count += range[1] - range[0];
                     for(int idx = range[0]; idx < range[1]; idx++) {
                         tiles[idx].tileType = typeIdx;
                     }
+                }
+
+                data.tiles[typeIdx].cornerless = (count == 1);
+            }
+
+            //load default tile indices
+            if(config.count("default_tiles")) {
+                json& def = config.at("default_tiles");
+                for(auto& entry : def.items()) {
+                    int tileType = std::stoi(entry.key());
+                    int idx = entry.value();
+                    int y = idx / tile_count.x;
+                    int x = idx % tile_count.x;
+                    data.tiles[tileType].defaultIdx = glm::ivec2(x, y);
                 }
             }
 
@@ -524,6 +617,9 @@ namespace eng {
                 }
             }
 
+            for(int i = 0; i < data.tiles.size(); i++)
+                data.tiles[i].type = i;
+
             delete[] tiles;
 
             //warning msgs, possibly malformed tileset description
@@ -543,10 +639,16 @@ namespace eng {
     int GetBorderType(int a_t, int a, int b, int c, int d) {
         int res = 0;
 
-        res |= int(a_t != a) << 0;
-        res |= int(a_t != b) << 1;
-        res |= int(a_t != c) << 2;
-        res |= int(a_t != d) << 3;
+        /*a----b
+          |    |
+          c----d
+        */
+
+        //a,b <-> c,d due to vertical coords flip
+        res |= int(a_t != c) << 0;
+        res |= int(a_t != d) << 1;
+        res |= int(a_t != a) << 2;
+        res |= int(a_t != b) << 3;
 
         return res;
     }

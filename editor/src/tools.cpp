@@ -128,21 +128,22 @@ void PaintTool::Render() {
     glm::vec4 clr_reach = glm::vec4(0.f, 0.f, 1.f, 0.3f);
     glm::vec4 clr_debug = glm::vec4(.4f, 1.f, .2f, 0.3f);
 
-    for(int y = 0; y < paint.Size().y; y++) {
-        for(int x = 0; x < paint.Size().x; x++) {
-            if(HAS_FLAG(paint(y, x), PaintFlags::MARKED_FOR_PAINT)) {
-                //highlight current stroke selection
-                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_paint));
+    if(painting || viz_paintReach) {
+        for(int y = 0; y < paint.Size().y; y++) {
+            for(int x = 0; x < paint.Size().x; x++) {
+                if(HAS_FLAG(paint(y, x), PaintFlags::MARKED_FOR_PAINT)) {
+                    //highlight current stroke selection
+                    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_paint));
+                }
+                else if (viz_paintReach && HAS_FLAG(paint(y, x), PaintFlags::FINALIZED)) {
+                    //highlight affected tiles from the last stroke
+                    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_reach));
+                }
+                // if(HAS_FLAG(paint(y, x), PaintFlags::DEBUG)) {
+                //     //highlight current stroke selection
+                //     Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_debug));
+                // }
             }
-            else if (viz_paintReach && HAS_FLAG(paint(y, x), PaintFlags::FINALIZED)) {
-                //highlight affected tiles from the last stroke
-                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_reach));
-            }
-
-            // if(HAS_FLAG(paint(y, x), PaintFlags::DEBUG)) {
-            //     //highlight current stroke selection
-            //     Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(x, y)), zIdx), cam.Mult(), clr_debug));
-            // }
         }
     }
 }
