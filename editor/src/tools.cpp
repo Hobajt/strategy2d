@@ -174,6 +174,7 @@ bool PaintTool::UndoOperation(OperationRecord& op) {
         return false;
 
     context.level.map.UndoChanges(op.actions);
+    paint.Clear();
     return true;
 }
 
@@ -215,8 +216,6 @@ void PaintTool::ApplyPaint() {
 
     context.level.map.ModifyTiles(paint, tileType, randomVariations, variationValue, &op.actions);
     context.tools.PushOperation(std::move(op));
-    if(!viz_paintReach)
-        paint.Clear();
 }
 
 //===== ObjectPlacementTool =====
@@ -310,8 +309,8 @@ void EditorTools::PushOperation(OperationRecord&& op) {
 }
 
 void EditorTools::Undo() {
-    LOG_TRACE("Editor::Undo");
     if(ops_undo.Size() > 0) {
+        LOG_TRACE("Editor::Undo ({} left)", ops_undo.Size()-1);
         OperationRecord op = ops_undo.Pop();
 
         for(auto& [id, tool] : tools) {
@@ -321,11 +320,14 @@ void EditorTools::Undo() {
             }
         }
     }
+    else {
+        LOG_TRACE("Editor::Undo - there nothing to undo");
+    }
 }
 
 void EditorTools::Redo() {
-    LOG_TRACE("Editor::Redo");
     if(ops_redo.Size() > 0) {
+        LOG_TRACE("Editor::Redo ({} left)", ops_redo.Size()-1);
         OperationRecord op = ops_redo.Pop();
 
         for(auto& [id, tool] : tools) {
@@ -334,5 +336,8 @@ void EditorTools::Redo() {
                 break;
             }
         }
+    }
+    else {
+        LOG_TRACE("Editor::Redo - there nothing to redo");
     }
 }

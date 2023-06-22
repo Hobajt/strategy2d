@@ -221,6 +221,8 @@ namespace eng {
 
         void Move(Map&&) noexcept;
         void Release() noexcept;
+
+        void DBG_Print() const;
     private:
         TilesetRef tileset;
         glm::ivec2 size;

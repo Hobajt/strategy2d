@@ -64,26 +64,11 @@ void Editor::OnGUI() {
 #endif
 }
 
-/*TODO: tile painting tool progress
-    - maybe add operation cancel option (esc?)
-    - implement valid tileset transitions
-*/
-
-/*PAINT BEHAVIOUR:
-    - all types have predefined tile types, that they can neighbor with
-        - water  -> mud1
-        - walls  -> grass1
-        - mud2   -> mud1
-        - grass2 -> grass1
-        - rocks  -> mud1
-        - trees  -> grass1
-    - when painting & the neighboring tile doesn't match a transition tile is inserted
-    - transition tile override anything that was previously there
-*/
-
 /*Map logic checks:
     - valid tile type transitions (water -> mud; not grass directly) - only if I decide to enforce this
     - building placement validity (not just when placing, also when updating tiles -> can cause building removal)
+        - should also include these object removals in the history (undo/redo operations)
+        - this might complicate the functionality tho
 */
 
 //TODO: render starting locations

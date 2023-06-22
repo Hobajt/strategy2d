@@ -246,7 +246,27 @@ namespace eng {
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
-        //TODO:
+        for(TileRecord& tr : history) {
+            TileData& td = at(tr.pos.y, tr.pos.x);
+
+            int tileType    = tr.tileType;
+            int cornerType  = tr.cornerType;
+            int variation   = tr.variation;
+
+            if(rewrite_history) {
+                tr.tileType     = td.tileType;
+                tr.cornerType   = td.cornerType;
+                tr.variation    = td.variation;
+            }
+
+            td.tileType     = tileType;
+            td.cornerType   = cornerType;
+            td.variation    = variation;
+        }
+
+        DBG_Print();
+
+        tileset->UpdateTileIndices(tiles, size);
     }
 
     void Map::ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history) {
@@ -294,6 +314,8 @@ namespace eng {
             else {
                 //border tile; may have been indirectly affected (will become transition tile)
 
+                // DBG_Print();
+
                 //non-zero depth means that entry was generated through conflict resolution -> use different dominantCornerType
                 int cType = (m.depth == 0) ? cornerType : m.dominantCornerType;
 
@@ -318,18 +340,13 @@ namespace eng {
         if(history != nullptr)
             *history = std::move(modified);
         
-        printf("MAP | CORNERS:\n");
-        for(int y = 0; y <= size.y; y++) {
-            for(int x = 0; x <= size.x; x++) {
-                printf("%d ", at(size.y-y, x).tileType);
+        DBG_Print();
+        if(history != nullptr) {
+            printf("History (%d):\n", (int)history->size());
+            for(TileRecord& tr : *history) {
+                printf("[%d, %d]: t: %d, c: %d, v: %3d\n", tr.pos.y, tr.pos.x, tr.tileType, tr.cornerType, tr.variation);
             }
-            printf(" | ");
-            for(int x = 0; x <= size.x; x++) {
-                printf("%d ", at(size.y-y, x).cornerType);
-            }
-            printf("\n");
         }
-        printf("-------\n\n");
     }
 
     void Map::DetectAffectedTiles(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType) {
@@ -370,12 +387,13 @@ namespace eng {
 
                     modified[i].painted = true;
                 }
-
-                //override tile's top-left corner value
-                if(modified[i].painted || modified[i].writeCorner) {
-                    td.cornerType = cornerType;
-                }
             }
+
+            //override tile's top-left corner value
+            if(modified[i].painted || modified[i].writeCorner) {
+                td.cornerType = cornerType;
+            }
+
             flag |= PaintFlags::VISITED;
         }
     }
@@ -398,12 +416,6 @@ namespace eng {
         int newTileType, resolutionCornerType;
         bool hasValidCorners = CornersValidationCheck(corners, dominantCornerType, resolutionCornerType, newTileType);
         if(!hasValidCorners) {
-            //invalid corner combination -> override corners that aren't dominant corner type with new, resolution type
-            at(m.y+0, m.x+0).cornerType = (at(m.y+0, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
-            at(m.y+0, m.x+1).cornerType = (at(m.y+0, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
-            at(m.y+1, m.x+0).cornerType = (at(m.y+1, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
-            at(m.y+1, m.x+1).cornerType = (at(m.y+1, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
-
             //mark neighboring tiles for corner conflict checkup too
             if(m.y > 0) {
                 if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y-1, m.x-1, at(m.y-1, m.x-1).cornerType, resolutionCornerType, depth+1));
@@ -419,6 +431,12 @@ namespace eng {
                                   modified.push_back(TileMod::FromResolution(m.y+1, m.x+0, at(m.y+1, m.x+0).cornerType, resolutionCornerType, depth+1));
                 if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y+1, m.x+1, at(m.y+1, m.x+1).cornerType, resolutionCornerType, depth+1));
             }
+
+            //invalid corner combination -> override corners that aren't dominant corner type with new, resolution type
+            at(m.y+0, m.x+0).cornerType = (at(m.y+0, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+0, m.x+1).cornerType = (at(m.y+0, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+1, m.x+0).cornerType = (at(m.y+1, m.x+0).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
+            at(m.y+1, m.x+1).cornerType = (at(m.y+1, m.x+1).cornerType != dominantCornerType) ? resolutionCornerType : dominantCornerType;
         }
         return newTileType;
     }
@@ -533,6 +551,21 @@ namespace eng {
         ASSERT_MSG(tiles != nullptr, "Map isn't properly initialized!");
         ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
         return tiles[y*(size.x+1)+x];
+    }
+
+    void Map::DBG_Print() const {
+        printf("MAP | CORNERS:\n");
+        for(int y = 0; y <= size.y; y++) {
+            for(int x = 0; x <= size.x; x++) {
+                printf("%d ", at(size.y-y, x).tileType);
+            }
+            printf(" | ");
+            for(int x = 0; x <= size.x; x++) {
+                printf("%d ", at(size.y-y, x).cornerType);
+            }
+            printf("\n");
+        }
+        printf("-------\n\n");
     }
 
     //===================================================================================
