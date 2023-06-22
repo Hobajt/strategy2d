@@ -318,10 +318,14 @@ namespace eng {
         if(history != nullptr)
             *history = std::move(modified);
         
-        printf("MAP:\n");
+        printf("MAP | CORNERS:\n");
         for(int y = 0; y <= size.y; y++) {
             for(int x = 0; x <= size.x; x++) {
                 printf("%d ", at(size.y-y, x).tileType);
+            }
+            printf(" | ");
+            for(int x = 0; x <= size.x; x++) {
+                printf("%d ", at(size.y-y, x).cornerType);
             }
             printf("\n");
         }
@@ -379,8 +383,8 @@ namespace eng {
     int Map::ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int dominantCornerType, int depth) {
         //boundary tile (used for corner value only), can skip resolution
         if(m.y >= size.y || m.x >= size.x) {
-            at(m.y, m.x).cornerType = dominantCornerType;
-            return at(m.y, m.x).cornerType;
+            //corner type already was changed from the tile that uses this tile's corner
+            return dominantCornerType;
         }
 
         //this tile's corners
