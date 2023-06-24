@@ -18,4 +18,11 @@ private:
     eng::FontRef font;
     
     eng::Map map;
+
+    eng::TextureRef texture;
+    eng::TextureRef colorPalette;
+
+    bool whiteBackground = false;
+    int paletteIndex = 0;
+    int maxPaletteIndex = 0;
 };

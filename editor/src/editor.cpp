@@ -84,7 +84,31 @@ void Editor::OnGUI() {
     - faction objects
 */
 
-
+/*SAVEFILE/MAPFILE properties & impl:
+    - use the same structure for saves & mapfiles
+    - custom game vs campaign distinctions:
+        - campaigns will have specific controller scripts (for AI and stuff), customs will only have generic AI controllers
+            - any objects & other stuff in campaigns could be initialized from the scripts
+            - might be convenient to be able to edit it from the editor too tho
+        - there will be no distinction between custom & campaign map
+        - each type will use different values from the file tho
+            - campaign will use everything (except maybe for starting locations)
+            - custom will only use starting locations (& ignore everything else - techtree, diplomacy, objects (with the exception of critters))
+    
+    - what does the file need to contain:
+        - scenario description:
+            - map info - size, tiles
+            - max players & starting locations
+            - techtree, diplomacy settings
+            - objects
+            - resources & their values (oil & gold, trees are part of the map)
+        - game state description:
+            - each object's state - health/mana, position, command, animation frame
+            - map object states - health for walls & trees (can only store for those, which are damaged)
+            - faction state - each player's accumulated resources, revealed map
+        
+        - objects & techtree can maybe be part of game state description
+*/
 
 /*EDITOR TOOLSET & CAPABILITIES:
     - undo/redo capability - will need struct to describe operations & keep em in a stack
@@ -134,5 +158,11 @@ void Editor::OnGUI() {
         - it will be possible to change it ingame tho (for custom games)
         - have option in editor to change tileset (without modifying the default) - for visualization
     
+*/
+
+/*TODO: starting locations:
+    - integrate color cycling into the main shader
+    - load cross texture to mark the starting location (probably placeholder so far)
+    - 
 */
 
