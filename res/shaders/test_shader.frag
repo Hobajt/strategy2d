@@ -7,6 +7,7 @@ in vec4 color;
 in vec2 texCoords;
 in flat uint textureID;
 in flat float alphaFromTexture;
+in flat float paletteIdx;
 in flat uvec4 objectInfo;
 
 #define MAX_TEXTURES 8

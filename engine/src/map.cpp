@@ -203,13 +203,13 @@ namespace eng {
 
     int& Map::operator()(int y, int x) {
         //.at() does similar assert, but it also allows access to [size.y, size.x], which isn't a valid tile (it's there for corner value)
-        ASSERT_MSG((unsigned(y) < unsigned(size.y)) || (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
+        ASSERT_MSG((unsigned(y) < unsigned(size.y)) && (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
         return at(y,x).tileType;
     }
 
     const int& Map::operator()(int y, int x) const {
         //.at() does similar assert, but it also allows access to [size.y, size.x], which isn't a valid tile (it's there for corner value)
-        ASSERT_MSG((unsigned(y) < unsigned(size.y)) || (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
+        ASSERT_MSG((unsigned(y) < unsigned(size.y)) && (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
         return at(y,x).tileType;
     }
 
@@ -341,12 +341,12 @@ namespace eng {
             *history = std::move(modified);
         
         DBG_Print();
-        if(history != nullptr) {
-            printf("History (%d):\n", (int)history->size());
-            for(TileRecord& tr : *history) {
-                printf("[%d, %d]: t: %d, c: %d, v: %3d\n", tr.pos.y, tr.pos.x, tr.tileType, tr.cornerType, tr.variation);
-            }
-        }
+        // if(history != nullptr) {
+        //     printf("History (%d):\n", (int)history->size());
+        //     for(TileRecord& tr : *history) {
+        //         printf("[%d, %d]: t: %d, c: %d, v: %3d\n", tr.pos.y, tr.pos.x, tr.tileType, tr.cornerType, tr.variation);
+        //     }
+        // }
     }
 
     void Map::DetectAffectedTiles(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType) {
@@ -554,18 +554,18 @@ namespace eng {
     }
 
     void Map::DBG_Print() const {
-        printf("MAP | CORNERS:\n");
-        for(int y = 0; y <= size.y; y++) {
-            for(int x = 0; x <= size.x; x++) {
-                printf("%d ", at(size.y-y, x).tileType);
-            }
-            printf(" | ");
-            for(int x = 0; x <= size.x; x++) {
-                printf("%d ", at(size.y-y, x).cornerType);
-            }
-            printf("\n");
-        }
-        printf("-------\n\n");
+        // printf("MAP | CORNERS:\n");
+        // for(int y = 0; y <= size.y; y++) {
+        //     for(int x = 0; x <= size.x; x++) {
+        //         printf("%d ", at(size.y-y, x).tileType);
+        //     }
+        //     printf(" | ");
+        //     for(int x = 0; x <= size.x; x++) {
+        //         printf("%d ", at(size.y-y, x).cornerType);
+        //     }
+        //     printf("\n");
+        // }
+        // printf("-------\n\n");
     }
 
     //===================================================================================

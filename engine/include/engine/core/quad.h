@@ -15,6 +15,7 @@ namespace eng {
 
         uint32_t textureID = 0;
         float alphaFromTexture = 0.f;
+        float paletteIdx = -1.f;
 
         glm::uvec4 info;
     public:
@@ -39,6 +40,7 @@ namespace eng {
         glm::vec3 PositionAt(float x, float y);
 
         void SetAlphaFromTexture(bool enabled);
+        void SetPaletteIdx(float idx);
     };
 
     //======= QuadIndices =======
@@ -97,6 +99,8 @@ namespace eng {
         static Quad CharClippedBot(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int clipPos);
 
         static glm::uvec4 DefaultInfo() { return glm::uvec4(0); }
+
+        Quad& SetPaletteIdx(float idx);
     };
 
 }//namespace eng

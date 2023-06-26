@@ -230,8 +230,10 @@ namespace eng {
             glEnableVertexAttribArray(3);
             glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, alphaFromTexture));
             glEnableVertexAttribArray(4);
-            glVertexAttribPointer(5, 4, GL_UNSIGNED_INT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, info));
+            glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, paletteIdx));
             glEnableVertexAttribArray(5);
+            glVertexAttribPointer(6, 4, GL_UNSIGNED_INT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, info));
+            glEnableVertexAttribArray(6);
 
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             glBufferData(GL_ARRAY_BUFFER, sizeof(Quad) * BATCH_SIZE, nullptr, GL_DYNAMIC_DRAW);

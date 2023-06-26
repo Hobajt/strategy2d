@@ -40,6 +40,10 @@ namespace eng {
         vertices[0].alphaFromTexture = vertices[1].alphaFromTexture = vertices[2].alphaFromTexture = vertices[3].alphaFromTexture = enabled ? 1.f : 0.f;
     }
 
+    void QuadVertices::SetPaletteIdx(float idx) {
+        vertices[0].paletteIdx = vertices[1].paletteIdx = vertices[2].paletteIdx = vertices[3].paletteIdx = idx;
+    }
+
     //======= QuadIndices =======
 
     QuadIndices::QuadIndices(int idx) {
@@ -219,6 +223,11 @@ namespace eng {
         q.vertices.SetAlphaFromTexture(true);
 
         return q;
+    }
+
+    Quad& Quad::SetPaletteIdx(float idx) {
+        vertices.SetPaletteIdx(idx);
+        return *this;
     }
 
 }//namespace eng

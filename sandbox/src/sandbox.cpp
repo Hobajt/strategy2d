@@ -17,94 +17,6 @@ static std::string text = "";
 #define BUF_LEN (1 << 20)
 static char* buf = new char[BUF_LEN];
 
-struct clr {
-    uint8_t r,g,b,a;
-
-    clr bgr2rgb() const { return clr{b,g,r,a}; }
-};
-
-constexpr int num_colors = 4;
-
-eng::TextureRef CreateColorPalette(int& paletteCount) {
-    int s = 16;
-
-    std::vector<std::vector<clr>> palettes = {
-        std::vector<clr>{
-            {0, 4, 68, 255},
-            {0, 4, 92, 255},
-            {0, 0, 124, 255},
-            {0, 0, 164, 255},
-        },
-        std::vector<clr>{
-            {76, 4, 0, 255},
-            {108, 20, 0, 255},
-            {148, 36, 0, 255},
-            {192, 60, 0, 255},
-        },
-        std::vector<clr>{
-            {12, 40, 0, 255},
-            {44, 84, 4, 255},
-            {92, 132, 20, 255},
-            {148, 180, 44, 255},
-        },
-        std::vector<clr>{
-            {44, 8, 44, 255},
-            {76, 16, 80, 255},
-            {132, 48, 116, 255},
-            {176, 72, 152, 255},
-        },
-        std::vector<clr>{
-            {12, 32, 108, 255},
-            {16, 56, 152, 255},
-            {16, 88, 196, 255},
-            {20, 132, 240, 255},
-        },
-        std::vector<clr>{
-            {20, 12, 12, 255},
-            {32, 20, 20, 255},
-            {44, 28, 28, 255},
-            {60, 40, 40, 255},
-        },
-        std::vector<clr>{
-            {76, 40, 36, 255},
-            {128, 84, 84, 255},
-            {180, 152, 152, 255},
-            {224, 224, 224, 255},
-        },
-        std::vector<clr>{
-            {0, 116, 180, 255},
-            {16, 160, 204, 255},
-            {40, 204, 228, 255},
-            {72, 252, 252, 255},
-        },
-    };
-    paletteCount = (int)palettes.size()-1;
-    
-    int width = s*num_colors;
-    int height = s * (int)palettes.size();
-
-    int size = width * height;
-    clr* data = new clr[size];
-    for(int i = 0; i < size; i++)
-        data[i] = { 0,0,0,0 };
-    
-    for(int y = 0; y < palettes.size(); y++) {
-        auto& palette = palettes[y];
-        for(int x = 0; x < num_colors; x++) {
-
-            for(int j = 0; j < s; j++) {
-                for(int k = 0; k < s; k++) {
-                    data[(y*s+j)*width+x*s+k] = palette[x].bgr2rgb();
-                }
-            }
-        }
-    }
-
-    TextureRef tex = std::make_shared<Texture>(TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST), data, "colorPalette");
-    delete[] data;
-    return tex;
-}
-
 void Sandbox::OnInit() {
     try {
         ReloadShaders();
@@ -118,9 +30,8 @@ void Sandbox::OnInit() {
         texture = std::make_shared<Texture>("res/textures/troll.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
         // texture = std::make_shared<Texture>("res/textures/cross.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
 
-        colorPalette = CreateColorPalette(maxPaletteIndex);
-        shader->SetFloat("paletteIndex", 0.f);
-        shader->SetVec2("paletteCentering", glm::vec2(1.f / (2.f * num_colors), 1.f / (2.f*maxPaletteIndex)));
+        colorPalette = ColorPalette(true);
+        colorPalette.UpdateShaderValues(shader);
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -166,12 +77,13 @@ void Sandbox::OnUpdate() {
     Renderer::Begin(shader, true);
 
     //======================
-    
-    shader->SetInt("colorPalette", Renderer::ForceBindTexture(colorPalette));
+
+    colorPalette.Bind(shader);
 
     // map.Render();
     glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
-    Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture));
+    float idx = float(paletteIndex) / colorPalette.Size().y;
+    Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx(idx));
 
     if(whiteBackground)
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, 0.1f), glm::vec2(1.f), glm::vec4(1.f), nullptr));
@@ -206,14 +118,12 @@ void Sandbox::OnGUI() {
         ImGui::Begin("Sandbox stuff");
 
         ImGui::Checkbox("white background", &whiteBackground);
-        if(ImGui::SliderInt("Palette index", &paletteIndex, 0, maxPaletteIndex)) {
-            shader->SetFloat("paletteIndex", float(paletteIndex)/maxPaletteIndex);
-        }
+        ImGui::SliderInt("Palette index", &paletteIndex, 0, colorPalette.Size().y);
 
         ImGui::End();
 
         ImGui::Begin("Palettes");
-        colorPalette->DBG_GUI();
+        colorPalette.GetTexture()->DBG_GUI();
         ImGui::End();
     }
 #endif
@@ -222,4 +132,5 @@ void Sandbox::OnGUI() {
 void Sandbox::ReloadShaders() {
     shader = std::make_shared<Shader>("res/shaders/cycling_shader");
     shader->InitTextureSlots(Renderer::TextureSlotsCount());
+    colorPalette.UpdateShaderValues(shader);
 }

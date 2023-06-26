@@ -16,9 +16,11 @@
 #include "core/quad.h"
 #include "core/shader.h"
 #include "core/texture.h"
+#include "core/palette.h"
 #include "core/renderer.h"
 #include "core/framebuffer.h"
 #include "core/sprite.h"
+
 
 #include "game/app.h"
 #include "game/resources.h"

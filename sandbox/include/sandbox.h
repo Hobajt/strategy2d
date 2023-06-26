@@ -20,9 +20,8 @@ private:
     eng::Map map;
 
     eng::TextureRef texture;
-    eng::TextureRef colorPalette;
+    eng::ColorPalette colorPalette;
 
     bool whiteBackground = false;
     int paletteIndex = 0;
-    int maxPaletteIndex = 0;
 };
