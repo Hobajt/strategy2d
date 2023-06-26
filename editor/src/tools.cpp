@@ -5,8 +5,10 @@ using namespace eng;
 
 #define OP_STACK_SIZE 16
 
+#define MAX_PLAYERS_COUNT 8
+
 const char* toolType2str(int toolType) {
-    static const char* names[ToolType::COUNT] = { "SELECT", "TILE_PAINT", "OBJECT_PLACEMENT" };
+    static const char* names[ToolType::COUNT] = { "SELECT", "TILE_PAINT", "OBJECT_PLACEMENT", "STARTING_LOCATION" };
     return (toolType < ToolType::COUNT) ? names[toolType] : "INVALID";
 }
 
@@ -238,6 +240,135 @@ void ObjectPlacementTool::OnLMB(int state) {
     //TODO:
 }
 
+//===== StartingLocationTool =====
+
+StartingLocationTool::StartingLocationTool(EditorContext& context_) : EditorTool(context_) {}
+
+void StartingLocationTool::GUI_Update() {
+#ifdef ENGINE_ENABLE_GUI
+    ImGui::Text("Starting Location Tool");
+    ImGui::Separator();
+
+    ImGui::Checkbox("Render locations", &renderStartingLocations);
+    ImGui::Separator();
+
+    Level& level = context.level;
+    float f = 0.1f * ImGui::GetWindowSize().x;
+
+    ImGui::Text("Starting locations:");
+    ImGui::Indent(f);
+    ImGui::PushID(&startingLocations);
+    int eraseIdx = -1;
+    for(int i = 0; i < (int)startingLocations.size(); i++) {
+        glm::ivec2& pos = startingLocations[i];
+        ImGui::Text("[%d] - (%3d, %3d)", i, pos.x, pos.y);
+        ImGui::SameLine();
+        ImGui::PushID(i);
+        if(ImGui::Button("X")) {
+            eraseIdx = i;
+        }
+        ImGui::PopID();
+    }
+    ImGui::PopID();
+    ImGui::Unindent(f);
+
+    if(eraseIdx >= 0) {
+        startingLocations.erase(startingLocations.begin() + eraseIdx);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Controls:");
+    ImGui::Indent(f);
+    ImGui::Text("ctrl + LMB click = place new location (max %d)", MAX_PLAYERS_COUNT);
+    ImGui::Text("LMB - drag existing location around the map");
+    ImGui::Text("RMB - delete location (or use GUI buttons)");
+    ImGui::Unindent(f);
+#endif
+}
+
+void StartingLocationTool::Render() {
+    InnerRender();
+}
+
+void StartingLocationTool::Render_NotSelected() {
+    InnerRender();
+}
+
+void StartingLocationTool::OnLMB(int state) {
+    Input& input = Input::Get();
+    Camera& cam = Camera::Get();
+
+    glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
+    glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
+
+    //TODO: how to handle terrain issues - placing location over trees/placing trees under location
+    //TODO: add support for undo/redo logic
+
+    //can validate the location during placement here
+    //when changing tiles, probably just remove invalid locations
+    
+    switch(state) {
+        case InputButtonState::DOWN:
+        {
+            int idx = LocationIdx(coord);
+            if(idx < 0 && input.ctrl && startingLocations.size() < MAX_PLAYERS_COUNT) {
+                //create new
+                startingLocations.push_back(coord);
+            }
+            else if(idx >= 0 && !input.ctrl) {
+                //location dragging start
+                drag = true;
+                dragIdx = idx;
+            }
+            break;
+        }
+        case InputButtonState::PRESSED:
+            dragCoords = coord_f;
+            break;
+        case InputButtonState::UP:
+            if(drag) {
+                ASSERT_MSG(dragIdx < (int)startingLocations.size(), "Something went wrong, dragIdx is out of range.");
+                if(LocationIdx(coord) < 0)
+                    startingLocations[dragIdx] = coord;
+            }
+            drag = false;
+            dragIdx = -1;
+            break;
+    }
+}
+
+void StartingLocationTool::OnRMB(int state) {
+    if(state == InputButtonState::DOWN) {
+        Camera& cam = Camera::Get();
+
+        glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
+        glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
+
+        int idx = LocationIdx(coord);
+        if(idx >= 0) {
+            startingLocations.erase(startingLocations.begin() + idx);
+        }
+    }
+}
+
+int StartingLocationTool::LocationIdx(const glm::ivec2& loc) const {
+    auto pos = std::find(startingLocations.begin(), startingLocations.end(), loc);
+    return (pos != startingLocations.end()) ? (pos - startingLocations.begin()) : -1;
+}
+
+void StartingLocationTool::InnerRender() {
+    if(renderStartingLocations) {
+        Camera& cam = Camera::Get();
+        const Sprite& tilemap = context.level.map.GetTileset()->Tilemap();
+
+        for(int i = 0; i < (int)startingLocations.size(); i++) {
+            glm::vec2 v = (i != dragIdx || !drag) ? glm::vec2(startingLocations[i]) : dragCoords;
+            glm::vec3 pos = glm::vec3(cam.map2screen(v), -1e-2f);
+            tilemap.Render(pos, cam.Mult(), 0, 1, (float)i);
+        }
+    }
+}
+
 //===== EditorTools =====
 
 EditorTools::EditorTools(EditorContext& context_)
@@ -245,6 +376,7 @@ EditorTools::EditorTools(EditorContext& context_)
     tools.insert({ ToolType::SELECT, new SelectionTool(context_) });
     tools.insert({ ToolType::TILE_PAINT, new PaintTool(context_) });
     tools.insert({ ToolType::OBJECT_PLACEMENT, new ObjectPlacementTool(context_) });
+    tools.insert({ ToolType::STARTING_LOCATION, new StartingLocationTool(context_) });
 
     currentTool = tools.at(ToolType::SELECT);
 }
@@ -283,11 +415,21 @@ void EditorTools::CustomSignal(int state, int id) {
 void EditorTools::Render() {
     if(currentTool != nullptr)
         currentTool->Render();
+    
+    for(auto& [key, tool] : tools) {
+        if(tool != currentTool)
+            tool->Render_NotSelected();
+    }
 }
 
 void EditorTools::OnLMB(int state) {
     if(currentTool != nullptr)
         currentTool->OnLMB(state);
+}
+
+void EditorTools::OnRMB(int state) {
+    if(currentTool != nullptr)
+        currentTool->OnRMB(state);
 }
 
 void EditorTools::OnHover() {

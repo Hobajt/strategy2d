@@ -2,6 +2,8 @@
 
 namespace eng {
 
+    int Quad::paletteSize = 1;
+
     //======= Vertex =======
 
     Vertex::Vertex(const glm::vec3& pos, const glm::vec2& tc, const glm::uvec4& i) : Vertex(pos, glm::vec4(1.f), tc, i) {}
@@ -226,7 +228,7 @@ namespace eng {
     }
 
     Quad& Quad::SetPaletteIdx(float idx) {
-        vertices.SetPaletteIdx(idx);
+        vertices.SetPaletteIdx(idx / paletteSize);
         return *this;
     }
 

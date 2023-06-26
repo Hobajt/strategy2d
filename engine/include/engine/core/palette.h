@@ -9,6 +9,8 @@
 
 namespace eng {
 
+    //TODO: ColorPalette should really be singleton bcs of the Quad::paletteSize variable (or use uniform var instead of that)
+
     //Wrapper for a color palette texture.
     class ColorPalette {
     public:

@@ -25,6 +25,12 @@ namespace eng {
         Renderer::RenderQuad(quad);
     }
 
+    void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx, float paletteIdx) const {
+        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), (data.size.y + data.frames.offset) * (orientation % data.frames.line_count));
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset)).SetPaletteIdx(paletteIdx);
+        Renderer::RenderQuad(quad);
+    }
+
     void Sprite::RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) const {
         glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), data.size.y * (orientation % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, color, texture, TexOffset(texOffset));

@@ -42,6 +42,7 @@ namespace eng {
 
         //Render sprite at given screen coords. frameIdx and orientation are horizontal and vertical indices into the sprite's frames.
         void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0, float paletteIdx = -1.f) const;
 
         //Alternate render call with additional options (modify color/use texture as alpha).
         void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;

@@ -100,6 +100,8 @@ namespace eng {
             name
         );
 
+        Quad::paletteSize = size.y;
+
         delete[] tex_data;
     }
 

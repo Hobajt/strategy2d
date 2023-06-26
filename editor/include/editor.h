@@ -15,6 +15,7 @@ private:
     virtual void OnGUI() override;
 private:
     eng::ShaderRef shader;
+    eng::ColorPalette palette;
 
     eng::InputButton btn_toggleFullscreen;
 

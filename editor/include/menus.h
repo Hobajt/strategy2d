@@ -39,6 +39,7 @@ public:
     EditorComponent(EditorContext&& context) = delete;
 
     virtual void GUI_Update() = 0;
+    virtual void Render() {}
 protected:
     EditorContext& context;
 };
@@ -102,10 +103,6 @@ public:
     void NewLevelCreated();
 private:
     char* levelName;
-
-    int maxPlayers = 2;
-    bool renderStartingLocations = true;
-    std::vector<glm::ivec2> startingLocations;
 
     TilesetChoice tileset;
     bool tileset_forceReload = false;

@@ -82,8 +82,7 @@ void Sandbox::OnUpdate() {
 
     // map.Render();
     glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
-    float idx = float(paletteIndex) / colorPalette.Size().y;
-    Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx(idx));
+    Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
 
     if(whiteBackground)
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, 0.1f), glm::vec2(1.f), glm::vec4(1.f), nullptr));

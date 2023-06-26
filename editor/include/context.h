@@ -21,6 +21,8 @@ public:
     void Terrain_SetupNew(const glm::ivec2& size, const eng::TilesetRef& tileset);
     int Terrain_Load(const std::string& filepath);
     int Terrain_Save(const std::string& filepath);
+
+    void Render();
 };
 
 //===========

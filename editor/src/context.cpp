@@ -37,3 +37,11 @@ int EditorContext::Terrain_Save(const std::string& filepath) {
     //TODO:
     return 1;
 }
+
+void EditorContext::Render() {
+    level.map.Render();
+    tools.Render();
+    for(EditorComponentRef& comp : components) {
+        comp->Render();
+    }
+}

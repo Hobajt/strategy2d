@@ -185,6 +185,8 @@ namespace eng {
 
         void ChangeTileset(const TilesetRef& tilesetNew);
 
+        TilesetRef GetTileset() const { return tileset; }
+
         //==== Methods for editor ====
 
         std::string GetTilesetName() const { return (tileset != nullptr) ? tileset->Name() : "none"; }

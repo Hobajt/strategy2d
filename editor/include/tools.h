@@ -7,7 +7,7 @@
 
 class EditorContext;
 
-namespace ToolType { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT, COUNT }; }
+namespace ToolType { enum { SELECT, TILE_PAINT, OBJECT_PLACEMENT, STARTING_LOCATION, COUNT }; }
 const char* toolType2str(int toolType);
 
 //===== OperationRecord =====
@@ -31,9 +31,12 @@ public:
     virtual void GUI_Update() {}
 
     virtual void CustomSignal(int state, int id) {}
+
     virtual void Render() {}
+    virtual void Render_NotSelected() {}
 
     virtual void OnLMB(int state) = 0;
+    virtual void OnRMB(int state) {}
     virtual void OnHover() { hover = true; }
 
     virtual void NewLevelCreated(const glm::ivec2& size) {}
@@ -121,6 +124,29 @@ public:
     virtual void OnLMB(int state) override;
 };
 
+//===== StartingLocationTool =====
+
+class StartingLocationTool : public EditorTool {
+public:
+    StartingLocationTool(EditorContext& tools);
+
+    virtual void GUI_Update() override;
+    virtual void Render() override;
+    virtual void Render_NotSelected() override;
+    virtual void OnLMB(int state) override;
+    virtual void OnRMB(int state) override;
+private:
+    int LocationIdx(const glm::ivec2& loc) const;
+    void InnerRender();
+private:
+    std::vector<glm::ivec2> startingLocations;
+    bool renderStartingLocations = true;
+
+    bool drag = false;
+    int dragIdx = -1;
+    glm::vec2 dragCoords = glm::vec2(0.f);
+};
+
 //===== EditorTools =====
 
 struct EditorTools {
@@ -139,6 +165,7 @@ public:
     void Render();
 
     void OnLMB(int state);
+    void OnRMB(int state);
     void OnHover();
 
     const std::unordered_map<int,EditorTool*>& GetTools() const;

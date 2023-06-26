@@ -9,9 +9,6 @@ using namespace eng;
 
 #define BUF_SIZE 1024
 
-#define MIN_PLAYERS_LIMIT 2
-#define MAX_PLAYERS_LIMIT 8
-
 //===== TilesetChoice =====
 
 TilesetChoice::ChoicesList TilesetChoice::choices = {};
@@ -100,10 +97,11 @@ void HotkeysMenu::GUI_Update() {
 
     ImGui::Text("1 - tile painting tool");
     ImGui::Text("2 - object placement tool");
-    ImGui::Text("3 - techtree tab");
-    ImGui::Text("4 - diplomacy tab");
-    ImGui::Text("5 - level info tab");
-    ImGui::Text("6 - file tab");
+    ImGui::Text("3 - starting location tool");
+    ImGui::Text("4 - techtree tab");
+    ImGui::Text("5 - diplomacy tab");
+    ImGui::Text("6 - level info tab");
+    ImGui::Text("7 - file tab");
     ImGui::Text("h - hotkeys hint (this tab)");
     ImGui::Separator();
 
@@ -298,11 +296,6 @@ void FileMenu::FileDialog() {
 InfoMenu::InfoMenu(EditorContext& context_) : EditorComponent(context_) {
     levelName = new char[BUF_SIZE];
     snprintf(levelName, sizeof(char) * BUF_SIZE, "%s", "unnamed_level");
-
-    maxPlayers = 2;
-    for(int i = 0; i < 8; i++) {
-        startingLocations.push_back(glm::ivec2(i, 0));
-    }
 }
 
 InfoMenu::~InfoMenu() {
@@ -325,35 +318,6 @@ void InfoMenu::GUI_Update() {
         level.map.ChangeTileset(tileset.LoadTilesetOrDefault(tileset_forceReload));
     }
     ImGui::Checkbox("Forced reload", &tileset_forceReload);
-    ImGui::Separator();
-    ImGui::Text("Player count & starting locations");
-    if(ImGui::SliderInt("Max players", &maxPlayers, MIN_PLAYERS_LIMIT, MAX_PLAYERS_LIMIT)) {
-        if(maxPlayers < MIN_PLAYERS_LIMIT) maxPlayers = MIN_PLAYERS_LIMIT;
-        else if(maxPlayers > MAX_PLAYERS_LIMIT) maxPlayers = MAX_PLAYERS_LIMIT;
-    }
-    if(ImGui::CollapsingHeader("Starting locations")) {
-        ImGui::PushID(&startingLocations);
-        for(int i = 0; i < maxPlayers; i++) {
-            char buf[256];
-            snprintf(buf, sizeof(buf), "player[%d]", i);
-            if(ImGui::DragInt2(buf, (int*)&startingLocations[i])) {
-                if(startingLocations[i].x < 0)
-                    startingLocations[i].x = 0;
-                else if(startingLocations[i].x >= level.map.Width())
-                    startingLocations[i].x = level.map.Width()-1;
-
-                if(startingLocations[i].y < 0)
-                    startingLocations[i].y = 0;
-                else if(startingLocations[i].y >= level.map.Height())
-                    startingLocations[i].y = level.map.Height()-1;
-
-                //TODO: add starting location overlap checks
-            }
-        }
-        ImGui::PopID();
-    }
-    ImGui::Checkbox("Render locations", &renderStartingLocations);
-
     ImGui::End();
 #endif
 }
@@ -381,12 +345,12 @@ void ToolsMenu::GUI_Update() {
 void ToolsMenu::GUI_ToolSelect() {
 #ifdef ENGINE_ENABLE_GUI
     const auto& tools = context.tools.GetTools();
-    if(tools.size() <= 3) {
+    if(tools.size() <= 4) {
         //render as separate buttons
         bool first = true;
         for(const auto& [type, tool] : tools) {
             if(!first) ImGui::SameLine();
-            if(ImGui::Button(toolType2str(type), ImVec2(ImGui::GetWindowSize().x * 0.3f, 0.f))) {
+            if(ImGui::Button(toolType2str(type), ImVec2(ImGui::GetWindowSize().x * 0.23f, 0.f))) {
                 context.tools.SwitchTool(type);
             }
             first = false;

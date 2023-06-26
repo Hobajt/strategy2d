@@ -77,6 +77,7 @@ namespace eng {
             |   \|
             0----2
         */
+        static int paletteSize;
     public:
         Quad() = default;
         Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());

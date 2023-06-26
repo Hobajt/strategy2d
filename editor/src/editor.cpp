@@ -10,8 +10,11 @@ void Editor::OnResize(int width, int height) {
 
 void Editor::OnInit() {
     try {
-        shader = std::make_shared<Shader>("res/shaders/test_shader");
+        shader = std::make_shared<Shader>("res/shaders/shader");
         shader->InitTextureSlots(Renderer::TextureSlotsCount());
+
+        palette = ColorPalette(true);
+        palette.UpdateShaderValues(shader);
 
         context.Terrain_SetupNew(glm::ivec2(10), Resources::DefaultTileset());
     } catch(std::exception& e) {
@@ -42,8 +45,8 @@ void Editor::OnUpdate() {
     }
 
     Renderer::Begin(shader, true);
-    context.level.map.Render();
-    context.tools.Render();
+    palette.Bind(shader);
+    context.Render();
     Renderer::End();
 }
 
@@ -61,6 +64,10 @@ void Editor::OnGUI() {
     for(auto& comp : context.components) {
         comp->GUI_Update();
     }
+
+    ImGui::Begin("Palette");
+    palette.GetTexture()->DBG_GUI();
+    ImGui::End();
 #endif
 }
 
@@ -160,9 +167,8 @@ void Editor::OnGUI() {
     
 */
 
-/*TODO: starting locations:
-    - integrate color cycling into the main shader
-    - load cross texture to mark the starting location (probably placeholder so far)
-    - 
+/*starting locations:
+    - number of placed markers determines the number of players
+    - map can be created without starting locations - can't be loaded as a custom game then
 */
 

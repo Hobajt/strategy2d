@@ -31,19 +31,23 @@ void EditorInputHandler::InputCallback(int keycode, int modifiers) {
             ENGINE_IF_GUI(ImGui::SetWindowFocus(ToolsMenu::TabName()));
             context.tools.SwitchTool(ToolType::OBJECT_PLACEMENT);
             break;
-        case GLFW_KEY_3:        //techtree tab
+        case GLFW_KEY_3:        //starting location tool
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(ToolsMenu::TabName()));
+            context.tools.SwitchTool(ToolType::STARTING_LOCATION);
+            break;
+        case GLFW_KEY_4:        //techtree tab
             ENGINE_IF_GUI(ImGui::SetWindowFocus(TechtreeMenu::TabName()));
             context.tools.SwitchTool(ToolType::SELECT);
             break;
-        case GLFW_KEY_4:        //diplomacy tab
+        case GLFW_KEY_5:        //diplomacy tab
             ENGINE_IF_GUI(ImGui::SetWindowFocus(DiplomacyMenu::TabName()));
             context.tools.SwitchTool(ToolType::SELECT);
             break;
-        case GLFW_KEY_5:        //level info tab
+        case GLFW_KEY_6:        //level info tab
             ENGINE_IF_GUI(ImGui::SetWindowFocus(InfoMenu::TabName()));
             context.tools.SwitchTool(ToolType::SELECT);
             break;
-        case GLFW_KEY_6:        //file tab
+        case GLFW_KEY_7:        //file tab
             ENGINE_IF_GUI(ImGui::SetWindowFocus(FileMenu::TabName()));
             context.tools.SwitchTool(ToolType::SELECT);
             break;
@@ -93,6 +97,10 @@ void EditorInputHandler::Update() {
             lmb_alt = false;
             context.tools.OnHover();
             break;
+    }
+
+    if(input.rmb.state != InputButtonState::RELEASED) {
+        context.tools.OnRMB(input.rmb.state);
     }
 
     //scroll control - tool signal or camera zoom
