@@ -39,7 +39,7 @@ namespace eng {
             int idx = 0;
             if(indices.size() != 1) {
                 //variation -> 0-50 = 1st option
-                variation = std::min(variation, 100);
+                variation = std::min(variation, 99);
                 idx = (variation / 50) * ((variation-50) % (indices.size()-1));
             }
             return indices.at(idx);
@@ -61,22 +61,85 @@ namespace eng {
         mapping[borderType].push_back(idx);
     }
 
+    //===== MapTiles =====
+
+    MapTiles::MapTiles(const glm::ivec2& size_) : size(size_) {
+        data = new TileData[(size.x+1) * (size.y+1)];
+    }
+
+    MapTiles::~MapTiles() {
+        Release();
+    }
+
+    MapTiles MapTiles::Clone() const {
+        MapTiles m = MapTiles(size);
+        memcpy(m.data, data, sizeof(TileData) * (size.x+1) * (size.y+1));
+        return m;
+    }
+
+    MapTiles::MapTiles(MapTiles&& m) noexcept {
+        Move(std::move(m));
+    }
+    
+    MapTiles& MapTiles::operator=(MapTiles&& m) noexcept {
+        Release();
+        Move(std::move(m));
+        return *this;
+    }
+
+    TileData& MapTiles::operator[](int i) {
+        ASSERT_MSG(data != nullptr, "Map isn't properly initialized!");
+        ASSERT_MSG(((unsigned(i) <= unsigned(size.y*size.x+size.y+size.x))), "Array index ([]) is out of bounds.", i);
+        return data[i];
+    }
+
+    const TileData& MapTiles::operator[](int i) const {
+        ASSERT_MSG(data != nullptr, "Map isn't properly initialized!");
+        ASSERT_MSG(((unsigned(i) <= unsigned(size.y*size.x+size.y+size.x))), "Array index ([]) is out of bounds.", i);
+        return data[i];
+    }
+
+    TileData& MapTiles::operator()(int y, int x) {
+        ASSERT_MSG(data != nullptr, "Map isn't properly initialized!");
+        ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
+        return data[y*(size.x+1)+x];
+    }
+
+    const TileData& MapTiles::operator()(int y, int x) const {
+        ASSERT_MSG(data != nullptr, "Map isn't properly initialized!");
+        ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
+        return data[y*(size.x+1)+x];
+    }
+    
+    void MapTiles::Move(MapTiles&& m) noexcept {
+        data = m.data;
+        size = m.size;
+
+        m.data = nullptr;
+    }
+
+    void MapTiles::Release() noexcept {
+        delete[] data;
+    }
+
     //===== Tileset =====
 
     Tileset::Tileset(const std::string& config_filepath, int flags) {
         data = ParseConfig_Tileset(config_filepath, flags);
     }
 
-    void Tileset::UpdateTileIndices(TileData* tiles, const glm::ivec2& size) const {
+    void Tileset::UpdateTileIndices(MapTiles& tiles) const {
+        glm::ivec2 size = tiles.Size();
+
         for(int y = 0; y < size.y; y++) {
             //adressing 4 tiles at a time to retrieve all cornerTypes for tile 'a'
             TileData *a, *b, *c, *d;
-            a = &tiles[c2i(y+0, 0, size)];
-            c = &tiles[c2i(y+1, 0, size)];
+            a = &tiles(y+0, 0);
+            c = &tiles(y+1, 0);
 
             for(int x = 0; x < size.x; x++) {
-                b = &tiles[c2i(y+0, x+1, size)];
-                d = &tiles[c2i(y+1, x+1, size)];
+                b = &tiles(y+0, x+1);
+                d = &tiles(y+1, x+1);
 
                 if(!IsWallTile(a->tileType)) {
                     //not a wall tile -> pick index based on corners
@@ -170,54 +233,50 @@ namespace eng {
 
     //===== Map =====
 
-    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : size(size_) {
-        tiles = new TileData[(size.x+1) * (size.y+1)];
+    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)) {
         ChangeTileset(tileset_);
     }
 
-    Map::~Map() {
-        Release();
+    Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)) {
+        ASSERT_MSG(tiles.Valid(), "Mapfile doesn't contain any tile descriptions!");
+        ChangeTileset(Resources::LoadTileset(mapfile.tileset));
     }
 
     Map::Map(Map&& m) noexcept {
-        Move(std::move(m));
+        tileset = m.tileset;
+        tiles = std::move(m.tiles);
+        m.tileset = nullptr;
     }
 
     Map& Map::operator=(Map&& m) noexcept {
-        Release();
-        Move(std::move(m));
+        tileset = m.tileset;
+        tiles = std::move(m.tiles);
+        m.tileset = nullptr;
         return *this;
     }
 
-    void Map::Move(Map&& m) noexcept {
-        size = m.size;
-        tiles = m.tiles;
-        tileset = m.tileset;
-        
-        m.tiles = nullptr;
-        m.tileset = nullptr;
-    }
-    void Map::Release() noexcept {
-        delete[] tiles;
-    }
-
     int& Map::operator()(int y, int x) {
-        //.at() does similar assert, but it also allows access to [size.y, size.x], which isn't a valid tile (it's there for corner value)
-        ASSERT_MSG((unsigned(y) < unsigned(size.y)) && (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
+        ASSERT_MSG((unsigned(y) < unsigned(tiles.Size().y)) && (unsigned(x) < unsigned(tiles.Size().x)), "Array index out of bounds.");
         return at(y,x).tileType;
     }
 
     const int& Map::operator()(int y, int x) const {
-        //.at() does similar assert, but it also allows access to [size.y, size.x], which isn't a valid tile (it's there for corner value)
-        ASSERT_MSG((unsigned(y) < unsigned(size.y)) && (unsigned(x) < unsigned(size.x)), "Array index out of bounds.");
+        ASSERT_MSG((unsigned(y) < unsigned(tiles.Size().y)) && (unsigned(x) < unsigned(tiles.Size().x)), "Array index out of bounds.");
         return at(y,x).tileType;
+    }
+
+    Mapfile Map::Export() {
+        Mapfile mapfile;
+        mapfile.tiles = tiles.Clone();
+        mapfile.tileset = tileset->Name();
+        return mapfile;
     }
 
     void Map::Render() {
         Camera& cam = Camera::Get();
 
-        for(int y = 0; y < size.y; y++) {
-            for(int x = 0; x < size.x; x++) {
+        for(int y = 0; y < tiles.Size().y; y++) {
+            for(int x = 0; x < tiles.Size().x; x++) {
                 int i = c2i(y, x);
                 glm::vec3 pos = glm::vec3(cam.map2screen(glm::vec2(x, y)), 0.f);
                 tileset->Tilemap().Render(glm::uvec4(0), pos, cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
@@ -228,8 +287,8 @@ namespace eng {
     void Map::RenderRange(int xs, int ys, int w, int h) {
         Camera& cam = Camera::Get();
 
-        for(int y = ys; y < std::min(size.y, h); y++) {
-            for(int x = xs; x < std::min(size.x, w); x++) {
+        for(int y = ys; y < std::min(tiles.Size().y, h); y++) {
+            for(int x = xs; x < std::min(tiles.Size().x, w); x++) {
                 int i = c2i(y, x);
                 glm::vec3 pos = glm::vec3((glm::vec2(x, y) - 0.5f - cam.Position()) * cam.Mult(), 0.f);
                 tileset->Tilemap().Render(glm::uvec4(0), pos, cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
@@ -241,7 +300,7 @@ namespace eng {
         TilesetRef ts = (tilesetNew != nullptr) ? tilesetNew : Resources::DefaultTileset();
         if(tileset != tilesetNew) {
             tileset = tilesetNew;
-            tileset->UpdateTileIndices(tiles, size);
+            tileset->UpdateTileIndices(tiles);
         }
     }
 
@@ -266,11 +325,11 @@ namespace eng {
 
         DBG_Print();
 
-        tileset->UpdateTileIndices(tiles, size);
+        tileset->UpdateTileIndices(tiles);
     }
 
     void Map::ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history) {
-        ASSERT_MSG(paint.Size() == size, "PaintBitmap size doesn't match the map size!");
+        ASSERT_MSG(paint.Size() == tiles.Size(), "PaintBitmap size doesn't match the map size!");
 
         std::mt19937 gen = std::mt19937(std::random_device{}());
         std::uniform_int_distribution<int> dist = std::uniform_int_distribution(0, 100);
@@ -282,8 +341,8 @@ namespace eng {
         int cornerType = ResolveCornerType(tileType);
 
         //iterate through the paint and retrieve all marked tiles & their direct neighbors
-        for(int y = 0; y < size.y; y++) {
-            for(int x = 0; x < size.x; x++) {
+        for(int y = 0; y < tiles.Size().y; y++) {
+            for(int x = 0; x < tiles.Size().x; x++) {
                 int& flag = paint(y, x);
 
                 if(HAS_FLAG(flag, PaintFlags::MARKED_FOR_PAINT) && !HAS_FLAG(flag, PaintFlags::VISITED)) {
@@ -333,7 +392,7 @@ namespace eng {
         }
 
         //update tile visuals
-        tileset->UpdateTileIndices(tiles, size);
+        tileset->UpdateTileIndices(tiles);
 
         ENG_LOG_TRACE("Map::ModifyTiles - number of affected tiles = {} ({})", modified.size(), affectedTiles.size());
 
@@ -371,18 +430,18 @@ namespace eng {
                 if(HAS_FLAG(flag, PaintFlags::MARKED_FOR_PAINT)) {
                     //add neighboring corners
                     if(my > 0) {
-                        if(mx > 0)       modified.push_back(TileMod::FromFloodFill(my-1, mx-1, false));
-                                         modified.push_back(TileMod::FromFloodFill(my-1, mx+0, false));
-                        if(mx < size.x)  modified.push_back(TileMod::FromFloodFill(my-1, mx+1, false));
+                        if(mx > 0)         modified.push_back(TileMod::FromFloodFill(my-1, mx-1, false));
+                                           modified.push_back(TileMod::FromFloodFill(my-1, mx+0, false));
+                        if(mx < Size().x)  modified.push_back(TileMod::FromFloodFill(my-1, mx+1, false));
                     }
 
-                    if(mx > 0)           modified.push_back(TileMod::FromFloodFill(my+0, mx-1, false));
-                    if(mx < size.x)      modified.push_back(TileMod::FromFloodFill(my+0, mx+1, true));
+                    if(mx > 0)             modified.push_back(TileMod::FromFloodFill(my+0, mx-1, false));
+                    if(mx < Size().x)      modified.push_back(TileMod::FromFloodFill(my+0, mx+1, true));
 
-                    if(my < size.y) {
-                        if(mx > 0)       modified.push_back(TileMod::FromFloodFill(my+1, mx-1, false));
-                                         modified.push_back(TileMod::FromFloodFill(my+1, mx+0, true));
-                        if(mx < size.x)  modified.push_back(TileMod::FromFloodFill(my+1, mx+1, true));
+                    if(my < Size().y) {
+                        if(mx > 0)         modified.push_back(TileMod::FromFloodFill(my+1, mx-1, false));
+                                           modified.push_back(TileMod::FromFloodFill(my+1, mx+0, true));
+                        if(mx < Size().x)  modified.push_back(TileMod::FromFloodFill(my+1, mx+1, true));
                     }
 
                     modified[i].painted = true;
@@ -400,7 +459,7 @@ namespace eng {
     
     int Map::ResolveCornerConflict(TileMod m, std::vector<TileMod>& modified, int dominantCornerType, int depth) {
         //boundary tile (used for corner value only), can skip resolution
-        if(m.y >= size.y || m.x >= size.x) {
+        if(m.y >= Size().y || m.x >= Size().x) {
             //corner type already was changed from the tile that uses this tile's corner
             return dominantCornerType;
         }
@@ -418,18 +477,18 @@ namespace eng {
         if(!hasValidCorners) {
             //mark neighboring tiles for corner conflict checkup too
             if(m.y > 0) {
-                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y-1, m.x-1, at(m.y-1, m.x-1).cornerType, resolutionCornerType, depth+1));
-                                  modified.push_back(TileMod::FromResolution(m.y-1, m.x+0, at(m.y-1, m.x+0).cornerType, resolutionCornerType, depth+1));
-                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y-1, m.x+1, at(m.y-1, m.x+1).cornerType, resolutionCornerType, depth+1));
+                if(m.x > 0)         modified.push_back(TileMod::FromResolution(m.y-1, m.x-1, at(m.y-1, m.x-1).cornerType, resolutionCornerType, depth+1));
+                                    modified.push_back(TileMod::FromResolution(m.y-1, m.x+0, at(m.y-1, m.x+0).cornerType, resolutionCornerType, depth+1));
+                if(m.x < Size().x)  modified.push_back(TileMod::FromResolution(m.y-1, m.x+1, at(m.y-1, m.x+1).cornerType, resolutionCornerType, depth+1));
             }
 
-            if(m.x > 0)           modified.push_back(TileMod::FromResolution(m.y+0, m.x-1, at(m.y+0, m.x-1).cornerType, resolutionCornerType, depth+1));
-            if(m.x < size.x)      modified.push_back(TileMod::FromResolution(m.y+0, m.x+1, at(m.y+0, m.x+1).cornerType, resolutionCornerType, depth+1));
+            if(m.x > 0)             modified.push_back(TileMod::FromResolution(m.y+0, m.x-1, at(m.y+0, m.x-1).cornerType, resolutionCornerType, depth+1));
+            if(m.x < Size().x)      modified.push_back(TileMod::FromResolution(m.y+0, m.x+1, at(m.y+0, m.x+1).cornerType, resolutionCornerType, depth+1));
 
-            if(m.y < size.y) {
-                if(m.x > 0)       modified.push_back(TileMod::FromResolution(m.y+1, m.x-1, at(m.y+1, m.x-1).cornerType, resolutionCornerType, depth+1));
-                                  modified.push_back(TileMod::FromResolution(m.y+1, m.x+0, at(m.y+1, m.x+0).cornerType, resolutionCornerType, depth+1));
-                if(m.x < size.x)  modified.push_back(TileMod::FromResolution(m.y+1, m.x+1, at(m.y+1, m.x+1).cornerType, resolutionCornerType, depth+1));
+            if(m.y < Size().y) {
+                if(m.x > 0)         modified.push_back(TileMod::FromResolution(m.y+1, m.x-1, at(m.y+1, m.x-1).cornerType, resolutionCornerType, depth+1));
+                                    modified.push_back(TileMod::FromResolution(m.y+1, m.x+0, at(m.y+1, m.x+0).cornerType, resolutionCornerType, depth+1));
+                if(m.x < Size().x)  modified.push_back(TileMod::FromResolution(m.y+1, m.x+1, at(m.y+1, m.x+1).cornerType, resolutionCornerType, depth+1));
             }
 
             //invalid corner combination -> override corners that aren't dominant corner type with new, resolution type
@@ -542,15 +601,11 @@ namespace eng {
     }
 
     TileData& Map::at(int y, int x) {
-        ASSERT_MSG(tiles != nullptr, "Map isn't properly initialized!");
-        ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
-        return tiles[y*(size.x+1)+x];
+        return tiles(y, x);
     }
 
     const TileData& Map::at(int y, int x) const {
-        ASSERT_MSG(tiles != nullptr, "Map isn't properly initialized!");
-        ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
-        return tiles[y*(size.x+1)+x];
+        return tiles(y, x);
     }
 
     void Map::DBG_Print() const {

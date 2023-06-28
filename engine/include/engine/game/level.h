@@ -10,7 +10,16 @@
 
 namespace eng {
 
-    struct Savefile {};
+    //===== Savefile =====
+
+    struct Savefile {
+        Mapfile map;
+    public:
+        Savefile() = default;
+        Savefile(const std::string& filepath);
+
+        void Save(const std::string& filepath);
+    };
 
     //===== Level =====
 
@@ -18,12 +27,17 @@ namespace eng {
     public:
         Level();
         Level(const glm::vec2& mapSize, const TilesetRef& tileset);
-        Level(const Savefile& savefile);
+        Level(Savefile& savefile);
 
         void Update();
         void Render();
 
+        bool Save(const std::string& filepath);
+        static int Load(const std::string& filepath, Level& out_level);
+
         glm::ivec2 MapSize() const { return map.Size(); }
+    private:
+        Savefile Export();
     public:
         Map map;
         ObjectPool objects;

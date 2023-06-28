@@ -59,7 +59,7 @@ namespace eng {
             return false;
         }
 
-        ENG_LOG_TRACE("[R] WriteFile - Written to '{}' ({})\n", filepath, (int)text.size());
+        ENG_LOG_TRACE("[R] WriteFile - Written to '{}' ({})", filepath, (int)text.size());
         return true;
     }
 

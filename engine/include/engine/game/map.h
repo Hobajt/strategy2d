@@ -52,6 +52,9 @@ namespace eng {
         int cornerType = 0;         //type identification for top-left corner of the tile
 
         glm::ivec2 idx = glm::ivec2(0);     //index, pointing to location of specific tile visuals in tilemap sprite
+    public:
+        TileData() = default;
+        TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
     };
 
     //To track map changes. Separate struct, in case TileData gets modified.
@@ -101,6 +104,40 @@ namespace eng {
         std::unordered_map<int, std::vector<glm::ivec2>> mapping;
     };
 
+    //===== MapTiles =====
+
+    class MapTiles {
+    public:
+        MapTiles() = default;
+        MapTiles(const glm::ivec2& size);
+        ~MapTiles();
+
+        MapTiles(const MapTiles&) = delete;
+        MapTiles& operator=(const MapTiles&) = delete;
+
+        MapTiles Clone() const;
+
+        MapTiles(MapTiles&&) noexcept;
+        MapTiles& operator=(MapTiles&&) noexcept;
+
+        glm::ivec2 Size() const { return size; }
+        int Area() const { return size.x * size.y; }
+        int Count() const { return size.x * size.y + size.x + size.y; }
+        bool Valid() const { return (data != nullptr); }
+
+        TileData& operator[](int i);
+        const TileData& operator[](int i) const;
+
+        TileData& operator()(int y, int x);
+        const TileData& operator()(int y, int x) const;
+    private:
+        void Move(MapTiles&& m) noexcept;
+        void Release() noexcept;
+    private:
+        glm::ivec2 size = glm::ivec2(0);
+        TileData* data = nullptr;
+    };
+
     //===== Tileset =====
 
     class Tileset {
@@ -119,7 +156,7 @@ namespace eng {
 
         //Updates tile.idx fields to use proper image for each tile (based on tile type, corner type & variations).
         //Assumes that provided array is of size ((size.x+1) * (size.y+1)).
-        void UpdateTileIndices(TileData* tiles, const glm::ivec2& size) const;
+        void UpdateTileIndices(MapTiles& tiles) const;
 
         glm::ivec2 GetTileIdx(int tileType, int borderType, int variation);
     private:
@@ -159,12 +196,19 @@ namespace eng {
         glm::ivec2 size = glm::ivec2(0,0);
     };
 
+    //===== Mapfile =====
+
+    struct Mapfile {
+        std::string tileset;
+        MapTiles tiles;
+    };
+
     //===== Map =====
 
     class Map {
     public:
         Map(const glm::ivec2& size = glm::ivec2(10), const TilesetRef& tileset = nullptr);
-        ~Map();
+        Map(Mapfile&& mapfile);
         
         Map(const Map&) = delete;
         Map& operator=(const Map&) = delete;
@@ -172,10 +216,12 @@ namespace eng {
         Map(Map&&) noexcept;
         Map& operator=(Map&&) noexcept;
 
-        glm::ivec2 Size() const { return size; }
-        int Width() const { return size.x; }
-        int Height() const { return size.y; }
-        int Area() const { return size.x * size.y; }
+        Mapfile Export();
+
+        glm::ivec2 Size() const { return tiles.Size(); }
+        int Width() const { return tiles.Size().x; }
+        int Height() const { return tiles.Size().y; }
+        int Area() const { return tiles.Area(); }
 
         int& operator()(int y, int x);
         const int& operator()(int y, int x) const;
@@ -219,17 +265,12 @@ namespace eng {
         TileData& at(int y, int x);
         const TileData& at(int y, int x) const;
 
-        int c2i(int y, int x) const { return y * (size.x+1) + x; }
-
-        void Move(Map&&) noexcept;
-        void Release() noexcept;
+        int c2i(int y, int x) const { return y * (tiles.Size().x+1) + x; }
 
         void DBG_Print() const;
     private:
         TilesetRef tileset;
-        glm::ivec2 size;
-
-        TileData* tiles;
+        MapTiles tiles;
     };
 
 }//namespace eng

@@ -226,10 +226,17 @@ void FileMenu::Submenu_Load() {
     }
 
     if(ImGui::Button("Load")) {
-        if(context.Terrain_Load(std::string(filepath)) != 0)
-            SignalError("File not found.");
-        else
-            Reset();
+        switch(context.Terrain_Load(std::string(filepath))) {
+            case 0:
+                Reset();
+                break;
+            case 1:
+                SignalError("File not found.");
+                break;
+            case 2:
+                SignalError("Failed to parse the file.");
+                break;
+        }
     }
 #endif
 }
