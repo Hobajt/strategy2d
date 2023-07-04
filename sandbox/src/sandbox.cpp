@@ -34,9 +34,10 @@ void Sandbox::OnInit() {
         for(auto& [name, sp] : *spritesheet) {
             LOG_INFO("SPRITE: {}", name);
         }
-        AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int,SpriteGroup>{ 
-            {0, SpriteGroup((*spritesheet)("troll.idle"))},
-            {1, SpriteGroup((*spritesheet)("troll.walk"))},
+        AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int, SpriteGroup>{ 
+                {0, SpriteGroup((*spritesheet)("idle"))},
+                {1, SpriteGroup((*spritesheet)("walk"))},
+                {2, SpriteGroup((*spritesheet)("attack"))},
             }
         );
         anim = Animator(ad);

@@ -20,7 +20,6 @@ namespace eng {
     }
 
     void Sprite::Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX) const {
-        ENG_LOG_TRACE("[{},{}] - {}, {}, {}", idxY, idxX, data.size, data.frames.offset, data.offset);
         glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset));
         Renderer::RenderQuad(quad);
@@ -29,6 +28,43 @@ namespace eng {
     void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX, float paletteIdx) const {
         glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
         Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset)).SetPaletteIdx(paletteIdx);
+        Renderer::RenderQuad(quad);
+    }
+
+    void Sprite::RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, int frameIdx, int spriteIdx, float paletteIdx) const {
+        ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.pts.size()), "Sprite::RenderAnim - frame index is out of bounds ({}).", frameIdx);
+        glm::ivec2 frameOffset = data.pts[frameIdx];
+
+        bool flip = false;
+        if(data.frames.enable_flip) {
+            flip = (spriteIdx > 4);
+            spriteIdx = (1-flip)*spriteIdx + int(flip)*(8-std::min(spriteIdx, 8));
+        }
+
+        glm::vec2 texOffset = glm::vec2(
+            (data.size.x + data.frames.offset.x) * (spriteIdx % data.frames.line_length) + frameOffset.x, 
+            (data.size.y + data.frames.offset.y) * (spriteIdx % data.frames.line_count) + frameOffset.y
+        );
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset, flip));
+        Renderer::RenderQuad(quad);
+    }
+
+    void Sprite::RenderAnimAlt(const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int frameIdx, int spriteIdx, float paletteIdx) const {
+        ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.pts.size()), "Sprite::RenderAnim - frame index is out of bounds ({}).", frameIdx);
+        glm::ivec2 frameOffset = data.pts[frameIdx];
+
+        bool flip = false;
+        if(data.frames.enable_flip) {
+            flip = (spriteIdx > 4);
+            spriteIdx = (1-flip)*spriteIdx + int(flip)*(8-std::min(spriteIdx, 8));
+        }
+
+        glm::vec2 texOffset = glm::vec2(
+            (data.size.x + data.frames.offset.x + frameOffset.x) * (spriteIdx % data.frames.line_length), 
+            (data.size.y + data.frames.offset.y + frameOffset.y) * (spriteIdx % data.frames.line_count)
+        );
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, color, texture, TexOffset(texOffset, flip));
+        quad.vertices.SetAlphaFromTexture(noTexture);
         Renderer::RenderQuad(quad);
     }
 
@@ -84,6 +120,29 @@ namespace eng {
             glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
             glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz
         );
+    }
+
+    TexCoords Sprite::TexOffset(const glm::ivec2& added_offset, bool flip) const {
+        const glm::ivec2& of = data.offset + added_offset;
+        const glm::ivec2& sz = data.size;
+        const glm::vec2  tsz = glm::vec2(texture->Size());
+
+        if(!flip) {
+            return TexCoords(
+                glm::vec2(of + glm::ivec2(   0, sz.y)) / tsz,
+                glm::vec2(of + glm::ivec2(   0,    0)) / tsz,
+                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
+                glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz
+            );
+        }
+        else {
+            return TexCoords(
+                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
+                glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz,
+                glm::vec2(of + glm::ivec2(   0, sz.y)) / tsz,
+                glm::vec2(of + glm::ivec2(   0,    0)) / tsz
+            );
+        }
     }
 
     //===== Spritesheet =====
@@ -155,10 +214,16 @@ namespace eng {
     SpriteGroup::SpriteGroup(const Sprite& sprite) {
         data.sprites = { sprite };
         data.firstFrame = sprite.FirstFrame();
-        data.frameCount = sprite.FrameCount();
+        data.frameCount = sprite.AnimFrameCount();
     }
     
     SpriteGroup::SpriteGroup(const SpriteGroupData& data_) : data(data_) {
+        int fc = data.frameCount;
+        for(Sprite& s : data.sprites) {
+            fc = std::min(s.AnimFrameCount(), fc);
+        }
+        ASSERT_MSG(fc == data.frameCount, "SpriteGroup - Group '{}' has mismatch in frame counts between individual sprites.", data.name);
+
         ENG_LOG_TRACE("[C] SpriteGraphics '{}' ({})", data.name, (int)data.sprites.size());
     }
 
@@ -175,6 +240,20 @@ namespace eng {
         glm::uvec3 inf = glm::uvec3(info);
         for (Sprite& sprite : data.sprites) {
             sprite.RenderAlt(glm::uvec4(inf, i++), color, noTexture, screen_pos, screen_size, idxY, idxX);
+        }
+    }
+
+    void SpriteGroup::RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx, int spriteIdx) {
+        ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
+        for (Sprite& sprite : data.sprites) {
+            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx);
+        }
+    }
+
+    void SpriteGroup::RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx, int spriteIdx) {
+        ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
+        for (Sprite& sprite : data.sprites) {
+            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx);
         }
     }
 
@@ -226,14 +305,13 @@ namespace eng {
             auto& pts_json = config.at("pts");
             for(auto& pt_json : pts_json) {
                 glm::ivec2 pt = eng::json::parse_ivec2(pt_json);
-                pt.y = data.size.y - pt.y;
+                // pt.y = data.size.y - pt.y;
                 data.pts.push_back(pt);
             }
         }
         else {
-            //auto-generate 2 control points
+            //auto-generate 1 control points
             data.pts.push_back(glm::ivec2(0, 0));
-            data.pts.push_back(glm::ivec2(data.size.x, data.size.y));
         }
 
         //parse frames data
@@ -247,6 +325,7 @@ namespace eng {
                 if(config.at("offset").size() > 1) data.frames.offset = eng::json::parse_ivec2(frames_json.at("offset"));
                 else                               data.frames.offset = glm::ivec2(frames_json.at("offset"));
             }
+            if(frames_json.count("enable_flip")) data.frames.enable_flip   = frames_json.at("enable_flip");
         }
 
         return data;
