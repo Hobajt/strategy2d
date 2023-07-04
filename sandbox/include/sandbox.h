@@ -24,4 +24,9 @@ private:
 
     bool whiteBackground = false;
     int paletteIndex = 0;
+
+    eng::SpritesheetRef spritesheet;
+    eng::Animator anim;
+    int action = 0;
+    int orientation = 0;
 };

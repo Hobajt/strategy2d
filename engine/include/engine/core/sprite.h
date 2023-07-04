@@ -21,7 +21,7 @@ namespace eng {
             int line_length = 1;
             int line_count = 1;
             int start_frame = 0;
-            int offset = 0;
+            glm::ivec2 offset = glm::ivec2(0);
         };
     public:
         glm::ivec2 offset;
@@ -41,11 +41,11 @@ namespace eng {
         Sprite(const TextureRef& texture, const SpriteData& data);
 
         //Render sprite at given screen coords. frameIdx and orientation are horizontal and vertical indices into the sprite's frames.
-        void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;
-        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0, float paletteIdx = -1.f) const;
+        void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY = 0, int idxX = 0) const;
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY = 0, int idxX = 0, float paletteIdx = -1.f) const;
 
         //Alternate render call with additional options (modify color/use texture as alpha).
-        void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation = 0, int frameIdx = 0) const;
+        void RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY = 0, int idxX = 0) const;
 
         //Update texture coordinates. Call when spritesheet or sprite's offset/size changes.
         void RecomputeTexCoords();
@@ -148,8 +148,8 @@ namespace eng {
         SpriteGroup(const Sprite& sprite);
         SpriteGroup(const SpriteGroupData& data);
 
-        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int orientation = 0, int frameIdx = 0);
-        void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int orientation = 0, int frameIdx = 0);
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY = 0, int idxX = 0);
+        void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int idxY = 0, int idxX = 0);
 
         int ID() const { return data.id; }
         bool Repeat() const { return data.repeat; }

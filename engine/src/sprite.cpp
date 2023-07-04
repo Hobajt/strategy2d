@@ -19,20 +19,21 @@ namespace eng {
         RecomputeTexCoords();
     }
 
-    void Sprite::Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) const {
-        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), (data.size.y + data.frames.offset) * (orientation % data.frames.line_count));
+    void Sprite::Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX) const {
+        ENG_LOG_TRACE("[{},{}] - {}, {}, {}", idxY, idxX, data.size, data.frames.offset, data.offset);
+        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset));
         Renderer::RenderQuad(quad);
     }
 
-    void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx, float paletteIdx) const {
-        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), (data.size.y + data.frames.offset) * (orientation % data.frames.line_count));
+    void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX, float paletteIdx) const {
+        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
         Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset)).SetPaletteIdx(paletteIdx);
         Renderer::RenderQuad(quad);
     }
 
-    void Sprite::RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int orientation, int frameIdx) const {
-        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset) * (frameIdx % data.frames.line_length), data.size.y * (orientation % data.frames.line_count));
+    void Sprite::RenderAlt(const glm::uvec4& info, const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX) const {
+        glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
         Quad quad = Quad::FromCorner(info, screen_pos, screen_size, color, texture, TexOffset(texOffset));
         quad.vertices.SetAlphaFromTexture(noTexture);
         Renderer::RenderQuad(quad);
@@ -153,25 +154,27 @@ namespace eng {
 
     SpriteGroup::SpriteGroup(const Sprite& sprite) {
         data.sprites = { sprite };
+        data.firstFrame = sprite.FirstFrame();
+        data.frameCount = sprite.FrameCount();
     }
     
     SpriteGroup::SpriteGroup(const SpriteGroupData& data_) : data(data_) {
         ENG_LOG_TRACE("[C] SpriteGraphics '{}' ({})", data.name, (int)data.sprites.size());
     }
 
-    void SpriteGroup::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int orientation, int frameIdx) {
+    void SpriteGroup::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY, int idxX) {
         size_t i = 0;
         glm::uvec3 inf = glm::uvec3(info);
         for (Sprite& sprite : data.sprites) {
-            sprite.Render(glm::uvec4(inf, i++), screen_pos, screen_size, orientation, frameIdx);
+            sprite.Render(glm::uvec4(inf, i++), screen_pos, screen_size, idxY, idxX);
         }
     }
 
-    void SpriteGroup::RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int orientation, int frameIdx) {
+    void SpriteGroup::RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int idxY, int idxX) {
         size_t i = 0;
         glm::uvec3 inf = glm::uvec3(info);
         for (Sprite& sprite : data.sprites) {
-            sprite.RenderAlt(glm::uvec4(inf, i++), color, noTexture, screen_pos, screen_size, orientation, frameIdx);
+            sprite.RenderAlt(glm::uvec4(inf, i++), color, noTexture, screen_pos, screen_size, idxY, idxX);
         }
     }
 
@@ -240,7 +243,10 @@ namespace eng {
             if(frames_json.count("line_length")) data.frames.line_length   = frames_json.at("line_length");
             if(frames_json.count("line_count"))  data.frames.line_count    = frames_json.at("line_count");
             if(frames_json.count("start_frame")) data.frames.start_frame   = frames_json.at("start_frame");
-            if(frames_json.count("offset"))      data.frames.offset        = frames_json.at("offset");
+            if(config.count("offset")) {
+                if(config.at("offset").size() > 1) data.frames.offset = eng::json::parse_ivec2(frames_json.at("offset"));
+                else                               data.frames.offset = glm::ivec2(frames_json.at("offset"));
+            }
         }
 
         return data;

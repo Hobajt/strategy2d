@@ -30,6 +30,21 @@ void Sandbox::OnInit() {
         texture = std::make_shared<Texture>("res/textures/troll.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
         // texture = std::make_shared<Texture>("res/textures/cross.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
 
+        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/troll.json");
+        for(auto& [name, sp] : *spritesheet) {
+            LOG_INFO("SPRITE: {}", name);
+        }
+        AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int,SpriteGroup>{ 
+            {0, SpriteGroup((*spritesheet)("troll.idle"))},
+            {1, SpriteGroup((*spritesheet)("troll.walk"))},
+            }
+        );
+        anim = Animator(ad);
+
+        // GameObject g1 = {};
+        // GameObject g2 = std::move(g1);
+        // GameObject g3 = GameObject(g2);
+
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
@@ -80,12 +95,15 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    // map.Render();
-    glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
-    Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
+    anim.Update(action);
+    anim.Render(glm::vec3(0.f), camera.Mult(), action, orientation);
 
-    if(whiteBackground)
-        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, 0.1f), glm::vec2(1.f), glm::vec4(1.f), nullptr));
+    // map.Render();
+    // glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
+    // Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
+
+    // if(whiteBackground)
+    //     Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, 0.1f), glm::vec2(1.f), glm::vec4(1.f), nullptr));
 
     //======================
     
@@ -123,6 +141,15 @@ void Sandbox::OnGUI() {
 
         ImGui::Begin("Palettes");
         colorPalette.GetTexture()->DBG_GUI();
+        ImGui::End();
+
+        ImGui::Begin("Spritesheet");
+        spritesheet->DBG_GUI();
+        ImGui::End();
+
+        ImGui::Begin("Anim");
+        ImGui::DragInt("action", &action);
+        ImGui::DragInt("orientation", &orientation);
         ImGui::End();
     }
 #endif

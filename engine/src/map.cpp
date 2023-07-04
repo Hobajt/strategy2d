@@ -652,8 +652,12 @@ namespace eng {
             spriteData.frames.line_length = tile_count.x;
             spriteData.frames.line_count = tile_count.y;
 
-            if(config.count("offset"))
-                spriteData.frames.offset = config.at("offset");
+            if(config.count("offset")) {
+                if(config.at("offset").size() > 1)
+                    spriteData.frames.offset = eng::json::parse_ivec2(config.at("offset"));
+                else
+                    spriteData.frames.offset = glm::ivec2(config.at("offset"));
+            }
 
             //assemble the tilemap sprite
             data.tilemap = Sprite(spritesheet, spriteData);

@@ -1,0 +1,27 @@
+{
+    "texture_filepath": "res/textures/troll.png",
+    "sprites": [
+        {
+            "name": "troll.idle",
+            "size": [47,53],
+            "offset": [12,8],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [6,0]
+            }
+        },
+        {
+            "name": "troll.walk",
+            "size": [53,53],
+            "offset": [10,6],
+            "frames": {
+                "line_length": 5,
+                "line_count": 5,
+                "start_frame": 0,
+                "offset": [6,-1]
+            }
+        }
+    ]
+}

@@ -28,6 +28,8 @@
 #include "game/level.h"
 #include "game/faction.h"
 #include "game/gameobject.h"
+#include "game/object_data.h"
+#include "game/command.h"
 
 #include "utils/generator.h"
 #include "utils/ring_buffer.hpp"
