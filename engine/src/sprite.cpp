@@ -45,7 +45,7 @@ namespace eng {
             (data.size.x + data.frames.offset.x) * (spriteIdx % data.frames.line_length) + frameOffset.x, 
             (data.size.y + data.frames.offset.y) * (spriteIdx % data.frames.line_count) + frameOffset.y
         );
-        Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset, flip));
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset, flip)).SetPaletteIdx(paletteIdx);;
         Renderer::RenderQuad(quad);
     }
 
@@ -63,7 +63,7 @@ namespace eng {
             (data.size.x + data.frames.offset.x + frameOffset.x) * (spriteIdx % data.frames.line_length), 
             (data.size.y + data.frames.offset.y + frameOffset.y) * (spriteIdx % data.frames.line_count)
         );
-        Quad quad = Quad::FromCorner(screen_pos, screen_size, color, texture, TexOffset(texOffset, flip));
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, color, texture, TexOffset(texOffset, flip)).SetPaletteIdx(paletteIdx);;
         quad.vertices.SetAlphaFromTexture(noTexture);
         Renderer::RenderQuad(quad);
     }
@@ -211,7 +211,9 @@ namespace eng {
 
     //===== SpriteGroup =====
 
-    SpriteGroup::SpriteGroup(const Sprite& sprite) {
+    SpriteGroup::SpriteGroup(const Sprite& sprite, int id_) {
+        data.id = id_;
+        data.name = sprite.Name();
         data.sprites = { sprite };
         data.firstFrame = sprite.FirstFrame();
         data.frameCount = sprite.AnimFrameCount();
@@ -243,17 +245,17 @@ namespace eng {
         }
     }
 
-    void SpriteGroup::RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx, int spriteIdx) {
+    void SpriteGroup::RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx, int spriteIdx, float paletteIdx) {
         ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
         for (Sprite& sprite : data.sprites) {
-            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx);
+            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx, paletteIdx);
         }
     }
 
-    void SpriteGroup::RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx, int spriteIdx) {
+    void SpriteGroup::RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx, int spriteIdx, float paletteIdx) {
         ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
         for (Sprite& sprite : data.sprites) {
-            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx);
+            sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx, paletteIdx);
         }
     }
 

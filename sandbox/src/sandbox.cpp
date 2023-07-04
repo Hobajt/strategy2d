@@ -35,16 +35,19 @@ void Sandbox::OnInit() {
             LOG_INFO("SPRITE: {}", name);
         }
         AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int, SpriteGroup>{ 
-                {0, SpriteGroup((*spritesheet)("idle"))},
-                {1, SpriteGroup((*spritesheet)("walk"))},
-                {2, SpriteGroup((*spritesheet)("attack"))},
+                {0, SpriteGroup((*spritesheet)("idle"), 0)},
+                {1, SpriteGroup((*spritesheet)("walk"), 1)},
+                {2, SpriteGroup((*spritesheet)("attack"), 2)},
             }
         );
-        anim = Animator(ad);
+        UnitDataRef go_data = std::make_shared<UnitData>();
+        go_data->name = "troll";
+        go_data->size = glm::vec2(1.f);
+        go_data->animData = ad;
 
-        // GameObject g1 = {};
-        // GameObject g2 = std::move(g1);
-        // GameObject g3 = GameObject(g2);
+        FactionControllerRef dummy_faction = std::make_shared<FactionController>();
+
+        troll = Unit(go_data, dummy_faction, glm::vec2(0.f, 0.f));
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -96,10 +99,10 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    anim.Update(action);
-    anim.Render(glm::vec3(0.f), camera.Mult(), action, orientation);
+    troll.Update();
+    troll.Render();
 
-    // map.Render();
+    map.Render();
     // glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
     // Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
 
@@ -148,9 +151,9 @@ void Sandbox::OnGUI() {
         spritesheet->DBG_GUI();
         ImGui::End();
 
-        ImGui::Begin("Anim");
-        ImGui::DragInt("action", &action);
-        ImGui::DragInt("orientation", &orientation);
+
+        ImGui::Begin("GameObjects");
+        troll.DBG_GUI();
         ImGui::End();
     }
 #endif

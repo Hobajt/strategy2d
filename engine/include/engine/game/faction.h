@@ -6,7 +6,12 @@ namespace eng {
 
     class Diplomacy {};
 
-    class FactionController {};
+    class FactionController {
+    public:
+        int GetColorIdx() const;
+    private:
+
+    };
     using FactionControllerRef = std::shared_ptr<FactionController>;
     
 }//namespace eng

@@ -4,6 +4,8 @@
 
 using rgba = glm::u8vec4;
 
+#define NUM_FACTION_COLORS 8
+
 static constexpr int palette_upscale = 16;
 
 namespace eng {
@@ -19,7 +21,7 @@ namespace eng {
         ENG_LOG_TRACE("[C] ColorPalette '{}' ({}x{})", name, size.x, size.y);
     }
 
-    ColorPalette::ColorPalette(bool dummy) : name("colorPalette_d"), size(glm::ivec2(4, 8)) {
+    ColorPalette::ColorPalette(bool dummy) : name("colorPalette_d"), size(glm::ivec2(4, NUM_FACTION_COLORS)) {
         data = new rgba[size.x * size.y] {
             rgba{68, 4, 0, 255},    rgba{92, 4, 0, 255},     rgba{124, 0, 0, 255},      rgba{164, 0, 0, 255},
             rgba{0, 4, 76, 255},    rgba{0, 20, 108, 255},   rgba{0, 36, 148, 255},     rgba{0, 60, 192, 255},
@@ -112,6 +114,10 @@ namespace eng {
 
     glm::vec2 ColorPalette::GetCenterOffset() const {
         return 1.f / (2.f * glm::vec2(size));
+    }
+
+    int ColorPalette::FactionColorCount() {
+        return NUM_FACTION_COLORS;
     }
 
     void ColorPalette::Move(ColorPalette&& p) noexcept {

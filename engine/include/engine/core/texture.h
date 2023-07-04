@@ -29,7 +29,7 @@ namespace eng {
         GLenum format = GL_RGB;
         GLenum dtype = GL_UNSIGNED_BYTE;
         
-        GLenum filtering = GL_LINEAR;
+        GLenum filtering = GL_NEAREST;
         GLenum wrapping = GL_CLAMP_TO_EDGE;
         glm::vec4 borderColor = glm::vec4(0.f);
 

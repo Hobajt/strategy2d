@@ -152,14 +152,14 @@ namespace eng {
     class SpriteGroup {
     public:
         SpriteGroup() = default;
-        SpriteGroup(const Sprite& sprite);
+        SpriteGroup(const Sprite& sprite, int id);
         SpriteGroup(const SpriteGroupData& data);
 
         void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY = 0, int idxX = 0);
         void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int idxY = 0, int idxX = 0);
 
-        void RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx = 0, int spriteIdx = 0);
-        void RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx = 0, int spriteIdx = 0);
+        void RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx = 0, int spriteIdx = 0, float paletteIdx = -1);
+        void RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx = 0, int spriteIdx = 0, float paletteIdx = -1);
 
         int ID() const { return data.id; }
         bool Repeat() const { return data.repeat; }

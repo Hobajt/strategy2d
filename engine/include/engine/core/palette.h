@@ -41,6 +41,8 @@ namespace eng {
 
         const TextureRef& GetTexture() const { return texture; }
         glm::ivec2 Size() const { return size; }
+
+        static int FactionColorCount();
     private:
         void Move(ColorPalette&&) noexcept;
         void Release() noexcept;

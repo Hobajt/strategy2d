@@ -5,6 +5,7 @@
 
 #include "engine/game/object_data.h"
 #include "engine/game/command.h"
+#include "engine/game/faction.h"
 
 namespace eng {
 
@@ -14,27 +15,23 @@ namespace eng {
     public:
         GameObject() = default;
         GameObject(const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
-        virtual ~GameObject();
-
-        GameObject Clone() const noexcept;
-
-        //move enabled
-        GameObject(GameObject&&) noexcept = default;
-        GameObject& operator=(GameObject&&) noexcept = default;
 
         virtual void Render();
-        virtual void Update() {}
-    private:
-        //copy private
-        GameObject(const GameObject&) noexcept = default;
-        GameObject& operator=(const GameObject&) noexcept = default;
-    private:
-        GameObjectDataRef data = nullptr;
-        Animator animator;
+        virtual void Update();
 
-        glm::vec2 position = glm::vec2(0.f);
+        void DBG_GUI();
+    protected:
+        virtual void Inner_DBG_GUI();
+    public:
+        //TODO: probably make private again
         int orientation = 0;
         int action = 0;
+    protected:
+        Animator animator;
+    private:
+        GameObjectDataRef data = nullptr;
+
+        glm::vec2 position = glm::vec2(0.f);
 
         int id = -1;
         static int idCounter;
@@ -43,16 +40,31 @@ namespace eng {
     //===== FactionObject =====
 
     class FactionObject : public GameObject {
+    public:
+        FactionObject() = default;
+        FactionObject(const GameObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
+        virtual ~FactionObject();
+
+        void ChangeColor(int colorIdx);
+    protected:
+        virtual void Inner_DBG_GUI() override;
     private:
+        static bool ValidColor(int idx);
+    private:
+        FactionControllerRef faction = nullptr;
         int colorIdx;
-        //TODO: add faction identifier or pointer
     };
 
     //===== Unit =====
 
     class Unit : public FactionObject {
+    public:
+        Unit() = default;
+        Unit(const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+
         virtual void Update() override;
     private:
+        UnitDataRef data = nullptr;
         Command command;
     };
 

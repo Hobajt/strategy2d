@@ -31,16 +31,18 @@ namespace eng {
     };
     using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
-    class FactionObjectData {
+    //===== UnitData =====
+
+    struct UnitData : public GameObjectData {
 
     };
+    using UnitDataRef = std::shared_ptr<UnitData>;
 
-    class UnitData {
+    //===== BuildingData =====
 
+    struct BuildingData {
+        
     };
-
-    class BuildingData {
-
-    };
+    using BuildingDataRef = std::shared_ptr<BuildingData>;
 
 }//namespace eng

@@ -26,7 +26,8 @@ private:
     int paletteIndex = 0;
 
     eng::SpritesheetRef spritesheet;
-    eng::Animator anim;
+    eng::Unit troll;
     int action = 0;
     int orientation = 0;
+    int color = 0;
 };

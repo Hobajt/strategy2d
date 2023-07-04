@@ -115,6 +115,10 @@ namespace eng {
         return (pos_map - 0.5f - position) * mult;
     }
 
+    glm::vec2 Camera::w2s(const glm::vec2& pos_world, const glm::vec2& size_world) const {
+        return (pos_world - size_world * 0.5f - position) * mult;
+    }
+
     void Camera::PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now) {
         position = GetMapCoords(anchor, mousePos_start - mousePos_now);
     }

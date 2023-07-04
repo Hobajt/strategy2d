@@ -38,13 +38,13 @@ namespace eng {
     void Animator::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, const glm::uvec4& info) {
         SpriteGroup& graphics = data->GetGraphics(action);
         int frameIdx = graphics.FrameIdx(frame);
-        graphics.RenderAnim(screen_pos, screen_size, info, frameIdx, orientation);
+        graphics.RenderAnim(screen_pos, screen_size, info, frameIdx, orientation, paletteIdx);
     }
 
     void Animator::RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::vec4& color, bool noTexture, int action, int orientation, const glm::uvec4& info) {
         SpriteGroup& graphics = data->GetGraphics(action);
         int frameIdx = graphics.FrameIdx(frame);
-        graphics.RenderAnimAlt(screen_pos, screen_size, info, color, noTexture, frameIdx, orientation);
+        graphics.RenderAnimAlt(screen_pos, screen_size, info, color, noTexture, frameIdx, orientation, paletteIdx);
     }
 
 }//namespace eng

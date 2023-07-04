@@ -50,6 +50,7 @@ namespace eng {
         glm::vec2 GetMapCoords(const glm::vec2& position, const glm::vec2& mousePos_ndc) const;
 
         glm::vec2 map2screen(const glm::vec2& pos_map) const;
+        glm::vec2 w2s(const glm::vec2& pos_world, const glm::vec2& size_world) const;
 
         //Sets camera position based on offset of given position from the anchor. Anchor is in map coords.
         void PositionFromMouse(const glm::vec2& anchor, const glm::vec2& mousePos_start, const glm::vec2& mousePos_now);
