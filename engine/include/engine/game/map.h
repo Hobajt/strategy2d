@@ -8,6 +8,8 @@
 
 namespace eng {
 
+    class Unit;
+
     //TODO: maybe setup tiletypes so that specific bits signal specific functionality (traversable, buildable, etc.)
     //can still use an index when loading descriptions from a file
 
@@ -17,6 +19,7 @@ namespace eng {
             - Map::CornersValidationCheck::transition_types
             - Map::GetTransitionTileType::transition_corners
             - Map::ResolveCornerType()
+            - TileData::Traversability::tile_traversability
             - IsWallTile() (local fn, map.cpp)
         */
 
@@ -45,6 +48,16 @@ namespace eng {
         }; 
     }//namespace TileType
 
+    namespace TraversabilityType { enum { OBSTACLE = 0, GROUND_OK = 1, WATER_OK = 2 }; }
+
+    //Navigation data container.
+    struct NavData {
+        bool gnd_taken = false;     //dynamic obstacles (units, ground/water)
+        bool air_taken = false;     //dynamic obstacles (units, air only)
+        bool has_building = false;  //static obstacle indicator (buildings)
+        bool permanent = false;     //true -> unit that's moving here aims to stop at this location (or is already stopped)
+    };
+
     //Live representation of a tile.
     struct TileData {
         int tileType = 0;           //tile type identifier (enum value)
@@ -52,9 +65,14 @@ namespace eng {
         int cornerType = 0;         //type identification for top-left corner of the tile
 
         glm::ivec2 idx = glm::ivec2(0);     //index, pointing to location of specific tile visuals in tilemap sprite
+
+        int health = 0;             //for trees/walls health tracking; useless in other tile types
+        NavData nav;                //navigation variables
     public:
         TileData() = default;
-        TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
+        TileData(int tileType, int variation, int cornerType);
+
+        int Traversability() const;
     };
 
     //To track map changes. Separate struct, in case TileData gets modified.
@@ -223,7 +241,6 @@ namespace eng {
         int Height() const { return tiles.Size().y; }
         int Area() const { return tiles.Area(); }
 
-        int& operator()(int y, int x);
         const int& operator()(int y, int x) const;
 
         void Render();
@@ -232,6 +249,8 @@ namespace eng {
         void ChangeTileset(const TilesetRef& tilesetNew);
 
         TilesetRef GetTileset() const { return tileset; }
+
+        glm::ivec2 UnitRoute_NextPos(const Unit& unit, const glm::ivec2& target_pos);
 
         //==== Methods for editor ====
 

@@ -13,4 +13,8 @@ namespace eng {
 
     glm::vec4 clr_interpolate(const glm::vec4& a, const glm::vec4& b, float t);
 
+    //Returns true if vector goes in one of the 8 directions.
+    bool has_valid_direction(const glm::ivec2& v);
+    bool has_valid_direction(const glm::vec2& v);
+
 }//namespace eng

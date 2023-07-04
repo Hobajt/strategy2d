@@ -24,4 +24,14 @@ namespace eng {
         );
     }
 
+    bool has_valid_direction(const glm::ivec2& v) {
+        glm::ivec2 w = glm::abs(v);
+        return w.x == 0 || w.y == 0 || (w.x - w.y) == 0;
+    }
+
+    bool has_valid_direction(const glm::vec2& v) {
+        glm::vec2 w = glm::abs(v);
+        return w.x < 1e-3f || w.y < 1e-3f || (w.x - w.y) < 1e-3f;
+    }
+
 }//namespace eng

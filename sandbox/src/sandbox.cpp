@@ -24,8 +24,8 @@ void Sandbox::OnInit() {
         font = std::make_shared<Font>("res/fonts/OpenSans-Regular.ttf", int(fontScale * Window::Get().Height()));
 
         TilesetRef tileset = Resources::LoadTileset("summer");
-        map = Map(glm::ivec2(10), tileset);
-        Camera::Get().SetBounds(map.Size());
+        level = Level(glm::ivec2(10), tileset);
+        Camera::Get().SetBounds(level.map.Size());
 
         texture = std::make_shared<Texture>("res/textures/troll.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
         // texture = std::make_shared<Texture>("res/textures/cross.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
@@ -99,10 +99,10 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    troll.Update();
+    troll.Update(level);
     troll.Render();
 
-    map.Render();
+    level.map.Render();
     // glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
     // Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
 

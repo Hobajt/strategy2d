@@ -9,6 +9,8 @@
 
 namespace eng {
 
+    class Level;
+
     //===== GameObject =====
     
     class GameObject {
@@ -17,7 +19,9 @@ namespace eng {
         GameObject(const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
 
         virtual void Render();
-        virtual void Update();
+        virtual void Update(Level& level);
+
+        glm::vec2 Position() const { return position; }
 
         void DBG_GUI();
     protected:
@@ -62,7 +66,7 @@ namespace eng {
         Unit() = default;
         Unit(const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
 
-        virtual void Update() override;
+        virtual void Update(Level& level) override;
     private:
         UnitDataRef data = nullptr;
         Command command;

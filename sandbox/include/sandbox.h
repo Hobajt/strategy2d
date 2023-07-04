@@ -17,7 +17,7 @@ private:
     eng::ShaderRef shader;
     eng::FontRef font;
     
-    eng::Map map;
+    eng::Level level;
 
     eng::TextureRef texture;
     eng::ColorPalette colorPalette;

@@ -1,6 +1,7 @@
 #include "engine/game/gameobject.h"
 
 #include "engine/game/camera.h"
+#include "engine/game/level.h"
 #include "engine/core/palette.h"
 
 #include "engine/utils/dbg_gui.h"
@@ -27,7 +28,7 @@ namespace eng {
         animator.Render(glm::vec3(cam.w2s(position, data->size), zIdx), data->size * cam.Mult(), action, orientation);
     }
 
-    void GameObject::Update() {
+    void GameObject::Update(Level& level) {
         ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
         animator.Update(action);
     }
@@ -88,10 +89,10 @@ namespace eng {
     Unit::Unit(const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
         : FactionObject(std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {}
 
-    void Unit::Update() {
+    void Unit::Update(Level& level) {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
+        command.Update(*this, level);
         animator.Update(action);
-        // command.Update();
     }
 
 }//namespace eng

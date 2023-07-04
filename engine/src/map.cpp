@@ -6,6 +6,8 @@
 #include "engine/utils/utils.h"
 #include "engine/utils/json.h"
 
+#include "engine/game/gameobject.h"
+
 #include <random>
 
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
@@ -24,6 +26,29 @@ namespace eng {
         int tileType = -1;
         int borderType = 0;
     };
+
+    TileData::TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
+
+    int TileData::Traversability() const {
+        constexpr static int tile_traversability[TileType::COUNT] = {
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::GROUND_OK,
+            TraversabilityType::WATER_OK,
+            TraversabilityType::OBSTACLE,
+            TraversabilityType::OBSTACLE,
+            TraversabilityType::OBSTACLE,
+            TraversabilityType::OBSTACLE,
+            TraversabilityType::OBSTACLE,
+            TraversabilityType::OBSTACLE,
+        };
+
+        return tile_traversability[tileType] & (3 * int(!nav.has_building));
+    }
 
     //===== TileGraphics =====
 
@@ -255,11 +280,6 @@ namespace eng {
         return *this;
     }
 
-    int& Map::operator()(int y, int x) {
-        ASSERT_MSG((unsigned(y) < unsigned(tiles.Size().y)) && (unsigned(x) < unsigned(tiles.Size().x)), "Array index out of bounds.");
-        return at(y,x).tileType;
-    }
-
     const int& Map::operator()(int y, int x) const {
         ASSERT_MSG((unsigned(y) < unsigned(tiles.Size().y)) && (unsigned(x) < unsigned(tiles.Size().x)), "Array index out of bounds.");
         return at(y,x).tileType;
@@ -302,6 +322,11 @@ namespace eng {
             tileset = tilesetNew;
             tileset->UpdateTileIndices(tiles);
         }
+    }
+
+    glm::ivec2 Map::UnitRoute_NextPos(const Unit& unit, const glm::ivec2& target_pos) {
+        //TODO: navigation algorithm (also consider unit params - air/water/gnd)
+        return glm::ivec2(0);
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
