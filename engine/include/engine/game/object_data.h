@@ -34,7 +34,7 @@ namespace eng {
     //===== UnitData =====
 
     struct UnitData : public GameObjectData {
-
+        int navigationType = 1;
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 

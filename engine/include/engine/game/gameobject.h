@@ -21,21 +21,29 @@ namespace eng {
         virtual void Render();
         virtual void Update(Level& level);
 
-        glm::vec2 Position() const { return position; }
+        glm::ivec2 Position() const { return position; }
+        int Orientation() const { return orientation; }
+        int ActionIdx() const { return actionIdx; }
+
+        glm::ivec2& pos() { return position; }
+        int& ori() { return orientation; }
+        int& act() { return actionIdx; }
+
+        int ID() const { return id; }
+        std::string Name() const { return data->name; }
 
         void DBG_GUI();
     protected:
         virtual void Inner_DBG_GUI();
-    public:
-        //TODO: probably make private again
-        int orientation = 0;
-        int action = 0;
+        void InnerRender(const glm::vec2& pos);
     protected:
         Animator animator;
     private:
         GameObjectDataRef data = nullptr;
 
-        glm::vec2 position = glm::vec2(0.f);
+        glm::ivec2 position = glm::ivec2(0);
+        int orientation = 0;
+        int actionIdx = 0;
 
         int id = -1;
         static int idCounter;
@@ -62,14 +70,32 @@ namespace eng {
     //===== Unit =====
 
     class Unit : public FactionObject {
+        friend class Command;
+        friend class Action;
     public:
         Unit() = default;
         Unit(const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
 
+        virtual void Render() override;
         virtual void Update(Level& level) override;
+
+        //Issue new command (by overriding the existing one).
+        void IssueCommand(const Command& cmd);
+
+        int NavigationType() const { return data->navigationType; }
+
+        float MoveSpeed() const { return 1.f; }
+
+        glm::vec2& m_offset() { return move_offset; }
+    protected:
+        virtual void Inner_DBG_GUI();
     private:
         UnitDataRef data = nullptr;
-        Command command;
+
+        Command command = Command();
+        Action action = Action();
+
+        glm::vec2 move_offset = glm::vec2(0.f);
     };
 
     //===== Building =====

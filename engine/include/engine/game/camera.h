@@ -42,6 +42,8 @@ namespace eng {
 
         void ZoomToFit(const glm::vec2& bounds);
 
+        void SetupZoomUpdates(bool enabled) { enableZoomUpdates = enabled; }
+
         void EnableBoundaries(bool enabled) { checkForBounds = enabled; }
         void SetBounds(const glm::vec2& bounds_) { bounds = bounds_; }
 

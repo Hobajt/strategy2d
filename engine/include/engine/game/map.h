@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <queue>
 #include <array>
 
 #include "engine/utils/mathdefs.h"
@@ -19,7 +21,7 @@ namespace eng {
             - Map::CornersValidationCheck::transition_types
             - Map::GetTransitionTileType::transition_corners
             - Map::ResolveCornerType()
-            - TileData::Traversability::tile_traversability
+            - TileData::TileTraversability::tile_traversability
             - IsWallTile() (local fn, map.cpp)
         */
 
@@ -48,14 +50,30 @@ namespace eng {
         }; 
     }//namespace TileType
 
-    namespace TraversabilityType { enum { OBSTACLE = 0, GROUND_OK = 1, WATER_OK = 2 }; }
+    namespace NavigationBit { enum { OBSTACLE = 0, GROUND = 1, WATER = 2, AIR = 4 }; }
 
     //Navigation data container.
     struct NavData {
-        bool gnd_taken = false;     //dynamic obstacles (units, ground/water)
-        bool air_taken = false;     //dynamic obstacles (units, air only)
-        bool has_building = false;  //static obstacle indicator (buildings)
-        bool permanent = false;     //true -> unit that's moving here aims to stop at this location (or is already stopped)
+        int taken = 0;                  //tracks if the tile is taken (bitmap - NavigationBit)
+        int permanent = 0;              //defines if the object occupying it intends to stay (bitmap, false -> just moving through)
+        
+        float d;
+        bool visited;
+    public:
+        //Clears the temporary variables for next pathfinding.
+        void Cleanup();
+    };
+
+    //Used to store intermediate info during the pathfinding computations.
+    struct NavEntry {
+        float h;
+        float d;
+        glm::ivec2 pos;
+    public:
+        NavEntry() = default;
+        NavEntry(float h_, float d_, const glm::ivec2& pos_) : h(h_), d(d_), pos(pos_) {}
+
+        friend inline bool operator<(const NavEntry& lhs, const NavEntry& rhs) { return lhs.h < rhs.h; }
     };
 
     //Live representation of a tile.
@@ -72,7 +90,15 @@ namespace eng {
         TileData() = default;
         TileData(int tileType, int variation, int cornerType);
 
-        int Traversability() const;
+        //Returns true if a unit with given navigation type can traverse this tile (& the tile isn't taken).
+        bool Traversable(int unitNavType) const;
+
+        //Returns true if the tile is marked as permanently taken (object occupying it indends to stay there).
+        //Also returns true if the tile is not taken, but is untraversable by definition (bcs of a tile type).
+        bool PermanentlyTaken(int unitNavType) const;
+    private:
+        //Defines how can this tile be traversed. Only considers tile type (no navigation data).
+        int TileTraversability() const;
     };
 
     //To track map changes. Separate struct, in case TileData gets modified.
@@ -148,6 +174,11 @@ namespace eng {
 
         TileData& operator()(int y, int x);
         const TileData& operator()(int y, int x) const;
+
+        TileData& operator()(const glm::ivec2& idx);
+        const TileData& operator()(const glm::ivec2& idx) const;
+
+        void NavDataCleanup();
     private:
         void Move(MapTiles&& m) noexcept;
         void Release() noexcept;
@@ -241,7 +272,8 @@ namespace eng {
         int Height() const { return tiles.Size().y; }
         int Area() const { return tiles.Area(); }
 
-        const int& operator()(int y, int x) const;
+        const TileData& operator()(int y, int x) const;
+        const TileData& operator()(const glm::ivec2& idx) const;
 
         void Render();
         void RenderRange(int x, int y, int w, int h);
@@ -250,7 +282,8 @@ namespace eng {
 
         TilesetRef GetTileset() const { return tileset; }
 
-        glm::ivec2 UnitRoute_NextPos(const Unit& unit, const glm::ivec2& target_pos);
+        //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
+        glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
 
         //==== Methods for editor ====
 
@@ -281,6 +314,10 @@ namespace eng {
         //Defines what corner type to write when painting given tileType.
         int ResolveCornerType(int paintedTileType) const;
 
+        glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center);
+        //Retrieves next position for movement. Call after pathfinding is done (uses filled out distance values in the map data).
+        glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
+
         TileData& at(int y, int x);
         const TileData& at(int y, int x) const;
 
@@ -290,6 +327,8 @@ namespace eng {
     private:
         TilesetRef tileset;
         MapTiles tiles;
+
+        std::priority_queue<NavEntry> nav_list;
     };
 
 }//namespace eng

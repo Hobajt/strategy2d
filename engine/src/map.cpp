@@ -9,6 +9,7 @@
 #include "engine/game/gameobject.h"
 
 #include <random>
+#include <limits>
 
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
 
@@ -21,33 +22,52 @@ namespace eng {
 
     bool IsWallTile(int tileType);
 
+    typedef float(*heuristic_fn)(const glm::ivec2& src, const glm::ivec2& dst);
+
+    float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst);
+    float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst);
+
+    void Pathfinding_AStar(MapTiles& tiles, std::priority_queue<NavEntry>& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
+
     //an element of tmp array, used during tileset parsing
     struct TileDescription {
         int tileType = -1;
         int borderType = 0;
     };
 
+    void NavData::Cleanup() {
+        d = std::numeric_limits<float>::infinity();
+        visited = false;
+    }
+
     TileData::TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
 
-    int TileData::Traversability() const {
-        constexpr static int tile_traversability[TileType::COUNT] = {
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::GROUND_OK,
-            TraversabilityType::WATER_OK,
-            TraversabilityType::OBSTACLE,
-            TraversabilityType::OBSTACLE,
-            TraversabilityType::OBSTACLE,
-            TraversabilityType::OBSTACLE,
-            TraversabilityType::OBSTACLE,
-            TraversabilityType::OBSTACLE,
-        };
+    bool TileData::Traversable(int unitNavType) const {
+        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken));
+    }
 
-        return tile_traversability[tileType] & (3 * int(!nav.has_building));
+    bool TileData::PermanentlyTaken(int unitNavType) const {
+        return bool(unitNavType & nav.taken & nav.permanent) || bool(unitNavType & ~(TileTraversability() + NavigationBit::AIR));
+    }
+
+    int TileData::TileTraversability() const {
+        constexpr static int tile_traversability[TileType::COUNT] = {
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::GROUND,
+            NavigationBit::WATER,
+            NavigationBit::OBSTACLE,
+            NavigationBit::OBSTACLE,
+            NavigationBit::OBSTACLE,
+            NavigationBit::OBSTACLE,
+            NavigationBit::OBSTACLE,
+            NavigationBit::OBSTACLE,
+        };
+        return tile_traversability[tileType];
     }
 
     //===== TileGraphics =====
@@ -134,6 +154,20 @@ namespace eng {
         ASSERT_MSG(data != nullptr, "Map isn't properly initialized!");
         ASSERT_MSG(((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x))), "Array index ({}, {}) is out of bounds.", y, x);
         return data[y*(size.x+1)+x];
+    }
+
+    TileData& MapTiles::operator()(const glm::ivec2& idx) {
+        return operator()(idx.y, idx.x);
+    }
+
+    const TileData& MapTiles::operator()(const glm::ivec2& idx) const {
+        return operator()(idx.y, idx.x);
+    }
+
+    void MapTiles::NavDataCleanup() {
+        int area = (size.x+1)*(size.y+1);
+        for(int i = 0; i < area; i++)
+            data[i].nav.Cleanup();
     }
     
     void MapTiles::Move(MapTiles&& m) noexcept {
@@ -280,9 +314,13 @@ namespace eng {
         return *this;
     }
 
-    const int& Map::operator()(int y, int x) const {
+    const TileData& Map::operator()(int y, int x) const {
         ASSERT_MSG((unsigned(y) < unsigned(tiles.Size().y)) && (unsigned(x) < unsigned(tiles.Size().x)), "Array index out of bounds.");
-        return at(y,x).tileType;
+        return at(y,x);
+    }
+
+    const TileData& Map::operator()(const glm::ivec2& idx) const {
+        return operator()(idx.y, idx.x);
     }
 
     Mapfile Map::Export() {
@@ -324,9 +362,20 @@ namespace eng {
         }
     }
 
-    glm::ivec2 Map::UnitRoute_NextPos(const Unit& unit, const glm::ivec2& target_pos) {
-        //TODO: navigation algorithm (also consider unit params - air/water/gnd)
-        return glm::ivec2(0);
+    glm::ivec2 Map::Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos) {
+        ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to ({},{}) (unit {})", unit.Position().x, unit.Position().y, target_pos.x, target_pos.y, unit.ID());
+
+        //identify unit's movement type (gnd/water/air)
+        int navType = unit.NavigationType();
+
+        //target fix for airborne units
+        glm::ivec2 dst_pos = (navType != NavigationBit::AIR) ? target_pos : make_even(target_pos);
+
+        //fills distance values in the tile data
+        Pathfinding_AStar(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
+        
+        //assembles the path, returns the next tile coord, that can be reached via a straight line travel
+        return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos);
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -545,13 +594,6 @@ namespace eng {
     }
 
     bool Map::CornersValidationCheck(const glm::ivec4& c, int dominantCornerType, int& out_resolutionCornerType, int& out_newTileType) const {
-        // auto [resType, replaceTileType] = resolutionTypes[cornerType];
-
-        // //replaceTileType: true -> use resolutionType as tileType for this transition tile (otherwise, use the other type)
-        // int transitionTileType = replaceTileType ? resType : cornerType;
-
-        // return isTransitionTile ? transitionTileType : at(m.y, m.x).tileType;
-
         //defines what tileType to assign to the transition tile (indices match array in Map::GetTransitionTileType)
         static constexpr std::array<int, TRANSITION_TILE_OPTIONS> transition_types = {
             TileType::GROUND2,
@@ -623,6 +665,55 @@ namespace eng {
             return (tileType != TileType::ROCK_BROKEN) ? TileType::GROUND1 : TileType::MUD1;
         else
             return tileType;
+    }
+
+    glm::ivec2 Map::MinDistanceNeighbor(const glm::ivec2& center) {
+        glm::ivec2 idx = center - 1;
+        float min_d = std::numeric_limits<float>::infinity();
+        
+        glm::ivec2 size = tiles.Size();
+        for(int y = center.y-1; y <= center.y+1; y++) {
+            if(y < 0 || y >= size.y)
+                continue;
+            
+            for(int x = center.x-1; x <= center.x+1; x++) {
+                if(x < 0 || x >= size.x)
+                    continue;
+
+                glm::ivec2 pos = glm::ivec2(x, y);
+                float d = tiles(pos).nav.d;
+                if(d < min_d) {
+                    idx = glm::ivec2(pos);
+                    min_d = d;
+                }
+            }
+        }
+
+        return idx;
+    }
+
+    glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst) {
+        glm::ivec2 res = pos_dst;
+        glm::ivec2 pos = pos_dst;
+        glm::ivec2 dir = pos_dst;
+        
+        while(pos != pos_src) {
+            glm::ivec2 pos_prev = pos;
+            
+            //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
+            pos = MinDistanceNeighbor(pos);
+            ASSERT_MSG(pos_prev != pos, "Map::Pathfinding - path retrieval is stuck.");
+
+            //direction change means corner in the path -> mark as new target position
+            glm::ivec2 dir_new = pos_prev - pos;
+            if(dir_new != dir) {
+                res = pos_prev;
+            }
+            dir = dir_new;
+        }
+
+        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) ... next target = ({},{}) (length - target: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
+        return res;
     }
 
     TileData& Map::at(int y, int x) {
@@ -776,6 +867,79 @@ namespace eng {
 
     bool IsWallTile(int tileType) {
         return (tileType >= TileType::WALL_HU && tileType <= TileType::WALL_OC_DAMAGED);
+    }
+
+    float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst) {
+        return glm::length(glm::vec2(src - dst));
+    }
+
+    float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst) {
+        int dx = std::abs(src.x - dst.x);
+        int dy = std::abs(src.y - dst.y);
+        return 1*(dx+dy) + (1.141421f - 2.f) * std::min(dx, dy);
+    }
+
+    void Pathfinding_AStar(MapTiles& tiles, std::priority_queue<NavEntry>& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
+        //airborne units only move on even tiles
+        int step = 1 + int(navType == NavigationBit::AIR);
+        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+
+        //prep distance values
+        tiles.NavDataCleanup();
+        tiles(pos_src).nav.d = 0.f;
+
+        //reset the open set tracking
+        open = {};
+        open.emplace(H(pos_src, pos_dst), 0.f, pos_src);
+        glm::ivec2 size = tiles.Size();
+
+        int it = 0;
+        while (open.size() > 0) {
+            NavEntry entry = open.top();
+            open.pop();
+            TileData& td = tiles(entry.pos);
+
+            //skip if (already visited) or (untraversable)
+            if(td.nav.visited || !td.Traversable(navType))
+                continue;
+            
+            it++;
+            
+            //mark as visited, set distance value
+            ASSERT_MSG(entry.d <= td.nav.d, "Value here should already be a minimal distance ({} < {})", entry.d, td.nav.d);
+            td.nav.visited = true;
+            td.nav.d = entry.d;
+
+            //path to the target destination found - terminate
+            if(entry.pos == pos_dst) {
+                break;
+            }
+
+            for(int y = -step; y <= step; y += step) {
+                for(int x = -step; x <= step; x += step) {
+                    glm::ivec2 pos = glm::ivec2(entry.pos.x+x, entry.pos.y+y);
+
+                    //skip out of bounds or central tile
+                    if(pos.y < 0 || pos.x < 0 || pos.y >= size.y || pos.x >= size.x || pos == entry.pos)
+                        continue;
+                    
+                    TileData& td = tiles(pos);
+                    float d = entry.d + ((std::abs(x+y) % 2 == 0) ? 1.414213f : 1.f);
+
+                    //skip when (untraversable) or (already visited) or (marked as open & current distance is worse than existing distance)
+                    if(td.nav.visited || !td.Traversable(navType) || (!std::isinf(td.nav.d) && d > td.nav.d))
+                        continue;
+
+                    //tmp distance value (tile is still open)
+                    td.nav.d = d;
+                    
+                    float h = H(pos, pos_dst);
+                    open.emplace(h+d, d, pos);
+                }
+            }
+        }
+
+        ENG_LOG_FINEST("    Map::Pathfinding::Alg    | algorithm steps: {}", it);
     }
 
 }//namespace eng

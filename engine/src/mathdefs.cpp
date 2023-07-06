@@ -34,4 +34,8 @@ namespace eng {
         return w.x < 1e-3f || w.y < 1e-3f || (w.x - w.y) < 1e-3f;
     }
 
+    glm::ivec2 make_even(const glm::ivec2& v) {
+        return glm::ivec2((v.x >> 1) << 1, (v.y >> 1) << 1);
+    }
+
 }//namespace eng

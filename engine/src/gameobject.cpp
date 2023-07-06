@@ -19,18 +19,12 @@ namespace eng {
     }
 
     void GameObject::Render() {
-        ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
-
-        //TODO: figure out zIdx from the y-coord
-        float zIdx = -0.5f;
-
-        Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.w2s(position, data->size), zIdx), data->size * cam.Mult(), action, orientation);
+        InnerRender(glm::vec2(position));
     }
 
     void GameObject::Update(Level& level) {
         ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
-        animator.Update(action);
+        animator.Update(actionIdx);
     }
 
     void GameObject::DBG_GUI() {
@@ -48,10 +42,20 @@ namespace eng {
     void GameObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d", id);
-        ImGui::DragInt("action", &action);
+        ImGui::DragInt("action", &actionIdx);
         ImGui::SliderInt("orientation", &orientation, 0, 8);
-        ImGui::DragFloat2("position", (float*)&position);
+        ImGui::DragInt2("position", (int*)&position);
 #endif
+    }
+
+    void GameObject::InnerRender(const glm::vec2& pos) {
+        ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
+
+        //TODO: figure out zIdx from the y-coord
+        float zIdx = -0.5f;
+
+        Camera& cam = Camera::Get();
+        animator.Render(glm::vec3(cam.w2s(pos, data->size), zIdx), data->size * cam.Mult(), actionIdx, orientation);
     }
 
     //===== FactionObject =====
@@ -89,10 +93,29 @@ namespace eng {
     Unit::Unit(const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
         : FactionObject(std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {}
 
+    void Unit::Render() {
+        InnerRender(glm::vec2(Position()) + move_offset);
+    }
+
     void Unit::Update(Level& level) {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, level);
-        animator.Update(action);
+        animator.Update(ActionIdx());
+    }
+
+    void Unit::IssueCommand(const Command& cmd) {
+        int prevType = command.Type();
+        command = cmd;
+        action.Signal(*this, ActionSignal::COMMAND_SWITCH, command.Type(), prevType);
+        ENG_LOG_FINE("IssueCommand: Unit: {} ({}) ... {}", ID(), Name(), command.to_string());
+    }
+
+    void Unit::Inner_DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        GameObject::Inner_DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("move_offset: %s", to_string(move_offset).c_str());
+#endif
     }
 
 }//namespace eng

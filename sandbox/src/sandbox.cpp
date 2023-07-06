@@ -52,6 +52,9 @@ void Sandbox::OnInit() {
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
+        Camera::Get().SetupZoomUpdates(true);
+        Camera::Get().ZoomToFit(glm::vec2(12.f));
+
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");
@@ -95,9 +98,18 @@ void Sandbox::OnUpdate() {
 
     Renderer::Begin(shader, true);
 
+    static bool g = true;
+    ImGui::ShowDemoWindow(&g);
+
     //======================
 
     colorPalette.Bind(shader);
+
+    if(input.rmb.down()) {
+        glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        // LOG_INFO("POS: {}", target_pos);
+        troll.IssueCommand(Command::Move(target_pos));
+    }
 
     troll.Update(level);
     troll.Render();

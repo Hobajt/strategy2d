@@ -17,4 +17,6 @@ namespace eng {
     bool has_valid_direction(const glm::ivec2& v);
     bool has_valid_direction(const glm::vec2& v);
 
+    glm::ivec2 make_even(const glm::ivec2& v);
+
 }//namespace eng
