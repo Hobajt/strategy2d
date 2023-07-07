@@ -112,9 +112,11 @@ namespace eng {
 
     void Unit::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
-        GameObject::Inner_DBG_GUI();
+        FactionObject::Inner_DBG_GUI();
         ImGui::Separator();
         ImGui::Text("move_offset: %s", to_string(move_offset).c_str());
+        ImGui::Text("%s", command.to_string().c_str());
+        ImGui::Text("Action type: %d", action.logic.type);
 #endif
     }
 

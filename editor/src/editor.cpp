@@ -68,6 +68,8 @@ void Editor::OnGUI() {
     ImGui::Begin("Palette");
     palette.GetTexture()->DBG_GUI();
     ImGui::End();
+
+    context.level.map.DBG_GUI();
 #endif
 }
 

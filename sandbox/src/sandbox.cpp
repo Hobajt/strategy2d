@@ -35,9 +35,9 @@ void Sandbox::OnInit() {
             LOG_INFO("SPRITE: {}", name);
         }
         AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int, SpriteGroup>{ 
-                {0, SpriteGroup((*spritesheet)("idle"), 0)},
-                {1, SpriteGroup((*spritesheet)("walk"), 1)},
-                {2, SpriteGroup((*spritesheet)("attack"), 2)},
+                {ActionType::IDLE,      SpriteGroup((*spritesheet)("idle"), ActionType::IDLE)},
+                {ActionType::MOVE,      SpriteGroup((*spritesheet)("walk"), ActionType::MOVE)},
+                {ActionType::ACTION,    SpriteGroup((*spritesheet)("attack"), ActionType::ACTION)},
             }
         );
         UnitDataRef go_data = std::make_shared<UnitData>();
@@ -98,8 +98,8 @@ void Sandbox::OnUpdate() {
 
     Renderer::Begin(shader, true);
 
-    static bool g = true;
-    ImGui::ShowDemoWindow(&g);
+    // static bool g = true;
+    // if(g) ImGui::ShowDemoWindow(&g);
 
     //======================
 
@@ -167,6 +167,8 @@ void Sandbox::OnGUI() {
         ImGui::Begin("GameObjects");
         troll.DBG_GUI();
         ImGui::End();
+
+        level.map.DBG_GUI();
     }
 #endif
 }

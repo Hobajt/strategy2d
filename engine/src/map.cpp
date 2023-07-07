@@ -5,6 +5,7 @@
 
 #include "engine/utils/utils.h"
 #include "engine/utils/json.h"
+#include "engine/utils/dbg_gui.h"
 
 #include "engine/game/gameobject.h"
 
@@ -27,7 +28,7 @@ namespace eng {
     float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst);
     float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst);
 
-    void Pathfinding_AStar(MapTiles& tiles, std::priority_queue<NavEntry>& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
+    void Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
 
     //an element of tmp array, used during tileset parsing
     struct TileDescription {
@@ -482,6 +483,114 @@ namespace eng {
         // }
     }
 
+    void Map::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGui::Begin("Map");
+
+        static int mode = 0;
+
+        ImVec2 btn_size = ImVec2(ImGui::GetWindowSize().x * 0.31f, 0.f);
+        ImGui::Text("General");
+        if(ImGui::Button("Tiles", btn_size)) mode = 0;
+        ImGui::SameLine();
+        if(ImGui::Button("Corners", btn_size)) mode = 1;
+        ImGui::SameLine();
+        if(ImGui::Button("Traversable", btn_size)) mode = 2;
+
+        ImGui::Separator();
+        ImGui::Text("Pathfinding");
+        if(ImGui::Button("Taken", btn_size)) mode = 3;
+        ImGui::SameLine();
+        if(ImGui::Button("Visited", btn_size)) mode = 4;
+        ImGui::SameLine();
+        if(ImGui::Button("Distances", btn_size)) mode = 5;
+        ImGui::Separator();
+
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * (mode == 5 ? 6.f : 3.f);
+        
+        glm::ivec2 size = (mode != 1) ? tiles.Size() : (tiles.Size()+1);
+
+        static int navType = NavigationBit::GROUND;
+        if(mode == 2) {
+            btn_size = ImVec2(ImGui::GetContentRegionAvail().x * 0.31f, 0.f);
+            ImGui::Text("Unit Navigation Mode:");
+            if(ImGui::Button("Ground", btn_size)) navType = NavigationBit::GROUND;
+            ImGui::SameLine();
+            if(ImGui::Button("Water", btn_size)) navType = NavigationBit::WATER;
+            ImGui::SameLine();
+            if(ImGui::Button("Air", btn_size)) navType = NavigationBit::AIR;
+            ImGui::Separator();
+        }
+
+        ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
+        // flags |= ImGuiTableFlags_NoHostExtendY;
+        flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
+
+        if (ImGui::BeginTable("table1", size.x, flags)) {
+
+            for(int x = 0; x < size.x; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+
+            ImU32 clr1 = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
+            ImU32 clr2 = ImGui::GetColorU32(ImVec4(0.1f, 1.0f, 0.1f, 1.0f));
+            bool b;
+            float f;
+            float D = 1.f;
+            if(mode == 5) {
+                for(int y = 0; y < size.y; y++) {
+                    for(int x = 0; x < size.x; x++) {
+                        if(tiles(y,x).nav.d > D && !std::isinf(tiles(y,x).nav.d))
+                            D = tiles(y,x).nav.d;
+                    }
+                }
+            }
+
+            for(int y = size.y-1; y >= 0; y--) {
+                ImGui::TableNextRow();
+                // ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_size);
+                for(int x = 0; x < size.x; x++) {
+                    ImGui::TableNextColumn();
+                    switch(mode) {
+                        case 0:
+                            ImGui::Text("%d", tiles(y,x).tileType);
+                            break;
+                        case 1:
+                            ImGui::Text("%d", tiles(y,x).cornerType);
+                            break;
+                        case 2:
+                            b = tiles(y,x).Traversable(navType);
+                            ImGui::Text("%d", int(b));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, b ? clr2 : clr1);
+                            break;
+                        case 3:
+                            ImGui::Text("%d|%d", tiles(y,x).nav.taken, tiles(y,x).nav.permanent);
+                            break;
+                        case 4:
+                            b = tiles(y,x).nav.visited;
+                            ImGui::Text("%d", b);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, b ? clr2 : clr1);
+                            break;
+                        case 5:
+                            ImGui::Text("%5.1f", tiles(y,x).nav.d);
+                            f = std::min(1.f, std::powf(tiles(y,x).nav.d / D, 2.2f));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(f, 0.1f, 0.1f, 1.0f)));
+                            break;
+                        default:
+                            ImGui::Text("---");
+                            break;
+                    }
+                    
+                }
+            }
+
+            ImGui::EndTable();
+        }
+
+        ImGui::End();
+#endif
+    }
+
     void Map::DetectAffectedTiles(PaintBitmap& paint, int y, int x, std::vector<TileMod>& modified, int cornerType) {
         size_t start = modified.size();
 
@@ -697,6 +806,7 @@ namespace eng {
         glm::ivec2 pos = pos_dst;
         glm::ivec2 dir = pos_dst;
         
+        printf("full path: ");
         while(pos != pos_src) {
             glm::ivec2 pos_prev = pos;
             
@@ -708,11 +818,14 @@ namespace eng {
             glm::ivec2 dir_new = pos_prev - pos;
             if(dir_new != dir) {
                 res = pos_prev;
+                printf("(%d, %d)<-", res.x, res.y);
             }
             dir = dir_new;
         }
+        printf("\b\b  \n");
 
-        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) ... next target = ({},{}) (length - target: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
+
+        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) | next = ({},{}) (dist - next: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
         return res;
     }
 
@@ -870,16 +983,16 @@ namespace eng {
     }
 
     float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst) {
-        return glm::length(glm::vec2(src - dst));
+        return glm::length(glm::vec2(dst - src));
     }
 
     float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst) {
-        int dx = std::abs(src.x - dst.x);
-        int dy = std::abs(src.y - dst.y);
+        int dx = std::abs(dst.x - src.x);
+        int dy = std::abs(dst.y - src.y);
         return 1*(dx+dy) + (1.141421f - 2.f) * std::min(dx, dy);
     }
 
-    void Pathfinding_AStar(MapTiles& tiles, std::priority_queue<NavEntry>& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
+    void Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
         int step = 1 + int(navType == NavigationBit::AIR);
         glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
@@ -911,9 +1024,8 @@ namespace eng {
             td.nav.d = entry.d;
 
             //path to the target destination found - terminate
-            if(entry.pos == pos_dst) {
+            if(entry.pos == pos_dst)
                 break;
-            }
 
             for(int y = -step; y <= step; y += step) {
                 for(int x = -step; x <= step; x += step) {
@@ -924,10 +1036,10 @@ namespace eng {
                         continue;
                     
                     TileData& td = tiles(pos);
-                    float d = entry.d + ((std::abs(x+y) % 2 == 0) ? 1.414213f : 1.f);
+                    float d = entry.d + (((std::abs(x+y)/step) % 2 == 0) ? 1.414213f : 1.f) * step;
 
                     //skip when (untraversable) or (already visited) or (marked as open & current distance is worse than existing distance)
-                    if(td.nav.visited || !td.Traversable(navType) || (!std::isinf(td.nav.d) && d > td.nav.d))
+                    if(!td.Traversable(navType) || (td.nav.visited && d > td.nav.d) || (!std::isinf(td.nav.d) && d > td.nav.d))
                         continue;
 
                     //tmp distance value (tile is still open)

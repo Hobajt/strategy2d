@@ -57,8 +57,8 @@ namespace eng {
         int taken = 0;                  //tracks if the tile is taken (bitmap - NavigationBit)
         int permanent = 0;              //defines if the object occupying it intends to stay (bitmap, false -> just moving through)
         
-        float d;
-        bool visited;
+        float d = HUGE_VALF;
+        bool visited = false;
     public:
         //Clears the temporary variables for next pathfinding.
         void Cleanup();
@@ -74,7 +74,10 @@ namespace eng {
         NavEntry(float h_, float d_, const glm::ivec2& pos_) : h(h_), d(d_), pos(pos_) {}
 
         friend inline bool operator<(const NavEntry& lhs, const NavEntry& rhs) { return lhs.h < rhs.h; }
+        friend inline bool operator>(const NavEntry& lhs, const NavEntry& rhs) { return lhs.h > rhs.h; }
     };
+
+    using pathfindingContainer = std::priority_queue<NavEntry, std::vector<NavEntry>, std::greater<NavEntry>>;
 
     //Live representation of a tile.
     struct TileData {
@@ -294,6 +297,8 @@ namespace eng {
         void UndoChanges(std::vector<TileRecord>& history, bool rewrite_history = true);
 
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
+
+        void DBG_GUI();
     private:
         //Flood-fill; Adds all tiles that are marked for painting or are neighboring with a marked tile (starting at the specified location (y,x)).
         //Corner type of marked tiles is overriden with the new type (old type is stored in it's TileMod entry in the modified vec).
@@ -328,7 +333,7 @@ namespace eng {
         TilesetRef tileset;
         MapTiles tiles;
 
-        std::priority_queue<NavEntry> nav_list;
+        pathfindingContainer nav_list;
     };
 
 }//namespace eng

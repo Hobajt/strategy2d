@@ -76,7 +76,6 @@ namespace eng {
         action.data.target_pos = pos_dst;
         action.data.move_dir = glm::sign(pos_dst - pos_src);
         action.data.i = VectorOrientation(action.data.move_dir);
-        //TODO: validate that glm::sign() does what I think it does
 
         return action;
     }
@@ -95,6 +94,9 @@ namespace eng {
 
     int IdleAction_Update(Unit& src, Level& level, Action& action) {
         //TODO:
+
+        src.act() = action.logic.type;
+
         //should probably always return finished, so that other commands can cancel it
         return ACTION_FINISHED_SUCCESS;
     }
@@ -144,7 +146,7 @@ namespace eng {
                 else {
                     //next tile is traversable
 
-                    //map update - claim the next tile as taken by this unit (& free the previous one)
+                    //map update - claim the next tile as taken by this unit & free the previous one
                     //TODO:
 
                     //update position & animation offset & keep moving
@@ -156,7 +158,7 @@ namespace eng {
 
         //motion update tick
         t += input.deltaTime * src.MoveSpeed();
-        move_offset = t * glm::vec2(action.data.move_dir);
+        move_offset = (t/l) * glm::vec2(action.data.move_dir);
 
         return ACTION_INPROGRESS;
     }
@@ -212,6 +214,10 @@ namespace eng {
 
     void CommandHandler_Idle(Unit& src, Level& level, Command& cmd, Action& action) {
         //TODO:
+        int res = action.Update(src, level);
+        if(res != ACTION_INPROGRESS && action.logic.type != ActionType::IDLE) {
+            action = Action::Idle();
+        }
     }
 
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action) {
@@ -241,13 +247,13 @@ namespace eng {
     }
 
     glm::ivec2 DirectionVector(int orientation) {
-        return glm::ivec2( DirVectorCoord(orientation), -DirVectorCoord(orientation-2) );
+        return glm::ivec2( DirVectorCoord(orientation), -DirVectorCoord(orientation+6) );
     }
 
     int VectorOrientation(const glm::ivec2& v) {
         int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
         ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
-        orientation = (8-orientation-2) % 8;
+        orientation = (8-orientation+6) % 8;
         return orientation;
     }
 
