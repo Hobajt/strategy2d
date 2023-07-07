@@ -12,8 +12,9 @@ namespace eng {
 
     int GameObject::idCounter = 0;
 
-    GameObject::GameObject(const GameObjectDataRef& data_, const glm::vec2& position_) : data(data_), id(idCounter++), position(position_) {
+    GameObject::GameObject(Level& level_, const GameObjectDataRef& data_, const glm::vec2& position_) : data(data_), id(idCounter++), position(position_), level(&level_) {
         ASSERT_MSG(data != nullptr, "Cannot create GameObject without any data!");
+        ASSERT_MSG(level != nullptr, "GameObject needs a reference to the Level it's contained in!");
 
         animator = Animator(data->animData);
     }
@@ -22,9 +23,14 @@ namespace eng {
         InnerRender(glm::vec2(position));
     }
 
-    void GameObject::Update(Level& level) {
-        ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
+    void GameObject::Update() {
+        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(actionIdx);
+    }
+
+    Level* GameObject::lvl() {
+        ASSERT_MSG(level != nullptr, "GameObject isn't properly initialized!");
+        return level;
     }
 
     void GameObject::DBG_GUI() {
@@ -49,7 +55,7 @@ namespace eng {
     }
 
     void GameObject::InnerRender(const glm::vec2& pos) {
-        ASSERT_MSG(data != nullptr, "GameObject isn't properly initialized!");
+        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
 
         //TODO: figure out zIdx from the y-coord
         float zIdx = -0.5f;
@@ -60,8 +66,9 @@ namespace eng {
 
     //===== FactionObject =====
 
-    FactionObject::FactionObject(const GameObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_)
-        : GameObject(data_, position_), faction(faction_) {
+    FactionObject::FactionObject(Level& level_, const GameObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_)
+        : GameObject(level_, data_, position_), faction(faction_) {
+
         ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
         ChangeColor(colorIdx_);
     }
@@ -90,16 +97,23 @@ namespace eng {
 
     //===== Unit =====
 
-    Unit::Unit(const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
-        : FactionObject(std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {}
+    Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
+        : FactionObject(level_, std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {
+        
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(data->size));
+    }
+
+    Unit::~Unit() {
+        //TODO: remove collider from the map
+    }
 
     void Unit::Render() {
         InnerRender(glm::vec2(Position()) + move_offset);
     }
 
-    void Unit::Update(Level& level) {
+    void Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
-        command.Update(*this, level);
+        command.Update(*this, *lvl());
         animator.Update(ActionIdx());
     }
 

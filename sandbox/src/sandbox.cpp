@@ -47,7 +47,7 @@ void Sandbox::OnInit() {
 
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
-        troll = Unit(go_data, dummy_faction, glm::vec2(0.f, 0.f));
+        troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -107,11 +107,13 @@ void Sandbox::OnUpdate() {
 
     if(input.rmb.down()) {
         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        // LOG_INFO("POS: {}", target_pos);
-        troll.IssueCommand(Command::Move(target_pos));
+        ENG_LOG_INFO("MOVE TO {}", target_pos);
+        if(level.map.IsWithinBounds(target_pos)) {
+            troll.IssueCommand(Command::Move(target_pos));
+        }
     }
 
-    troll.Update(level);
+    troll.Update();
     troll.Render();
 
     level.map.Render();

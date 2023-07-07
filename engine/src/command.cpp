@@ -29,7 +29,17 @@ namespace eng {
 
     
     /* MOVE ACTION DESCRIPTION:
-        - move action moves the unit tile by tile, ...
+        - moves the unit in a tile by tile fashion
+            - unit position is tracked in integers (no midway between tiles, unit always occupies a single tile)
+            - animation position is handled through move_offset variable
+            - when the motion starts:
+                - position is updated to the next tile
+                - move_offset is set to the offset of previous tile & slowly interpolates to vec2(0,0) - this makes the unit move
+                - map tile ownership is updated
+            - after every tile, the action checks next tile's availability:
+                - if destination is reached -> action finishes succcessfully
+                - if next tile is traversable, initiates movement onto the next tile
+                - if it's unreachable, either finishes unsuccessfully or waits until the tile is freed
         - signaling causes the unit to stop at current location (finishes movement to the center of tile)
     */
 
@@ -133,8 +143,10 @@ namespace eng {
                 return ACTION_FINISHED_SUCCESS;
             }
             else {
-                const TileData& td = level.map(pos);
+                glm::ivec2 next_pos = pos + action.data.move_dir;
+                const TileData& td = level.map(next_pos);
                 int navType = src.NavigationType();
+
                 if(!td.Traversable(navType)) {
                     //next tile is untraversable
                     t = 0.f;
@@ -147,10 +159,10 @@ namespace eng {
                     //next tile is traversable
 
                     //map update - claim the next tile as taken by this unit & free the previous one
-                    //TODO:
+                    level.map.MoveUnit(navType, pos, next_pos, next_pos == action.data.target_pos);
 
                     //update position & animation offset & keep moving
-                    pos += action.data.move_dir;
+                    pos = next_pos;
                     t = -l;
                 }
             }

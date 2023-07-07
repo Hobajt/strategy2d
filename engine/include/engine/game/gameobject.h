@@ -16,10 +16,10 @@ namespace eng {
     class GameObject {
     public:
         GameObject() = default;
-        GameObject(const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
+        GameObject(Level& level, const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
 
         virtual void Render();
-        virtual void Update(Level& level);
+        virtual void Update();
 
         glm::ivec2 Position() const { return position; }
         int Orientation() const { return orientation; }
@@ -28,6 +28,7 @@ namespace eng {
         glm::ivec2& pos() { return position; }
         int& ori() { return orientation; }
         int& act() { return actionIdx; }
+        Level* lvl();
 
         int ID() const { return id; }
         std::string Name() const { return data->name; }
@@ -40,6 +41,7 @@ namespace eng {
         Animator animator;
     private:
         GameObjectDataRef data = nullptr;
+        Level* level = nullptr;
 
         glm::ivec2 position = glm::ivec2(0);
         int orientation = 0;
@@ -54,7 +56,7 @@ namespace eng {
     class FactionObject : public GameObject {
     public:
         FactionObject() = default;
-        FactionObject(const GameObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
+        FactionObject(Level& level, const GameObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
         virtual ~FactionObject();
 
         void ChangeColor(int colorIdx);
@@ -74,10 +76,11 @@ namespace eng {
         friend class Action;
     public:
         Unit() = default;
-        Unit(const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+        Unit(Level& level, const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+        virtual ~Unit();
 
         virtual void Render() override;
-        virtual void Update(Level& level) override;
+        virtual void Update() override;
 
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);

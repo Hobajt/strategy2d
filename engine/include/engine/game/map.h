@@ -62,6 +62,9 @@ namespace eng {
     public:
         //Clears the temporary variables for next pathfinding.
         void Cleanup();
+
+        void Claim(int navType, bool permanently);
+        void Unclaim(int navType);
     };
 
     //Used to store intermediate info during the pathfinding computations.
@@ -281,12 +284,17 @@ namespace eng {
         void Render();
         void RenderRange(int x, int y, int w, int h);
 
+        bool IsWithinBounds(const glm::ivec2& pos) const;
+
         void ChangeTileset(const TilesetRef& tilesetNew);
 
         TilesetRef GetTileset() const { return tileset; }
 
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
+
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size);
+        void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 
         //==== Methods for editor ====
 
@@ -321,14 +329,15 @@ namespace eng {
 
         glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center);
         //Retrieves next position for movement. Call after pathfinding is done (uses filled out distance values in the map data).
-        glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
+        glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType);
 
         TileData& at(int y, int x);
         const TileData& at(int y, int x) const;
 
         int c2i(int y, int x) const { return y * (tiles.Size().x+1) + x; }
 
-        void DBG_Print() const;
+        void DBG_PrintTiles() const;
+        void DBG_PrintDistances() const;
     private:
         TilesetRef tileset;
         MapTiles tiles;

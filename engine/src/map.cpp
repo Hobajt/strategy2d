@@ -11,6 +11,7 @@
 
 #include <random>
 #include <limits>
+#include <sstream>
 
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
 
@@ -39,6 +40,16 @@ namespace eng {
     void NavData::Cleanup() {
         d = std::numeric_limits<float>::infinity();
         visited = false;
+    }
+
+    void NavData::Claim(int navType, bool permanently) {
+        taken |= navType;
+        permanent |= int(permanently)*navType;
+    }
+
+    void NavData::Unclaim(int navType) {
+        taken &= ~navType;
+        permanent &= ~navType;
     }
 
     TileData::TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
@@ -355,6 +366,10 @@ namespace eng {
         }
     }
 
+    bool Map::IsWithinBounds(const glm::ivec2& pos) const {
+        return ((unsigned int)pos.y) < ((unsigned int)tiles.Size().y) && ((unsigned int)pos.x) < ((unsigned int)tiles.Size().x);
+    }
+
     void Map::ChangeTileset(const TilesetRef& tilesetNew) {
         TilesetRef ts = (tilesetNew != nullptr) ? tilesetNew : Resources::DefaultTileset();
         if(tileset != tilesetNew) {
@@ -374,9 +389,29 @@ namespace eng {
 
         //fills distance values in the tile data
         Pathfinding_AStar(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
+        DBG_PrintDistances();
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
-        return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos);
+        return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
+    }
+
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size) {
+        if(size.x == 0 || size.y == 0)
+            ENG_LOG_WARN("Map::AddObject - object has no size");
+
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                glm::vec2 idx = glm::ivec2(pos.x+x, pos.y+y);
+                if(!tiles(idx).Traversable(navType))
+                    ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
+                tiles(idx).nav.Claim(navType, true);
+            }
+        }
+    }
+
+    void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently) {
+        tiles(pos_prev).nav.Unclaim(unit_navType);
+        tiles(pos_next).nav.Claim(unit_navType, permanently);
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -398,7 +433,7 @@ namespace eng {
             td.variation    = variation;
         }
 
-        DBG_Print();
+        DBG_PrintTiles();
 
         tileset->UpdateTileIndices(tiles);
     }
@@ -448,7 +483,7 @@ namespace eng {
             else {
                 //border tile; may have been indirectly affected (will become transition tile)
 
-                // DBG_Print();
+                // DBG_PrintTiles();
 
                 //non-zero depth means that entry was generated through conflict resolution -> use different dominantCornerType
                 int cType = (m.depth == 0) ? cornerType : m.dominantCornerType;
@@ -474,7 +509,7 @@ namespace eng {
         if(history != nullptr)
             *history = std::move(modified);
         
-        DBG_Print();
+        DBG_PrintTiles();
         // if(history != nullptr) {
         //     printf("History (%d):\n", (int)history->size());
         //     for(TileRecord& tr : *history) {
@@ -506,13 +541,19 @@ namespace eng {
         if(ImGui::Button("Distances", btn_size)) mode = 5;
         ImGui::Separator();
 
-        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
-        float cell_width = TEXT_BASE_WIDTH * (mode == 5 ? 6.f : 3.f);
-        
         glm::ivec2 size = (mode != 1) ? tiles.Size() : (tiles.Size()+1);
 
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * 3.f;
+        int num_cols = size.x;
+        switch(mode) {
+            case 5:
+                cell_width = TEXT_BASE_WIDTH * 6.f;
+                break;
+        }
+        
         static int navType = NavigationBit::GROUND;
-        if(mode == 2) {
+        if(mode == 2 || mode == 3) {
             btn_size = ImVec2(ImGui::GetContentRegionAvail().x * 0.31f, 0.f);
             ImGui::Text("Unit Navigation Mode:");
             if(ImGui::Button("Ground", btn_size)) navType = NavigationBit::GROUND;
@@ -527,9 +568,9 @@ namespace eng {
         // flags |= ImGuiTableFlags_NoHostExtendY;
         flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
 
-        if (ImGui::BeginTable("table1", size.x, flags)) {
+        if (ImGui::BeginTable("table1", num_cols, flags)) {
 
-            for(int x = 0; x < size.x; x++)
+            for(int x = 0; x < num_cols; x++)
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
 
             ImU32 clr1 = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
@@ -559,22 +600,28 @@ namespace eng {
                             ImGui::Text("%d", tiles(y,x).cornerType);
                             break;
                         case 2:
-                            b = tiles(y,x).Traversable(navType);
-                            ImGui::Text("%d", int(b));
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, b ? clr2 : clr1);
+                            ImGui::Text("%d", int(tiles(y,x).Traversable(navType)));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).Traversable(navType) ? clr2 : clr1);
                             break;
                         case 3:
-                            ImGui::Text("%d|%d", tiles(y,x).nav.taken, tiles(y,x).nav.permanent);
+                            if(ImGui::BeginTable("table2", 2, ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+                                ImGui::TableNextRow();
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).nav.taken);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HAS_FLAG(tiles(y,x).nav.taken, navType) ? clr1 : clr2);
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).nav.permanent);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HAS_FLAG(tiles(y,x).nav.permanent, navType) ? clr1 : clr2);
+                                ImGui::EndTable();
+                            }
                             break;
                         case 4:
-                            b = tiles(y,x).nav.visited;
-                            ImGui::Text("%d", b);
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, b ? clr2 : clr1);
+                            ImGui::Text("%d", tiles(y,x).nav.visited);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.visited ? clr2 : clr1);
                             break;
                         case 5:
                             ImGui::Text("%5.1f", tiles(y,x).nav.d);
-                            f = std::min(1.f, std::powf(tiles(y,x).nav.d / D, 2.2f));
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(f, 0.1f, 0.1f, 1.0f)));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(std::min(1.f, std::powf(tiles(y,x).nav.d / D, 2.2f)), 0.1f, 0.1f, 1.0f)));
                             break;
                         default:
                             ImGui::Text("---");
@@ -791,41 +838,49 @@ namespace eng {
 
                 glm::ivec2 pos = glm::ivec2(x, y);
                 float d = tiles(pos).nav.d;
-                if(d < min_d) {
+                if(d <= min_d) {
                     idx = glm::ivec2(pos);
                     min_d = d;
                 }
             }
         }
 
+        ASSERT_MSG(IsWithinBounds(idx), "Map::MinDistanceNeighbor - out-of-bounds coordinates aren't allowed ({})", idx);
         return idx;
     }
 
-    glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst) {
+    glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType) {
         glm::ivec2 res = pos_dst;
         glm::ivec2 pos = pos_dst;
         glm::ivec2 dir = pos_dst;
+
+        char buf[256];
+        std::stringstream ss;
         
-        printf("full path: ");
+        int i = 0;
         while(pos != pos_src) {
             glm::ivec2 pos_prev = pos;
             
             //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
             pos = MinDistanceNeighbor(pos);
             ASSERT_MSG(pos_prev != pos, "Map::Pathfinding - path retrieval is stuck.");
+            ASSERT_MSG(tiles(pos).Traversable(navType) || pos == pos_src, "Map::Pathfinding - path leads through untraversable tiles ({}).", pos);
 
             //direction change means corner in the path -> mark as new target position
             glm::ivec2 dir_new = pos_prev - pos;
             if(dir_new != dir) {
                 res = pos_prev;
-                printf("(%d, %d)<-", res.x, res.y);
+                
+                snprintf(buf, sizeof(buf), "(%d, %d)<-", res.x, res.y);
+                ss << buf;
             }
+            ENG_LOG_TRACE("{} | {} {} | {} {}", res, pos, pos_prev, dir, dir_new);
             dir = dir_new;
+            i++;
         }
-        printf("\b\b  \n");
 
-
-        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) | next = ({},{}) (dist - next: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
+        ENG_LOG_FINEST("        full path: {}\b\b  ({} tiles)", ss.str().c_str(), i);
+        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) | next = ({},{}) (d - next: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
         return res;
     }
 
@@ -837,7 +892,7 @@ namespace eng {
         return tiles(y, x);
     }
 
-    void Map::DBG_Print() const {
+    void Map::DBG_PrintTiles() const {
         // printf("MAP | CORNERS:\n");
         // for(int y = 0; y <= size.y; y++) {
         //     for(int x = 0; x <= size.x; x++) {
@@ -850,6 +905,17 @@ namespace eng {
         //     printf("\n");
         // }
         // printf("-------\n\n");
+    }
+
+    void Map::DBG_PrintDistances() const {
+        printf("DISTANCES:\n");
+        for(int y = 0; y <= Size().y; y++) {
+            for(int x = 0; x <= Size().x; x++) {
+                printf("%5.1f ", at(Size().y-y, x).nav.d);
+            }
+            printf("\n");
+        }
+        printf("-------\n\n");
     }
 
     //===================================================================================
@@ -1012,8 +1078,8 @@ namespace eng {
             open.pop();
             TileData& td = tiles(entry.pos);
 
-            //skip if (already visited) or (untraversable)
-            if(td.nav.visited || !td.Traversable(navType))
+            //skip if (already visited) or (untraversable & not starting pos (that one's untraversable bcs unit's standing there))
+            if(td.nav.visited || !(td.Traversable(navType) || entry.pos == pos_src))
                 continue;
             
             it++;
