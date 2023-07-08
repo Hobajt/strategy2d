@@ -26,7 +26,7 @@ namespace eng {
 
     bool has_valid_direction(const glm::ivec2& v) {
         glm::ivec2 w = glm::abs(v);
-        return w.x == 0 || w.y == 0 || (w.x - w.y) == 0;
+        return (w.x == 0 || w.y == 0 || (w.x - w.y) == 0) && (w.x != 0 || w.y != 0);
     }
 
     bool has_valid_direction(const glm::vec2& v) {

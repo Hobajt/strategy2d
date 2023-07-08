@@ -45,6 +45,8 @@ void Sandbox::OnInit() {
         go_data->size = glm::vec2(1.f);
         go_data->animData = ad;
 
+        Level::Load("res/ignored/tst.json", level);
+
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
         troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));

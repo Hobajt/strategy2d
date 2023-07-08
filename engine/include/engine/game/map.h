@@ -294,6 +294,7 @@ namespace eng {
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
 
         void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size);
+        void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 
         //==== Methods for editor ====

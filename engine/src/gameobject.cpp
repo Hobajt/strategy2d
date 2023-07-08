@@ -104,7 +104,9 @@ namespace eng {
     }
 
     Unit::~Unit() {
-        //TODO: remove collider from the map
+        if(lvl() != nullptr) {
+            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(data->size));
+        }
     }
 
     void Unit::Render() {

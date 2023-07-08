@@ -29,7 +29,7 @@ namespace eng {
     float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst);
     float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst);
 
-    void Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
+    bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
 
     //an element of tmp array, used during tileset parsing
     struct TileDescription {
@@ -381,6 +381,9 @@ namespace eng {
     glm::ivec2 Map::Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos) {
         ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to ({},{}) (unit {})", unit.Position().x, unit.Position().y, target_pos.x, target_pos.y, unit.ID());
 
+        if(unit.Position() == target_pos)
+            return target_pos;
+
         //identify unit's movement type (gnd/water/air)
         int navType = unit.NavigationType();
 
@@ -389,7 +392,7 @@ namespace eng {
 
         //fills distance values in the tile data
         Pathfinding_AStar(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
-        DBG_PrintDistances();
+        // DBG_PrintDistances();
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
@@ -405,6 +408,20 @@ namespace eng {
                 if(!tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
                 tiles(idx).nav.Claim(navType, true);
+            }
+        }
+    }
+
+    void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size) {
+        if(size.x == 0 || size.y == 0)
+            ENG_LOG_WARN("Map::RemoveObject - object has no size");
+
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                glm::vec2 idx = glm::ivec2(pos.x+x, pos.y+y);
+                if(tiles(idx).Traversable(navType))
+                    ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
+                tiles(idx).nav.Unclaim(navType);
             }
         }
     }
@@ -849,13 +866,26 @@ namespace eng {
         return idx;
     }
 
-    glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType) {
-        glm::ivec2 res = pos_dst;
-        glm::ivec2 pos = pos_dst;
-        glm::ivec2 dir = pos_dst;
+    glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst_, int navType) {
+        glm::ivec2 pos_dst = pos_dst_;
+        glm::ivec2 dir = glm::sign(pos_dst - pos_src);
 
         char buf[256];
         std::stringstream ss;
+
+        if(pos_src == pos_dst)
+            return pos_dst;
+        
+        int j = 0;
+        //when the target destination is unreachable - find new (reachable) location along the way from dst to src position
+        while((tiles(pos_dst).nav.d == std::numeric_limits<float>::infinity() || !tiles(pos_dst).Traversable(navType)) && pos_dst != pos_src) {
+            pos_dst -= dir;
+            j++;
+        }
+
+        glm::ivec2 res = pos_dst;
+        glm::ivec2 pos = pos_dst;
+        dir = pos_dst;
         
         int i = 0;
         while(pos != pos_src) {
@@ -874,13 +904,13 @@ namespace eng {
                 snprintf(buf, sizeof(buf), "(%d, %d)<-", res.x, res.y);
                 ss << buf;
             }
-            ENG_LOG_TRACE("{} | {} {} | {} {}", res, pos, pos_prev, dir, dir_new);
+            // ENG_LOG_TRACE("{} | {} {} | {} {}", res, pos, pos_prev, dir, dir_new);
             dir = dir_new;
             i++;
         }
 
-        ENG_LOG_FINEST("        full path: {}\b\b  ({} tiles)", ss.str().c_str(), i);
-        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) | next = ({},{}) (d - next: {:.1f}, total: {:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
+        ENG_LOG_FINEST("        full path: {}\b\b  ({} tiles + {} unreachable)", ss.str().c_str(), i, j);
+        ENG_LOG_FINER("    Map::Pathfinding::Result | from ({},{}) to ({},{}) | next=({},{}) | (D - next:{:.1f}, total:{:.1f})", pos_src.x, pos_src.y, pos_dst.x, pos_dst.y, res.x, res.y, tiles(res).nav.d, tiles(pos_dst).nav.d);
         return res;
     }
 
@@ -1058,7 +1088,7 @@ namespace eng {
         return 1*(dx+dy) + (1.141421f - 2.f) * std::min(dx, dy);
     }
 
-    void Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
+    bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
         int step = 1 + int(navType == NavigationBit::AIR);
         glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
@@ -1073,6 +1103,7 @@ namespace eng {
         glm::ivec2 size = tiles.Size();
 
         int it = 0;
+        bool found = false;
         while (open.size() > 0) {
             NavEntry entry = open.top();
             open.pop();
@@ -1085,13 +1116,16 @@ namespace eng {
             it++;
             
             //mark as visited, set distance value
-            ASSERT_MSG(entry.d <= td.nav.d, "Value here should already be a minimal distance ({} < {})", entry.d, td.nav.d);
+            ASSERT_MSG(fabsf(entry.d - td.nav.d) < 1e-5f, "Value here should already be a minimal distance ({} < {})", entry.d, td.nav.d);
+            // if(entry.d > td.nav.d) ENG_LOG_WARN("HOPE IT'S JUST A ROUNDING ERROR (distance mismatch): {}, {}", entry.d, td.nav.d);
             td.nav.visited = true;
-            td.nav.d = entry.d;
+            td.nav.d = std::min(entry.d, td.nav.d);
 
             //path to the target destination found - terminate
-            if(entry.pos == pos_dst)
+            if(entry.pos == pos_dst) {
+                found = true;
                 break;
+            }
 
             for(int y = -step; y <= step; y += step) {
                 for(int x = -step; x <= step; x += step) {
@@ -1117,7 +1151,8 @@ namespace eng {
             }
         }
 
-        ENG_LOG_FINEST("    Map::Pathfinding::Alg    | algorithm steps: {}", it);
+        ENG_LOG_FINEST("    Map::Pathfinding::Alg    | algorithm steps: {} (found: {})", it, found);
+        return found;
     }
 
 }//namespace eng

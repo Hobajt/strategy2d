@@ -243,12 +243,17 @@ namespace eng {
             else {
                 //consult navmesh - fetch next target position
                 glm::ivec2 target_pos = level.map.Pathfinding_NextPosition(src, cmd.target_pos);
-                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
-                action = Action::Move(src.Position(), target_pos);
+                if(target_pos == src.Position()) {
+                    //target destination unreachable
+                    cmd = Command::Idle();
+                }
+                else {
+                    //initiate new move action
+                    ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                    action = Action::Move(src.Position(), target_pos);
+                }
             }
         }
-
-        //TODO: add handling for unreachable locations - both in navigation & in command
     }
 
     //=======================================
