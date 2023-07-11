@@ -71,9 +71,16 @@ namespace eng {
 
         ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
         ChangeColor(colorIdx_);
+
+        //register the object with the map
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->IsBuilding());
     }
 
     FactionObject::~FactionObject() {
+        if(lvl() != nullptr && Data() != nullptr) {
+            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->IsBuilding());
+        }
+
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
 
@@ -98,16 +105,9 @@ namespace eng {
     //===== Unit =====
 
     Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
-        : FactionObject(level_, std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {
-        
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(data->size));
-    }
+        : FactionObject(level_, std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {}
 
-    Unit::~Unit() {
-        if(lvl() != nullptr) {
-            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(data->size));
-        }
-    }
+    Unit::~Unit() {}
 
     void Unit::Render() {
         InnerRender(glm::vec2(Position()) + move_offset);
@@ -134,6 +134,17 @@ namespace eng {
         ImGui::Text("%s", command.to_string().c_str());
         ImGui::Text("Action type: %d", action.logic.type);
 #endif
+    }
+
+    //===== Building =====
+
+    Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
+        : FactionObject(level_, data_, faction_, position_), data(data_) {}
+
+    Building::~Building() {}
+
+    void Building::Update() {
+        //TODO:
     }
 
 }//namespace eng

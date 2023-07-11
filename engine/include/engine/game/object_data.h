@@ -26,22 +26,27 @@ namespace eng {
     struct GameObjectData {
         std::string name;
         glm::vec2 size;
+        int navigationType;
 
         AnimatorDataRef animData = nullptr;
+    public:
+        virtual bool IsBuilding() const { return false; }
     };
     using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
     //===== UnitData =====
 
     struct UnitData : public GameObjectData {
-        int navigationType = 1;
+        
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 
     //===== BuildingData =====
 
-    struct BuildingData {
+    struct BuildingData : public GameObjectData {
         
+    public:
+        virtual bool IsBuilding() const { return true; }
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

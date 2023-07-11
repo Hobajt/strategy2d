@@ -40,26 +40,29 @@ namespace eng {
     void NavData::Cleanup() {
         d = std::numeric_limits<float>::infinity();
         visited = false;
+        pathtile = false;
     }
 
-    void NavData::Claim(int navType, bool permanently) {
+    void NavData::Claim(int navType, bool permanently, bool is_building) {
         taken |= navType;
         permanent |= int(permanently)*navType;
+        building |= is_building;
     }
 
-    void NavData::Unclaim(int navType) {
+    void NavData::Unclaim(int navType, bool is_building) {
         taken &= ~navType;
         permanent &= ~navType;
+        building = (is_building) ? false : building;
     }
 
     TileData::TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
 
     bool TileData::Traversable(int unitNavType) const {
-        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken));
+        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken)) && !nav.building;
     }
 
     bool TileData::PermanentlyTaken(int unitNavType) const {
-        return bool(unitNavType & nav.taken & nav.permanent) || bool(unitNavType & ~(TileTraversability() + NavigationBit::AIR));
+        return bool(unitNavType & nav.taken & nav.permanent) || bool(unitNavType & ~(TileTraversability() + NavigationBit::AIR)) || nav.building;
     }
 
     int TileData::TileTraversability() const {
@@ -398,7 +401,9 @@ namespace eng {
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size) {
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building) {
+        ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
+
         if(size.x == 0 || size.y == 0)
             ENG_LOG_WARN("Map::AddObject - object has no size");
 
@@ -407,12 +412,14 @@ namespace eng {
                 glm::vec2 idx = glm::ivec2(pos.x+x, pos.y+y);
                 if(!tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
-                tiles(idx).nav.Claim(navType, true);
+                tiles(idx).nav.Claim(navType, true, is_building);
             }
         }
     }
 
-    void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size) {
+    void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building) {
+        ENG_LOG_FINE("Map::RemoveObject - removing at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
+
         if(size.x == 0 || size.y == 0)
             ENG_LOG_WARN("Map::RemoveObject - object has no size");
 
@@ -421,14 +428,14 @@ namespace eng {
                 glm::vec2 idx = glm::ivec2(pos.x+x, pos.y+y);
                 if(tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
-                tiles(idx).nav.Unclaim(navType);
+                tiles(idx).nav.Unclaim(navType, is_building);
             }
         }
     }
 
     void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently) {
-        tiles(pos_prev).nav.Unclaim(unit_navType);
-        tiles(pos_next).nav.Claim(unit_navType, permanently);
+        tiles(pos_prev).nav.Unclaim(unit_navType, false);
+        tiles(pos_next).nav.Claim(unit_navType, permanently, false);
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -592,6 +599,10 @@ namespace eng {
 
             ImU32 clr1 = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
             ImU32 clr2 = ImGui::GetColorU32(ImVec4(0.1f, 1.0f, 0.1f, 1.0f));
+            ImU32 clr3 = ImGui::GetColorU32(ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+            ImU32 clr4 = ImGui::GetColorU32(ImVec4(0.30f, 0.53f, 0.91f, 1.0f));
+            ImU32 clr5 = ImGui::GetColorU32(ImVec4(0.59f, 0.21f, 0.76f, 1.0f));
+
             bool b;
             float f;
             float D = 1.f;
@@ -604,6 +615,7 @@ namespace eng {
                 }
             }
 
+            ImGuiStyle& style = ImGui::GetStyle();
             for(int y = size.y-1; y >= 0; y--) {
                 ImGui::TableNextRow();
                 // ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_size);
@@ -621,16 +633,27 @@ namespace eng {
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).Traversable(navType) ? clr2 : clr1);
                             break;
                         case 3:
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
                             if(ImGui::BeginTable("table2", 2, ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+                                ImU32 taken_clr = HAS_FLAG(tiles(y,x).nav.taken, navType) ? clr1 : clr2;
+
                                 ImGui::TableNextRow();
                                 ImGui::TableNextColumn();
                                 ImGui::Text("%d", tiles(y,x).nav.taken);
-                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HAS_FLAG(tiles(y,x).nav.taken, navType) ? clr1 : clr2);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, taken_clr);
                                 ImGui::TableNextColumn();
                                 ImGui::Text("%d", tiles(y,x).nav.permanent);
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HAS_FLAG(tiles(y,x).nav.permanent, navType) ? clr1 : clr2);
+                                ImGui::TableNextRow();
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", int(tiles(y,x).nav.building));
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.building ? clr4 : taken_clr);
+                                ImGui::TableNextColumn();
+                                ImGui::Text(" ");
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.pathtile ? clr5 : taken_clr);
                                 ImGui::EndTable();
                             }
+                            ImGui::PopStyleVar();
                             break;
                         case 4:
                             ImGui::Text("%d", tiles(y,x).nav.visited);
@@ -890,6 +913,7 @@ namespace eng {
         int i = 0;
         while(pos != pos_src) {
             glm::ivec2 pos_prev = pos;
+            tiles(pos_prev).nav.pathtile = true;
             
             //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
             pos = MinDistanceNeighbor(pos);

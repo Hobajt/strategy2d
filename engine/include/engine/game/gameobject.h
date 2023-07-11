@@ -18,6 +18,14 @@ namespace eng {
         GameObject() = default;
         GameObject(Level& level, const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
 
+        //copy disabled
+        GameObject(const GameObject&) = delete;
+        GameObject& operator=(const GameObject&) = delete;
+
+        //move enabled
+        GameObject(GameObject&&) noexcept = default;
+        GameObject& operator=(GameObject&&) noexcept = default;
+
         virtual void Render();
         virtual void Update();
 
@@ -32,6 +40,9 @@ namespace eng {
 
         int ID() const { return id; }
         std::string Name() const { return data->name; }
+
+        GameObjectDataRef Data() const { return data; }
+        int NavigationType() const { return data->navigationType; }
 
         void DBG_GUI();
     protected:
@@ -59,6 +70,10 @@ namespace eng {
         FactionObject(Level& level, const GameObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
         virtual ~FactionObject();
 
+        //move enabled
+        FactionObject(FactionObject&&) noexcept = default;
+        FactionObject& operator=(FactionObject&&) noexcept = default;
+
         void ChangeColor(int colorIdx);
     protected:
         virtual void Inner_DBG_GUI() override;
@@ -79,13 +94,15 @@ namespace eng {
         Unit(Level& level, const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
         virtual ~Unit();
 
+        //move enabled
+        Unit(Unit&&) noexcept = default;
+        Unit& operator=(Unit&&) noexcept = default;
+
         virtual void Render() override;
         virtual void Update() override;
 
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);
-
-        int NavigationType() const { return data->navigationType; }
 
         float MoveSpeed() const { return 1.f; }
 
@@ -103,7 +120,20 @@ namespace eng {
 
     //===== Building =====
 
-    class Building : public FactionObject {};
+    class Building : public FactionObject {
+    public:
+        Building() = default;
+        Building(Level& level, const BuildingDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+        virtual ~Building();
+
+        //move enabled
+        Building(Building&&) noexcept = default;
+        Building& operator=(Building&&) noexcept = default;
+
+        virtual void Update() override;
+    private:
+        BuildingDataRef data = nullptr;
+    };
 
     //===== UtilityObject =====
 

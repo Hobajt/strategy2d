@@ -27,6 +27,7 @@ private:
 
     eng::SpritesheetRef spritesheet;
     eng::Unit troll;
+    eng::Building building;
 
 
     int action = 0;

@@ -41,12 +41,28 @@ void Sandbox::OnInit() {
         go_data->name = "troll";
         go_data->size = glm::vec2(1.f);
         go_data->animData = ad;
+        go_data->navigationType = NavigationBit::GROUND;
 
         Level::Load("res/ignored/tst.json", level);
 
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
         troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));
+
+        ad = std::make_shared<AnimatorData>("test_building", std::map<int, SpriteGroup>{ 
+                {ActionType::IDLE,      SpriteGroup((*spritesheet)("idle"), ActionType::IDLE)},
+                {ActionType::MOVE,      SpriteGroup((*spritesheet)("walk"), ActionType::MOVE)},
+                {ActionType::ACTION,    SpriteGroup((*spritesheet)("attack"), ActionType::ACTION)},
+            }
+        );
+
+        BuildingDataRef building_data = std::make_shared<BuildingData>();
+        building_data->name = "test_building";
+        building_data->size = glm::vec2(2.f);
+        building_data->animData = ad;
+        building_data->navigationType = NavigationBit::GROUND;
+
+        building = Building(level, building_data, dummy_faction, glm::vec2(2.f, 2.f));
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -170,6 +186,9 @@ void Sandbox::OnUpdate() {
 
     troll.Update();
     troll.Render();
+
+    building.Update();
+    building.Render();
 
     level.map.Render();
 

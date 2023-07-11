@@ -56,15 +56,17 @@ namespace eng {
     struct NavData {
         int taken = 0;                  //tracks if the tile is taken (bitmap - NavigationBit)
         int permanent = 0;              //defines if the object occupying it intends to stay (bitmap, false -> just moving through)
-        
+        bool building = false;          //additional check, to ensure that units can't pass trough buildings
+
+        bool pathtile = false;      //purely for debugging
         float d = HUGE_VALF;
         bool visited = false;
     public:
         //Clears the temporary variables for next pathfinding.
         void Cleanup();
 
-        void Claim(int navType, bool permanently);
-        void Unclaim(int navType);
+        void Claim(int navType, bool permanently, bool is_building);
+        void Unclaim(int navType, bool is_building);
     };
 
     //Used to store intermediate info during the pathfinding computations.
@@ -293,8 +295,8 @@ namespace eng {
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size);
-        void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size);
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
+        void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 
         //==== Methods for editor ====
