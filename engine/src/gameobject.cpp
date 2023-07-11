@@ -138,13 +138,35 @@ namespace eng {
 
     //===== Building =====
 
-    Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
-        : FactionObject(level_, data_, faction_, position_), data(data_) {}
+    Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool constructed)
+        : FactionObject(level_, data_, faction_, position_), data(data_) {
+        
+        if(constructed)
+            action = BuildingAction::Idle(CanAttack());
+    }
 
     Building::~Building() {}
 
     void Building::Update() {
-        //TODO:
+        action.Update(*this, *lvl());
+    }
+
+    void Building::IssueAction(const BuildingAction& new_action) {
+        action = new_action;
+        ENG_LOG_FINE("IssueAction: Building: {} ({}) ... {}", ID(), Name(), action.to_string());
+    }
+
+    void Building::CancelAction() {
+        ENG_LOG_FINE("CancelAction: Building: {} ({}) ... {}", ID(), Name(), action.to_string());
+        action = BuildingAction::Idle(CanAttack());
+    }
+
+    void Building::Inner_DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        FactionObject::Inner_DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("%s", action.to_string().c_str());
+#endif
     }
 
 }//namespace eng

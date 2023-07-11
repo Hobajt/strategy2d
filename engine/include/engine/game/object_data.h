@@ -44,7 +44,11 @@ namespace eng {
     //===== BuildingData =====
 
     struct BuildingData : public GameObjectData {
-        
+        int attack_damage = 0;
+
+        int health = 1200;
+
+        int upgrade_target = 1000;
     public:
         virtual bool IsBuilding() const { return true; }
     };

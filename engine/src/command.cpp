@@ -9,6 +9,8 @@ namespace eng {
 #define ACTION_FINISHED_SUCCESS         1
 #define ACTION_FINISHED_INTERRUPTED     2
 
+#define WORKER_BUILD_SPEED 50.f
+
     int DirVectorCoord(int orientation);
     glm::ivec2 DirectionVector(int orientation);
     int VectorOrientation(const glm::ivec2& v);
@@ -60,6 +62,13 @@ namespace eng {
     */
 
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action);
+
+    //=============================
+
+    void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action);
+    void BuildingAction_Attack(Building& src, Level& level, BuildingAction& action);
+    void BuildingAction_TrainOrResearch(Building& src, Level& level, BuildingAction& action);
+    void BuildingAction_ConstructOrUpgrade(Building& src, Level& level, BuildingAction& action);
 
 
     //===== Action =====
@@ -252,6 +261,122 @@ namespace eng {
                     ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                     action = Action::Move(src.Position(), target_pos);
                 }
+            }
+        }
+    }
+
+    //=======================================
+
+    //===== BuildingAction =====
+
+    BuildingAction::Logic::Logic(int type_, BuildingActionUpdateHandler handler_) : type(type_), update(handler_) {}
+
+    BuildingAction::BuildingAction() : logic(BuildingAction::Logic(BuildingActionType::CONSTRUCTION_OR_UPGRADE, BuildingAction_ConstructOrUpgrade)), data(BuildingAction::Data{}) {
+        data.t1 = 0.f;          //initial "progress" value
+        data.flag = false;      //marks the action as construction
+    }
+
+    BuildingAction BuildingAction::Construction() {
+        return BuildingAction();
+    }
+
+    BuildingAction BuildingAction::Idle(bool canAttack) {
+        return canAttack ? BuildingAction::Idle() : BuildingAction::IdleAttack();
+    }
+
+    BuildingAction BuildingAction::Idle() {
+        BuildingAction act = {};
+        act.logic = BuildingAction::Logic(BuildingActionType::IDLE, BuildingAction_Idle);
+        act.data = {};
+        return act;
+    }
+
+    BuildingAction BuildingAction::IdleAttack() {
+        BuildingAction act = {};
+        act.logic = BuildingAction::Logic(BuildingActionType::IDLE_ATTACK, BuildingAction_Attack);
+        act.data = {};
+        return act;
+    }
+    
+    void BuildingAction::Update(Building& source, Level& level) {
+        ASSERT_MSG(logic.update != nullptr, "BuildingAction::Update - handler should never be null.");
+        logic.update(source, level, *this);
+    }
+
+    std::string BuildingAction::to_string() const {
+        char buf[2048];
+
+        switch(logic.type) {
+        case BuildingActionType::IDLE:
+        case BuildingActionType::IDLE_ATTACK:
+            snprintf(buf, sizeof(buf), "Action: Idle");
+            break;
+        case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%d%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t2, int((data.t1/data.t2)*100.f));
+            break;
+        default:
+            snprintf(buf, sizeof(buf), "Action: Unknown type (%d)", logic.type);
+            break;
+        }
+
+        return std::string(buf);
+    }
+
+    //=======================================
+
+    void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action) {
+        //swap to attack idle if the building can attack
+        if(src.CanAttack()) {
+            action = BuildingAction::IdleAttack();
+        }
+
+        src.act() = BuildingAnimationType::IDLE;
+    }
+
+    void BuildingAction_Attack(Building& src, Level& level, BuildingAction& action) {
+        if(!src.CanAttack()) {
+            action = BuildingAction::Idle();
+        }
+
+        src.act() = BuildingAnimationType::IDLE;
+        //TODO:
+    }
+
+    void BuildingAction_TrainOrResearch(Building& src, Level& level, BuildingAction& action) {
+        //TODO:
+    }
+
+    void BuildingAction_ConstructOrUpgrade(Building& src, Level& level, BuildingAction& action) {
+        Input& input = Input::Get();
+        float& progress = action.data.t1;
+        bool is_construction = !action.data.flag;
+        float target = is_construction ? src.MaxHealth() : src.UpgradeTargetHealth();
+        action.data.t2 = target;
+        //=====
+
+        //compute the uptick for this frame
+        float uptick = input.deltaTime * WORKER_BUILD_SPEED;
+
+        //increment construction tracking as well as building health
+        progress += uptick;
+
+        if(is_construction) {
+            // src.health += uptick;        //TODO: figure out how it works ingame
+
+            //compute animation based on construction percentual progress
+            int state = std::min(int((progress / target) * 4.f), 2);
+            src.act() = BuildingAnimationType::BUILD1 + state;
+        }
+        else {
+            src.act() = BuildingAnimationType::UPGRADE;
+        }
+
+        //construction finished condition
+        if(progress >= target) {
+            action = BuildingAction::Idle(src.CanAttack());
+
+            if(!is_construction) {
+                //TODO: modify building object by changing the data pointers (update animator too)
             }
         }
     }

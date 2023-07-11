@@ -10,9 +10,11 @@ namespace eng {
 
     class Level;
     class Unit;
+    class Building;
 
     struct Action;
     struct Command;
+    struct BuildingAction;
 
     //===== Action =====
 
@@ -92,8 +94,45 @@ namespace eng {
         ObjectID target_id;
     };
 
+    //===== BuildingAction =====
 
+    typedef void(*BuildingActionUpdateHandler)(Building& source, Level& level, BuildingAction& action);
 
-    
+    namespace BuildingActionType { enum { INVALID = -1, IDLE = 0, TRAIN_OR_RESEARCH, CONSTRUCTION_OR_UPGRADE, IDLE_ATTACK, COUNT }; }
+
+    namespace BuildingAnimationType { enum { BUILD1, BUILD2, BUILD3, IDLE, UPGRADE }; }
+
+    struct BuildingAction {
+        struct Logic {
+            int type = ActionType::INVALID;
+            BuildingActionUpdateHandler update = nullptr;
+        public:
+            Logic() = default;
+            Logic(int type, BuildingActionUpdateHandler update);
+        };
+        struct Data {
+            float t1 = 0.f;
+            float t2 = 0.f;
+            bool flag = false;
+        };
+    public:
+        Logic logic;
+        Data data;
+    public:
+        //Construction action
+        BuildingAction();
+
+        static BuildingAction Idle(bool canAttack);
+        static BuildingAction Idle();
+        static BuildingAction IdleAttack();
+        static BuildingAction Construction();
+
+        // static BuildingAction Train();
+        // static BuildingAction Upgrade();
+
+        void Update(Building& src, Level& level);
+
+        std::string to_string() const;
+    };
 
 }//namespace eng

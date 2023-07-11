@@ -123,7 +123,7 @@ namespace eng {
     class Building : public FactionObject {
     public:
         Building() = default;
-        Building(Level& level, const BuildingDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+        Building(Level& level, const BuildingDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), bool constructed = false);
         virtual ~Building();
 
         //move enabled
@@ -131,8 +131,22 @@ namespace eng {
         Building& operator=(Building&&) noexcept = default;
 
         virtual void Update() override;
+
+        void IssueAction(const BuildingAction& action);
+        void CancelAction();
+
+        //==== Building properties ====
+
+        bool CanAttack() const { return data->attack_damage > 0; } //TODO: return stuff from data
+        int MaxHealth() const { return data->health; }
+
+        //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
+        int UpgradeTargetHealth() const { return data->upgrade_target; }
+    protected:
+        virtual void Inner_DBG_GUI();
     private:
         BuildingDataRef data = nullptr;
+        BuildingAction action = BuildingAction();
     };
 
     //===== UtilityObject =====

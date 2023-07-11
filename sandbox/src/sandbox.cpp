@@ -49,10 +49,15 @@ void Sandbox::OnInit() {
 
         troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));
 
+        SpritesheetRef ss2 = std::make_shared<Spritesheet>("res/json/spritesheets/misc/buildings.json");
+        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_summer.json");
+
         ad = std::make_shared<AnimatorData>("test_building", std::map<int, SpriteGroup>{ 
-                {ActionType::IDLE,      SpriteGroup((*spritesheet)("idle"), ActionType::IDLE)},
-                {ActionType::MOVE,      SpriteGroup((*spritesheet)("walk"), ActionType::MOVE)},
-                {ActionType::ACTION,    SpriteGroup((*spritesheet)("attack"), ActionType::ACTION)},
+                {BuildingAnimationType::IDLE,           SpriteGroup((*spritesheet)("town_hall"),            BuildingAnimationType::IDLE)},
+                {BuildingAnimationType::UPGRADE,        SpriteGroup((*spritesheet)("keep_build"),           BuildingAnimationType::UPGRADE)},
+                {BuildingAnimationType::BUILD1,         SpriteGroup((*ss2)("construction1"),                BuildingAnimationType::BUILD1)},
+                {BuildingAnimationType::BUILD2,         SpriteGroup((*ss2)("construction2"),                BuildingAnimationType::BUILD2)},
+                {BuildingAnimationType::BUILD3,         SpriteGroup((*spritesheet)("town_hall_build"),      BuildingAnimationType::BUILD3)},
             }
         );
 
@@ -69,49 +74,9 @@ void Sandbox::OnInit() {
 
         Camera::Get().SetupZoomUpdates(true);
         Camera::Get().ZoomToFit(glm::vec2(12.f));
-
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/gryphon.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/battleship.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/footman.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/archer.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/knight.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/ballista.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/demo_squad.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/destroyer.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/machine.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/submarine.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/tanker.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/transport.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/mage.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/peasant.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_summer.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_winter.json");
-
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/catapult.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/death_knight.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/dragon.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/turtle.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/sappers.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/zeppelin.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/troll.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/grunt.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/ogre.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/juggernaut.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/tanker.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/transport.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/destroyer.json");
+        
+        
         spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/peon.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/buildings_summer.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/buildings_winter.json");
-
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/skeleton.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/daemon.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/sheep.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/pig.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/seal.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/effects.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/corpses.json");
-        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/buildings.json");
         std::map<int, SpriteGroup> anims;
         int i = 0;
         for(auto& [name, sp] : *spritesheet) {
@@ -119,12 +84,13 @@ void Sandbox::OnInit() {
             anims.insert({i, SpriteGroup(sp, i)});
             i++;
         }
-
         AnimatorDataRef test_data = std::make_shared<AnimatorData>("test_anim", anims);
         anim = Animator(test_data);
 
         spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/icons.json");
         icon = (*spritesheet)("icon");
+
+        
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -242,6 +208,7 @@ void Sandbox::OnGUI() {
 
         ImGui::Begin("GameObjects");
         troll.DBG_GUI();
+        building.DBG_GUI();
         ImGui::End();
 
         ImGui::Begin("Test anim");
