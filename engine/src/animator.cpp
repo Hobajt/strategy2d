@@ -47,4 +47,9 @@ namespace eng {
         graphics.RenderAnimAlt(screen_pos, screen_size, info, color, noTexture, frameIdx, orientation, paletteIdx);
     }
 
+    void Animator::SetFrameIdx(int action, int frameIdx) {
+        SpriteGroup& graphics = data->GetGraphics(action);
+        frame = (graphics.Duration() * frameIdx) / graphics.FrameCount();
+    }
+
 }//namespace eng

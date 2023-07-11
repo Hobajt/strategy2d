@@ -27,7 +27,14 @@ private:
 
     eng::SpritesheetRef spritesheet;
     eng::Unit troll;
+
+
     int action = 0;
     int orientation = 0;
     int color = 0;
+    int frame = 0;
+    eng::Animator anim;
+
+    eng::Sprite icon;
+    glm::ivec2 iconIdx = glm::ivec2(0);
 };

@@ -1,0 +1,29 @@
+{
+    "texture_filepath": "res/textures/misc/critters.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [37,33],
+            "offset": [3,10],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-1,0]
+            },
+            "pts": [[0,43]]
+        },
+        {
+            "name": "death",
+            "size": [37,33],
+            "offset": [3,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-1,0]
+            },
+            "pts": [[183,43]]
+        }
+    ]
+}

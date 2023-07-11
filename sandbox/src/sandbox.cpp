@@ -27,10 +27,7 @@ void Sandbox::OnInit() {
         level = Level(glm::ivec2(10), tileset);
         Camera::Get().SetBounds(level.map.Size());
 
-        texture = std::make_shared<Texture>("res/textures/troll.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
-        // texture = std::make_shared<Texture>("res/textures/cross.png", TextureParams(GL_NEAREST, GL_CLAMP_TO_EDGE));
-
-        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/troll.json");
+        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/troll.json");
         for(auto& [name, sp] : *spritesheet) {
             LOG_INFO("SPRITE: {}", name);
         }
@@ -56,6 +53,62 @@ void Sandbox::OnInit() {
 
         Camera::Get().SetupZoomUpdates(true);
         Camera::Get().ZoomToFit(glm::vec2(12.f));
+
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/gryphon.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/battleship.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/footman.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/archer.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/knight.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/ballista.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/demo_squad.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/destroyer.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/machine.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/submarine.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/tanker.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/transport.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/mage.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/peasant.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_summer.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_winter.json");
+
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/catapult.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/death_knight.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/dragon.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/turtle.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/sappers.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/zeppelin.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/troll.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/grunt.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/ogre.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/juggernaut.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/tanker.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/transport.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/destroyer.json");
+        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/peon.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/buildings_summer.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/buildings_winter.json");
+
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/skeleton.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/daemon.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/sheep.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/pig.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/seal.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/effects.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/corpses.json");
+        // spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/buildings.json");
+        std::map<int, SpriteGroup> anims;
+        int i = 0;
+        for(auto& [name, sp] : *spritesheet) {
+            LOG_INFO("[{}] SPRITE: {}", i, name);
+            anims.insert({i, SpriteGroup(sp, i)});
+            i++;
+        }
+
+        AnimatorDataRef test_data = std::make_shared<AnimatorData>("test_anim", anims);
+        anim = Animator(test_data);
+
+        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/icons.json");
+        icon = (*spritesheet)("icon");
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -119,11 +172,11 @@ void Sandbox::OnUpdate() {
     troll.Render();
 
     level.map.Render();
-    // glm::vec2 size = glm::vec2(texture->Size()) / float(texture->Size().y);
-    // Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), size, glm::vec4(1.f), texture).SetPaletteIdx((float)paletteIndex));
 
-    // if(whiteBackground)
-    //     Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, 0.1f), glm::vec2(1.f), glm::vec4(1.f), nullptr));
+    anim.SetFrameIdx(action, frame);
+    anim.Render(glm::vec3(-2.f, -2.f, -0.5f) * glm::vec3(camera.Mult(), 1.f), glm::vec2(4.f) * camera.Mult(), action, orientation);
+
+    icon.Render(glm::vec3(-1.f, -1.f, -0.5f), glm::vec2(0.2f, 0.2f), iconIdx.y, iconIdx.x);
 
     //======================
     
@@ -170,6 +223,17 @@ void Sandbox::OnGUI() {
 
         ImGui::Begin("GameObjects");
         troll.DBG_GUI();
+        ImGui::End();
+
+        ImGui::Begin("Test anim");
+        if(ImGui::SliderInt("action", &action, 0, anim.ActionCount()-1))
+            frame = 0;
+        ImGui::SliderInt("frame", &frame, 0, anim.GetGraphics(action).FrameCount()-1);
+        ImGui::SliderInt("orientation", &orientation, 0, 8);
+        if(ImGui::SliderInt("color", &color, 0, ColorPalette::FactionColorCount()))
+            anim.SetPaletteIdx((float)color);
+        ImGui::SliderInt("icon-x", &iconIdx.x, 0, icon.LineLength()-1);
+        ImGui::SliderInt("icon-y", &iconIdx.y, 0, icon.LineCount()-1);
         ImGui::End();
 
         level.map.DBG_GUI();

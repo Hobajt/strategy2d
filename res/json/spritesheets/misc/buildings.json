@@ -1,0 +1,221 @@
+{
+    "texture_filepath": "res/textures/misc/buildings.png",
+    "sprites": [
+        {
+            "name": "gm_empty_summer",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0]]
+        },
+        {
+            "name": "gm_full_summer",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,96]]
+        },
+        {
+            "name": "gm_empty_winter",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[99,0]]
+        },
+        {
+            "name": "gm_full_winter",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[99,96]]
+        },
+        {
+            "name": "gm_empty_wasteland",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[198,0]]
+        },
+        {
+            "name": "gm_full_wasteland",
+            "size": [99,93],
+            "offset": [12,10],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[198,96]]
+        },
+        {
+            "name": "oil",
+            "size": [96,95],
+            "offset": [11,204],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [2,0]
+            },
+            "pts": [[0,0]]
+        },
+        {
+            "name": "oil_wasteland",
+            "size": [96,95],
+            "offset": [11,204],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [2,0]
+            },
+            "pts": [[98,0]]
+        },
+        {
+            "name": "ruins_ground",
+            "size": [65,64],
+            "offset": [441,8],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [5,5]
+            },
+            "pts": [[0,0], [0, 68]]
+        },
+        {
+            "name": "ruins_ground_wasteland",
+            "size": [65,64],
+            "offset": [441,8],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [5,5]
+            },
+            "pts": [[70,0], [70, 68]]
+        },
+        {
+            "name": "construction1_winter",
+            "size": [68,62],
+            "offset": [582,5],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0]]
+        },
+        {
+            "name": "construction2_winter",
+            "size": [68,62],
+            "offset": [582,5],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,65]]
+        },
+        {
+            "name": "construction1",
+            "size": [68,57],
+            "offset": [582,138],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0]]
+        },
+        {
+            "name": "construction2",
+            "size": [68,57],
+            "offset": [582,138],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,66]]
+        },
+        {
+            "name": "ruins_water",
+            "size": [66,62],
+            "offset": [441,140],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0], [0,65]]
+        },
+        {
+            "name": "ruins_small_summer",
+            "size": [36,36],
+            "offset": [517,148],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0], [0,34]]
+        },
+        {
+            "name": "ruins_small_winter",
+            "size": [36,36],
+            "offset": [517,148],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,70], [0,105]]
+        },
+        {
+            "name": "circle_of_power",
+            "size": [64,61],
+            "offset": [302,279],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [0,0]
+            },
+            "pts": [[0,0]]
+        }
+    ]
+}

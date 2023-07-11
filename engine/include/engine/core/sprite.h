@@ -59,10 +59,13 @@ namespace eng {
         glm::ivec2 Point(int i) const { return data.pts[i]; }
         size_t PointCount() const { return data.pts.size(); }
 
+        //for sprite animation
         int FirstFrame() const { return data.frames.start_frame; }
-
         int FrameCount() const { return data.frames.line_length; }
         int AnimFrameCount() const { return data.pts.size(); }
+
+        int LineLength() const { return data.frames.line_length; }
+        int LineCount() const { return data.frames.line_count; }
 
         void DBG_GUI();
     private:

@@ -1,0 +1,28 @@
+{
+    "texture_filepath": "res/textures/hu/transport.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [75,69],
+            "offset": [0,3],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-1,0]
+            }
+        },
+        {
+            "name": "death",
+            "size": [75,69],
+            "offset": [0,3],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-1,0]
+            },
+            "pts": [[0,74],[0,151]]
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "texture_filepath": "res/textures/oc/sappers.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [43,37],
+            "offset": [15,6],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [15,0]
+            }
+        },
+        {
+            "name": "walk",
+            "size": [43,37],
+            "offset": [15,6],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [15,0]
+            },
+            "pts": [[0,0], [0,41], [0,84], [0,124], [0,165], [0,209]]
+        },
+        {
+            "name": "attack",
+            "size": [57,45],
+            "offset": [8,255],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [1,0]
+            },
+            "pts": [[0,0], [0,46], [0,97]]
+        },
+        {
+            "name": "death",
+            "size": [65,45],
+            "offset": [0,399],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-7,0]
+            },
+            "pts": [[0,0], [58, 0], [116, 0], [174, 0], [232, 0], [0, 45]]
+        }
+    ]
+}

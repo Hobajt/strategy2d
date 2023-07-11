@@ -1,0 +1,765 @@
+{
+    "texture_filepath": "res/textures/oc/buildings_winter.png",
+    "sprites": [
+        {
+            "name": "farm",
+            "size": [
+                64,
+                64
+            ],
+            "offset": [
+                463,
+                5
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "town_hall",
+            "size": [
+                118,
+                120
+            ],
+            "offset": [
+                138,
+                6
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "fortress",
+            "size": [
+                127,
+                128
+            ],
+            "offset": [
+                264,
+                6
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "tower",
+            "size": [
+                64,
+                64
+            ],
+            "offset": [
+                394,
+                6
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "oil_platform",
+            "size": [
+                94,
+                92
+            ],
+            "offset": [
+                530,
+                7
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "stronghold",
+            "size": [
+                126,
+                104
+            ],
+            "offset": [
+                7,
+                14
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "farm_build",
+            "size": [
+                64,
+                64
+            ],
+            "offset": [
+                463,
+                70
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "tower_build",
+            "size": [
+                63,
+                46
+            ],
+            "offset": [
+                395,
+                88
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "oil_platform_build",
+            "size": [
+                94,
+                92
+            ],
+            "offset": [
+                530,
+                103
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "fortress_build",
+            "size": [
+                125,
+                128
+            ],
+            "offset": [
+                264,
+                134
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "tower_guard",
+            "size": [
+                63,
+                64
+            ],
+            "offset": [
+                395,
+                135
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "tower_cannon",
+            "size": [
+                64,
+                64
+            ],
+            "offset": [
+                459,
+                135
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "stronghold_build",
+            "size": [
+                112,
+                121
+            ],
+            "offset": [
+                17,
+                138
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "great_hall_build",
+            "size": [
+                102,
+                100
+            ],
+            "offset": [
+                147,
+                151
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "oil_platform_full",
+            "size": [
+                94,
+                92
+            ],
+            "offset": [
+                530,
+                199
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "tower_upgrade",
+            "size": [
+                63,
+                64
+            ],
+            "offset": [
+                460,
+                200
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "barracks",
+            "size": [
+                96,
+                96
+            ],
+            "offset": [
+                106,
+                267
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "altar_of_storms",
+            "size": [
+                94,
+                96
+            ],
+            "offset": [
+                209,
+                267
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "ogre_mound",
+            "size": [
+                96,
+                90
+            ],
+            "offset": [
+                403,
+                268
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "lumber_mill",
+            "size": [
+                95,
+                91
+            ],
+            "offset": [
+                306,
+                269
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "goblin_laboratory",
+            "size": [
+                96,
+                91
+            ],
+            "offset": [
+                5,
+                272
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "ogre_mound_build",
+            "size": [
+                83,
+                83
+            ],
+            "offset": [
+                403,
+                364
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "lumber_mill_build",
+            "size": [
+                90,
+                82
+            ],
+            "offset": [
+                309,
+                365
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "altar_of_storms_build",
+            "size": [
+                94,
+                86
+            ],
+            "offset": [
+                209,
+                373
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "barracks_build",
+            "size": [
+                92,
+                76
+            ],
+            "offset": [
+                110,
+                382
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "goblin_laboratory_build",
+            "size": [
+                90,
+                69
+            ],
+            "offset": [
+                9,
+                389
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "shipyard",
+            "size": [
+                94,
+                96
+            ],
+            "offset": [
+                106,
+                461
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "foundry",
+            "size": [
+                86,
+                96
+            ],
+            "offset": [
+                209,
+                461
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "oil_refinery",
+            "size": [
+                90,
+                96
+            ],
+            "offset": [
+                306,
+                461
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "dragon_roost",
+            "size": [
+                96,
+                96
+            ],
+            "offset": [
+                496,
+                461
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "blacksmith",
+            "size": [
+                95,
+                93
+            ],
+            "offset": [
+                6,
+                464
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "temple_of_the_damned",
+            "size": [
+                95,
+                89
+            ],
+            "offset": [
+                399,
+                467
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "blacksmith_build",
+            "size": [
+                79,
+                88
+            ],
+            "offset": [
+                16,
+                560
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "shipyard_build",
+            "size": [
+                94,
+                90
+            ],
+            "offset": [
+                106,
+                563
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "temple_of_the_damned_build",
+            "size": [
+                81,
+                82
+            ],
+            "offset": [
+                399,
+                564
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "foundry_build",
+            "size": [
+                76,
+                84
+            ],
+            "offset": [
+                219,
+                569
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "oil_refinery_build",
+            "size": [
+                90,
+                84
+            ],
+            "offset": [
+                306,
+                569
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "name": "dragon_roost_build",
+            "size": [
+                93,
+                73
+            ],
+            "offset": [
+                496,
+                575
+            ],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [
+                    0,
+                    0
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "texture_filepath": "res/textures/oc/grunt.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [51,49],
+            "offset": [16,6],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [23,0]
+            }
+        },
+        {
+            "name": "walk",
+            "size": [51,49],
+            "offset": [16,6],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [23,0]
+            },
+            "pts": [[0, 0], [0, 54], [0, 108], [0, 0], [0, 163], [0, 216]]
+        },
+        {
+            "name": "attack",
+            "size": [77,51],
+            "offset": [0,274],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [-1,0]
+            },
+            "pts": [[0, 0], [0, 55], [0, 112], [0, 173]]
+        },
+        {
+            "name": "death",
+            "size": [59,53],
+            "offset": [11,510],
+            "frames": {
+                "line_length": 1,
+                "line_count": 2,
+                "start_frame": 0,
+                "offset": [9,4]
+            },
+            "pts": [[0,0], [68,0], [136,0]]
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "texture_filepath": "res/textures/hu/mage.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [53,53],
+            "offset": [10,12],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [18,0]
+            }
+        },
+        {
+            "name": "walk",
+            "size": [53,53],
+            "offset": [10,12],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [18,0]
+            },
+            "pts": [[0, 0], [0, 62], [0, 123], [0, 182], [0, 243]]
+        },
+        {
+            "name": "attack",
+            "size": [71,53],
+            "offset": [0,312],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [4,0]
+            },
+            "pts": [[0, 0], [0, 60], [0, 122], [0, 188]]
+        },
+        {
+            "name": "death",
+            "size": [57,53],
+            "offset": [6,562],
+            "frames": {
+                "line_length": 1,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [9,0]
+            },
+            "pts": [[0,0], [66,0], [132,0], [198,0], [264,0], [0,48], [66,48]]
+        }
+    ]
+}

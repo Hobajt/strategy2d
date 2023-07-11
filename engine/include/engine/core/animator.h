@@ -22,6 +22,7 @@ namespace eng {
         std::string Name() const { return name; }
 
         SpriteGroup& GetGraphics(int action);
+        int ActionCount() const { return anims.size(); }
     private:
         std::map<int, SpriteGroup> anims;
         std::string name;
@@ -43,6 +44,11 @@ namespace eng {
         void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::vec4& color, bool noTexture, int action, int orientation, const glm::uvec4& info = glm::uvec4(QuadType::Animator,0,0,0));
 
         void SetPaletteIdx(float paletteIdx_) { paletteIdx = paletteIdx_; }
+
+        void SetFrameIdx(int action, int idx);
+
+        int ActionCount() const { return data->ActionCount(); }
+        SpriteGroup& GetGraphics(int action) { return data->GetGraphics(action); }
     private:
         AnimatorDataRef data = nullptr;
         float frame = 0;

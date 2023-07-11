@@ -1,5 +1,5 @@
 {
-    "texture_filepath": "res/textures/troll.png",
+    "texture_filepath": "res/textures/oc/troll.png",
     "sprites": [
         {
             "name": "idle",
@@ -35,6 +35,18 @@
                 "offset": [-2,0]
             },
             "pts": [[0, 0], [0, 59], [0, 123], [0, 179]]
+        },
+        {
+            "name": "death",
+            "size": [53,57],
+            "offset": [12,505],
+            "frames": {
+                "line_length": 2,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [8,0]
+            },
+            "pts": [[0,0], [122,0], [0,59]]
         }
     ]
 }

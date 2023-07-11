@@ -1,0 +1,52 @@
+{
+    "texture_filepath": "res/textures/oc/ogre.png",
+    "sprites": [
+        {
+            "name": "idle",
+            "size": [65,57],
+            "offset": [4,4],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [9,0]
+            }
+        },
+        {
+            "name": "walk",
+            "size": [65,57],
+            "offset": [4,4],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [9,0]
+            },
+            "pts": [[0, 0], [0, 74], [0, 148], [0, 0], [0, 223], [0, 297]]
+        },
+        {
+            "name": "attack",
+            "size": [69,57],
+            "offset": [2,373],
+            "frames": {
+                "line_length": 5,
+                "line_count": 1,
+                "start_frame": 0,
+                "offset": [5,0]
+            },
+            "pts": [[0, 0], [0, 73], [0, 147], [0, 222]]
+        },
+        {
+            "name": "death",
+            "size": [51,53],
+            "offset": [5,660],
+            "frames": {
+                "line_length": 1,
+                "line_count": 2,
+                "start_frame": 0,
+                "offset": [13,8]
+            },
+            "pts": [[0,0], [64,0], [128,0], [192,0], [256,0]]
+        }
+    ]
+}
