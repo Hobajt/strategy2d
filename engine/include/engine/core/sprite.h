@@ -122,6 +122,8 @@ namespace eng {
         SpriteMap::const_iterator begin() const { return data.sprites.begin(); }
         SpriteMap::const_iterator end() const { return data.sprites.end(); }
 
+        size_t Size() const { return data.sprites.size(); }
+
         //=== other ===
 
         void DBG_GUI();

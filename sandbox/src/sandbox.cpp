@@ -23,18 +23,16 @@ void Sandbox::OnInit() {
         // font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
         font = std::make_shared<Font>("res/fonts/OpenSans-Regular.ttf", int(fontScale * Window::Get().Height()));
 
+        Resources::Preload();
+
         TilesetRef tileset = Resources::LoadTileset("summer");
         level = Level(glm::ivec2(10), tileset);
         Camera::Get().SetBounds(level.map.Size());
 
-        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/troll.json");
-        for(auto& [name, sp] : *spritesheet) {
-            LOG_INFO("SPRITE: {}", name);
-        }
         AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int, SpriteGroup>{ 
-                {ActionType::IDLE,      SpriteGroup((*spritesheet)("idle"), ActionType::IDLE)},
-                {ActionType::MOVE,      SpriteGroup((*spritesheet)("walk"), ActionType::MOVE)},
-                {ActionType::ACTION,    SpriteGroup((*spritesheet)("attack"), ActionType::ACTION)},
+                {ActionType::IDLE,      SpriteGroup(Resources::LoadSprite("orc/troll/idle"),   ActionType::IDLE)},
+                {ActionType::MOVE,      SpriteGroup(Resources::LoadSprite("orc/troll/walk"),   ActionType::MOVE)},
+                {ActionType::ACTION,    SpriteGroup(Resources::LoadSprite("orc/troll/attack"), ActionType::ACTION)},
             }
         );
         UnitDataRef go_data = std::make_shared<UnitData>();
@@ -49,15 +47,12 @@ void Sandbox::OnInit() {
 
         troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));
 
-        SpritesheetRef ss2 = std::make_shared<Spritesheet>("res/json/spritesheets/misc/buildings.json");
-        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/hu/buildings_summer.json");
-
         ad = std::make_shared<AnimatorData>("test_building", std::map<int, SpriteGroup>{ 
-                {BuildingAnimationType::IDLE,           SpriteGroup((*spritesheet)("town_hall"),            BuildingAnimationType::IDLE)},
-                {BuildingAnimationType::UPGRADE,        SpriteGroup((*spritesheet)("keep_build"),           BuildingAnimationType::UPGRADE)},
-                {BuildingAnimationType::BUILD1,         SpriteGroup((*ss2)("construction1"),                BuildingAnimationType::BUILD1)},
-                {BuildingAnimationType::BUILD2,         SpriteGroup((*ss2)("construction2"),                BuildingAnimationType::BUILD2)},
-                {BuildingAnimationType::BUILD3,         SpriteGroup((*spritesheet)("town_hall_build"),      BuildingAnimationType::BUILD3)},
+                {BuildingAnimationType::IDLE,     SpriteGroup(Resources::LoadSprite("human/buildings_summer/town_hall"),        BuildingAnimationType::IDLE)},
+                {BuildingAnimationType::UPGRADE,  SpriteGroup(Resources::LoadSprite("human/buildings_summer/keep_build"),       BuildingAnimationType::UPGRADE)},
+                {BuildingAnimationType::BUILD1,   SpriteGroup(Resources::LoadSprite("misc/buildings/construction1"),            BuildingAnimationType::BUILD1)},
+                {BuildingAnimationType::BUILD2,   SpriteGroup(Resources::LoadSprite("misc/buildings/construction2"),            BuildingAnimationType::BUILD2)},
+                {BuildingAnimationType::BUILD3,   SpriteGroup(Resources::LoadSprite("human/buildings_summer/town_hall_build"),  BuildingAnimationType::BUILD3)},
             }
         );
 
@@ -76,7 +71,7 @@ void Sandbox::OnInit() {
         Camera::Get().ZoomToFit(glm::vec2(12.f));
         
         
-        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/oc/peon.json");
+        spritesheet = Resources::LoadSpritesheet("orc/peon");
         std::map<int, SpriteGroup> anims;
         int i = 0;
         for(auto& [name, sp] : *spritesheet) {
@@ -87,7 +82,7 @@ void Sandbox::OnInit() {
         AnimatorDataRef test_data = std::make_shared<AnimatorData>("test_anim", anims);
         anim = Animator(test_data);
 
-        spritesheet = std::make_shared<Spritesheet>("res/json/spritesheets/misc/icons.json");
+        spritesheet = Resources::LoadSpritesheet("misc/icons");
         icon = (*spritesheet)("icon");
 
         

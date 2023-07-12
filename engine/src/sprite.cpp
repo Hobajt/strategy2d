@@ -11,6 +11,7 @@
 namespace eng {
 
     SpritesheetData ParseConfig_Spritesheet(const std::string& config_filepath, int flags);
+    SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags);
     SpriteData ParseConfig_Sprite(const nlohmann::json& config);
 
     //===== Sprite =====
@@ -264,15 +265,29 @@ namespace eng {
     SpritesheetData ParseConfig_Spritesheet(const std::string& config_filepath, int flags) {
         using json = nlohmann::json;
 
-        SpritesheetData data = {};
-
         //load the config and parse it as json file
         json config = json::parse(ReadFile(config_filepath.c_str()));
+
+        //spritesheet
+        SpritesheetData data = ParseConfig_Spritesheet(config_filepath, config, flags);
+
+        //extract spritesheet name (from configfile name)
+        data.name = GetFilename(config_filepath, true);
+
+        return data;
+    }
+
+    SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags) {
+        using json = nlohmann::json;
+        SpritesheetData data = {};
 
         try {
             //get spritesheet texture path & load the texture
             std::string texture_filepath = config.at("texture_filepath");
-            data.texture = std::make_shared<Texture>(texture_filepath, flags);
+            data.texture = std::make_shared<Texture>(texture_filepath, texture_flags);
+
+            if(config.count("name"))
+                data.name = config.at("name");
 
             //iterate & parse 'sprites' array
             auto& sprites_json = config.at("sprites");
@@ -282,13 +297,10 @@ namespace eng {
             }
         }
         catch(json::exception& e) {
-            ENG_LOG_WARN("Failed to parse '{}' config file - {}", config_filepath.c_str(), e.what());
+            ENG_LOG_WARN("Failed to parse '{}' config file - {}", name.c_str(), e.what());
             throw e;
         }
-
-        //extract spritesheet name (from configfile name)
-        data.name = GetFilename(config_filepath, true);
-
+        
         return data;
     }
 
