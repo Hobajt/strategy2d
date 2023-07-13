@@ -149,6 +149,11 @@ namespace eng {
 
         int frameCount = 1;
         int firstFrame = 0;
+    public:
+        SpriteGroupData() = default;
+        SpriteGroupData(int id, const std::string& name, bool repeat, float duration, int frameCount, int firstFrame);
+        SpriteGroupData(bool repeat, float duration, int frameCount, int firstFrame);
+        SpriteGroupData(int id, const Sprite& sprite, bool repeat, float duration);
     };
 
     //===== SpriteGroup =====

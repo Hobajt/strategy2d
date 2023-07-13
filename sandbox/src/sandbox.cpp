@@ -29,40 +29,12 @@ void Sandbox::OnInit() {
         level = Level(glm::ivec2(10), tileset);
         Camera::Get().SetBounds(level.map.Size());
 
-        AnimatorDataRef ad = std::make_shared<AnimatorData>("troll", std::map<int, SpriteGroup>{ 
-                {ActionType::IDLE,      SpriteGroup(Resources::LoadSprite("orc/troll/idle"),   ActionType::IDLE)},
-                {ActionType::MOVE,      SpriteGroup(Resources::LoadSprite("orc/troll/walk"),   ActionType::MOVE)},
-                {ActionType::ACTION,    SpriteGroup(Resources::LoadSprite("orc/troll/attack"), ActionType::ACTION)},
-            }
-        );
-        UnitDataRef go_data = std::make_shared<UnitData>();
-        go_data->name = "troll";
-        go_data->size = glm::vec2(1.f);
-        go_data->animData = ad;
-        go_data->navigationType = NavigationBit::GROUND;
-
         Level::Load("res/ignored/tst.json", level);
 
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
-        troll = Unit(level, go_data, dummy_faction, glm::vec2(0.f, 0.f));
-
-        ad = std::make_shared<AnimatorData>("test_building", std::map<int, SpriteGroup>{ 
-                {BuildingAnimationType::IDLE,     SpriteGroup(Resources::LoadSprite("human/buildings_summer/town_hall"),        BuildingAnimationType::IDLE)},
-                {BuildingAnimationType::UPGRADE,  SpriteGroup(Resources::LoadSprite("human/buildings_summer/keep_build"),       BuildingAnimationType::UPGRADE)},
-                {BuildingAnimationType::BUILD1,   SpriteGroup(Resources::LoadSprite("misc/buildings/construction1"),            BuildingAnimationType::BUILD1)},
-                {BuildingAnimationType::BUILD2,   SpriteGroup(Resources::LoadSprite("misc/buildings/construction2"),            BuildingAnimationType::BUILD2)},
-                {BuildingAnimationType::BUILD3,   SpriteGroup(Resources::LoadSprite("human/buildings_summer/town_hall_build"),  BuildingAnimationType::BUILD3)},
-            }
-        );
-
-        BuildingDataRef building_data = std::make_shared<BuildingData>();
-        building_data->name = "test_building";
-        building_data->size = glm::vec2(2.f);
-        building_data->animData = ad;
-        building_data->navigationType = NavigationBit::GROUND;
-
-        building = Building(level, building_data, dummy_faction, glm::vec2(2.f, 2.f));
+        troll = Unit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
+        building = Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(2.f, 2.f));
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);

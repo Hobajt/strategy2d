@@ -212,6 +212,16 @@ namespace eng {
 
     //===== SpriteGroup =====
 
+    SpriteGroupData::SpriteGroupData(int id_, const std::string& name_, bool repeat_, float duration_, int frameCount_, int firstFrame_)
+        : id(id_), name(name_), repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_) {}
+
+    SpriteGroupData::SpriteGroupData(bool repeat_, float duration_, int frameCount_, int firstFrame_) 
+        : repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_) {}
+
+    SpriteGroupData::SpriteGroupData(int id_, const Sprite& sprite_, bool repeat_, float duration_)
+        : id(id_), repeat(repeat_), duration(duration_), sprites({sprite_}) {}
+
+
     SpriteGroup::SpriteGroup(const Sprite& sprite, int id_) {
         data.id = id_;
         data.name = sprite.Name();

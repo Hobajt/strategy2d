@@ -21,6 +21,7 @@ namespace eng {
     typedef int(*ActionUpdateHandler)(Unit& source, Level& level, Action& action);
     typedef void(*ActionSignalHandler)(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev);
 
+    //when changing values, also update ResolveUnitAnimationID() (local fn in object_data.cpp)
     namespace ActionType { enum { INVALID = -1, IDLE = 0, MOVE, ACTION, ENTER, UNLOAD, COUNT }; }
     namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH }; }
 
@@ -100,7 +101,8 @@ namespace eng {
 
     namespace BuildingActionType { enum { INVALID = -1, IDLE = 0, TRAIN_OR_RESEARCH, CONSTRUCTION_OR_UPGRADE, IDLE_ATTACK, COUNT }; }
 
-    namespace BuildingAnimationType { enum { BUILD1, BUILD2, BUILD3, IDLE, UPGRADE }; }
+    //when changing values, also update ResolveBuildingAnimationID() (local fn in object_data.cpp)
+    namespace BuildingAnimationType { enum { IDLE, BUILD1, BUILD2, BUILD3, UPGRADE, COUNT }; }
 
     struct BuildingAction {
         struct Logic {

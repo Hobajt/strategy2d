@@ -142,6 +142,8 @@ namespace eng {
 
         //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
         int UpgradeTargetHealth() const { return data->upgrade_target; }
+
+        static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
     protected:
         virtual void Inner_DBG_GUI();
     private:

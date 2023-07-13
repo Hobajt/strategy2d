@@ -12,6 +12,9 @@ constexpr float DEFAULT_FONT_SCALE = 0.055f;
 namespace eng {
     //defined in sprite.cpp:280 (+-)
     SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags);
+
+    //defined in object_data.cpp:23 (+-)
+    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config);
 }
 
 namespace eng::Resources {
@@ -210,7 +213,7 @@ namespace eng::Resources {
         GameObjectDataRef data = LoadObject(name);
         UnitDataRef res = std::dynamic_pointer_cast<UnitData>(data);
         if(res == nullptr) {
-            ENG_LOG_ERROR("Resources::LoadUnit - object '{}' is not a building.", name);
+            ENG_LOG_ERROR("Resources::LoadUnit - object '{}' is not an unit.", name);
             throw std::runtime_error("");
         }
         return res;
@@ -248,7 +251,19 @@ namespace eng::Resources {
     }
     
     void PreloadObjects() {
-        //TODO: read & parse the objects JSONs
+        using json = nlohmann::json;
+
+        size_t object_count = 0;
+        Timer t = {};
+
+        t.Reset();
+        json config = json::parse(ReadFile("res/json/objects.json"));
+        for(auto& entry : config) {
+            GameObjectDataRef objData = ParseConfig_Object(entry);
+            data.objects.insert({ objData->name, objData });
+        }
+        float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
+        ENG_LOG_TRACE("Resources::PreloadObjects - parsed {} object prefab descriptions ({:.2f}s)", data.objects.size(), time_elapsed);
     }
 
 }//namespace eng::Resources

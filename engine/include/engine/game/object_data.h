@@ -21,16 +21,20 @@ namespace eng {
     //for logging purposes
     std::ostream& operator<<(std::ostream& os, const ObjectID& id);
 
+    namespace ObjectType { enum { GAMEOBJECT, UNIT, BUILDING, UTILITY }; }
+
     //===== GameObjectData =====
 
     struct GameObjectData {
         std::string name;
+        int objectType;
+
         glm::vec2 size;
         int navigationType;
 
         AnimatorDataRef animData = nullptr;
     public:
-        virtual bool IsBuilding() const { return false; }
+        virtual ~GameObjectData() = default;
     };
     using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
@@ -49,8 +53,6 @@ namespace eng {
         int health = 1200;
 
         int upgrade_target = 1000;
-    public:
-        virtual bool IsBuilding() const { return true; }
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

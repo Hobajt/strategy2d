@@ -73,12 +73,12 @@ namespace eng {
         ChangeColor(colorIdx_);
 
         //register the object with the map
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->IsBuilding());
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
     }
 
     FactionObject::~FactionObject() {
         if(lvl() != nullptr && Data() != nullptr) {
-            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->IsBuilding());
+            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
         }
 
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)

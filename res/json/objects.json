@@ -1,0 +1,19 @@
+[
+    {
+        "name": "orc/troll",
+        "type": 1,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack" },
+            "death": { "duration": 1.0, "repeat": false }
+        }
+    },
+    {
+        "name": "human/town_hall",
+        "type": 2,
+        "nav_type": 1,
+        "size": [2, 2]
+    }
+]
