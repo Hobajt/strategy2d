@@ -1,7 +1,7 @@
 [
     {
         "name": "orc/troll",
-        "type": 1,
+        "type": 2,
         "nav_type": 1,
         "animations": {
             "idle": { "duration": 1.0 },
@@ -12,7 +12,7 @@
     },
     {
         "name": "human/town_hall",
-        "type": 2,
+        "type": 3,
         "nav_type": 1,
         "size": [2, 2]
     }

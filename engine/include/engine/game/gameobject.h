@@ -14,6 +14,7 @@ namespace eng {
     //===== GameObject =====
     
     class GameObject {
+        friend class ObjectPool;
     public:
         GameObject() = default;
         GameObject(Level& level, const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
@@ -29,6 +30,9 @@ namespace eng {
         virtual void Render();
         virtual void Update();
 
+        //Check if this object covers given map coordinates.
+        bool CheckPosition(const glm::ivec2& map_coords);
+
         glm::ivec2 Position() const { return position; }
         int Orientation() const { return orientation; }
         int ActionIdx() const { return actionIdx; }
@@ -39,6 +43,7 @@ namespace eng {
         Level* lvl();
 
         int ID() const { return id; }
+        ObjectID OID() const { return oid; }
         std::string Name() const { return data->name; }
 
         GameObjectDataRef Data() const { return data; }
@@ -48,6 +53,9 @@ namespace eng {
     protected:
         virtual void Inner_DBG_GUI();
         void InnerRender(const glm::vec2& pos);
+    private:
+        static int PeekNextID() { return idCounter; }
+        void SetObjectID(const ObjectID& oid_) { oid = oid_; }
     protected:
         Animator animator;
     private:
@@ -59,6 +67,7 @@ namespace eng {
         int actionIdx = 0;
 
         int id = -1;
+        ObjectID oid = {};
         static int idCounter;
     };
 
@@ -157,9 +166,5 @@ namespace eng {
     //===== UtilityObject =====
 
     class UtilityObject : public GameObject {};
-
-    // //===== ObjectPool =====
-
-    class ObjectPool {};
 
 }//namespace eng

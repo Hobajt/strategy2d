@@ -49,8 +49,13 @@ namespace eng {
 
     Level::Level(Savefile& savefile) : map(std::move(savefile.map)) {}
 
+    void Level::Update() {
+        objects.Update();
+    }
+
     void Level::Render() {
         map.Render();
+        objects.Render();
     }
 
     bool Level::Save(const std::string& filepath) {

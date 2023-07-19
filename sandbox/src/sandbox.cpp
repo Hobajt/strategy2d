@@ -33,8 +33,8 @@ void Sandbox::OnInit() {
 
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
-        troll = Unit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
-        building = Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(2.f, 2.f));
+        level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(2.f, 2.f)));
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -93,6 +93,8 @@ void Sandbox::OnUpdate() {
     colorPalette.Bind(shader);
 
     if(input.rmb.down()) {
+        Unit& troll = level.objects.GetUnit(trollID);
+
         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
         ObjectID target_id;
         switch(rmb_commandID) {
@@ -103,26 +105,24 @@ void Sandbox::OnUpdate() {
                 }
                 break;
             case CommandType::ATTACK:
-                // target_id = level.objects.GetObjectIDAt(target_pos);
-                // ENG_LOG_INFO("ATTACK {} (at {})", target_id, target_pos);
-                // if(ObjectID::IsValid(target_id)) {
-                //     troll.IssueCommand(Command::Attack(target_id));
-                // }
+                target_id = level.objects.GetObjectAt(target_pos);
+                ENG_LOG_INFO("ATTACK {} (at {})", target_id, target_pos);
+                if(ObjectID::IsValid(target_id)) {
+                    troll.IssueCommand(Command::Attack(target_id));
+                }
                 break;
         }
-
     }
 
-    troll.Update();
-    building.Update();
+    if(input.lmb.down()) {
+        glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        ObjectID id = level.objects.GetObjectAt(coords);
+        ENG_LOG_INFO("CLICK at {} - ID = {}", coords, id);
+    }
+    
+    level.Update();
 
-    troll.Render();
-    building.Render();
-    level.map.Render();
-
-    // anim.SetFrameIdx(action, frame);
-    // anim.Render(glm::vec3(-2.f, -2.f, -0.5f) * glm::vec3(camera.Mult(), 1.f), glm::vec2(4.f) * camera.Mult(), action, orientation);
-    // icon.Render(glm::vec3(-1.f, -1.f, -0.5f), glm::vec2(0.2f, 0.2f), iconIdx.y, iconIdx.x);
+    level.Render();
 
     //======================
     
@@ -157,22 +157,8 @@ void Sandbox::OnGUI() {
         ImGui::SliderInt("Palette index", &paletteIndex, 0, colorPalette.Size().y);
 
         ImGui::End();
-
-        ImGui::Begin("GameObjects");
-        troll.DBG_GUI();
-        building.DBG_GUI();
-        ImGui::End();
-
-        // ImGui::Begin("Test anim");
-        // if(ImGui::SliderInt("action", &action, 0, anim.ActionCount()-1))
-        //     frame = 0;
-        // ImGui::SliderInt("frame", &frame, 0, anim.GetGraphics(action).FrameCount()-1);
-        // ImGui::SliderInt("orientation", &orientation, 0, 8);
-        // if(ImGui::SliderInt("color", &color, 0, ColorPalette::FactionColorCount()))
-        //     anim.SetPaletteIdx((float)color);
-        // ImGui::SliderInt("icon-x", &iconIdx.x, 0, icon.LineLength()-1);
-        // ImGui::SliderInt("icon-y", &iconIdx.y, 0, icon.LineCount()-1);
-        // ImGui::End();
+        
+        level.objects.DBG_GUI();
 
         ImGui::Begin("Command");
         ImGui::Combo("type", &rmb_commandID, "Idle\0Move\0Attack\0");

@@ -11,17 +11,24 @@ namespace eng {
 
     //===== ObjectID =====
 
+    namespace ObjectType { enum { INVALID, GAMEOBJECT, UNIT, BUILDING, UTILITY }; }
+
     //Unique identifier for any object within the ObjectPool.
     struct ObjectID {
-        int type;
-        int idx;
-        int id;
+        using dtype = size_t;
+    public:
+        dtype type = ObjectType::INVALID;
+        dtype idx;
+        dtype id;
+    public:
+        ObjectID() = default;
+        ObjectID(dtype type_, dtype idx_, dtype id_) : type(type_), idx(idx_), id(id_) {}
+
+        static bool IsValid(const ObjectID& id) { return id.type != ObjectType::INVALID; }
     };
 
     //for logging purposes
     std::ostream& operator<<(std::ostream& os, const ObjectID& id);
-
-    namespace ObjectType { enum { GAMEOBJECT, UNIT, BUILDING, UTILITY }; }
 
     //===== GameObjectData =====
 

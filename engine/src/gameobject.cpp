@@ -28,6 +28,10 @@ namespace eng {
         animator.Update(actionIdx);
     }
 
+    bool GameObject::CheckPosition(const glm::ivec2& map_coords) {
+        return map_coords.x >= position.x && map_coords.x < (position.x + data->size.x) && map_coords.y >= position.y && map_coords.y < (position.y + data->size.y);
+    }
+
     Level* GameObject::lvl() {
         ASSERT_MSG(level != nullptr, "GameObject isn't properly initialized!");
         return level;

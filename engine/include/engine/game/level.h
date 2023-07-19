@@ -7,6 +7,7 @@
 #include "engine/game/gameobject.h"
 #include "engine/game/faction.h"
 #include "engine/game/map.h"
+#include "engine/game/object_pool.h"
 
 namespace eng {
 

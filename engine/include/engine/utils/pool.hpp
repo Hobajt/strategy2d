@@ -1,13 +1,12 @@
 #pragma once
 
 #define POOL_STARTING_SIZE 1
+#define POOL_NO_HOLE_SORTING
 
 #include <stdexcept>
 #include <exception>
 #include <cstddef>
 #include <memory>
-
-#define POOL_NO_HOLE_SORTING
 
 namespace eng {
 
@@ -21,10 +20,10 @@ namespace eng {
     //  - not ideal, need to iterate the entire pool, including holes
     //  - complexity is dependent on capacity, not current size
     //  - is still faster than maps (with reasonable size/capacity ratio)
-    template <typename T, typename K = size_t>
+    template <typename T, typename K = size_t, typename I = size_t>
     class pool {
     public:
-        using idxType = size_t;
+        using idxType = I;
         using keyType = K;
 
         //Identifies object within the pool (array index + object identifier).

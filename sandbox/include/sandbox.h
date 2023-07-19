@@ -25,19 +25,7 @@ private:
     bool whiteBackground = false;
     int paletteIndex = 0;
 
-    eng::SpritesheetRef spritesheet;
-    eng::Unit troll;
-    eng::Building building;
-
-
-    int action = 0;
-    int orientation = 0;
-    int color = 0;
-    int frame = 0;
-    eng::Animator anim;
-
     int rmb_commandID = eng::CommandType::MOVE;
 
-    eng::Sprite icon;
-    glm::ivec2 iconIdx = glm::ivec2(0);
+    eng::ObjectID trollID;
 };

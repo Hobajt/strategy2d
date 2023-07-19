@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/utils/mathdefs.h"
-
 #include "engine/game/object_data.h"
 
 #include <string>

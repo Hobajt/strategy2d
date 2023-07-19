@@ -10,38 +10,38 @@ namespace eng {
 
     //===== Constructors =====
 
-    template <typename T, typename K>
-    pool<T, K>::pool() : m_capacity(0), m_size(0), m_holes(0), m_data(nullptr) {}
+    template <typename T, typename K, typename I>
+    pool<T, K, I>::pool() : m_capacity(0), m_size(0), m_holes(0), m_data(nullptr) {}
 
-    template <typename T, typename K>
-    pool<T, K>::pool(idxType capacity) : m_capacity(capacity), m_size(0), m_holes(0), m_data(nullptr) {
+    template <typename T, typename K, typename I>
+    pool<T, K, I>::pool(idxType capacity) : m_capacity(capacity), m_size(0), m_holes(0), m_data(nullptr) {
         allocate(capacity);
     }
 
-    template <typename T, typename K>
-    pool<T, K>::~pool() {
+    template <typename T, typename K, typename I>
+    pool<T, K, I>::~pool() {
         release();
     }
 
-    template <typename T, typename K>
-    pool<T, K>::pool(const pool<T,K>& p) noexcept {
+    template <typename T, typename K, typename I>
+    pool<T, K, I>::pool(const pool<T,K,I>& p) noexcept {
         copy(p);
     }
 
-    template <typename T, typename K>
-    pool<T,K>& pool<T,K>::operator=(const pool<T,K>& p) noexcept {
+    template <typename T, typename K, typename I>
+    pool<T,K,I>& pool<T,K,I>::operator=(const pool<T,K,I>& p) noexcept {
         release();
         copy(p);
         return *this;
     }
 
-    template <typename T, typename K>
-    pool<T, K>::pool(pool<T, K>&& p) noexcept {
+    template <typename T, typename K, typename I>
+    pool<T, K, I>::pool(pool<T, K, I>&& p) noexcept {
         move(std::move(p));
     }
 
-    template <typename T, typename K>
-    pool<T, K>& pool<T, K>::operator=(pool<T, K>&& p) noexcept {
+    template <typename T, typename K, typename I>
+    pool<T, K, I>& pool<T, K, I>::operator=(pool<T, K, I>&& p) noexcept {
         release();
         move(std::move(p));
         return *this;
@@ -49,8 +49,8 @@ namespace eng {
 
     //===== Management/Access  =====
 
-    template <typename T, typename K>
-    void pool<T, K>::clear() {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::clear() {
         if (m_data != nullptr) {
             for (idxType i = 0; i < m_capacity; i++) {
                 if (!m_data[i].taken)
@@ -62,48 +62,48 @@ namespace eng {
         m_size = 0;
     }
 
-    template <typename T, typename K>
-    bool pool<T, K>::exists(const key& k) const {
+    template <typename T, typename K, typename I>
+    bool pool<T, K, I>::exists(const key& k) const {
         POOL_CHECK_IDX_RANGE(k.idx);
         return m_data[k.idx].info.id == k.id;
     }
 
-    template <typename T, typename K>
-    bool pool<T, K>::taken(idxType idx) const {
+    template <typename T, typename K, typename I>
+    bool pool<T, K, I>::taken(idxType idx) const {
         POOL_CHECK_IDX_RANGE(idx);
         return m_data[idx].taken;
     }
 
-    template <typename T, typename K>
-    T& pool<T, K>::operator[](idxType idx) {
+    template <typename T, typename K, typename I>
+    T& pool<T, K, I>::operator[](idxType idx) {
         if (!taken(idx))
             throw POOL_UNUSED_SLOT_EXCEPTION;
         return m_data[idx].data;
     }
 
-    template <typename T, typename K>
-    const T& pool<T, K>::operator[](idxType idx) const {
+    template <typename T, typename K, typename I>
+    const T& pool<T, K, I>::operator[](idxType idx) const {
         if (!taken(idx))
             throw POOL_UNUSED_SLOT_EXCEPTION;
         return m_data[idx].data;
     }
 
-    template <typename T, typename K>
-    T& pool<T, K>::operator[](const key& k) {
+    template <typename T, typename K, typename I>
+    T& pool<T, K, I>::operator[](const key& k) {
         if (!exists(k))
             throw POOL_KEY_NOT_FOUND_EXCEPTION;
         return m_data[k.idx].data;
     }
 
-    template <typename T, typename K>
-    const T& pool<T, K>::operator[](const key& k) const {
+    template <typename T, typename K, typename I>
+    const T& pool<T, K, I>::operator[](const key& k) const {
         if (!exists(k))
             throw POOL_KEY_NOT_FOUND_EXCEPTION;
         return m_data[k.idx].data;
     }
 
-    template <typename T, typename K>
-    typename pool<T, K>::idxType pool<T, K>::find(const keyType& id) {
+    template <typename T, typename K, typename I>
+    typename pool<T, K, I>::idxType pool<T, K, I>::find(const keyType& id) {
         for (idxType i = 0; i < m_capacity; i++) {
             if (m_data[i].info.id == id)
                 return i;
@@ -113,30 +113,30 @@ namespace eng {
 
     //===== Insert/Remove =====
 
-    template <typename T, typename K>
-    typename pool<T, K>::key pool<T, K>::add(const keyType& id, const T& element) {
+    template <typename T, typename K, typename I>
+    typename pool<T, K, I>::key pool<T, K, I>::add(const keyType& id, const T& element) {
         idxType idx = fetchFreeSlot(id);
         new(&m_data[idx].data) T(std::move(element));
         return key{ idx, id };
     }
 
-    template <typename T, typename K>
-    typename pool<T, K>::key pool<T, K>::add(const keyType& id, T&& element) {
+    template <typename T, typename K, typename I>
+    typename pool<T, K, I>::key pool<T, K, I>::add(const keyType& id, T&& element) {
         idxType idx = fetchFreeSlot(id);
         new(&m_data[idx].data) T(std::move(element));
         return key{ idx, id };
     }
 
-    template <typename T, typename K>
+    template <typename T, typename K, typename I>
     template <typename... Args>
-    typename pool<T, K>::key pool<T, K>::emplace(const keyType& id, Args&&... args) {
+    typename pool<T, K, I>::key pool<T, K, I>::emplace(const keyType& id, Args&&... args) {
         idxType idx = fetchFreeSlot(id);
         new(&m_data[idx].data) T(std::forward<Args>(args)...);
         return key{ idx, id };
     }
 
-    template <typename T, typename K> 
-    bool pool<T, K>::remove(idxType idx) {
+    template <typename T, typename K, typename I> 
+    bool pool<T, K, I>::remove(idxType idx) {
         if (taken(idx)) {
             clearSlot(idx);
             return true;
@@ -145,8 +145,8 @@ namespace eng {
             return false;
     }
 
-    template <typename T, typename K> 
-    bool pool<T, K>::remove(const key& k) {
+    template <typename T, typename K, typename I> 
+    bool pool<T, K, I>::remove(const key& k) {
         if(exists(k)) {
             clearSlot(k.idx);
             return true;
@@ -155,24 +155,24 @@ namespace eng {
             return false;
     }
 
-    template <typename T, typename K>
-    T pool<T, K>::withdraw(idxType idx) {
+    template <typename T, typename K, typename I>
+    T pool<T, K, I>::withdraw(idxType idx) {
         T out_data = T();
         if (!withdraw(idx, out_data))
             throw POOL_UNUSED_SLOT_EXCEPTION;
         return out_data;
     }
 
-    template <typename T, typename K>
-    T pool<T, K>::withdraw(const key& k) {
+    template <typename T, typename K, typename I>
+    T pool<T, K, I>::withdraw(const key& k) {
         T out_data = T();
         if (!withdraw(k, out_data))
             throw POOL_KEY_NOT_FOUND_EXCEPTION;
         return out_data;
     }
 
-    template <typename T, typename K>
-    bool pool<T, K>::withdraw(idxType idx, T& out_data) {
+    template <typename T, typename K, typename I>
+    bool pool<T, K, I>::withdraw(idxType idx, T& out_data) {
         POOL_CHECK_IDX_RANGE(idx);
         if (taken(idx)) {
             out_data = std::move(m_data[idx].data);
@@ -183,8 +183,8 @@ namespace eng {
             return false;
     }
 
-    template <typename T, typename K>
-    bool pool<T, K>::withdraw(const key& k, T& out_data) {
+    template <typename T, typename K, typename I>
+    bool pool<T, K, I>::withdraw(const key& k, T& out_data) {
         POOL_CHECK_IDX_RANGE(k.idx);
         if (exists(k)) {
             out_data = std::move(m_data[k.idx].data);
@@ -197,8 +197,8 @@ namespace eng {
 
     //===== Helper methods =====
 
-    template <typename T, typename K>
-    void pool<T, K>::allocate(idxType capacity) {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::allocate(idxType capacity) {
         release();
 
         m_capacity = capacity;
@@ -209,8 +209,8 @@ namespace eng {
         }
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::extend() {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::extend() {
         idxType capacity_new = m_capacity * 2;
 
         //allocate new buffer and move stuff over
@@ -234,8 +234,8 @@ namespace eng {
         }
     }
 
-    template <typename T, typename K>
-    typename pool<T, K>::idxType pool<T, K>::fetchFreeSlot(const keyType& id) {
+    template <typename T, typename K, typename I>
+    typename pool<T, K, I>::idxType pool<T, K, I>::fetchFreeSlot(const keyType& id) {
         //container resize
         if (m_data == nullptr)
             allocate(POOL_STARTING_SIZE);
@@ -256,8 +256,8 @@ namespace eng {
         return idx;
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::clearSlot(idxType idx) {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::clearSlot(idxType idx) {
         //decrement object counter & unset slot key and data
         m_size--;
         m_data[idx].info.id = keyType();
@@ -279,8 +279,8 @@ namespace eng {
         }
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::sortHoles() {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::sortHoles() {
         //binary search to find fitting position
         idxType val = m_data[m_size].info.idx;
         idxType start = m_size;
@@ -310,8 +310,8 @@ namespace eng {
             m_holes = std::min(m_holes, pos-m_size);
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::copy(const pool& p) noexcept {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::copy(const pool& p) noexcept {
         m_size = p.m_size;
         m_holes = p.m_holes;
         m_first = p.m_first;
@@ -320,8 +320,8 @@ namespace eng {
         for (idxType i = 0; i < m_capacity; i++) m_data[i] = slot(p.m_data[i]);
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::move(pool&& p) noexcept {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::move(pool&& p) noexcept {
         m_capacity = p.m_capacity;
         m_size = p.m_size;
         m_data = p.m_data;
@@ -332,8 +332,8 @@ namespace eng {
         p.m_holes = p.m_first = p.m_size = p.m_capacity = 0;
     }
 
-    template <typename T, typename K>
-    void pool<T, K>::release() noexcept {
+    template <typename T, typename K, typename I>
+    void pool<T, K, I>::release() noexcept {
         if (m_data != nullptr) {
             for (idxType i = 0; i < m_capacity; i++) {
                 if (m_data[i].info.id != K())
@@ -345,7 +345,7 @@ namespace eng {
         m_holes = m_first = m_size = m_capacity = 0;
     }
 
-}//namespace eng 
+}//namespace eng
 
 //============================
 
