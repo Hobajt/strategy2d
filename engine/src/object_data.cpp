@@ -144,7 +144,7 @@ namespace eng {
     }
 
     int ResolveUnitAnimationID(const std::string& name) {
-        constexpr static std::array<const char*,3> anim_names = { "idle", "walk", "action" };
+        constexpr static std::array<const char*,4> anim_names = { "idle", "walk", "action", "death" };
 
         const char* n = name.c_str();
         for(int i = 0; i < anim_names.size(); i++) {
@@ -183,7 +183,8 @@ namespace eng {
 
         //winter sprite
         sprite_path = prefix + "/buildings_winter/" + suffix;
-        animations.insert({ id + Building::WinterSpritesOffset(), SpriteGroup(SpriteGroupData(id, Resources::LoadSprite(sprite_path), repeat, 1.f)) });
+        int wo = Building::WinterSpritesOffset();
+        animations.insert({ id + wo, SpriteGroup(SpriteGroupData(id + wo, Resources::LoadSprite(sprite_path), repeat, 1.f)) });
     }
 
 

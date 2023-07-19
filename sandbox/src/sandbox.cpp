@@ -41,23 +41,6 @@ void Sandbox::OnInit() {
 
         Camera::Get().SetupZoomUpdates(true);
         Camera::Get().ZoomToFit(glm::vec2(12.f));
-        
-        
-        spritesheet = Resources::LoadSpritesheet("orc/peon");
-        std::map<int, SpriteGroup> anims;
-        int i = 0;
-        for(auto& [name, sp] : *spritesheet) {
-            LOG_INFO("[{}] SPRITE: {}", i, name);
-            anims.insert({i, SpriteGroup(sp, i)});
-            i++;
-        }
-        AnimatorDataRef test_data = std::make_shared<AnimatorData>("test_anim", anims);
-        anim = Animator(test_data);
-
-        spritesheet = Resources::LoadSpritesheet("misc/icons");
-        icon = (*spritesheet)("icon");
-
-        
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -111,24 +94,35 @@ void Sandbox::OnUpdate() {
 
     if(input.rmb.down()) {
         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ENG_LOG_INFO("MOVE TO {}", target_pos);
-        if(level.map.IsWithinBounds(target_pos)) {
-            troll.IssueCommand(Command::Move(target_pos));
+        ObjectID target_id;
+        switch(rmb_commandID) {
+            case CommandType::MOVE:
+                ENG_LOG_INFO("MOVE TO {}", target_pos);
+                if(level.map.IsWithinBounds(target_pos)) {
+                    troll.IssueCommand(Command::Move(target_pos));
+                }
+                break;
+            case CommandType::ATTACK:
+                // target_id = level.objects.GetObjectIDAt(target_pos);
+                // ENG_LOG_INFO("ATTACK {} (at {})", target_id, target_pos);
+                // if(ObjectID::IsValid(target_id)) {
+                //     troll.IssueCommand(Command::Attack(target_id));
+                // }
+                break;
         }
+
     }
 
     troll.Update();
-    troll.Render();
-
     building.Update();
-    building.Render();
 
+    troll.Render();
+    building.Render();
     level.map.Render();
 
-    anim.SetFrameIdx(action, frame);
-    anim.Render(glm::vec3(-2.f, -2.f, -0.5f) * glm::vec3(camera.Mult(), 1.f), glm::vec2(4.f) * camera.Mult(), action, orientation);
-
-    icon.Render(glm::vec3(-1.f, -1.f, -0.5f), glm::vec2(0.2f, 0.2f), iconIdx.y, iconIdx.x);
+    // anim.SetFrameIdx(action, frame);
+    // anim.Render(glm::vec3(-2.f, -2.f, -0.5f) * glm::vec3(camera.Mult(), 1.f), glm::vec2(4.f) * camera.Mult(), action, orientation);
+    // icon.Render(glm::vec3(-1.f, -1.f, -0.5f), glm::vec2(0.2f, 0.2f), iconIdx.y, iconIdx.x);
 
     //======================
     
@@ -164,29 +158,24 @@ void Sandbox::OnGUI() {
 
         ImGui::End();
 
-        ImGui::Begin("Palettes");
-        colorPalette.GetTexture()->DBG_GUI();
-        ImGui::End();
-
-        ImGui::Begin("Spritesheet");
-        spritesheet->DBG_GUI();
-        ImGui::End();
-
-
         ImGui::Begin("GameObjects");
         troll.DBG_GUI();
         building.DBG_GUI();
         ImGui::End();
 
-        ImGui::Begin("Test anim");
-        if(ImGui::SliderInt("action", &action, 0, anim.ActionCount()-1))
-            frame = 0;
-        ImGui::SliderInt("frame", &frame, 0, anim.GetGraphics(action).FrameCount()-1);
-        ImGui::SliderInt("orientation", &orientation, 0, 8);
-        if(ImGui::SliderInt("color", &color, 0, ColorPalette::FactionColorCount()))
-            anim.SetPaletteIdx((float)color);
-        ImGui::SliderInt("icon-x", &iconIdx.x, 0, icon.LineLength()-1);
-        ImGui::SliderInt("icon-y", &iconIdx.y, 0, icon.LineCount()-1);
+        // ImGui::Begin("Test anim");
+        // if(ImGui::SliderInt("action", &action, 0, anim.ActionCount()-1))
+        //     frame = 0;
+        // ImGui::SliderInt("frame", &frame, 0, anim.GetGraphics(action).FrameCount()-1);
+        // ImGui::SliderInt("orientation", &orientation, 0, 8);
+        // if(ImGui::SliderInt("color", &color, 0, ColorPalette::FactionColorCount()))
+        //     anim.SetPaletteIdx((float)color);
+        // ImGui::SliderInt("icon-x", &iconIdx.x, 0, icon.LineLength()-1);
+        // ImGui::SliderInt("icon-y", &iconIdx.y, 0, icon.LineCount()-1);
+        // ImGui::End();
+
+        ImGui::Begin("Command");
+        ImGui::Combo("type", &rmb_commandID, "Idle\0Move\0Attack\0");
         ImGui::End();
 
         level.map.DBG_GUI();

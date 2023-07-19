@@ -18,12 +18,12 @@ namespace eng {
 
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
-    
     */
 
     //=============================
 
     /* IDLE ACTION DESCRIPTION:
+        - TODO:
     */
 
     int  IdleAction_Update(Unit& src, Level& level, Action& action);
@@ -52,16 +52,25 @@ namespace eng {
     //=============================
 
     /* IDLE COMMAND DESCRIPTION:
-        - 
+        - TODO:
     */
 
     void CommandHandler_Idle(Unit& src, Level& level, Command& cmd, Action& action);
-
+    
     /* MOVE COMMAND DESCRIPTION:
-        - 
+        - generates move actions that move unit in one direction
+        - after each completed move action, it checks:
+            - did unit reach it's destination? -> command finished
+            - otherwise it checks pathfinding & either starts new move action or terminates bcs the destination is unreachable
     */
 
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action);
+
+    /* ATTACK COMMAND DESCRIPTION:
+        - TODO:
+    */ 
+
+    void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action);
 
     //=============================
 
@@ -208,6 +217,16 @@ namespace eng {
         return cmd;
     }
 
+    Command Command::Attack(const ObjectID& target_id) {
+        Command cmd = {};
+
+        cmd.type = CommandType::ATTACK;
+        cmd.handler = CommandHandler_Attack;
+        cmd.target_id = target_id;
+
+        return cmd;
+    }
+
     void Command::Update(Unit& src, Level& level) {
         ASSERT_MSG(handler != nullptr, "Command::Update - handler should never be null.");
         handler(src, level, *this, src.action);
@@ -222,6 +241,9 @@ namespace eng {
             break;
         case CommandType::MOVE:
             snprintf(buf, sizeof(buf), "Command: Move to (%d, %d)", target_pos.x, target_pos.y);
+            break;
+        case CommandType::ATTACK:
+            snprintf(buf, sizeof(buf), "Command: Attack ...");//, target_pos.x, target_pos.y);
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -263,6 +285,23 @@ namespace eng {
                 }
             }
         }
+    }
+
+    void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action) {
+        //action update + do nothing if in progress
+
+        //no action:
+
+        //  - check target validity - range & status
+        //          - if out of range, start move actions (also check for reachability, just like in move command)
+        //          - if dead or otherwise unattackable - terminate the command
+        //  - otherwise initiate new attack action
+
+
+        /*attack action general description:
+            - has to have access to attack parameters - damage, speed, direct or spawn projectile, projectile utility object ref, ...
+            - dont know exactly when to apply the attack effect - either by frame index or by fraction of the animation duration
+        */
     }
 
     //=======================================

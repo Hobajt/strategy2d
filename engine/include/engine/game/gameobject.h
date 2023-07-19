@@ -67,7 +67,8 @@ namespace eng {
     class FactionObject : public GameObject {
     public:
         FactionObject() = default;
-        FactionObject(Level& level, const GameObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, float health_percentage, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
         virtual ~FactionObject();
 
         //move enabled
@@ -82,6 +83,8 @@ namespace eng {
     private:
         FactionControllerRef faction = nullptr;
         int colorIdx;
+
+        int health;
     };
 
     //===== Unit =====

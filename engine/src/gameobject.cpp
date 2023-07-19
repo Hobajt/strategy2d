@@ -51,6 +51,8 @@ namespace eng {
         ImGui::DragInt("action", &actionIdx);
         ImGui::SliderInt("orientation", &orientation, 0, 8);
         ImGui::DragInt2("position", (int*)&position);
+        ImGui::Separator();
+        ImGui::Text("Frame: %d/%d (%.0f%%)", animator.GetCurrentFrameIdx(), animator.GetCurrentFrameCount(), animator.GetCurrentFrame() * 100.f);
 #endif
     }
 
@@ -66,8 +68,13 @@ namespace eng {
 
     //===== FactionObject =====
 
-    FactionObject::FactionObject(Level& level_, const GameObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_)
-        : GameObject(level_, data_, position_), faction(faction_) {
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_)
+        : FactionObject(level_, data_, faction_, 100.f, position_, colorIdx_) {}
+
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, float health_p, const glm::vec2& position_, int colorIdx_)
+        : GameObject(level_, std::static_pointer_cast<GameObjectData>(data_), position_), faction(faction_) {
+
+        health = (health_p * 1e-2f) * data_->MaxHealth();
 
         ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
         ChangeColor(colorIdx_);
@@ -105,7 +112,7 @@ namespace eng {
     //===== Unit =====
 
     Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
-        : FactionObject(level_, std::static_pointer_cast<GameObjectData>(data_), faction_, position_), data(data_) {}
+        : FactionObject(level_, data_, faction_, position_), data(data_) {}
 
     Unit::~Unit() {}
 

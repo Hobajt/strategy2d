@@ -36,6 +36,8 @@ private:
     int frame = 0;
     eng::Animator anim;
 
+    int rmb_commandID = eng::CommandType::MOVE;
+
     eng::Sprite icon;
     glm::ivec2 iconIdx = glm::ivec2(0);
 };

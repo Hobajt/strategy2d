@@ -52,4 +52,13 @@ namespace eng {
         frame = (graphics.Duration() * frameIdx) / graphics.FrameCount();
     }
 
+    int Animator::GetCurrentFrameIdx() const {
+        return data->GetGraphics(lastAction).FrameIdx(frame);
+    }
+
+    int Animator::GetCurrentFrameCount() const {
+        return data->GetGraphics(lastAction).FrameCount();
+    }
+
+
 }//namespace eng

@@ -49,6 +49,10 @@ namespace eng {
 
         int ActionCount() const { return data->ActionCount(); }
         SpriteGroup& GetGraphics(int action) { return data->GetGraphics(action); }
+
+        int GetCurrentFrameIdx() const;
+        int GetCurrentFrameCount() const;
+        float GetCurrentFrame() const { return frame; }
     private:
         AnimatorDataRef data = nullptr;
         float frame = 0;

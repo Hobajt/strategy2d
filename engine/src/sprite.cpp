@@ -219,7 +219,7 @@ namespace eng {
         : repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_) {}
 
     SpriteGroupData::SpriteGroupData(int id_, const Sprite& sprite_, bool repeat_, float duration_)
-        : id(id_), repeat(repeat_), duration(duration_), sprites({sprite_}) {}
+        : id(id_), repeat(repeat_), duration(duration_), sprites({sprite_}), name(sprite_.Name()), frameCount(sprite_.AnimFrameCount()), firstFrame(sprite_.FirstFrame()) {}
 
 
     SpriteGroup::SpriteGroup(const Sprite& sprite, int id_) {
@@ -237,7 +237,7 @@ namespace eng {
         }
         ASSERT_MSG(fc == data.frameCount, "SpriteGroup - Group '{}' has mismatch in frame counts between individual sprites.", data.name);
 
-        ENG_LOG_TRACE("[C] SpriteGraphics '{}' ({})", data.name, (int)data.sprites.size());
+        ENG_LOG_TRACE("[C] SpriteGraphics '{}' ({} sprite{}, ID: {})", data.name, (int)data.sprites.size(), ((data.sprites.size() == 1) ? "" : "s6"), data.id);
     }
 
     void SpriteGroup::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY, int idxX) {
