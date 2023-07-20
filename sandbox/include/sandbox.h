@@ -25,7 +25,7 @@ private:
     bool whiteBackground = false;
     int paletteIndex = 0;
 
-    int rmb_commandID = eng::CommandType::MOVE;
+    int rmb_commandID = eng::CommandType::IDLE;
 
     eng::ObjectID trollID;
 };

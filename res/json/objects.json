@@ -8,12 +8,30 @@
             "walk": { "duration": 1.0 },
             "action": { "duration": 1.0, "sprite_name": "attack" },
             "death": { "duration": 1.0, "repeat": false }
-        }
+        },
+        "vision_range": 5,
+        "health": 40,
+        "mana": 0,
+        "build_time": 70,
+        "cost": [500,50,0],
+        "attack_range": 4,
+        "armor": 0,
+        "basic_damage": 3,
+        "pierce_damage": 6
     },
     {
         "name": "human/town_hall",
         "type": 3,
         "nav_type": 1,
-        "size": [2, 2]
+        "size": [2, 2],
+        "vision_range": 4,
+        "health": 1200,
+        "mana": 0,
+        "build_time": 255,
+        "cost": [1200,800,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0
     }
 ]

@@ -73,6 +73,7 @@ namespace eng {
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
         friend void CommandHandler_Move(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_Attack(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
         Command();

@@ -294,6 +294,7 @@ namespace eng {
 
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
+        glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max);
 
         void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);

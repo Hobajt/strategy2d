@@ -50,8 +50,21 @@ namespace eng {
 
     struct FactionObjectData : public GameObjectData {
         int health;
+        int mana;
+
+        int build_time;
+        int upgrade_time;
+        glm::ivec3 cost;
+
+        int basic_damage;
+        int pierce_damage;
+        int attack_range;
+        int armor;
+        int vision_range;
     public:
         virtual int MaxHealth() const override { return health; }
+
+        bool CanAttack() const { return basic_damage + pierce_damage > 0; }
     };
     using FactionObjectDataRef = std::shared_ptr<FactionObjectData>;
 
@@ -65,9 +78,6 @@ namespace eng {
     //===== BuildingData =====
 
     struct BuildingData : public FactionObjectData {
-        int attack_damage = 0;
-        
-        int upgrade_target = 1000;
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

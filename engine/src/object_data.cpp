@@ -13,6 +13,7 @@ namespace eng {
 
     GameObjectDataRef ParseConfig_Building(const nlohmann::json& config);
     GameObjectDataRef ParseConfig_Unit(const nlohmann::json& config);
+    void ParseConfig_FactionObject(const nlohmann::json& config, FactionObjectData& data);
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config);
 
     int ResolveUnitAnimationID(const std::string& name);
@@ -108,6 +109,9 @@ namespace eng {
 
         data->animData = std::make_shared<AnimatorData>(building_name, std::move(animations));
 
+        //parse general unit/building parameters
+        ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
+
         return std::static_pointer_cast<GameObjectData>(data);
     }
     
@@ -133,7 +137,25 @@ namespace eng {
 
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));
 
+        //parse general unit/building parameters
+        ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
+
         return std::static_pointer_cast<GameObjectData>(data);
+    }
+
+    void ParseConfig_FactionObject(const nlohmann::json& config, FactionObjectData& data) {
+        data.health = config.at("health");
+        data.mana = config.at("mana");
+
+        data.build_time = config.at("build_time");
+        data.upgrade_time = config.count("upgrade_time") ? config.at("upgrade_time") : 0;
+        data.cost = eng::json::parse_ivec3(config.at("cost"));
+
+        data.basic_damage = config.at("basic_damage");
+        data.pierce_damage = config.at("pierce_damage");
+        data.attack_range = config.at("attack_range");
+        data.armor = config.at("armor");
+        data.vision_range = config.at("vision_range");
     }
 
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {

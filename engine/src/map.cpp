@@ -28,8 +28,10 @@ namespace eng {
 
     float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst);
     float heuristic_diagonal(const glm::ivec2& src, const glm::ivec2& dst);
+    float range_heuristic(const glm::ivec2& src, const glm::ivec2& m, const glm::ivec2& M, heuristic_fn H);
 
     bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
+    bool Pathfinding_AStar_Range(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, int range, const glm::ivec2& m, const glm::ivec2& M, glm::ivec2* result_pos, int navType, heuristic_fn h);
 
     //an element of tmp array, used during tileset parsing
     struct TileDescription {
@@ -395,6 +397,32 @@ namespace eng {
 
         //fills distance values in the tile data
         Pathfinding_AStar(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
+        // DBG_PrintDistances();
+        
+        //assembles the path, returns the next tile coord, that can be reached via a straight line travel
+        return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
+    }
+
+    glm::ivec2 Map::Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& m, const glm::ivec2& M) {
+        ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to block [({},{})-({},{})] (unit {}, range {})", unit.Position().x, unit.Position().y, m.x, m.y, M.x, M.y, unit.ID(), unit.AttackRange());
+
+        //already within the range
+        if(get_range(unit.Position(), m, M) <= unit.AttackRange())
+            return unit.Position();
+
+        //identify unit's movement type (gnd/water/air)
+        int navType = unit.NavigationType();
+
+        //target fix for airborne units
+        glm::ivec2 dm = (navType != NavigationBit::AIR) ? m : make_even(m);
+        glm::ivec2 dM = (navType != NavigationBit::AIR) ? M : make_even(M);
+
+        //fills distance values in the tile data
+        glm::ivec2 dst_pos = glm::ivec2(-1);
+        if(!Pathfinding_AStar_Range(tiles, nav_list, unit.Position(), unit.AttackRange(), dm, dM, &dst_pos, navType, &heuristic_euclidean)) {
+            //destination unreachable
+            return unit.Position();
+        }
         // DBG_PrintDistances();
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
@@ -1112,6 +1140,15 @@ namespace eng {
         return 1*(dx+dy) + (1.141421f - 2.f) * std::min(dx, dy);
     }
 
+    float range_heuristic(const glm::ivec2& src, const glm::ivec2& m, const glm::ivec2& M, heuristic_fn H) {
+        return std::min({
+            H(src, glm::vec2(m.x, m.y)),
+            H(src, glm::vec2(m.x, M.y)),
+            H(src, glm::vec2(M.x, m.y)),
+            H(src, glm::vec2(M.x, M.y)),
+        });
+    }
+
     bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
         int step = 1 + int(navType == NavigationBit::AIR);
@@ -1170,6 +1207,76 @@ namespace eng {
                     td.nav.d = d;
                     
                     float h = H(pos, pos_dst);
+                    open.emplace(h+d, d, pos);
+                }
+            }
+        }
+
+        ENG_LOG_FINEST("    Map::Pathfinding::Alg    | algorithm steps: {} (found: {})", it, found);
+        return found;
+    }
+
+    bool Pathfinding_AStar_Range(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, int range, const glm::ivec2& m, const glm::ivec2& M, glm::ivec2* result_pos, int navType, heuristic_fn H) {
+        //airborne units only move on even tiles
+        int step = 1 + int(navType == NavigationBit::AIR);
+        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+
+        //prep distance values
+        tiles.NavDataCleanup();
+        tiles(pos_src).nav.d = 0.f;
+
+        //reset the open set tracking
+        open = {};
+        open.emplace(range_heuristic(pos_src, m, M, H), 0.f, pos_src);
+        glm::ivec2 size = tiles.Size();
+
+        int it = 0;
+        bool found = false;
+        while (open.size() > 0) {
+            NavEntry entry = open.top();
+            open.pop();
+            TileData& td = tiles(entry.pos);
+
+            //skip if (already visited) or (untraversable & not starting pos (that one's untraversable bcs unit's standing there))
+            if(td.nav.visited || !(td.Traversable(navType) || entry.pos == pos_src))
+                continue;
+            
+            it++;
+            
+            //mark as visited, set distance value
+            ASSERT_MSG(fabsf(entry.d - td.nav.d) < 1e-5f, "Value here should already be a minimal distance ({} < {})", entry.d, td.nav.d);
+            // if(entry.d > td.nav.d) ENG_LOG_WARN("HOPE IT'S JUST A ROUNDING ERROR (distance mismatch): {}, {}", entry.d, td.nav.d);
+            td.nav.visited = true;
+            td.nav.d = std::min(entry.d, td.nav.d);
+
+            //path to the target destination found - terminate
+            if(get_range(entry.pos, m, M) <= range) {
+                //TODO: seems inefficient to compute this distance for every tile - maybe lazy compute them or somehow utilize heuristic for this?
+                //TODO: also might want to search a bit more before terminating (first tile in range might not be the best one)
+                *result_pos = entry.pos;
+                found = true;
+                break;
+            }
+
+            for(int y = -step; y <= step; y += step) {
+                for(int x = -step; x <= step; x += step) {
+                    glm::ivec2 pos = glm::ivec2(entry.pos.x+x, entry.pos.y+y);
+
+                    //skip out of bounds or central tile
+                    if(pos.y < 0 || pos.x < 0 || pos.y >= size.y || pos.x >= size.x || pos == entry.pos)
+                        continue;
+                    
+                    TileData& td = tiles(pos);
+                    float d = entry.d + (((std::abs(x+y)/step) % 2 == 0) ? 1.414213f : 1.f) * step;
+
+                    //skip when (untraversable) or (already visited) or (marked as open & current distance is worse than existing distance)
+                    if(!td.Traversable(navType) || (td.nav.visited && d > td.nav.d) || (!std::isinf(td.nav.d) && d > td.nav.d))
+                        continue;
+
+                    //tmp distance value (tile is still open)
+                    td.nav.d = d;
+                    
+                    float h = range_heuristic(pos, m, M, H);
                     open.emplace(h+d, d, pos);
                 }
             }

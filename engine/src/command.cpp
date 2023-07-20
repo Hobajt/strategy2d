@@ -288,14 +288,58 @@ namespace eng {
     }
 
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action) {
-        //action update + do nothing if in progress
+        int res = action.Update(src, level);
 
-        //no action:
+        if(res != ACTION_INPROGRESS) {
+            //no action in progress
 
-        //  - check target validity - range & status
-        //          - if out of range, start move actions (also check for reachability, just like in move command)
-        //          - if dead or otherwise unattackable - terminate the command
-        //  - otherwise initiate new attack action
+            GameObject* target;
+            if(!level.objects.GetObject(cmd.target_id, target)) {
+                //existence check failed - target no longer exists
+                cmd = Command::Idle();
+                return;
+            }
+
+            if(!src.RangeCheck(*target)) {
+                //range check failed
+
+
+
+                /*range check:
+                    - distance metric used in the game seems to be chebyshev (chessboard distance)
+                    - no need to distinguish between ranged/melee units
+                    - range check needs to account for the fact that buildings have varying sizes
+                  proper movement destination:
+                    - could adapt/modify current pathfinding impl
+                        - pathfinding logic would stay the same
+                        - search would terminate once a tile with good enough distance is found
+                            - distance has to be the chebyshev metric
+                            - also has to account for varying building sizes
+                    - need to also do the movement checks - destination unreachable
+                */
+
+
+                //lookup new possible location to attack from & start moving there
+                glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, target->MinPos(), target->MaxPos());
+                if(target_pos == src.Position()) {
+                    //target destination unreachable
+                    cmd = Command::Idle();
+                }
+                else {
+                    //initiate new move action
+                    ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                    action = Action::Move(src.Position(), target_pos);
+                }
+                return;
+            }
+            else {
+                //iniate new attack action
+                // action = Action::Attack();
+                ENG_LOG_INFO("IN ATTACK RANGE ({} -> ({}-{}), d = {})", src.Position(), target->MinPos(), target->MaxPos(), get_range(src.Positionf(), target->MinPos(), target->MaxPos()));
+                cmd = Command::Idle();
+            }
+
+        }
 
 
         /*attack action general description:
@@ -389,7 +433,7 @@ namespace eng {
         Input& input = Input::Get();
         float& progress = action.data.t1;
         bool is_construction = !action.data.flag;
-        float target = is_construction ? src.MaxHealth() : src.UpgradeTargetHealth();
+        float target = is_construction ? src.BuildTime() : src.UpgradeTime();
         action.data.t2 = target;
         //=====
 

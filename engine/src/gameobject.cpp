@@ -49,6 +49,10 @@ namespace eng {
 #endif
     }
 
+    std::ostream& operator<<(std::ostream& os, const GameObject& go) {
+        return go.DBG_Print(os);
+    }
+
     void GameObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d", id);
@@ -67,7 +71,12 @@ namespace eng {
         float zIdx = -0.5f;
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.w2s(pos, data->size), zIdx), data->size * cam.Mult(), actionIdx, orientation);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), data->size * cam.Mult(), actionIdx, orientation);
+    }
+
+    std::ostream& GameObject::DBG_Print(std::ostream& os) const {
+        os << "GameObject - " << Name() << " (ID=" << ID() << ")";
+        return os;
     }
 
     //===== FactionObject =====
@@ -76,7 +85,7 @@ namespace eng {
         : FactionObject(level_, data_, faction_, 100.f, position_, colorIdx_) {}
 
     FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, float health_p, const glm::vec2& position_, int colorIdx_)
-        : GameObject(level_, std::static_pointer_cast<GameObjectData>(data_), position_), faction(faction_) {
+        : GameObject(level_, std::static_pointer_cast<GameObjectData>(data_), position_), faction(faction_), data_f(data_) {
 
         health = (health_p * 1e-2f) * data_->MaxHealth();
 
@@ -98,6 +107,11 @@ namespace eng {
     void FactionObject::ChangeColor(int newColorIdx) {
         colorIdx = ValidColor(newColorIdx) ? newColorIdx : faction->GetColorIdx();
         animator.SetPaletteIdx((float)colorIdx);
+    }
+
+    bool FactionObject::RangeCheck(GameObject& target) {
+        float D = get_range(MinPos(), MaxPos(), target.MinPos(), target.MaxPos());
+        return (D <= data_f->attack_range);
     }
 
     void FactionObject::Inner_DBG_GUI() {
@@ -147,6 +161,11 @@ namespace eng {
 #endif
     }
 
+    std::ostream& Unit::DBG_Print(std::ostream& os) const {
+        os << "Unit - " << Name() << " (ID=" << ID() << ")";
+        return os;
+    }
+
     //===== Building =====
 
     Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool constructed)
@@ -178,6 +197,11 @@ namespace eng {
         ImGui::Separator();
         ImGui::Text("%s", action.to_string().c_str());
 #endif
+    }
+
+    std::ostream& Building::DBG_Print(std::ostream& os) const {
+        os << "Building - " << Name() << " (ID=" << ID() << ")";
+        return os;
     }
 
 }//namespace eng

@@ -1,5 +1,6 @@
 #include "engine/utils/mathdefs.h"
 #include <stdio.h>
+#include <algorithm>
 
 namespace eng {
 
@@ -36,6 +37,20 @@ namespace eng {
 
     glm::ivec2 make_even(const glm::ivec2& v) {
         return glm::ivec2((v.x >> 1) << 1, (v.y >> 1) << 1);
+    }
+
+    float get_range(const glm::vec2& pos, const glm::vec2& m, const glm::vec2& M) {
+        glm::ivec2 a = glm::abs(pos - m);
+        glm::ivec2 b = glm::abs(pos - M);
+        return std::min({ std::max(a.x, a.y), std::max(b.x, b.y) });
+    }
+
+    float get_range(const glm::vec2& m1, const glm::vec2& M1, const glm::vec2& m2, const glm::vec2& M2) {
+        glm::ivec2 a = glm::abs(m1 - m2);
+        glm::ivec2 b = glm::abs(m1 - M2);
+        glm::ivec2 c = glm::abs(M1 - m2);
+        glm::ivec2 d = glm::abs(M1 - M2);
+        return std::min({ std::max(a.x, a.y), std::max(b.x, b.y), std::max(c.x, c.y), std::max(d.x, d.y) });
     }
 
 }//namespace eng

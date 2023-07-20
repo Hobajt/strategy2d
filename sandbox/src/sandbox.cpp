@@ -96,8 +96,21 @@ void Sandbox::OnUpdate() {
         Unit& troll = level.objects.GetUnit(trollID);
 
         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ObjectID target_id;
+        ObjectID target_id = level.objects.GetObjectAt(target_pos);
         switch(rmb_commandID) {
+            case CommandType::IDLE:     //adaptive command - determined based on click target
+                if(ObjectID::IsValid(target_id)) {
+                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
+                    troll.IssueCommand(Command::Attack(target_id));
+                }
+                else if(level.map.IsWithinBounds(target_pos)) {
+                    ENG_LOG_INFO("MOVE TO {}", target_pos);
+                    troll.IssueCommand(Command::Move(target_pos));
+                }
+                else {
+                    ENG_LOG_INFO("COULDN'T RESOLVE COMMAND");
+                }
+                break;
             case CommandType::MOVE:
                 ENG_LOG_INFO("MOVE TO {}", target_pos);
                 if(level.map.IsWithinBounds(target_pos)) {
@@ -105,10 +118,12 @@ void Sandbox::OnUpdate() {
                 }
                 break;
             case CommandType::ATTACK:
-                target_id = level.objects.GetObjectAt(target_pos);
-                ENG_LOG_INFO("ATTACK {} (at {})", target_id, target_pos);
                 if(ObjectID::IsValid(target_id)) {
+                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
                     troll.IssueCommand(Command::Attack(target_id));
+                }
+                else {
+                    ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);
                 }
                 break;
         }
@@ -161,7 +176,7 @@ void Sandbox::OnGUI() {
         level.objects.DBG_GUI();
 
         ImGui::Begin("Command");
-        ImGui::Combo("type", &rmb_commandID, "Idle\0Move\0Attack\0");
+        ImGui::Combo("type", &rmb_commandID, "Adaptive\0Move\0Attack\0");
         ImGui::End();
 
         level.map.DBG_GUI();
