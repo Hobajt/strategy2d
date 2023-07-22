@@ -124,6 +124,8 @@ namespace eng {
         struct Data {
             float t1 = 0.f;
             float t2 = 0.f;
+            float t3 = 0.f;
+            int i = 0;
             bool flag = false;
         };
     public:

@@ -9,7 +9,7 @@ namespace eng {
 #define ACTION_FINISHED_SUCCESS         1
 #define ACTION_FINISHED_INTERRUPTED     2
 
-#define WORKER_BUILD_SPEED 50.f
+#define CONSTRUCTION_SPEED 5.f
 
     int DirVectorCoord(int orientation);
     glm::ivec2 DirectionVector(int orientation);
@@ -466,7 +466,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "Action: Idle");
             break;
         case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
-            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%d%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t2, int((data.t1/data.t2)*100.f));
+            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%d%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t3, int((data.t1/data.t3)*100.f));
             break;
         default:
             snprintf(buf, sizeof(buf), "Action: Unknown type (%d)", logic.type);
@@ -503,19 +503,27 @@ namespace eng {
     void BuildingAction_ConstructOrUpgrade(Building& src, Level& level, BuildingAction& action) {
         Input& input = Input::Get();
         float& progress = action.data.t1;
+        float& prev_health = action.data.t2;
+        int& next_tick = action.data.i;
         bool is_construction = !action.data.flag;
-        float target = is_construction ? src.BuildTime() : src.UpgradeTime();
-        action.data.t2 = target;
+        int target = is_construction ? src.BuildTime() : src.UpgradeTime();
+        action.data.t3 = target;        //displayed in debug messages
         //=====
 
         //compute the uptick for this frame
-        float uptick = input.deltaTime * WORKER_BUILD_SPEED;
+        float uptick = input.deltaTime * CONSTRUCTION_SPEED;
 
         //increment construction tracking as well as building health
         progress += uptick;
 
         if(is_construction) {
-            // src.health += uptick;        //TODO: figure out how it works ingame
+            //health uptick logic
+            if(next_tick < progress) {
+                float health_now = ((src.MaxHealth() - src.StartingHealth()) * progress) / target;
+                src.AddHealth(int(health_now) - int(prev_health));
+                prev_health = health_now;
+                next_tick = int(progress)+1;        //increment every second
+            }
 
             //compute animation based on construction percentual progress
             int state = std::min(int((progress / target) * 4.f), 2);

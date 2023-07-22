@@ -128,6 +128,11 @@ namespace eng {
         ENG_LOG_FINE("[DMG] {} dealt {} damage to {} (melee).", source.OID().to_string(), dmg, OID().to_string());
     }
 
+    void FactionObject::AddHealth(int value) {
+        health += value;
+        health = (health <= MaxHealth()) ? health : MaxHealth();
+    }
+
     void FactionObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         GameObject::Inner_DBG_GUI();
@@ -189,8 +194,14 @@ namespace eng {
     Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool constructed)
         : FactionObject(level_, data_, faction_, position_), data(data_) {
         
-        if(constructed)
+        if(constructed) {
+            //change action to idle for constructed buildings
             action = BuildingAction::Idle(CanAttack());
+        }
+        else {
+            //starting health uptick
+            SetHealth(StartingHealth());
+        }
     }
 
     Building::~Building() {}

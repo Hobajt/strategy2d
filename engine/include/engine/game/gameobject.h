@@ -112,6 +112,9 @@ namespace eng {
 
         //For melee damage application.
         void ApplyDirectDamage(const FactionObject& source);
+
+        void SetHealth(int health_) { health = health_; }
+        void AddHealth(int value);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -184,6 +187,9 @@ namespace eng {
 
         //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
         int UpgradeTime() const { return data->upgrade_time; }
+
+        //How much health should the building start with when constructing.
+        int StartingHealth() const { return MaxHealth() > 100 ? 40 : 10; }
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
     protected:
