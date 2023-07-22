@@ -23,8 +23,14 @@ namespace eng {
 
     //===== ObjectID =====
 
+    std::string ObjectID::to_string() const { 
+        char buf[512];
+        snprintf(buf, sizeof(buf), "(%zd, %zd, %zd)", type, idx, id);
+        return std::string(buf);
+    }
+
     std::ostream& operator<<(std::ostream& os, const ObjectID& id) {
-        os << "(" << id.type << "," << id.idx << "," << id.id << ")";
+        os << id.to_string();
         return os;
     }
 
@@ -132,7 +138,8 @@ namespace eng {
             
             float duration = anim_data.at("duration");
             bool repeat = anim_data.count("repeat") ? anim_data.at("repeat") : true;
-            animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration)) });
+            float keyframe = anim_data.count("keyframe") ? anim_data.at("keyframe") : 1.f;
+            animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe)) });
         }
 
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));

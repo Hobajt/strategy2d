@@ -149,11 +149,13 @@ namespace eng {
 
         int frameCount = 1;
         int firstFrame = 0;
+
+        float keyframe = 1.f;
     public:
         SpriteGroupData() = default;
         SpriteGroupData(int id, const std::string& name, bool repeat, float duration, int frameCount, int firstFrame);
         SpriteGroupData(bool repeat, float duration, int frameCount, int firstFrame);
-        SpriteGroupData(int id, const Sprite& sprite, bool repeat, float duration);
+        SpriteGroupData(int id, const Sprite& sprite, bool repeat, float duration, float keyframe = 1.f);
     };
 
     //===== SpriteGroup =====
@@ -179,6 +181,8 @@ namespace eng {
 
         int FrameIdx(float f) const { return int(data.frameCount * (f / data.duration)); }
         float FirstFrameF() const { return data.firstFrame / (float)data.frameCount;}
+
+        float Keyframe() const { return data.keyframe; }
     private:
         SpriteGroupData data;
     };

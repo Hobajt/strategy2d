@@ -48,6 +48,9 @@ namespace eng {
         int& act() { return actionIdx; }
         Level* lvl();
 
+        float AnimationProgress() const { return animator.GetCurrentFrame(); }
+        bool AnimKeyframeSignal() const { return animator.KeyframeSignal(); }
+
         int ID() const { return id; }
         ObjectID OID() const { return oid; }
         std::string Name() const { return data->name; }
@@ -137,6 +140,8 @@ namespace eng {
         float MoveSpeed() const { return 1.f; }
 
         glm::vec2& m_offset() { return move_offset; }
+
+        bool AnimationFinished() const { return animation_ended; }
     protected:
         virtual void Inner_DBG_GUI();
     private:
@@ -148,6 +153,7 @@ namespace eng {
         Action action = Action();
 
         glm::vec2 move_offset = glm::vec2(0.f);
+        bool animation_ended = false;
     };
 
     //===== Building =====

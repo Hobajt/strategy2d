@@ -141,7 +141,7 @@ namespace eng {
     void Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, *lvl());
-        animator.Update(ActionIdx());
+        animation_ended = animator.Update(ActionIdx());
     }
 
     void Unit::IssueCommand(const Command& cmd) {

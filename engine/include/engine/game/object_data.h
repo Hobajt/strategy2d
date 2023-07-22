@@ -25,10 +25,12 @@ namespace eng {
         ObjectID(dtype type_, dtype idx_, dtype id_) : type(type_), idx(idx_), id(id_) {}
 
         static bool IsValid(const ObjectID& id) { return id.type != ObjectType::INVALID; }
+
+        //for logging purposes
+        std::string to_string() const;
+        friend std::ostream& operator<<(std::ostream& os, const ObjectID& id);
     };
 
-    //for logging purposes
-    std::ostream& operator<<(std::ostream& os, const ObjectID& id);
 
     //===== GameObjectData =====
 

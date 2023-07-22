@@ -6,7 +6,7 @@
         "animations": {
             "idle": { "duration": 1.0 },
             "walk": { "duration": 1.0 },
-            "action": { "duration": 1.0, "sprite_name": "attack" },
+            "action": { "duration": 5.0, "sprite_name": "attack", "keyframe": 0.5 },
             "death": { "duration": 1.0, "repeat": false }
         },
         "vision_range": 5,

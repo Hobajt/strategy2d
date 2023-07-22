@@ -24,6 +24,8 @@ namespace eng {
     namespace ActionType { enum { INVALID = -1, IDLE = 0, MOVE, ACTION, ENTER, UNLOAD, COUNT }; }
     namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH }; }
 
+    namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, OTHER = 1 }; }
+
     //An atomic unit of work, that a Unit object can do within the game.
     struct Action {
     public:
@@ -45,6 +47,9 @@ namespace eng {
             //helper state variables for action implementation
             float t = 0.f;
             int i = 0;
+            int j = 0;
+            int k = 0;
+            bool b = false;
         public:
             void Reset();
         };
@@ -57,6 +62,7 @@ namespace eng {
 
         static Action Idle();
         static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
+        static Action Attack(const ObjectID& target_id, const glm::ivec2& target_dir, bool is_ranged);
 
         //========
 

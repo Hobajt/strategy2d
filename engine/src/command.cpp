@@ -14,6 +14,7 @@ namespace eng {
     int DirVectorCoord(int orientation);
     glm::ivec2 DirectionVector(int orientation);
     int VectorOrientation(const glm::ivec2& v);
+    int VectorOrientation(const glm::vec2& v);
     
 
     /* GROUND RULES:
@@ -48,6 +49,14 @@ namespace eng {
     int  MoveAction_Update(Unit& src, Level& level, Action& action);
     void MoveAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev);
 
+    /* ACTION ACTION DESCRIPTION:
+        - TODO:
+        - signaling causes the unit to cancel the attack (effect doesn't happen, but animation still finishes)
+    */
+
+    int  ActionAction_Update(Unit& src, Level& level, Action& action);
+    void ActionAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev);
+
 
     //=============================
 
@@ -67,7 +76,11 @@ namespace eng {
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action);
 
     /* ATTACK COMMAND DESCRIPTION:
-        - TODO:
+        - if the target is within range, periodically generates attack actions
+        - between the attack actions:
+            - checks for target existence
+            - validates that the target is still within range
+                - if it isn't issues move actions in order to move to valid range
     */ 
 
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action);
@@ -86,7 +99,8 @@ namespace eng {
 
     void Action::Data::Reset() {
         t = 0.f;
-        i = 0;
+        k = j = i = 0;
+        b = false;
     }
 
     Action::Action() : logic(Action::Logic(ActionType::IDLE, IdleAction_Update, IdleAction_Signal)), data(Action::Data{}) {}
@@ -104,6 +118,19 @@ namespace eng {
         action.data.target_pos = pos_dst;
         action.data.move_dir = glm::sign(pos_dst - pos_src);
         action.data.i = VectorOrientation(action.data.move_dir);
+
+        return action;
+    }
+
+    Action Action::Attack(const ObjectID& target_id, const glm::ivec2& target_dir, bool is_ranged) {
+        Action action = {};
+
+        action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
+        action.data.Reset();
+        action.data.target = target_id;
+
+        action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
+        action.data.j = is_ranged ? ActionPayloadType::RANGED_ATTACK : ActionPayloadType::MELEE_ATTACK; //payload type identifier
 
         return action;
     }
@@ -197,6 +224,34 @@ namespace eng {
         action.data.target_pos = src.Position();
     }
 
+    int  ActionAction_Update(Unit& src, Level& level, Action& action) {
+        int orientation = action.data.i;
+        int payload_id = action.data.j;
+        bool& delivered = action.data.b;
+        //===========
+
+        //animation values update
+        src.act() = action.logic.type;
+        src.ori() = orientation;
+
+        //payload delivery check
+        if(src.AnimKeyframeSignal() && !delivered) {
+            delivered = true;
+            //TODO: implement the three types of payload
+
+            //harvest should return from here (if the tree is felled)
+
+            ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
+        }
+
+        return src.AnimationFinished() ? ACTION_FINISHED_SUCCESS : ACTION_INPROGRESS;
+    }
+
+    void ActionAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev) {
+        //mark payload as already delivered - action won't happen but the animation continues
+        action.data.b = true;
+    }
+
     //=======================================
 
     //===== Command =====
@@ -243,7 +298,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "Command: Move to (%d, %d)", target_pos.x, target_pos.y);
             break;
         case CommandType::ATTACK:
-            snprintf(buf, sizeof(buf), "Command: Attack ...");//, target_pos.x, target_pos.y);
+            snprintf(buf, sizeof(buf), "Command: Attack %s", target_id.to_string().c_str());
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -292,60 +347,49 @@ namespace eng {
 
         if(res != ACTION_INPROGRESS) {
             //no action in progress
+            ENG_LOG_INFO("ATTACK CMD - NO ACTION");
 
             GameObject* target;
             if(!level.objects.GetObject(cmd.target_id, target)) {
                 //existence check failed - target no longer exists
+                ENG_LOG_INFO("ATTACK CMD - NO TARGET");
                 cmd = Command::Idle();
                 return;
             }
 
+            //TODO: there also needs to be a cooldown
+            /*HOW TO IMPL COOLDOWN:
+                - add new field to the object jsons
+                - cooldown will be time between animation end and next attack start
+                - can implement this from inside attack action
+                    - will have to track that the animation ended (cuz it signals only once)
+                    - will mark the time when it ended & then compare it against the cooldown time
+                    - return ACTION_FINISHED only after it's over
+                    - also play idle animation for the cooldown duration (instead of the attack one)
+            */
+
             if(!src.RangeCheck(*target)) {
-                //range check failed
-
-
-
-                /*range check:
-                    - distance metric used in the game seems to be chebyshev (chessboard distance)
-                    - no need to distinguish between ranged/melee units
-                    - range check needs to account for the fact that buildings have varying sizes
-                  proper movement destination:
-                    - could adapt/modify current pathfinding impl
-                        - pathfinding logic would stay the same
-                        - search would terminate once a tile with good enough distance is found
-                            - distance has to be the chebyshev metric
-                            - also has to account for varying building sizes
-                    - need to also do the movement checks - destination unreachable
-                */
-
-
-                //lookup new possible location to attack from & start moving there
+                //range check failed -> lookup new possible location to attack from & start moving there
                 glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, target->MinPos(), target->MaxPos());
                 if(target_pos == src.Position()) {
-                    //target destination unreachable
+                    //no reachable destination found
+                    ENG_LOG_INFO("ATTACK CMD - TARGET UNREACHABLE");
                     cmd = Command::Idle();
                 }
                 else {
                     //initiate new move action
+                    ENG_LOG_INFO("ATTACK CMD - MOVING TOWARDS TARGET");
                     ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                     action = Action::Move(src.Position(), target_pos);
                 }
                 return;
             }
             else {
-                //iniate new attack action
-                // action = Action::Attack();
-                ENG_LOG_INFO("IN ATTACK RANGE ({} -> ({}-{}), d = {})", src.Position(), target->MinPos(), target->MaxPos(), get_range(src.Positionf(), target->MinPos(), target->MaxPos()));
-                cmd = Command::Idle();
+                //within range -> iniate new attack action
+                ENG_LOG_INFO("ATTACK CMD - ISSUE ATTACK ACTION");
+                action = Action::Attack(cmd.target_id, target->Position() - src.Position(), src.AttackRange() > 1);
             }
-
         }
-
-
-        /*attack action general description:
-            - has to have access to attack parameters - damage, speed, direct or spawn projectile, projectile utility object ref, ...
-            - dont know exactly when to apply the attack effect - either by frame index or by fraction of the animation duration
-        */
     }
 
     //=======================================
@@ -476,6 +520,13 @@ namespace eng {
     }
 
     int VectorOrientation(const glm::ivec2& v) {
+        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
+        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
+        orientation = (8-orientation+6) % 8;
+        return orientation;
+    }
+
+    int VectorOrientation(const glm::vec2& v) {
         int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
         ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
         orientation = (8-orientation+6) % 8;

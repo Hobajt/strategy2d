@@ -22,7 +22,7 @@ namespace eng {
 
     Animator::Animator(const AnimatorDataRef& data_) : data(data_) {}
 
-    void Animator::Update(int action) {
+    bool Animator::Update(int action) {
         SpriteGroup& graphics = data->GetGraphics(action);
 
         if(lastAction != action) {
@@ -31,8 +31,12 @@ namespace eng {
         lastAction = action;
 
         frame += Input::Get().deltaTime;
-        while(frame >= graphics.Duration() && graphics.Repeat())
+        bool res = false;
+        while(frame >= graphics.Duration() && graphics.Repeat()) {
             frame -= graphics.Duration();
+            res = true;
+        }
+        return res || (frame >= graphics.Duration());
     }
 
     void Animator::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, const glm::uvec4& info) {
@@ -60,5 +64,9 @@ namespace eng {
         return data->GetGraphics(lastAction).FrameCount();
     }
 
+    bool Animator::KeyframeSignal() const {
+        SpriteGroup& graphics = data->GetGraphics(lastAction);
+        return frame >= graphics.Keyframe() * graphics.Duration();
+    }
 
 }//namespace eng
