@@ -45,13 +45,15 @@ namespace eng {
             //maybe add fields to track timing & animation synchronization
 
             //helper state variables for action implementation
-            float t = 0.f;
             int i = 0;
             int j = 0;
             int k = 0;
             bool b = false;
+            bool c = false;
+            float t = 0.f;
         public:
             void Reset();
+            void DBG_Print();
         };
     public:
         Logic logic;

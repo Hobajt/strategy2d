@@ -102,6 +102,7 @@ namespace eng {
 
         bool CanAttack() const { return data_f->CanAttack(); }
         int AttackRange() const { return data_f->attack_range; }
+        float Cooldown() const { return data_f->cooldown; }
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }

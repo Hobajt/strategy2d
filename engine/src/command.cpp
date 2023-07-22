@@ -98,9 +98,13 @@ namespace eng {
     Action::Logic::Logic(int type_, ActionUpdateHandler update_, ActionSignalHandler signal_) : type(type_), update(update_), signal(signal_) {}
 
     void Action::Data::Reset() {
+        i = j = k = 0;
+        b = c = false;
         t = 0.f;
-        k = j = i = 0;
-        b = false;
+    }
+
+    void Action::Data::DBG_Print() {
+        ENG_LOG_TRACE("i={}, j={}, k={}, b={}, c={}, t={}", i, j, k, b, c, t);
     }
 
     Action::Action() : logic(Action::Logic(ActionType::IDLE, IdleAction_Update, IdleAction_Signal)), data(Action::Data{}) {}
@@ -225,31 +229,44 @@ namespace eng {
     }
 
     int  ActionAction_Update(Unit& src, Level& level, Action& action) {
+        Input& input = Input::Get();
         int orientation = action.data.i;
         int payload_id = action.data.j;
         bool& delivered = action.data.b;
+        bool& anim_ended = action.data.c;
+        float& action_stop_time = action.data.t;
         //===========
 
-        //animation values update
-        src.act() = action.logic.type;
-        src.ori() = orientation;
+        // action.data.DBG_Print();
 
         //payload delivery check
         if(src.AnimKeyframeSignal() && !delivered) {
             delivered = true;
             //TODO: implement the three types of payload
 
-            //harvest should return from here (if the tree is felled)
+            //harvest could return from here (wood tick - when the tree is felled)
 
             ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
         }
 
-        return src.AnimationFinished() ? ACTION_FINISHED_SUCCESS : ACTION_INPROGRESS;
+        //logic for transition from the action to idling (action cooldown)
+        if(!anim_ended && src.AnimationFinished()) {
+            anim_ended = true;
+            action_stop_time = (float)input.CurrentTime() + src.Cooldown();
+        }
+
+        //animation values update
+        src.act() = anim_ended ? ActionType::IDLE : action.logic.type;
+        src.ori() = orientation;
+
+        //terminate action only once the cooldown is over
+        return (anim_ended && action_stop_time < (float)input.CurrentTime()) ? ACTION_FINISHED_SUCCESS : ACTION_INPROGRESS;
     }
 
     void ActionAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev) {
         //mark payload as already delivered - action won't happen but the animation continues
         action.data.b = true;
+        //TODO: could also start counting cooldown from now (or make cooldown shorter to switch action faster)
     }
 
     //=======================================
@@ -356,17 +373,6 @@ namespace eng {
                 cmd = Command::Idle();
                 return;
             }
-
-            //TODO: there also needs to be a cooldown
-            /*HOW TO IMPL COOLDOWN:
-                - add new field to the object jsons
-                - cooldown will be time between animation end and next attack start
-                - can implement this from inside attack action
-                    - will have to track that the animation ended (cuz it signals only once)
-                    - will mark the time when it ended & then compare it against the cooldown time
-                    - return ACTION_FINISHED only after it's over
-                    - also play idle animation for the cooldown duration (instead of the attack one)
-            */
 
             if(!src.RangeCheck(*target)) {
                 //range check failed -> lookup new possible location to attack from & start moving there

@@ -163,6 +163,8 @@ namespace eng {
         data.attack_range = config.at("attack_range");
         data.armor = config.at("armor");
         data.vision_range = config.at("vision_range");
+
+        data.cooldown = config.count("cooldown") ? config.at("cooldown") : 0.f;
     }
 
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {

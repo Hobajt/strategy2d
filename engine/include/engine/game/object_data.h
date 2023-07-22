@@ -63,6 +63,8 @@ namespace eng {
         int attack_range;
         int armor;
         int vision_range;
+
+        float cooldown;
     public:
         virtual int MaxHealth() const override { return health; }
 
