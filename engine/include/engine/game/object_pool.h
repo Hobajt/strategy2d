@@ -22,11 +22,11 @@ namespace eng {
 
         Unit& GetUnit(const ObjectID& id);
         Building& GetBuilding(const ObjectID& id);
-        GameObject& GetObject(const ObjectID& id);
+        FactionObject& GetObject(const ObjectID& id);
 
         bool GetUnit(const ObjectID& id, Unit*& ref_unit);
         bool GetBuilding(const ObjectID& id, Building*& ref_building);
-        bool GetObject(const ObjectID& id, GameObject*& ref_object);
+        bool GetObject(const ObjectID& id, FactionObject*& ref_object);
 
         //===== insert =====
 

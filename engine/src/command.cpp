@@ -242,11 +242,32 @@ namespace eng {
         //payload delivery check
         if(src.AnimKeyframeSignal() && !delivered) {
             delivered = true;
-            //TODO: implement the three types of payload
+            // ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
 
-            //harvest could return from here (wood tick - when the tree is felled)
-
-            ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
+            switch(payload_id) {
+                case ActionPayloadType::HARVEST:        //harvest action payload
+                    //TODO:
+                    //decrement value in the map data, send out signal when
+                    //harvest could return from here (wood tick - when the tree is felled)
+                    ENG_LOG_INFO("ACTION PAYLOAD - HARVEST");
+                    break;
+                case ActionPayloadType::MELEE_ATTACK:   //melee attack action payload
+                {
+                    ENG_LOG_INFO("ACTION PAYLOAD - MELEE ATTACK");
+                    FactionObject* target = nullptr;
+                    if(level.objects.GetObject(action.data.target, target)) {
+                        target->ApplyDirectDamage(src);
+                    }
+                }
+                    break;
+                default:                                //effect action payload (includes ranged attacks)
+                    ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
+                    //TODO:
+                    //spawn an utility object (projectile/spell effect/buff)
+                    //use payload_id to get the prefab from Unit's data
+                    break;
+                
+            }
         }
 
         //logic for transition from the action to idling (action cooldown)
@@ -364,12 +385,12 @@ namespace eng {
 
         if(res != ACTION_INPROGRESS) {
             //no action in progress
-            ENG_LOG_INFO("ATTACK CMD - NO ACTION");
+            // ENG_LOG_INFO("ATTACK CMD - NO ACTION");
 
-            GameObject* target;
+            FactionObject* target;
             if(!level.objects.GetObject(cmd.target_id, target)) {
                 //existence check failed - target no longer exists
-                ENG_LOG_INFO("ATTACK CMD - NO TARGET");
+                // ENG_LOG_INFO("ATTACK CMD - NO TARGET");
                 cmd = Command::Idle();
                 return;
             }
@@ -379,12 +400,12 @@ namespace eng {
                 glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, target->MinPos(), target->MaxPos());
                 if(target_pos == src.Position()) {
                     //no reachable destination found
-                    ENG_LOG_INFO("ATTACK CMD - TARGET UNREACHABLE");
+                    // ENG_LOG_INFO("ATTACK CMD - TARGET UNREACHABLE");
                     cmd = Command::Idle();
                 }
                 else {
                     //initiate new move action
-                    ENG_LOG_INFO("ATTACK CMD - MOVING TOWARDS TARGET");
+                    // ENG_LOG_INFO("ATTACK CMD - MOVING TOWARDS TARGET");
                     ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                     action = Action::Move(src.Position(), target_pos);
                 }
@@ -392,7 +413,7 @@ namespace eng {
             }
             else {
                 //within range -> iniate new attack action
-                ENG_LOG_INFO("ATTACK CMD - ISSUE ATTACK ACTION");
+                // ENG_LOG_INFO("ATTACK CMD - ISSUE ATTACK ACTION");
                 action = Action::Attack(cmd.target_id, target->Position() - src.Position(), src.AttackRange() > 1);
             }
         }

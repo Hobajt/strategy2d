@@ -5,6 +5,7 @@
 #include "engine/core/palette.h"
 
 #include "engine/utils/dbg_gui.h"
+#include "engine/utils/randomness.h"
 
 namespace eng {
 
@@ -114,10 +115,25 @@ namespace eng {
         return (D <= data_f->attack_range);
     }
 
+    void FactionObject::ApplyDirectDamage(const FactionObject& source) {
+        //formula from http://classic.battle.net/war2/basic/combat.shtml
+        int dmg = std::max(source.BasicDamage() - this->Armor(), 0) + source.PierceDamage();
+        dmg = int(dmg * (Random::Uniform() * 0.5f + 0.5f));
+
+        if(dmg < 0) dmg = 0;
+
+        //death condition is handled in object's Update() method
+        health -= dmg;
+
+        ENG_LOG_FINE("[DMG] {} dealt {} damage to {} (melee).", source.OID().to_string(), dmg, OID().to_string());
+    }
+
     void FactionObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         GameObject::Inner_DBG_GUI();
         ImGui::Separator();
+        ImGui::Text("Health: %d/%d", health, data_f->MaxHealth());
+        ImGui::SliderInt("health", &health, 0, data_f->MaxHealth());
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
             ChangeColor(colorIdx);
 #endif
@@ -142,6 +158,8 @@ namespace eng {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, *lvl());
         animation_ended = animator.Update(ActionIdx());
+
+        //TODO: add death condition check here (do the same for buildings) ... also probably ceil health value at maxHealth
     }
 
     void Unit::IssueCommand(const Command& cmd) {

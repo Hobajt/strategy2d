@@ -102,10 +102,16 @@ namespace eng {
 
         bool CanAttack() const { return data_f->CanAttack(); }
         int AttackRange() const { return data_f->attack_range; }
+        int BasicDamage() const { return data_f->basic_damage; }
+        int PierceDamage() const { return data_f->pierce_damage; }
         float Cooldown() const { return data_f->cooldown; }
+        int Armor() const { return data_f->armor; }
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
+
+        //For melee damage application.
+        void ApplyDirectDamage(const FactionObject& source);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

@@ -21,6 +21,28 @@
         "cooldown": 1.5
     },
     {
+        "name": "human/footman",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 60,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [600,0,0],
+        "attack_range": 1,
+        "armor": 2,
+        "basic_damage": 6,
+        "pierce_damage": 3,
+        "cooldown": 1.5
+    },
+
+    {
         "name": "human/town_hall",
         "type": 3,
         "nav_type": 1,

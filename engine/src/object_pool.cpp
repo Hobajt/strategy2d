@@ -56,7 +56,7 @@ namespace eng {
         return buildings[BuildingsPool::key(id.idx, id.id)];
     }
 
-    GameObject& ObjectPool::GetObject(const ObjectID& id) {
+    FactionObject& ObjectPool::GetObject(const ObjectID& id) {
         switch(id.type) {
             case ObjectType::BUILDING:
                 return GetBuilding(id);
@@ -98,7 +98,7 @@ namespace eng {
         return false;
     }
 
-    bool ObjectPool::GetObject(const ObjectID& id, GameObject*& ref_object) {
+    bool ObjectPool::GetObject(const ObjectID& id, FactionObject*& ref_object) {
         switch(id.type) {
             case ObjectType::BUILDING:
                 return GetBuilding(id, (Building*&)ref_object);
