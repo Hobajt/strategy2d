@@ -7,6 +7,10 @@
 #include "engine/game/command.h"
 #include "engine/game/gameobject.h"
 
+#include "engine/utils/randomness.h"
+
+#define SOUNDS_PATH_PREFIX "res/sounds/Gamesfx"
+
 namespace eng {
 
     GameObjectDataRef ParseConfig_Object(const nlohmann::json& config);
@@ -15,6 +19,8 @@ namespace eng {
     GameObjectDataRef ParseConfig_Unit(const nlohmann::json& config);
     void ParseConfig_FactionObject(const nlohmann::json& config, FactionObjectData& data);
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config);
+
+    SoundEffect ParseSoundEffect(const nlohmann::json& json);
 
     int ResolveUnitAnimationID(const std::string& name);
     int ResolveBuildingAnimationID(const std::string& name);
@@ -32,6 +38,17 @@ namespace eng {
     std::ostream& operator<<(std::ostream& os, const ObjectID& id) {
         os << id.to_string();
         return os;
+    }
+
+    //===== SoundEffect =====
+
+    std::string SoundEffect::Random() const {
+        char buf[512];
+        if(variations > 0)
+            snprintf(buf, sizeof(buf), "%s/%s%d.wav", SOUNDS_PATH_PREFIX, path.c_str(), Random::UniformInt(1, variations));
+        else
+            snprintf(buf, sizeof(buf), "%s/%s.wav", SOUNDS_PATH_PREFIX, path.c_str());
+        return std::string(buf);
     }
 
     //=============================
@@ -141,11 +158,18 @@ namespace eng {
             float keyframe = anim_data.count("keyframe") ? anim_data.at("keyframe") : 1.f;
             animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe)) });
         }
-
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));
 
         //parse general unit/building parameters
         ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
+
+        //sound paths parsing
+        auto& sounds = config.at("sounds");
+        if(sounds.count("attack"))  data->sound_attack  = ParseSoundEffect(sounds.at("attack"));
+        if(sounds.count("ready"))   data->sound_ready   = ParseSoundEffect(sounds.at("ready"));
+        if(sounds.count("yes"))     data->sound_yes     = ParseSoundEffect(sounds.at("yes"));
+        if(sounds.count("what"))    data->sound_what    = ParseSoundEffect(sounds.at("what"));
+        if(sounds.count("pissed"))  data->sound_pissed  = ParseSoundEffect(sounds.at("pissed"));
 
         return std::static_pointer_cast<GameObjectData>(data);
     }
@@ -216,6 +240,10 @@ namespace eng {
         sprite_path = prefix + "/buildings_winter/" + suffix;
         int wo = Building::WinterSpritesOffset();
         animations.insert({ id + wo, SpriteGroup(SpriteGroupData(id + wo, Resources::LoadSprite(sprite_path), repeat, 1.f)) });
+    }
+
+    SoundEffect ParseSoundEffect(const nlohmann::json& json) {
+        return json.is_array() ? SoundEffect(json.at(0), json.at(1)) : SoundEffect(json);
     }
 
 

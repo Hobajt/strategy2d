@@ -134,7 +134,7 @@ namespace eng {
         friend class Action;
     public:
         Unit() = default;
-        Unit(Level& level, const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f));
+        Unit(Level& level, const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), bool playReadySound = true);
         virtual ~Unit();
 
         //move enabled
@@ -152,6 +152,8 @@ namespace eng {
         glm::vec2& m_offset() { return move_offset; }
 
         bool AnimationFinished() const { return animation_ended; }
+
+        UnitDataRef UData() const { return data; }
     protected:
         virtual void Inner_DBG_GUI();
     private:

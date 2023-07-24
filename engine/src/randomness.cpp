@@ -12,8 +12,20 @@ namespace eng::Random {
 
     static Data data = {};
 
+    //==================
+
     float Uniform() {
         return data.dist(data.gen);
+    }
+
+    int UniformInt(int max) {
+        std::uniform_int_distribution<int> dist = std::uniform_int_distribution<int>(0, max);
+        return dist(data.gen);
+    }
+    
+    int UniformInt(int min, int max) {
+        std::uniform_int_distribution<int> dist = std::uniform_int_distribution<int>(min, max);
+        return dist(data.gen);
     }
 
 }//namespace eng::Random

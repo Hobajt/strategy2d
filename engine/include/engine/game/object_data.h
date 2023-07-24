@@ -31,6 +31,19 @@ namespace eng {
         friend std::ostream& operator<<(std::ostream& os, const ObjectID& id);
     };
 
+    //===== SoundEffect =====
+
+    struct SoundEffect {
+        bool valid = false;
+        std::string path;
+        int variations;
+    public:
+        SoundEffect() = default;
+        SoundEffect(const std::string& path_, int variations_ = 0) : valid(true), path(path_), variations(variations_) {}
+
+        //Composes path for random variation of given sound effect.
+        std::string Random() const;
+    };
 
     //===== GameObjectData =====
 
@@ -75,7 +88,13 @@ namespace eng {
     //===== UnitData =====
 
     struct UnitData : public FactionObjectData {
-        
+        SoundEffect sound_attack;
+        SoundEffect sound_ready;
+        SoundEffect sound_yes;
+        SoundEffect sound_what;
+        SoundEffect sound_pissed;
+    public:
+        const SoundEffect& AttackSound() const { return sound_attack; }
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 

@@ -18,7 +18,14 @@
         "armor": 0,
         "basic_damage": 3,
         "pierce_damage": 6,
-        "cooldown": 1.5
+        "cooldown": 1.5,
+        "sounds": {
+            "yes": ["troll/tryessr", 3],
+            "what": ["troll/trwhat", 3],
+            "pissed": ["troll/trpissd", 3],
+            "ready": "troll/tryessr",
+            "attack": "misc/axe"
+        }
     },
     {
         "name": "human/footman",
@@ -39,7 +46,14 @@
         "armor": 2,
         "basic_damage": 6,
         "pierce_damage": 3,
-        "cooldown": 1.5
+        "cooldown": 1.5,
+        "sounds": {
+            "yes": ["human/hyessir", 4],
+            "what": ["human/hwhat", 6],
+            "pissed": ["human/hpissed", 7],
+            "ready": "human/hready",
+            "attack": ["misc/sword", 3]
+        }
     },
 
     {

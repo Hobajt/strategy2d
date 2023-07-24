@@ -2,6 +2,7 @@
 
 #include "engine/core/input.h"
 #include "engine/game/level.h"
+#include "engine/core/audio.h"
 
 namespace eng {
 
@@ -49,8 +50,18 @@ namespace eng {
     int  MoveAction_Update(Unit& src, Level& level, Action& action);
     void MoveAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev);
 
-    /* ACTION ACTION DESCRIPTION:
-        - TODO:
+    /* "ACTION" ACTION DESCRIPTION:
+        - action for generic activities
+            - manages synchronization between unit's animation and the effect of given activity (ie. ranged attack -> spawn arrow at proper time)
+            - also manages cooldown after the action has been done
+            - supports 3 types of activities:
+                - melee attack - applies damage to the target
+                - wood harvest - decrements wood resource
+                - effect - spawns an utility object with given effect
+            - returns:
+                - in_progress while in progress or when on cooldown
+                - finished once the cooldown wears off
+                - for harvest, returns tick_signal when target wood block has exactly 0 health
         - signaling causes the unit to cancel the attack (effect doesn't happen, but animation still finishes)
     */
 
@@ -257,6 +268,9 @@ namespace eng {
                     FactionObject* target = nullptr;
                     if(level.objects.GetObject(action.data.target, target)) {
                         target->ApplyDirectDamage(src);
+
+                        if(src.UData()->AttackSound().valid)
+                            Audio::Play(src.UData()->AttackSound().Random(), src.Position());
                     }
                 }
                     break;
@@ -265,6 +279,9 @@ namespace eng {
                     //TODO:
                     //spawn an utility object (projectile/spell effect/buff)
                     //use payload_id to get the prefab from Unit's data
+
+                    if(src.UData()->AttackSound().valid)
+                        Audio::Play(src.UData()->AttackSound().Random(), src.Position());
                     break;
                 
             }

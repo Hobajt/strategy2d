@@ -6,6 +6,7 @@
 
 #include "engine/utils/dbg_gui.h"
 #include "engine/utils/randomness.h"
+#include "engine/core/audio.h"
 
 namespace eng {
 
@@ -150,8 +151,12 @@ namespace eng {
 
     //===== Unit =====
 
-    Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_)
-        : FactionObject(level_, data_, faction_, position_), data(data_) {}
+    Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool playReadySound)
+        : FactionObject(level_, data_, faction_, position_), data(data_) {
+        
+        if(playReadySound && data->sound_ready.valid)
+            Audio::Play(data->sound_ready.Random());
+    }
 
     Unit::~Unit() {}
 
