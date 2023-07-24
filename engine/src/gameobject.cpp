@@ -93,9 +93,6 @@ namespace eng {
 
         ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
         ChangeColor(colorIdx_);
-
-        //register the object with the map
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
     }
 
     FactionObject::~FactionObject() {
@@ -111,8 +108,12 @@ namespace eng {
         animator.SetPaletteIdx((float)colorIdx);
     }
 
-    bool FactionObject::RangeCheck(GameObject& target) {
-        float D = get_range(MinPos(), MaxPos(), target.MinPos(), target.MaxPos());
+    bool FactionObject::RangeCheck(GameObject& target) const {
+        return RangeCheck(target.MinPos(), target.MaxPos());
+    }
+
+    bool FactionObject::RangeCheck(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const {
+        float D = get_range(MinPos(), MaxPos(), min_pos, max_pos);
         return (D <= data_f->attack_range);
     }
 
@@ -143,6 +144,11 @@ namespace eng {
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
             ChangeColor(colorIdx);
 #endif
+    }
+
+    void FactionObject::InnerIntegrate() {
+        //register the object with the map
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), Data()->objectType == ObjectType::BUILDING);
     }
 
     bool FactionObject::ValidColor(int idx) {

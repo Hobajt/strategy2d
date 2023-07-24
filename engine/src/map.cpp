@@ -6,6 +6,7 @@
 #include "engine/utils/utils.h"
 #include "engine/utils/json.h"
 #include "engine/utils/dbg_gui.h"
+#include "engine/utils/randomness.h"
 
 #include "engine/game/gameobject.h"
 
@@ -21,8 +22,6 @@ namespace eng {
 
     //Generates tile's border type from corner tile types.
     int GetBorderType(int t_a, int a, int b, int c, int d);
-
-    bool IsWallTile(int tileType);
 
     typedef float(*heuristic_fn)(const glm::ivec2& src, const glm::ivec2& dst);
 
@@ -57,7 +56,10 @@ namespace eng {
         building = (is_building) ? false : building;
     }
 
-    TileData::TileData(int tileType_, int variation_, int cornerType_) : tileType(tileType_), cornerType(cornerType_), variation(variation_) {}
+    TileData::TileData(int tileType_, int variation_, int cornerType_, int health_)
+        : tileType(tileType_), cornerType(cornerType_), variation(variation_), health(health_) {
+        UpdateID();
+    }
 
     bool TileData::Traversable(int unitNavType) const {
         return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken)) && !nav.building;
@@ -65,6 +67,10 @@ namespace eng {
 
     bool TileData::PermanentlyTaken(int unitNavType) const {
         return bool(unitNavType & nav.taken & nav.permanent) || bool(unitNavType & ~(TileTraversability() + NavigationBit::AIR)) || nav.building;
+    }
+
+    void TileData::UpdateID() {
+        id = IsMapObject(tileType) ? ObjectID(ObjectType::MAP_OBJECT, 0, tileType) : ObjectID();
     }
 
     int TileData::TileTraversability() const {
@@ -216,26 +222,35 @@ namespace eng {
             for(int x = 0; x < size.x; x++) {
                 b = &tiles(y+0, x+1);
                 d = &tiles(y+1, x+1);
-
-                if(!IsWallTile(a->tileType)) {
-                    //not a wall tile -> pick index based on corners
-                    int borderType = GetBorderType(a->tileType, a->cornerType, b->cornerType, c->cornerType, d->cornerType);
-                    a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
-                }
-                else {
-                    //wall tile -> pick index based on neighboring tile types
-                    int t = (y > 0) ? (int)IsWallTile(tiles[c2i(y-1, x, size)].tileType) : 0;
-                    int l = (int)IsWallTile(b->tileType);
-                    int b = (int)IsWallTile(c->tileType);
-                    int r = (x > 0) ? (int)IsWallTile(tiles[c2i(y, x-1, size)].tileType) : 0;
-                    int borderType = GetBorderType(1, t, r, b, l);
-                    a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
-                }
-
+                
+                UpdateTileIndex(tiles, y, x, a, b, c, d);
                 
                 a = b;
                 c = d;
             }
+        }
+    }
+
+    void Tileset::UpdateTileIndices(MapTiles& tiles, const glm::ivec2& coords) const {
+        int x = coords.x;
+        int y = coords.y;
+        UpdateTileIndex(tiles, y, x, &tiles(y, x), &tiles(y, x+1), &tiles(y+1, x), &tiles(y+1, x+1));
+    }
+
+    void Tileset::UpdateTileIndex(MapTiles& tiles, int y, int x, TileData* a, TileData* b, TileData* c, TileData* d) const {
+        if(!IsWallTile(a->tileType)) {
+            //not a wall tile -> pick index based on corners
+            int borderType = GetBorderType(a->tileType, a->cornerType, b->cornerType, c->cornerType, d->cornerType);
+            a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
+        }
+        else {
+            //wall tile -> pick index based on neighboring tile types
+            int t = (y > 0) ? (int)IsWallTile(tiles[c2i(y-1, x, tiles.Size())].tileType) : 0;
+            int l = (int)IsWallTile(b->tileType);
+            int b = (int)IsWallTile(c->tileType);
+            int r = (x > 0) ? (int)IsWallTile(tiles[c2i(y, x-1, tiles.Size())].tileType) : 0;
+            int borderType = GetBorderType(1, t, r, b, l);
+            a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
         }
     }
 
@@ -340,6 +355,39 @@ namespace eng {
         return operator()(idx.y, idx.x);
     }
 
+    void Map::DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src) {
+        constexpr static std::array<int, 6> tileMapping = {
+            TileType::ROCK_BROKEN,
+            TileType::WALL_HU_DAMAGED, 
+            TileType::WALL_BROKEN,
+            TileType::WALL_OC_DAMAGED, 
+            TileType::WALL_BROKEN,
+            TileType::TREES_FELLED,
+        };
+
+        TileData& td = at(idx.y, idx.x);
+        if(!IsMapObject(td.tileType)) {
+            ENG_LOG_WARN("Map::DamageTile - Attempting to damage a tile which isn't a map object (type={}).", td.tileType);
+            return;
+        }
+        
+        damage = int(damage * (Random::Uniform() * 0.5f + 0.5f));
+        if(damage < 0) damage = 0;
+        
+        td.health -= damage;
+        ENG_LOG_FINE("[DMG] {} dealt {} damage to map_object at ({},{}) (melee, remaining: {}/100).", src.to_string(), damage, idx.x, idx.y, td.health);
+
+        if(td.health <= 0) {
+            int newType = tileMapping[td.tileType - TileType::ROCK];
+            ENG_LOG_FINE("Tile transformation [({},{})] - {} -> {}", idx.x, idx.y, td.tileType, newType);
+            td.tileType = newType;
+            td.health = 100;
+            tileset->UpdateTileIndices(tiles, idx);
+            td.UpdateID();
+        }
+
+    }
+
     Mapfile Map::Export() {
         Mapfile mapfile;
         mapfile.tiles = tiles.Clone();
@@ -429,7 +477,7 @@ namespace eng {
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building) {
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, bool is_building) {
         ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -441,6 +489,7 @@ namespace eng {
                 if(!tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
                 tiles(idx).nav.Claim(navType, true, is_building);
+                tiles(idx).id = id;
             }
         }
     }
@@ -457,6 +506,7 @@ namespace eng {
                 if(tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
                 tiles(idx).nav.Unclaim(navType, is_building);
+                tiles(idx).id = ObjectID();
             }
         }
     }
@@ -464,6 +514,13 @@ namespace eng {
     void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently) {
         tiles(pos_prev).nav.Unclaim(unit_navType, false);
         tiles(pos_next).nav.Claim(unit_navType, permanently, false);
+
+        tiles(pos_next).id = tiles(pos_prev).id;
+        tiles(pos_prev).id = ObjectID();
+    }
+
+    ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {
+        return tiles(coords).id;
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -585,6 +642,11 @@ namespace eng {
         if(ImGui::Button("Traversable", btn_size)) mode = 2;
 
         ImGui::Separator();
+        if(ImGui::Button("ObjectIDs", btn_size)) mode = 6;
+        ImGui::SameLine();
+        if(ImGui::Button("Tile Health", btn_size)) mode = 7;
+        ImGui::Separator();
+
         ImGui::Text("Pathfinding");
         if(ImGui::Button("Taken", btn_size)) mode = 3;
         ImGui::SameLine();
@@ -592,6 +654,7 @@ namespace eng {
         ImGui::SameLine();
         if(ImGui::Button("Distances", btn_size)) mode = 5;
         ImGui::Separator();
+        
 
         glm::ivec2 size = (mode != 1) ? tiles.Size() : (tiles.Size()+1);
 
@@ -601,6 +664,9 @@ namespace eng {
         switch(mode) {
             case 5:
                 cell_width = TEXT_BASE_WIDTH * 6.f;
+                break;
+            case 6:
+                cell_width = TEXT_BASE_WIDTH * 8.f;
                 break;
         }
         
@@ -690,6 +756,21 @@ namespace eng {
                         case 5:
                             ImGui::Text("%5.1f", tiles(y,x).nav.d);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(std::min(1.f, std::powf(tiles(y,x).nav.d / D, 2.2f)), 0.1f, 0.1f, 1.0f)));
+                            break;
+                        case 6:
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
+                            if(tiles(y,x).id.type != ObjectType::INVALID) {
+                                ImGui::Text("%d|%d|%d", tiles(y,x).id.type, tiles(y,x).id.idx, tiles(y,x).id.id);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr4);
+                            }
+                            else {
+                                ImGui::Text("---");
+                            }
+                            ImGui::PopStyleVar();
+                            break;
+                        case 7:
+                            ImGui::Text("%d", tiles(y,x).health);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(tiles(y,x).health / 100.f, 0.1f, 0.1f, 1.0f)));
                             break;
                         default:
                             ImGui::Text("---");
@@ -1128,6 +1209,10 @@ namespace eng {
 
     bool IsWallTile(int tileType) {
         return (tileType >= TileType::WALL_HU && tileType <= TileType::WALL_OC_DAMAGED);
+    }
+
+    bool IsMapObject(int tileType) {
+        return (tileType >= TileType::ROCK);
     }
 
     float heuristic_euclidean(const glm::ivec2& src, const glm::ivec2& dst) {

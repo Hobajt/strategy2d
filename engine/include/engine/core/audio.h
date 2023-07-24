@@ -23,6 +23,8 @@ namespace eng {
 
         void UpdateListenerPosition(const glm::vec2& position);
 
+        void Enabled(bool enabled);
+
         void DBG_GUI();
 
    }//namespace Audio

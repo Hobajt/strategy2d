@@ -35,7 +35,7 @@ void Sandbox::OnInit() {
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(2.f, 2.f)));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
-        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), dummy_faction, glm::vec2(0.f, 0.f), false);
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), dummy_faction, glm::vec2(5.f, 5.f), false);
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -48,6 +48,8 @@ void Sandbox::OnInit() {
         LOG_ERROR("Failed to load resources; Terminating...");
         throw e;
     }
+
+    Audio::Enabled(false);
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
@@ -97,16 +99,26 @@ void Sandbox::OnUpdate() {
         Unit& troll = level.objects.GetUnit(trollID);
 
         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ObjectID target_id = level.objects.GetObjectAt(target_pos);
+        ObjectID target_id = level.map.ObjectIDAt(target_pos);
         switch(rmb_commandID) {
             case CommandType::IDLE:     //adaptive command - determined based on click target
-                if(ObjectID::IsValid(target_id)) {
-                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-                    troll.IssueCommand(Command::Attack(target_id));
+                if(ObjectID::IsAttackable(target_id)) {
+                    if(ObjectID::IsObject(target_id))
+                        ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
+                    else
+                        ENG_LOG_INFO("ATTACK {} at {} (map object)", target_id, target_pos);
+                    if(troll.UData()->YesSound().valid) {
+                        Audio::Play(troll.UData()->YesSound().Random());
+                    }
+                    troll.IssueCommand(Command::Attack(target_id, target_pos));
                 }
                 else if(level.map.IsWithinBounds(target_pos)) {
                     ENG_LOG_INFO("MOVE TO {}", target_pos);
                     troll.IssueCommand(Command::Move(target_pos));
+                    //TODO: play units voices from wherever player commands are generated (not in the commands themselves)
+                    if(troll.UData()->YesSound().valid) {
+                        Audio::Play(troll.UData()->YesSound().Random());
+                    }
                 }
                 else {
                     ENG_LOG_INFO("COULDN'T RESOLVE COMMAND");
@@ -119,9 +131,9 @@ void Sandbox::OnUpdate() {
                 }
                 break;
             case CommandType::ATTACK:
-                if(ObjectID::IsValid(target_id)) {
+                if(ObjectID::IsAttackable(target_id)) {
                     ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-                    troll.IssueCommand(Command::Attack(target_id));
+                    troll.IssueCommand(Command::Attack(target_id, target_pos));
                 }
                 else {
                     ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);

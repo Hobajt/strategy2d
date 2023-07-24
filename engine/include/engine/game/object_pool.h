@@ -37,7 +37,7 @@ namespace eng {
         ObjectID EmplaceUnit(Args&&... args) {
             UnitsPool::key key = units.emplace(GameObject::PeekNextID(), std::forward<Args>(args)...);
             ObjectID oid = ObjectID(ObjectType::UNIT, key.idx, key.id);
-            units[key].SetObjectID(oid);
+            units[key].IntegrateIntoLevel(oid);
             return oid;
         }
 
@@ -45,7 +45,7 @@ namespace eng {
         ObjectID EmplaceBuilding(Args&&... args) {
             BuildingsPool::key key = units.emplace(GameObject::PeekNextID(), std::forward<Args>(args)...);
             ObjectID oid = ObjectID(ObjectType::BUILDING, key.idx, key.id);
-            buildings[key].SetObjectID(oid);
+            buildings[key].IntegrateIntoLevel(oid);
             return oid;
         }
 

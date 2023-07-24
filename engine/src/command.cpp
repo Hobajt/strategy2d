@@ -137,12 +137,13 @@ namespace eng {
         return action;
     }
 
-    Action Action::Attack(const ObjectID& target_id, const glm::ivec2& target_dir, bool is_ranged) {
+    Action Action::Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged) {
         Action action = {};
 
         action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
         action.data.Reset();
         action.data.target = target_id;
+        action.data.target_pos = target_pos;
 
         action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
         action.data.j = is_ranged ? ActionPayloadType::RANGED_ATTACK : ActionPayloadType::MELEE_ATTACK; //payload type identifier
@@ -239,7 +240,7 @@ namespace eng {
         action.data.target_pos = src.Position();
     }
 
-    int  ActionAction_Update(Unit& src, Level& level, Action& action) {
+    int ActionAction_Update(Unit& src, Level& level, Action& action) {
         Input& input = Input::Get();
         int orientation = action.data.i;
         int payload_id = action.data.j;
@@ -265,12 +266,28 @@ namespace eng {
                 case ActionPayloadType::MELEE_ATTACK:   //melee attack action payload
                 {
                     ENG_LOG_INFO("ACTION PAYLOAD - MELEE ATTACK");
-                    FactionObject* target = nullptr;
-                    if(level.objects.GetObject(action.data.target, target)) {
-                        target->ApplyDirectDamage(src);
 
-                        if(src.UData()->AttackSound().valid)
-                            Audio::Play(src.UData()->AttackSound().Random(), src.Position());
+                    bool attack_happened = false;
+                    if(action.data.target.type != ObjectType::MAP_OBJECT) {
+                        //target is regular object
+                        FactionObject* target = nullptr;
+                        if(level.objects.GetObject(action.data.target, target)) {
+                            target->ApplyDirectDamage(src);
+                            attack_happened = true;
+                        }
+                    }
+                    else {
+                        //target is attackable map object
+                        const TileData& tile = level.map(action.data.target_pos);
+                        if(IsWallTile(tile.tileType)) {
+                            level.map.DamageTile(action.data.target_pos, src.BasicDamage(), src.OID());
+                            attack_happened = true;
+                        }
+                    }
+
+                    //play units attack sound if the attack happened
+                    if(attack_happened && src.UData()->AttackSound().valid) {
+                        Audio::Play(src.UData()->AttackSound().Random(), src.Position());
                     }
                 }
                     break;
@@ -327,12 +344,13 @@ namespace eng {
         return cmd;
     }
 
-    Command Command::Attack(const ObjectID& target_id) {
+    Command Command::Attack(const ObjectID& target_id, const glm::ivec2& target_pos) {
         Command cmd = {};
 
         cmd.type = CommandType::ATTACK;
         cmd.handler = CommandHandler_Attack;
         cmd.target_id = target_id;
+        cmd.target_pos = target_pos;
 
         return cmd;
     }
@@ -401,37 +419,53 @@ namespace eng {
         int res = action.Update(src, level);
 
         if(res != ACTION_INPROGRESS) {
-            //no action in progress
-            // ENG_LOG_INFO("ATTACK CMD - NO ACTION");
 
-            FactionObject* target;
-            if(!level.objects.GetObject(cmd.target_id, target)) {
-                //existence check failed - target no longer exists
-                // ENG_LOG_INFO("ATTACK CMD - NO TARGET");
-                cmd = Command::Idle();
-                return;
+            //target existence check & value retrieval
+            glm::vec2 pos_min, pos_max;
+            if(cmd.target_id.type != ObjectType::MAP_OBJECT) {
+                //target is regular object
+
+                FactionObject* target;
+                if(!level.objects.GetObject(cmd.target_id, target)) {
+                    //existence check failed - target no longer exists
+                    cmd = Command::Idle();
+                    return;
+                }
+
+                pos_min = target->MinPos();
+                pos_max = target->MaxPos();
+            }
+            else {
+                //target is an attackable map object (wall)
+
+                const TileData& tile = level.map(cmd.target_pos);
+                if(!IsWallTile(tile.tileType)) {
+                    //existence check failed - target no longer exists
+                    cmd = Command::Idle();
+                    return;
+                }
+
+                pos_min = pos_max = glm::vec2(cmd.target_pos);
             }
 
-            if(!src.RangeCheck(*target)) {
+            //range check & action issuing
+            if(!src.RangeCheck(pos_min, pos_max)) {
                 //range check failed -> lookup new possible location to attack from & start moving there
-                glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, target->MinPos(), target->MaxPos());
-                if(target_pos == src.Position()) {
+                glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max);
+                if(move_pos == src.Position()) {
                     //no reachable destination found
-                    // ENG_LOG_INFO("ATTACK CMD - TARGET UNREACHABLE");
                     cmd = Command::Idle();
                 }
                 else {
                     //initiate new move action
-                    // ENG_LOG_INFO("ATTACK CMD - MOVING TOWARDS TARGET");
-                    ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
-                    action = Action::Move(src.Position(), target_pos);
+                    ASSERT_MSG(has_valid_direction(move_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                    action = Action::Move(src.Position(), move_pos);
                 }
                 return;
             }
             else {
                 //within range -> iniate new attack action
-                // ENG_LOG_INFO("ATTACK CMD - ISSUE ATTACK ACTION");
-                action = Action::Attack(cmd.target_id, target->Position() - src.Position(), src.AttackRange() > 1);
+                action = Action::Attack(cmd.target_id, glm::ivec2(pos_min), glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
             }
         }
     }

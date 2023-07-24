@@ -23,6 +23,8 @@ namespace eng {
         struct InternalAudioData {
             ma_engine engine;
 
+            bool enabled = true;
+
             //TODO: initialize volume values from some kind of persistent storage (.config file?)
             float volume_master = 100.f;
             float volume_digital = 100.f;
@@ -98,6 +100,9 @@ namespace eng {
         }
 
         bool Play(const std::string& path) {
+            if(!data.enabled)
+                return true;
+
             // ma_result result = ma_engine_play_sound(&data.engine, path.c_str(), &data.digital_group);
 
             ma_sound* sound = FetchFreeSoundObject();
@@ -114,6 +119,9 @@ namespace eng {
         }
 
         bool Play(const std::string& path, const glm::vec2& position) {
+            if(!data.enabled)
+                return true;
+            
             ma_sound* sound = FetchFreeSoundObject();
 
             ma_uint32 flags = MA_SOUND_FLAG_DECODE;
@@ -141,6 +149,9 @@ namespace eng {
         }
 
         bool PlayMusic(const std::string& path) {
+            if(!data.enabled)
+                return true;
+
             if(ma_sound_is_playing(&data.music)) {
                 ma_sound_uninit(&data.music);
             }
@@ -162,9 +173,17 @@ namespace eng {
             // ENG_LOG_TRACE("LISTENER POS: ({}, {}, {})", p.x, p.y, p.z);
         }
 
+        void Enabled(bool enabled) {
+            data.enabled = enabled;
+            //TODO: add music start/stop
+        }
+
         void DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
             ImGui::Begin("Sound");
+
+            ImGui::Checkbox("Enabled", &data.enabled);
+            ImGui::Separator();
 
             ImGui::Text("Volume");
             if(ImGui::SliderFloat("Master", &data.volume_master, 0.f, 100.f, "%.1f")) {

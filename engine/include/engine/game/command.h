@@ -64,7 +64,7 @@ namespace eng {
 
         static Action Idle();
         static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
-        static Action Attack(const ObjectID& target_id, const glm::ivec2& target_dir, bool is_ranged);
+        static Action Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged);
 
         //========
 
@@ -88,7 +88,7 @@ namespace eng {
 
         static Command Idle();
         static Command Move(const glm::ivec2& target_pos);
-        static Command Attack(const ObjectID& target_id);
+        static Command Attack(const ObjectID& target_id, const glm::ivec2& target_pos);
 
         void Update(Unit& src, Level& level);
 

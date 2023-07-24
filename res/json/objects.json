@@ -44,7 +44,7 @@
         "cost": [600,0,0],
         "attack_range": 1,
         "armor": 2,
-        "basic_damage": 6,
+        "basic_damage": 60,
         "pierce_damage": 3,
         "cooldown": 1.5,
         "sounds": {

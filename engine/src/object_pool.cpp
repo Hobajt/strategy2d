@@ -115,14 +115,14 @@ namespace eng {
     ObjectID ObjectPool::Add(Unit&& unit) {
         UnitsPool::key key = units.add(unit.ID(), std::move(unit));
         ObjectID oid = ObjectID(ObjectType::UNIT, key.idx, key.id);
-        units[key].SetObjectID(oid);
+        units[key].IntegrateIntoLevel(oid);
         return oid;
     }
 
     ObjectID ObjectPool::Add(Building&& building) {
         BuildingsPool::key key = buildings.add(building.ID(), std::move(building));
         ObjectID oid = ObjectID(ObjectType::BUILDING, key.idx, key.id);
-        buildings[key].SetObjectID(oid);
+        buildings[key].IntegrateIntoLevel(oid);
         return oid;
     }
 

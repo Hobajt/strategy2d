@@ -8,6 +8,8 @@
 #include "engine/utils/mathdefs.h"
 #include "engine/core/sprite.h"
 
+#include "engine/game/object_data.h"
+
 namespace eng {
 
     class Unit;
@@ -20,9 +22,11 @@ namespace eng {
             - Map::CornersValidationCheck::resolutionTypes
             - Map::CornersValidationCheck::transition_types
             - Map::GetTransitionTileType::transition_corners
+            - Map::DamageTile::tileMapping
             - Map::ResolveCornerType()
             - TileData::TileTraversability::tile_traversability
-            - IsWallTile() (local fn, map.cpp)
+            - IsWallTile()
+            - IsMapObject()
         */
 
         enum {
@@ -51,6 +55,9 @@ namespace eng {
     }//namespace TileType
 
     namespace NavigationBit { enum { OBSTACLE = 0, GROUND = 1, WATER = 2, AIR = 4 }; }
+
+    bool IsWallTile(int tileType);
+    bool IsMapObject(int tileType);
 
     //Navigation data container.
     struct NavData {
@@ -92,11 +99,13 @@ namespace eng {
 
         glm::ivec2 idx = glm::ivec2(0);     //index, pointing to location of specific tile visuals in tilemap sprite
 
-        int health = 0;             //for trees/walls health tracking; useless in other tile types
+        int health = 100;           //for trees/walls health tracking; useless in other tile types
         NavData nav;                //navigation variables
+
+        ObjectID id = {};           //id of an object located on this tile (invalid means empty)
     public:
         TileData() = default;
-        TileData(int tileType, int variation, int cornerType);
+        TileData(int tileType, int variation, int cornerType, int health);
 
         //Returns true if a unit with given navigation type can traverse this tile (& the tile isn't taken).
         bool Traversable(int unitNavType) const;
@@ -104,6 +113,8 @@ namespace eng {
         //Returns true if the tile is marked as permanently taken (object occupying it indends to stay there).
         //Also returns true if the tile is not taken, but is untraversable by definition (bcs of a tile type).
         bool PermanentlyTaken(int unitNavType) const;
+
+        void UpdateID();
     private:
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
@@ -214,8 +225,11 @@ namespace eng {
         //Updates tile.idx fields to use proper image for each tile (based on tile type, corner type & variations).
         //Assumes that provided array is of size ((size.x+1) * (size.y+1)).
         void UpdateTileIndices(MapTiles& tiles) const;
+        void UpdateTileIndices(MapTiles& tiles, const glm::ivec2& coords) const;
 
         glm::ivec2 GetTileIdx(int tileType, int borderType, int variation);
+    private:
+        void UpdateTileIndex(MapTiles& tiles, int y, int x, TileData* a, TileData* b, TileData* c, TileData* d) const;
     private:
         int c2i(int y, int x, const glm::ivec2& size) const { return y*(size.x+1)+x; }
     private:
@@ -283,6 +297,11 @@ namespace eng {
         const TileData& operator()(int y, int x) const;
         const TileData& operator()(const glm::ivec2& idx) const;
 
+        //Apply damage to given tile's health (don't use for harvest). If health drops below zero, the tile type changes.
+        void DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src);
+        //Harvest tick on given tile. Should only be used on wood tiles. Returns true when the health hits zero.
+        bool HarvestTile(const glm::ivec2& idx);
+
         void Render();
         void RenderRange(int x, int y, int w, int h);
 
@@ -296,9 +315,11 @@ namespace eng {
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
         glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, bool is_building);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
+
+        ObjectID ObjectIDAt(const glm::ivec2& coords) const;
 
         //==== Methods for editor ====
 

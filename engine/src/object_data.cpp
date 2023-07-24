@@ -40,6 +40,14 @@ namespace eng {
         return os;
     }
 
+    bool ObjectID::IsAttackable(const ObjectID& id) {
+        return ((unsigned int)(id.type - 1) < ObjectType::UTILITY) || (id.type == ObjectType::MAP_OBJECT && IsWallTile(id.id));
+    }
+
+    bool ObjectID::IsObject(const ObjectID& id) {
+        return ((unsigned int)(id.type - 1) < ObjectType::UTILITY);
+    }
+
     //===== SoundEffect =====
 
     std::string SoundEffect::Random() const {

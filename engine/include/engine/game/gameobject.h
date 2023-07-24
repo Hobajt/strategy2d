@@ -66,7 +66,8 @@ namespace eng {
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
-        void SetObjectID(const ObjectID& oid_) { oid = oid_; }
+        void IntegrateIntoLevel(const ObjectID& oid_) { oid = oid_; InnerIntegrate(); }
+        virtual void InnerIntegrate() {}
     protected:
         Animator animator;
     private:
@@ -98,7 +99,8 @@ namespace eng {
         void ChangeColor(int colorIdx);
 
         //Return true if given object is within this object's attack range.
-        bool RangeCheck(GameObject& target);
+        bool RangeCheck(GameObject& target) const;
+        bool RangeCheck(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
 
         bool CanAttack() const { return data_f->CanAttack(); }
         int AttackRange() const { return data_f->attack_range; }
@@ -117,6 +119,7 @@ namespace eng {
         void AddHealth(int value);
     protected:
         virtual void Inner_DBG_GUI() override;
+        virtual void InnerIntegrate() override;
     private:
         static bool ValidColor(int idx);
     private:

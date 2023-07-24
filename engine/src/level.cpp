@@ -95,10 +95,20 @@ namespace eng {
 
         map.tiles = MapTiles(eng::json::parse_ivec2(config.at("size")));
         int i = 0;
+        bool warn = false;
         for(auto& entry : config.at("data")) {
-            map.tiles[i++] = TileData(int(entry.at(0)), int(entry.at(1)), int(entry.at(2)));
+            if(entry.size() == 4)
+                map.tiles[i++] = TileData(int(entry.at(0)), int(entry.at(1)), int(entry.at(2)), int(entry.at(3)));
+            else {
+                map.tiles[i++] = TileData(int(entry.at(0)), int(entry.at(1)), int(entry.at(2)), 100);
+                warn = true;
+            }
         }
         map.tileset = config.at("tileset");
+
+        if(warn) {
+            ENG_LOG_WARN("Mapfile format is outdated.");
+        }
 
         if(i != map.tiles.Count()) {
             ENG_LOG_WARN("Mapfile - size mismatch ({}/{}).", i, map.tiles.Count());
@@ -120,7 +130,7 @@ namespace eng {
         int count = map.tiles.Count();
         for(int i = 0; i < count; i++) {
             const TileData& td = map.tiles[i];
-            data.push_back({ td.tileType, td.variation, td.cornerType });
+            data.push_back({ td.tileType, td.variation, td.cornerType, td.health });
         }
 
         return out;

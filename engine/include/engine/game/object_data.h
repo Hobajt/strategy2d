@@ -11,7 +11,7 @@ namespace eng {
 
     //===== ObjectID =====
 
-    namespace ObjectType { enum { INVALID, GAMEOBJECT, UNIT, BUILDING, UTILITY }; }
+    namespace ObjectType { enum { INVALID = 0, GAMEOBJECT, UNIT, BUILDING, UTILITY, MAP_OBJECT }; }
 
     //Unique identifier for any object within the ObjectPool.
     struct ObjectID {
@@ -25,6 +25,12 @@ namespace eng {
         ObjectID(dtype type_, dtype idx_, dtype id_) : type(type_), idx(idx_), id(id_) {}
 
         static bool IsValid(const ObjectID& id) { return id.type != ObjectType::INVALID; }
+
+        //True if ID describes a FactionObject or a MapObject which is a wall.
+        static bool IsAttackable(const ObjectID& id);
+
+        //true if it describes a unit/building/gameobject.
+        static bool IsObject(const ObjectID& id);
 
         //for logging purposes
         std::string to_string() const;
@@ -95,6 +101,10 @@ namespace eng {
         SoundEffect sound_pissed;
     public:
         const SoundEffect& AttackSound() const { return sound_attack; }
+        const SoundEffect& ReadySound() const { return sound_ready; }
+        const SoundEffect& YesSound() const { return sound_yes; }
+        const SoundEffect& WhatSound() const { return sound_what; }
+        const SoundEffect& PissedSound() const { return sound_pissed; }
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 
