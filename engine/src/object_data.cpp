@@ -8,6 +8,9 @@
 #include "engine/game/gameobject.h"
 
 #include "engine/utils/randomness.h"
+#include "engine/core/input.h"
+
+#include <tuple>
 
 #define SOUNDS_PATH_PREFIX "res/sounds/Gamesfx"
 
@@ -26,6 +29,13 @@ namespace eng {
     int ResolveBuildingAnimationID(const std::string& name);
     std::pair<std::string,std::string> SplitName(const std::string& name);
     void LoadBuildingSprites(std::map<int, SpriteGroup>& animations, int id, const std::string& prefix, const std::string& suffix, bool repeat);
+    void ResolveUtilityHandlers(UtilityObjectDataRef& data, int id);
+
+    //==================================
+
+    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject& src);
+    bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level);
+    void UtilityHandler_Default_Render(UtilityObject& obj);
 
     //===== ObjectID =====
 
@@ -57,6 +67,14 @@ namespace eng {
         else
             snprintf(buf, sizeof(buf), "%s/%s.wav", SOUNDS_PATH_PREFIX, path.c_str());
         return std::string(buf);
+    }
+
+    //===== UnitData =====
+
+    void UnitData::SetupObjectReferences(const referencesRecord& ref_names) {
+        for(int i = 0; i < ref_names.second; i++) {
+            refs[i] = Resources::LoadObjectReference(ref_names.first[i]);
+        }
     }
 
     //=============================
@@ -220,11 +238,39 @@ namespace eng {
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {
         UtilityObjectDataRef data = std::make_shared<UtilityObjectData>();
 
-        //TODO: load animation sprites - probably gonna have to name them all in the JSON
+        //utility object type ID + handlers
+        data->utility_id = config.at("utility_id");
+        ResolveUtilityHandlers(data, data->utility_id);
 
-        //load UtilityObject-specific fields
+        //animation parsing
+        std::map<int, SpriteGroup> animations = {};
+        if(config.count("animations")) {
+            int anim_id = 0;
+            for(auto& anim_data : config.at("animations")) {
+                float duration = 1.f;
+                float keyframe = 1.f;
+                bool repeat = true;
+                std::string sprite_name;
+                if(anim_data.is_object()) {
+                    sprite_name = anim_data.at("sprite_name");
+                    repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
+                    keyframe = anim_data.count("keyframe") ? anim_data.at("keyframe") : 1.f;
+                    duration = anim_data.count("duration") ? anim_data.at("duration") : 1.f;
+                }
+                else {
+                    sprite_name = anim_data;
+                }
+                animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_name), repeat, duration, keyframe)) });
+                anim_id++;
+            }
+        }
+        data->animData = std::make_shared<AnimatorData>(config.at("name"), std::move(animations));
 
-
+        switch(data->utility_id) {
+            case UtilityObjectType::PROJECTILE:
+                data->duration = config.at("duration");
+                break;
+        }
 
         return std::static_pointer_cast<GameObjectData>(data);
     }
@@ -277,5 +323,53 @@ namespace eng {
         return json.is_array() ? SoundEffect(json.at(0), json.at(1)) : SoundEffect(json);
     }
 
+    void ResolveUtilityHandlers(UtilityObjectDataRef& data, int id) {
+        using handlerRefs = std::tuple<UtilityObjectData::InitHandlerFn, UtilityObjectData::UpdateHandlerFn, UtilityObjectData::RenderHandlerFn>;
+
+        switch(id) {
+            case UtilityObjectType::PROJECTILE:
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Projectile_Init, UtilityHandler_Projectile_Update, UtilityHandler_Default_Render };
+                break;
+            default:
+                ENG_LOG_ERROR("UtilityObject - invalid utility type ID ({})", id);
+                throw std::runtime_error("");
+        }
+    }
+
+    //======================================================
+
+    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject& src) {
+        UtilityObject::LiveData& d = obj.LD();
+
+        glm::vec2 target_dir = d.target_pos - d.source_pos;
+        d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+        obj.real_pos() = glm::vec2(src.Position());
+        d.i2 = src.BasicDamage();
+        d.i3 = src.PierceDamage();
+    }
+
+    bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        Input& input = Input::Get();
+
+        obj.act() = 0;
+        obj.ori() = d.i1;
+
+        d.f2 += input.deltaTime;
+        float t = (d.f2 - d.f1) / obj.UData()->duration;
+
+        obj.real_pos() = d.InterpolatePosition(t);
+        if(t >= 1.f) {
+            bool attack_happened = ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+            return true;
+        }
+
+        return false;
+    }
+
+    void UtilityHandler_Default_Render(UtilityObject& obj) {
+        obj.RenderAt(obj.real_pos());
+    }
 
 }//namespace eng

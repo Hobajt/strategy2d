@@ -12,12 +12,6 @@ namespace eng {
 
 #define CONSTRUCTION_SPEED 5.f
 
-    int DirVectorCoord(int orientation);
-    glm::ivec2 DirectionVector(int orientation);
-    int VectorOrientation(const glm::ivec2& v);
-    int VectorOrientation(const glm::vec2& v);
-    
-
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
     */
@@ -266,24 +260,8 @@ namespace eng {
                 case ActionPayloadType::MELEE_ATTACK:   //melee attack action payload
                 {
                     ENG_LOG_INFO("ACTION PAYLOAD - MELEE ATTACK");
-
-                    bool attack_happened = false;
-                    if(action.data.target.type != ObjectType::MAP_OBJECT) {
-                        //target is regular object
-                        FactionObject* target = nullptr;
-                        if(level.objects.GetObject(action.data.target, target)) {
-                            target->ApplyDirectDamage(src);
-                            attack_happened = true;
-                        }
-                    }
-                    else {
-                        //target is attackable map object
-                        const TileData& tile = level.map(action.data.target_pos);
-                        if(IsWallTile(tile.tileType)) {
-                            level.map.DamageTile(action.data.target_pos, src.BasicDamage(), src.OID());
-                            attack_happened = true;
-                        }
-                    }
+                    
+                    bool attack_happened = ApplyDamage(level, src, action.data.target, action.data.target_pos);
 
                     //play units attack sound if the attack happened
                     if(attack_happened && src.UData()->AttackSound().valid) {
@@ -292,15 +270,22 @@ namespace eng {
                 }
                     break;
                 default:                                //effect action payload (includes ranged attacks)
+                {
                     ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
-                    //TODO:
-                    //spawn an utility object (projectile/spell effect/buff)
                     //use payload_id to get the prefab from Unit's data
+                    UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.UData()->refs[payload_id]);
+                    if(obj != nullptr) {
+                        //spawn an utility object (projectile/spell effect/buff)
+                        level.objects.EmplaceUtilityObj(level, obj, action.data.target_pos, action.data.target, src);
 
-                    if(src.UData()->AttackSound().valid)
-                        Audio::Play(src.UData()->AttackSound().Random(), src.Position());
+                        if(src.UData()->AttackSound().valid)
+                            Audio::Play(src.UData()->AttackSound().Random(), src.Position());
+                    }
+                    else {
+                        ENG_LOG_ERROR("ActionAction - action payload not delivered - invalid object.");
+                    }
+                }
                     break;
-                
             }
         }
 
@@ -592,31 +577,6 @@ namespace eng {
                 //TODO: modify building object by changing the data pointers (update animator too)
             }
         }
-    }
-
-    //=======================================
-
-    int DirVectorCoord(int ori) {
-        ori = ori % 8;
-        return 1 - 2*(ori/5) - int(ori % 4 == 0);
-    }
-
-    glm::ivec2 DirectionVector(int orientation) {
-        return glm::ivec2( DirVectorCoord(orientation), -DirVectorCoord(orientation+6) );
-    }
-
-    int VectorOrientation(const glm::ivec2& v) {
-        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
-        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
-        orientation = (8-orientation+6) % 8;
-        return orientation;
-    }
-
-    int VectorOrientation(const glm::vec2& v) {
-        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
-        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
-        orientation = (8-orientation+6) % 8;
-        return orientation;
     }
 
 }//namespace eng

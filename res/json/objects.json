@@ -53,7 +53,8 @@
             "pissed": ["elves/epissed", 3],
             "ready": "elves/eready",
             "attack": "misc/bowfire"
-        }
+        },
+        "refs": ["arrow"]
     },
     {
         "name": "human/footman",

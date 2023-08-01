@@ -11,10 +11,10 @@ namespace eng {
     //===== Constructors =====
 
     template <typename T, typename K, typename I>
-    pool<T, K, I>::pool() : m_capacity(0), m_size(0), m_holes(0), m_data(nullptr) {}
+    pool<T, K, I>::pool() : m_capacity(0), m_size(0), m_holes(0), m_first(0), m_data(nullptr) {}
 
     template <typename T, typename K, typename I>
-    pool<T, K, I>::pool(idxType capacity) : m_capacity(capacity), m_size(0), m_holes(0), m_data(nullptr) {
+    pool<T, K, I>::pool(idxType capacity) : m_capacity(capacity), m_size(0), m_holes(0), m_first(0), m_data(nullptr) {
         allocate(capacity);
     }
 

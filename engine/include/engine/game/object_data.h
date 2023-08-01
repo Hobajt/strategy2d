@@ -8,6 +8,9 @@
 #include <ostream>
 #include <utility>
 #include <vector>
+#include <array>
+
+#define MAX_OBJECT_REFS 6
 
 namespace eng {
 
@@ -55,9 +58,13 @@ namespace eng {
 
     //===== GameObjectData =====
 
+    struct GameObjectData;
+    using GameObjectDataRef = std::shared_ptr<GameObjectData>;
+
     struct GameObjectData {
-        using referencesRecord = std::pair<std::array<std::string, 6>, int>;
+        using referencesRecord = std::pair<std::array<std::string, MAX_OBJECT_REFS>, int>;
         using referencesMapping = std::vector<std::pair<std::string, referencesRecord>>;
+        using objectReferences = std::array<GameObjectDataRef, MAX_OBJECT_REFS>;
     public:
         std::string name;
         int objectType;
@@ -73,7 +80,6 @@ namespace eng {
         //Used during resources initialization.
         virtual void SetupObjectReferences(const referencesRecord& refs) {}
     };
-    using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
     //===== FactionObjectData =====
 
@@ -107,12 +113,16 @@ namespace eng {
         SoundEffect sound_yes;
         SoundEffect sound_what;
         SoundEffect sound_pissed;
+
+        objectReferences refs;
     public:
         const SoundEffect& AttackSound() const { return sound_attack; }
         const SoundEffect& ReadySound() const { return sound_ready; }
         const SoundEffect& YesSound() const { return sound_yes; }
         const SoundEffect& WhatSound() const { return sound_what; }
         const SoundEffect& PissedSound() const { return sound_pissed; }
+
+        virtual void SetupObjectReferences(const referencesRecord& refs) override;
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 
@@ -128,9 +138,22 @@ namespace eng {
         enum { INVALID = -1, PROJECTILE, COUNT };
     }
 
+    class UtilityObject;
+    class FactionObject;
+    class Level;
+
     struct UtilityObjectData : public GameObjectData {
-        int type = UtilityObjectType::INVALID;
+        typedef void(*InitHandlerFn)(UtilityObject& obj, FactionObject& src);
+        typedef bool(*UpdateHandlerFn)(UtilityObject& obj, Level& level);
+        typedef void(*RenderHandlerFn)(UtilityObject& obj);
+    public:
+        int utility_id = UtilityObjectType::INVALID;
         
+        InitHandlerFn Init = nullptr;
+        UpdateHandlerFn Update = nullptr;
+        RenderHandlerFn Render = nullptr;
+
+        float duration = 1.f;
     };
     using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
 

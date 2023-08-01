@@ -12,6 +12,9 @@ namespace eng {
         
         for(Building& b : buildings)
             b.Update();
+        
+        for(UtilityObject& u : utilityObjs)
+            u.Update();
     }
 
     void ObjectPool::Render() {
@@ -20,6 +23,9 @@ namespace eng {
         
         for(Building& b : buildings)
             b.Render();
+        
+        for(UtilityObject& u : utilityObjs)
+            u.Render();
     }
 
     //===== getters =====
@@ -125,20 +131,37 @@ namespace eng {
         buildings[key].IntegrateIntoLevel(oid);
         return oid;
     }
+    
+    ObjectID ObjectPool::Add(UtilityObject&& utilityObj) {
+        UtilityObjsPool::key key = utilityObjs.add(utilityObj.ID(), std::move(utilityObj));
+        ObjectID oid = ObjectID(ObjectType::UTILITY, key.idx, key.id);
+        utilityObjs[key].IntegrateIntoLevel(oid);
+        return oid;
+    }
 
     void ObjectPool::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("GameObjects");
 
-        ImGui::Text("Units");
+        ImGui::Text("Units: %d, Buildings: %d, Utilities: %d", units.size(), buildings.size(), utilityObjs.size());
         ImGui::Separator();
-        for(Unit& u : units)
-            u.DBG_GUI();
 
-        ImGui::Text("Buildings");
+        if(ImGui::CollapsingHeader("Units")) {
+            for(Unit& u : units)
+                u.DBG_GUI();
+        }
         ImGui::Separator();
-        for(Building& b : buildings)
-            b.DBG_GUI();
+
+        if(ImGui::CollapsingHeader("Buildings")) {
+            for(Building& b : buildings)
+                b.DBG_GUI();
+        }
+        ImGui::Separator();
+
+        if(ImGui::CollapsingHeader("Utilities")) {
+            for(UtilityObject& u : utilityObjs)
+                u.DBG_GUI();
+        }
 
         ImGui::End();
 #endif

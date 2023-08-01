@@ -22,7 +22,17 @@ namespace eng {
     }
 
     void GameObject::Render() {
-        InnerRender(glm::vec2(position));
+        RenderAt(glm::vec2(position));
+    }
+
+    void GameObject::RenderAt(const glm::vec2& pos) {
+        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
+
+        //TODO: figure out zIdx from the y-coord
+        float zIdx = -0.5f;
+
+        Camera& cam = Camera::Get();
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), data->size * cam.Mult(), actionIdx, orientation);
     }
 
     bool GameObject::Update() {
@@ -65,16 +75,6 @@ namespace eng {
         ImGui::Separator();
         ImGui::Text("Frame: %d/%d (%.0f%%)", animator.GetCurrentFrameIdx(), animator.GetCurrentFrameCount(), animator.GetCurrentFrame() * 100.f);
 #endif
-    }
-
-    void GameObject::InnerRender(const glm::vec2& pos) {
-        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
-
-        //TODO: figure out zIdx from the y-coord
-        float zIdx = -0.5f;
-
-        Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), data->size * cam.Mult(), actionIdx, orientation);
     }
 
     std::ostream& GameObject::DBG_Print(std::ostream& os) const {
@@ -131,6 +131,19 @@ namespace eng {
         ENG_LOG_FINE("[DMG] {} dealt {} damage to {} (melee).", source.OID().to_string(), dmg, OID().to_string());
     }
 
+    void FactionObject::ApplyDirectDamage(int src_basicDmg, int src_pierceDmg) {
+        //formula from http://classic.battle.net/war2/basic/combat.shtml
+        int dmg = std::max(src_basicDmg - this->Armor(), 0) + src_pierceDmg;
+        dmg = int(dmg * (Random::Uniform() * 0.5f + 0.5f));
+
+        if(dmg < 0) dmg = 0;
+
+        //death condition is handled in object's Update() method
+        health -= dmg;
+
+        ENG_LOG_FINE("[DMG] <<no_source>> dealt {} damage to {} (melee).", dmg, OID().to_string());
+    }
+
     void FactionObject::SetHealth(int value) {
         health = value;
         health = (health <= MaxHealth()) ? health : MaxHealth();
@@ -173,7 +186,7 @@ namespace eng {
     Unit::~Unit() {}
 
     void Unit::Render() {
-        InnerRender(glm::vec2(Position()) + move_offset);
+        RenderAt(glm::vec2(Position()) + move_offset);
     }
 
     bool Unit::Update() {
@@ -252,14 +265,35 @@ namespace eng {
 
     //===== UtilityObject =====
 
-    UtilityObject::UtilityObject(const UtilityObjectDataRef& data_) {}
+    glm::vec2 UtilityObject::LiveData::InterpolatePosition(float f) {
+        return glm::vec2(source_pos) + f * glm::vec2(target_pos - source_pos);
+    }
+
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, const ObjectID& targetID_, FactionObject& src_)
+        : GameObject(level_, data_), data(data_) {
+        
+        live_data.target_pos = target_pos_;
+        live_data.source_pos = src_.Position();
+        live_data.targetID = targetID_;
+        live_data.sourceID = src_.OID();
+
+        ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
+        data->Init(*this, src_);
+    }
 
     UtilityObject::~UtilityObject() {}
 
-    void UtilityObject::Render() {}
+    void UtilityObject::Render() {
+        ASSERT_MSG(data->Render != nullptr, "UtilityObject - Render() handler in prefab '{}' isn't setup properly!", data->name);
+        data->Render(*this);
+    }
 
     bool UtilityObject::Update() {
-        return false;
+        ASSERT_MSG(data != nullptr, "UtilityObject isn't properly initialized!");
+        ASSERT_MSG(data->Update != nullptr, "UtilityObject - Update() handler in prefab '{}' isn't setup properly!", data->name);
+        bool res = data->Update(*this, *lvl());
+        animator.Update(ActionIdx());
+        return res;
     }
 
     void UtilityObject::Inner_DBG_GUI() {
@@ -271,6 +305,50 @@ namespace eng {
     std::ostream& UtilityObject::DBG_Print(std::ostream& os) const {
         os << "UtilityObj - " << Name() << " (ID=" << ID() << ")";
         return os;
+    }
+
+    //=============================================
+
+    bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos) {
+        bool attack_happened = false;
+        if(targetID.type != ObjectType::MAP_OBJECT) {
+            //target is regular object
+            FactionObject* target = nullptr;
+            if(level.objects.GetObject(targetID, target)) {
+                target->ApplyDirectDamage(src);
+                attack_happened = true;
+            }
+        }
+        else {
+            //target is attackable map object
+            const TileData& tile = level.map(target_pos);
+            if(IsWallTile(tile.tileType)) {
+                level.map.DamageTile(target_pos, src.BasicDamage(), src.OID());
+                attack_happened = true;
+            }
+        }
+        return attack_happened;
+    }
+
+    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos) {
+        bool attack_happened = false;
+        if(targetID.type != ObjectType::MAP_OBJECT) {
+            //target is regular object
+            FactionObject* target = nullptr;
+            if(level.objects.GetObject(targetID, target)) {
+                target->ApplyDirectDamage(basicDamage, pierceDamage);
+                attack_happened = true;
+            }
+        }
+        else {
+            //target is attackable map object
+            const TileData& tile = level.map(target_pos);
+            if(IsWallTile(tile.tileType)) {
+                level.map.DamageTile(target_pos, basicDamage);
+                attack_happened = true;
+            }
+        }
+        return attack_happened;
     }
 
 }//namespace eng

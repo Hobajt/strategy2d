@@ -1,4 +1,6 @@
 #include "engine/utils/mathdefs.h"
+#include "engine/utils/setup.h"
+
 #include <stdio.h>
 #include <algorithm>
 
@@ -51,6 +53,29 @@ namespace eng {
         glm::ivec2 c = glm::abs(M1 - m2);
         glm::ivec2 d = glm::abs(M1 - M2);
         return std::min({ std::max(a.x, a.y), std::max(b.x, b.y), std::max(c.x, c.y), std::max(d.x, d.y) });
+    }
+
+    int DirVectorCoord(int ori) {
+        ori = ori % 8;
+        return 1 - 2*(ori/5) - int(ori % 4 == 0);
+    }
+
+    glm::ivec2 DirectionVector(int orientation) {
+        return glm::ivec2( DirVectorCoord(orientation), -DirVectorCoord(orientation+6) );
+    }
+
+    int VectorOrientation(const glm::ivec2& v) {
+        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
+        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
+        orientation = (8-orientation+6) % 8;
+        return orientation;
+    }
+
+    int VectorOrientation(const glm::vec2& v) {
+        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
+        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
+        orientation = (8-orientation+6) % 8;
+        return orientation;
     }
 
 }//namespace eng

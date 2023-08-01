@@ -298,7 +298,7 @@ namespace eng {
         const TileData& operator()(const glm::ivec2& idx) const;
 
         //Apply damage to given tile's health (don't use for harvest). If health drops below zero, the tile type changes.
-        void DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src);
+        void DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src = ObjectID());
         //Harvest tick on given tile. Should only be used on wood tiles. Returns true when the health hits zero.
         bool HarvestTile(const glm::ivec2& idx);
 

@@ -12,6 +12,7 @@ namespace eng {
     class ObjectPool {
         using UnitsPool = pool<Unit, ObjectID::dtype, ObjectID::dtype>;
         using BuildingsPool = pool<Building, ObjectID::dtype, ObjectID::dtype>;
+        using UtilityObjsPool = pool<UtilityObject, ObjectID::dtype, ObjectID::dtype>;
     public:
         void Update();
         void Render();
@@ -32,6 +33,7 @@ namespace eng {
 
         ObjectID Add(Unit&& unit);
         ObjectID Add(Building&& building);
+        ObjectID Add(UtilityObject&& utilityObj);
         
         template <typename... Args>
         ObjectID EmplaceUnit(Args&&... args) {
@@ -43,9 +45,17 @@ namespace eng {
 
         template <typename... Args>
         ObjectID EmplaceBuilding(Args&&... args) {
-            BuildingsPool::key key = units.emplace(GameObject::PeekNextID(), std::forward<Args>(args)...);
+            BuildingsPool::key key = buildings.emplace(GameObject::PeekNextID(), std::forward<Args>(args)...);
             ObjectID oid = ObjectID(ObjectType::BUILDING, key.idx, key.id);
             buildings[key].IntegrateIntoLevel(oid);
+            return oid;
+        }
+
+        template <typename... Args>
+        ObjectID EmplaceUtilityObj(Args&&... args) {
+            UtilityObjsPool::key key = utilityObjs.emplace(GameObject::PeekNextID(), std::forward<Args>(args)...);
+            ObjectID oid = ObjectID(ObjectType::UTILITY, key.idx, key.id);
+            utilityObjs[key].IntegrateIntoLevel(oid);
             return oid;
         }
 
@@ -53,6 +63,7 @@ namespace eng {
     private:
         UnitsPool units;
         BuildingsPool buildings;
+        UtilityObjsPool utilityObjs;
     };
 
 }//namespace eng

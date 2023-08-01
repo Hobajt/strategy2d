@@ -30,6 +30,7 @@ namespace eng {
         GameObject& operator=(GameObject&&) noexcept = default;
 
         virtual void Render();
+        void RenderAt(const glm::vec2& map_pos);
 
         //Return true when requesting object removal.
         virtual bool Update();
@@ -64,7 +65,6 @@ namespace eng {
         friend std::ostream& operator<<(std::ostream& os, const GameObject& go);
     protected:
         virtual void Inner_DBG_GUI();
-        void InnerRender(const glm::vec2& pos);
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
@@ -117,6 +117,7 @@ namespace eng {
 
         //For melee damage application.
         void ApplyDirectDamage(const FactionObject& source);
+        void ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
 
         void SetHealth(int health);
         void AddHealth(int value);
@@ -213,18 +214,51 @@ namespace eng {
 
     class UtilityObject : public GameObject {
     public:
+        struct LiveData {
+            glm::ivec2 source_pos;
+            glm::ivec2 target_pos;
+            ObjectID targetID;
+            ObjectID sourceID;
+
+            float f1 = 0.f;
+            float f2 = 0.f;
+            int i1 = 0;
+            int i2 = 0;
+            int i3 = 0;
+        public:
+            glm::vec2 InterpolatePosition(float f);
+        };
+    public:
         UtilityObject() = default;
-        UtilityObject(const UtilityObjectDataRef& data);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, const ObjectID& targetID, FactionObject& src);
         virtual ~UtilityObject();
+
+        //move enabled
+        UtilityObject(UtilityObject&&) noexcept = default;
+        UtilityObject& operator=(UtilityObject&&) noexcept = default;
 
         virtual void Render() override;
         virtual bool Update() override;
+
+        glm::vec2& real_pos() { return real_position; }        
+
+        UtilityObjectDataRef UData() const { return data; }
+        LiveData& LD() { return live_data; }
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
     private:
         UtilityObjectDataRef data = nullptr;
+        LiveData live_data = {};
+
+        glm::vec2 real_position;
     };
+
+    //=============================================
+
+    //Apply damage to given target. Works for both regular & map objects. Returns true if the application went through.
+    bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos);
+    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
 
 }//namespace eng
