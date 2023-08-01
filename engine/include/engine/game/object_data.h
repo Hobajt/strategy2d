@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 #include <ostream>
+#include <utility>
+#include <vector>
 
 namespace eng {
 
@@ -54,6 +56,9 @@ namespace eng {
     //===== GameObjectData =====
 
     struct GameObjectData {
+        using referencesRecord = std::pair<std::array<std::string, 6>, int>;
+        using referencesMapping = std::vector<std::pair<std::string, referencesRecord>>;
+    public:
         std::string name;
         int objectType;
 
@@ -64,6 +69,9 @@ namespace eng {
     public:
         virtual ~GameObjectData() = default;
         virtual int MaxHealth() const { return 0; }
+
+        //Used during resources initialization.
+        virtual void SetupObjectReferences(const referencesRecord& refs) {}
     };
     using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
@@ -113,5 +121,17 @@ namespace eng {
     struct BuildingData : public FactionObjectData {
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
+
+    //===== UtilityObjectData =====
+
+    namespace UtilityObjectType {
+        enum { INVALID = -1, PROJECTILE, COUNT };
+    }
+
+    struct UtilityObjectData : public GameObjectData {
+        int type = UtilityObjectType::INVALID;
+        
+    };
+    using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
 
 }//namespace eng

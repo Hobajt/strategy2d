@@ -25,9 +25,10 @@ namespace eng {
         InnerRender(glm::vec2(position));
     }
 
-    void GameObject::Update() {
+    bool GameObject::Update() {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(actionIdx);
+        return false;
     }
 
     bool GameObject::CheckPosition(const glm::ivec2& map_coords) {
@@ -130,6 +131,11 @@ namespace eng {
         ENG_LOG_FINE("[DMG] {} dealt {} damage to {} (melee).", source.OID().to_string(), dmg, OID().to_string());
     }
 
+    void FactionObject::SetHealth(int value) {
+        health = value;
+        health = (health <= MaxHealth()) ? health : MaxHealth();
+    }
+
     void FactionObject::AddHealth(int value) {
         health += value;
         health = (health <= MaxHealth()) ? health : MaxHealth();
@@ -170,12 +176,11 @@ namespace eng {
         InnerRender(glm::vec2(Position()) + move_offset);
     }
 
-    void Unit::Update() {
+    bool Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, *lvl());
         animation_ended = animator.Update(ActionIdx());
-
-        //TODO: add death condition check here (do the same for buildings) ... also probably ceil health value at maxHealth
+        return (Health() <= 0);
     }
 
     void Unit::IssueCommand(const Command& cmd) {
@@ -217,8 +222,9 @@ namespace eng {
 
     Building::~Building() {}
 
-    void Building::Update() {
+    bool Building::Update() {
         action.Update(*this, *lvl());
+        return (Health() <= 0);
     }
 
     void Building::IssueAction(const BuildingAction& new_action) {
@@ -241,6 +247,29 @@ namespace eng {
 
     std::ostream& Building::DBG_Print(std::ostream& os) const {
         os << "Building - " << Name() << " (ID=" << ID() << ")";
+        return os;
+    }
+
+    //===== UtilityObject =====
+
+    UtilityObject::UtilityObject(const UtilityObjectDataRef& data_) {}
+
+    UtilityObject::~UtilityObject() {}
+
+    void UtilityObject::Render() {}
+
+    bool UtilityObject::Update() {
+        return false;
+    }
+
+    void UtilityObject::Inner_DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+
+#endif
+    }
+
+    std::ostream& UtilityObject::DBG_Print(std::ostream& os) const {
+        os << "UtilityObj - " << Name() << " (ID=" << ID() << ")";
         return os;
     }
 

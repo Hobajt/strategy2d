@@ -53,6 +53,9 @@ namespace eng::Resources {
     //===== Object Prefabs =====
 
     GameObjectDataRef LoadObject(const std::string& name);
+    GameObjectDataRef LoadObjectReference(const std::string& name);
+
+    UtilityObjectDataRef LoadUtilityObj(const std::string& name);
     BuildingDataRef LoadBuilding(const std::string& name);
     UnitDataRef LoadUnit(const std::string& name);
 

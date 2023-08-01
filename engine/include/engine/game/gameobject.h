@@ -30,7 +30,9 @@ namespace eng {
         GameObject& operator=(GameObject&&) noexcept = default;
 
         virtual void Render();
-        virtual void Update();
+
+        //Return true when requesting object removal.
+        virtual bool Update();
 
         //Check if this object covers given map coordinates.
         bool CheckPosition(const glm::ivec2& map_coords);
@@ -111,11 +113,12 @@ namespace eng {
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
+        int Health() const { return health; }
 
         //For melee damage application.
         void ApplyDirectDamage(const FactionObject& source);
 
-        void SetHealth(int health_) { health = health_; }
+        void SetHealth(int health);
         void AddHealth(int value);
     protected:
         virtual void Inner_DBG_GUI() override;
@@ -145,7 +148,7 @@ namespace eng {
         Unit& operator=(Unit&&) noexcept = default;
 
         virtual void Render() override;
-        virtual void Update() override;
+        virtual bool Update() override;
 
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);
@@ -158,7 +161,7 @@ namespace eng {
 
         UnitDataRef UData() const { return data; }
     protected:
-        virtual void Inner_DBG_GUI();
+        virtual void Inner_DBG_GUI() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
     private:
@@ -183,7 +186,7 @@ namespace eng {
         Building(Building&&) noexcept = default;
         Building& operator=(Building&&) noexcept = default;
 
-        virtual void Update() override;
+        virtual bool Update() override;
 
         void IssueAction(const BuildingAction& action);
         void CancelAction();
@@ -198,7 +201,7 @@ namespace eng {
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
     protected:
-        virtual void Inner_DBG_GUI();
+        virtual void Inner_DBG_GUI() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
     private:
@@ -208,6 +211,20 @@ namespace eng {
 
     //===== UtilityObject =====
 
-    class UtilityObject : public GameObject {};
+    class UtilityObject : public GameObject {
+    public:
+        UtilityObject() = default;
+        UtilityObject(const UtilityObjectDataRef& data);
+        virtual ~UtilityObject();
+
+        virtual void Render() override;
+        virtual bool Update() override;
+    protected:
+        virtual void Inner_DBG_GUI() override;
+    private:
+        virtual std::ostream& DBG_Print(std::ostream& os) const override;
+    private:
+        UtilityObjectDataRef data = nullptr;
+    };
 
 }//namespace eng

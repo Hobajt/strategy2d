@@ -13,7 +13,7 @@
 
 namespace eng {
 
-    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config);
+    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config, GameObjectData::referencesMapping& refMapping);
 
     GameObjectDataRef ParseConfig_Building(const nlohmann::json& config);
     GameObjectDataRef ParseConfig_Unit(const nlohmann::json& config);
@@ -61,7 +61,7 @@ namespace eng {
 
     //=============================
 
-    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config) {
+    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config, GameObjectData::referencesMapping& refMapping) {
         GameObjectDataRef data = nullptr;
 
         int objectType = config.at("type");
@@ -88,6 +88,24 @@ namespace eng {
         data->name = config.at("name");
         data->size = config.count("size") ? eng::json::parse_vec2(config.at("size")) : glm::vec2(1.f);
         data->navigationType = config.at("nav_type");
+
+        //table of references to other object prefabs (only names loading here)
+        if(config.count("refs")) {
+            GameObjectData::referencesRecord refs = {};
+
+            auto& refs_json = config.at("refs");
+            refs.second = std::min(refs_json.size(), refs.first.size());
+
+            for(int i = 0; i < refs.second; i++) {
+                refs.first[i] = refs_json.at(i);
+            }
+
+            if(refs_json.size() > refs.first.size()) {
+                ENG_LOG_WARN("ParseConfig_Object - too many references to other objects (some will be discarded).");
+            }
+
+            refMapping.push_back({data->name, refs });
+        }
 
         ASSERT_MSG(data != nullptr, "ObjectData parsing failed.");
         return data;
@@ -200,8 +218,13 @@ namespace eng {
     }
 
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {
-        // BuildingDataRef data = std::make_shared<BuildingData>();
-        BuildingDataRef data = nullptr;
+        UtilityObjectDataRef data = std::make_shared<UtilityObjectData>();
+
+        //TODO: load animation sprites - probably gonna have to name them all in the JSON
+
+        //load UtilityObject-specific fields
+
+
 
         return std::static_pointer_cast<GameObjectData>(data);
     }

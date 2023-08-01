@@ -13,8 +13,8 @@ namespace eng {
     //defined in sprite.cpp:280 (+-)
     SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags);
 
-    //defined in object_data.cpp:23 (+-)
-    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config);
+    //defined in object_data.cpp:64 (+-)
+    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config, GameObjectData::referencesMapping& refMapping);
 }
 
 namespace eng::Resources {
@@ -30,6 +30,7 @@ namespace eng::Resources {
         std::unordered_map<std::string, TilesetRef> tilesets;
 
         std::unordered_map<std::string, GameObjectDataRef> objects;
+        bool linkable = false;
         bool preloaded = false;
     };
     static Data data = {};
@@ -199,6 +200,30 @@ namespace eng::Resources {
         return data.objects.at(name);
     }
 
+    GameObjectDataRef LoadObjectReference(const std::string& name) {
+        if(!data.linkable) {
+            ENG_LOG_ERROR("Resources::LoadObject - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+
+        if(!data.objects.count(name)) {
+            ENG_LOG_ERROR("Resources::LoadObject - object '{}' not found.", name);
+            throw std::runtime_error("");
+        }
+
+        return data.objects.at(name);
+    }
+
+    UtilityObjectDataRef LoadUtilityObj(const std::string& name) {
+        GameObjectDataRef data = LoadObject(name);
+        UtilityObjectDataRef res = std::dynamic_pointer_cast<UtilityObjectData>(data);
+        if(res == nullptr) {
+            ENG_LOG_ERROR("Resources::LoadUtilityObj - object '{}' is not an utility object.", name);
+            throw std::runtime_error("");
+        }
+        return res;
+    }
+
     BuildingDataRef LoadBuilding(const std::string& name) {
         GameObjectDataRef data = LoadObject(name);
         BuildingDataRef res = std::dynamic_pointer_cast<BuildingData>(data);
@@ -253,15 +278,31 @@ namespace eng::Resources {
     void PreloadObjects() {
         using json = nlohmann::json;
 
-        size_t object_count = 0;
+        GameObjectData::referencesMapping referenceMapping;
         Timer t = {};
 
         t.Reset();
-        json config = json::parse(ReadFile("res/json/objects.json"));
+
+        //load utility object definitions
+        json config = json::parse(ReadFile("res/json/utility.json"));
         for(auto& entry : config) {
-            GameObjectDataRef objData = ParseConfig_Object(entry);
+            GameObjectDataRef objData = ParseConfig_Object(entry, referenceMapping);
             data.objects.insert({ objData->name, objData });
         }
+
+        //load regular object definitions
+        config = json::parse(ReadFile("res/json/objects.json"));
+        for(auto& entry : config) {
+            GameObjectDataRef objData = ParseConfig_Object(entry, referenceMapping);
+            data.objects.insert({ objData->name, objData });
+        }
+
+        //references setup
+        data.linkable = true;
+        for(auto& [name, refs] : referenceMapping) {
+            data.objects.at(name)->SetupObjectReferences(refs);
+        }
+
         float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
         ENG_LOG_TRACE("Resources::PreloadObjects - parsed {} object prefab descriptions ({:.2f}s)", data.objects.size(), time_elapsed);
     }
