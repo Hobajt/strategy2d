@@ -54,6 +54,8 @@ namespace eng {
 
         //Composes path for random variation of given sound effect.
         std::string Random() const;
+
+        static std::string GetPath(const char* name);
     };
 
     //===== GameObjectData =====
@@ -98,6 +100,9 @@ namespace eng {
         int vision_range;
 
         float cooldown;
+
+        int deathSoundIdx;
+        int race;
     public:
         virtual int MaxHealth() const override { return health; }
 
@@ -115,6 +120,8 @@ namespace eng {
         SoundEffect sound_pissed;
 
         objectReferences refs;
+
+        int deathAnimIdx = -1;
     public:
         const SoundEffect& AttackSound() const { return sound_attack; }
         const SoundEffect& ReadySound() const { return sound_ready; }
@@ -135,7 +142,7 @@ namespace eng {
     //===== UtilityObjectData =====
 
     namespace UtilityObjectType {
-        enum { INVALID = -1, PROJECTILE, COUNT };
+        enum { INVALID = -1, PROJECTILE, CORPSE, COUNT };
     }
 
     class UtilityObject;

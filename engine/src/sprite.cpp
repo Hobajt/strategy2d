@@ -258,6 +258,7 @@ namespace eng {
     }
 
     void SpriteGroup::RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int frameIdx, int spriteIdx, float paletteIdx) {
+        if(!data.repeat && frameIdx >= data.frameCount) frameIdx = data.frameCount-1;
         ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
         for (Sprite& sprite : data.sprites) {
             sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx, paletteIdx);
@@ -265,6 +266,7 @@ namespace eng {
     }
 
     void SpriteGroup::RenderAnimAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int frameIdx, int spriteIdx, float paletteIdx) {
+        if(!data.repeat && frameIdx >= data.frameCount) frameIdx = data.frameCount-1;
         ASSERT_MSG(((unsigned int)frameIdx < (unsigned int)data.frameCount), "SpriteAnimation::Render - frameIdx is out of bounds ({}).", frameIdx);
         for (Sprite& sprite : data.sprites) {
             sprite.RenderAnim(screen_pos, screen_size, frameIdx, spriteIdx, paletteIdx);

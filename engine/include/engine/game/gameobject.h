@@ -31,9 +31,12 @@ namespace eng {
 
         virtual void Render();
         void RenderAt(const glm::vec2& map_pos);
+        void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, float zOffset = 0.f);
 
         //Return true when requesting object removal.
         virtual bool Update();
+
+        virtual void Kill() { killed = true; }
 
         //Check if this object covers given map coordinates.
         bool CheckPosition(const glm::ivec2& map_coords);
@@ -65,6 +68,7 @@ namespace eng {
         friend std::ostream& operator<<(std::ostream& os, const GameObject& go);
     protected:
         virtual void Inner_DBG_GUI();
+        bool IsKilled() const { return killed; }
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
@@ -79,6 +83,7 @@ namespace eng {
         glm::ivec2 position = glm::ivec2(0);
         int orientation = 0;
         int actionIdx = 0;
+        bool killed = false;
 
         int id = -1;
         ObjectID oid = {};
@@ -99,6 +104,8 @@ namespace eng {
         FactionObject& operator=(FactionObject&&) noexcept = default;
 
         void ChangeColor(int colorIdx);
+
+        virtual void Kill() override;
 
         //Return true if given object is within this object's attack range.
         bool RangeCheck(GameObject& target) const;
@@ -121,6 +128,10 @@ namespace eng {
 
         void SetHealth(int health);
         void AddHealth(int value);
+
+        virtual bool IsUnit() const { return false; }
+        virtual int DeathAnimIdx() const { return -1; }
+        int Race() const { return data_f->race; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -161,6 +172,8 @@ namespace eng {
         bool AnimationFinished() const { return animation_ended; }
 
         UnitDataRef UData() const { return data; }
+        virtual bool IsUnit() const override { return true; }
+        virtual int DeathAnimIdx() const override { return data->deathAnimIdx; }
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -187,6 +200,7 @@ namespace eng {
         Building(Building&&) noexcept = default;
         Building& operator=(Building&&) noexcept = default;
 
+        virtual void Render() override;
         virtual bool Update() override;
 
         void IssueAction(const BuildingAction& action);
@@ -225,6 +239,7 @@ namespace eng {
             int i1 = 0;
             int i2 = 0;
             int i3 = 0;
+            int i4 = 0;
         public:
             glm::vec2 InterpolatePosition(float f);
         };
@@ -240,7 +255,8 @@ namespace eng {
         virtual void Render() override;
         virtual bool Update() override;
 
-        glm::vec2& real_pos() { return real_position; }        
+        glm::vec2& real_pos() { return real_position; }
+        glm::vec2& real_size() { return m_real_size; }
 
         UtilityObjectDataRef UData() const { return data; }
         LiveData& LD() { return live_data; }
@@ -253,6 +269,7 @@ namespace eng {
         LiveData live_data = {};
 
         glm::vec2 real_position;
+        glm::vec2 m_real_size = glm::vec2(1.f);
     };
 
     //=============================================

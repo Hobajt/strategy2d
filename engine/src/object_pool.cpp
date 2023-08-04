@@ -7,14 +7,43 @@ namespace eng {
     //===== ObjectPool =====
 
     void ObjectPool::Update() {
-        for(Unit& u : units)
-            u.Update();
+        for(Unit& u : units) {
+            if(u.Update()) {
+                u.Kill();
+                markedForRemoval.push_back(u.OID().idx);
+            }
+        }
+        markedForRemoval.push_back((ObjectID::dtype)-1);
         
-        for(Building& b : buildings)
-            b.Update();
+        for(Building& b : buildings) {
+            if(b.Update()) {
+                b.Kill();
+                markedForRemoval.push_back(b.OID().idx);
+            }
+        }
+        markedForRemoval.push_back((ObjectID::dtype)-1);
         
-        for(UtilityObject& u : utilityObjs)
-            u.Update();
+        for(UtilityObject& u : utilityObjs) {
+            if(u.Update()) {
+                u.Kill();
+                markedForRemoval.push_back(u.OID().idx);
+            }
+        }
+
+        int poolIdx = 0;
+        for(ObjectID::dtype idx : markedForRemoval) {
+            if(idx == (ObjectID::dtype)-1) {
+                poolIdx++;
+                continue;
+            }
+
+            switch(poolIdx) {
+                case 0: units.remove(idx);          break;
+                case 1: buildings.remove(idx);      break;
+                case 2: utilityObjs.remove(idx);    break;
+            }
+        }
+        markedForRemoval.clear();
     }
 
     void ObjectPool::Render() {
@@ -146,21 +175,29 @@ namespace eng {
         ImGui::Text("Units: %d, Buildings: %d, Utilities: %d", units.size(), buildings.size(), utilityObjs.size());
         ImGui::Separator();
 
+        // float indent_val = ImGui::GetWindowSize().x * 0.05f;
+
         if(ImGui::CollapsingHeader("Units")) {
+            ImGui::Indent();
             for(Unit& u : units)
                 u.DBG_GUI();
+            ImGui::Unindent();
         }
         ImGui::Separator();
 
         if(ImGui::CollapsingHeader("Buildings")) {
+            ImGui::Indent();
             for(Building& b : buildings)
                 b.DBG_GUI();
+            ImGui::Unindent();
         }
         ImGui::Separator();
 
         if(ImGui::CollapsingHeader("Utilities")) {
+            ImGui::Indent();
             for(UtilityObject& u : utilityObjs)
                 u.DBG_GUI();
+            ImGui::Unindent();
         }
 
         ImGui::End();

@@ -208,12 +208,15 @@ namespace eng {
 
     //===== Tileset =====
 
+    namespace TilesetType { enum { SUMMER = 0, WINTER, WASTELAND }; }
+
     class Tileset {
     public:
         struct Data {
             std::string name;
             Sprite tilemap;
             std::array<TileGraphics, TileType::COUNT> tiles;
+            int type;
         };
     public:
         Tileset() = default;
@@ -228,6 +231,8 @@ namespace eng {
         void UpdateTileIndices(MapTiles& tiles, const glm::ivec2& coords) const;
 
         glm::ivec2 GetTileIdx(int tileType, int borderType, int variation);
+
+        int GetType() const { return data.type; }
     private:
         void UpdateTileIndex(MapTiles& tiles, int y, int x, TileData* a, TileData* b, TileData* c, TileData* d) const;
     private:

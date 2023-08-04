@@ -1093,6 +1093,8 @@ namespace eng {
         json config = json::parse(ReadFile(config_filepath.c_str()));
 
         try {
+            data.type = config.at("type");
+
             //get texture path & load the texture
             std::string texture_filepath = config.at("texture_filepath");
             // TextureRef spritesheet = std::make_shared<Texture>(texture_filepath, flags);

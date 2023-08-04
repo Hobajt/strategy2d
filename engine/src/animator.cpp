@@ -18,6 +18,10 @@ namespace eng {
         }
     }
 
+    void AnimatorData::AddAction(int actionIdx, const SpriteGroup& graphics) {
+        anims.insert({ actionIdx, graphics });
+    }
+
     //===== Animator =====
 
     Animator::Animator(const AnimatorDataRef& data_) : data(data_) {}

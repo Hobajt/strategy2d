@@ -19,6 +19,8 @@
         "basic_damage": 3,
         "pierce_damage": 6,
         "cooldown": 1.5,
+        "race": 1,
+        "death_sound": 2,
         "sounds": {
             "yes": ["troll/tryessr", 3],
             "what": ["troll/trwhat", 3],
@@ -47,6 +49,8 @@
         "basic_damage": 3,
         "pierce_damage": 6,
         "cooldown": 1.5,
+        "race": 0,
+        "death_sound": 1,
         "sounds": {
             "yes": ["elves/eyessir", 4],
             "what": ["elves/ewhat", 4],
@@ -76,6 +80,8 @@
         "basic_damage": 60,
         "pierce_damage": 3,
         "cooldown": 1.5,
+        "race": 0,
+        "death_sound": 1,
         "sounds": {
             "yes": ["human/hyessir", 4],
             "what": ["human/hwhat", 6],
@@ -89,7 +95,7 @@
         "name": "human/town_hall",
         "type": 3,
         "nav_type": 1,
-        "size": [2, 2],
+        "size": [4, 4],
         "vision_range": 4,
         "health": 1200,
         "mana": 0,
@@ -98,6 +104,23 @@
         "attack_range": 0,
         "armor": 20,
         "basic_damage": 0,
-        "pierce_damage": 0
+        "pierce_damage": 0,
+        "race": 0
+    },
+    {
+        "name": "human/farm",
+        "type": 3,
+        "nav_type": 1,
+        "size": [2, 2],
+        "vision_range": 3,
+        "health": 400,
+        "mana": 0,
+        "build_time": 100,
+        "cost": [500,250,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0
     }
 ]

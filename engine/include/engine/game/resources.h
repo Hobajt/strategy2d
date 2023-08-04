@@ -47,6 +47,7 @@ namespace eng::Resources {
     //===== Sprites =====
 
     //name format = spritesheet_name/sprite_name
+    bool SpriteExists(const std::string& full_name);
     Sprite LoadSprite(const std::string& full_name);
     SpritesheetRef LoadSpritesheet(const std::string& name);
 

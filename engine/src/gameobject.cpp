@@ -2,6 +2,7 @@
 
 #include "engine/game/camera.h"
 #include "engine/game/level.h"
+#include "engine/game/resources.h"
 #include "engine/core/palette.h"
 
 #include "engine/utils/dbg_gui.h"
@@ -26,19 +27,23 @@ namespace eng {
     }
 
     void GameObject::RenderAt(const glm::vec2& pos) {
+        RenderAt(pos, data->size);
+    }
+
+    void GameObject::RenderAt(const glm::vec2& pos, const glm::vec2& size, float zOffset) {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
 
         //TODO: figure out zIdx from the y-coord
         float zIdx = -0.5f;
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), data->size * cam.Mult(), actionIdx, orientation);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), actionIdx, orientation);
     }
 
     bool GameObject::Update() {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(actionIdx);
-        return false;
+        return killed;
     }
 
     bool GameObject::CheckPosition(const glm::ivec2& map_coords) {
@@ -54,9 +59,10 @@ namespace eng {
 #ifdef ENGINE_ENABLE_GUI
         if(ImGui::CollapsingHeader(data->name.c_str())) {
             ImGui::PushID(this);
-
+            ImGui::Indent();
             Inner_DBG_GUI();
-            
+            if(ImGui::Button("Kill")) Kill();
+            ImGui::Unindent();
             ImGui::PopID();
         }
 #endif
@@ -69,10 +75,8 @@ namespace eng {
     void GameObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d", id);
-        ImGui::DragInt("action", &actionIdx);
-        ImGui::SliderInt("orientation", &orientation, 0, 8);
-        ImGui::DragInt2("position", (int*)&position);
-        ImGui::Separator();
+        ImGui::Text("Action: %d | Orientation: %d", actionIdx, orientation);
+        ImGui::Text("Position: [%d, %d]", position.x, position.y);
         ImGui::Text("Frame: %d/%d (%.0f%%)", animator.GetCurrentFrameIdx(), animator.GetCurrentFrameCount(), animator.GetCurrentFrame() * 100.f);
 #endif
     }
@@ -107,6 +111,21 @@ namespace eng {
     void FactionObject::ChangeColor(int newColorIdx) {
         colorIdx = ValidColor(newColorIdx) ? newColorIdx : faction->GetColorIdx();
         animator.SetPaletteIdx((float)colorIdx);
+    }
+
+    void FactionObject::Kill() {
+        if(IsKilled())
+            return;
+        GameObject::Kill();
+        
+        UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
+
+        //spawn a corpse utility object
+        lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
+        
+        //play the dying sound effect
+        static constexpr std::array<const char*, 4> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", };
+        Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
     }
 
     bool FactionObject::RangeCheck(GameObject& target) const {
@@ -157,7 +176,6 @@ namespace eng {
     void FactionObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         GameObject::Inner_DBG_GUI();
-        ImGui::Separator();
         ImGui::Text("Health: %d/%d", health, data_f->MaxHealth());
         ImGui::SliderInt("health", &health, 0, data_f->MaxHealth());
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
@@ -193,7 +211,7 @@ namespace eng {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, *lvl());
         animation_ended = animator.Update(ActionIdx());
-        return (Health() <= 0);
+        return (Health() <= 0) || IsKilled();
     }
 
     void Unit::IssueCommand(const Command& cmd) {
@@ -206,7 +224,6 @@ namespace eng {
     void Unit::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();
-        ImGui::Separator();
         ImGui::Text("move_offset: %s", to_string(move_offset).c_str());
         ImGui::Text("%s", command.to_string().c_str());
         ImGui::Text("Action type: %d", action.logic.type);
@@ -235,9 +252,23 @@ namespace eng {
 
     Building::~Building() {}
 
+    void Building::Render() {
+        glm::vec2 rendering_size, rendering_offset;
+        if(!action.UseConstructionSize()) {
+            rendering_offset = glm::vec2(0.f);
+            rendering_size = data->size;
+        }
+        else {
+            rendering_offset = (data->size - glm::vec2(2.f)) * 0.5f;
+            rendering_size = glm::vec2(2.f);
+        }
+        
+        RenderAt(glm::vec2(Position()) + rendering_offset, rendering_size);
+    }
+
     bool Building::Update() {
         action.Update(*this, *lvl());
-        return (Health() <= 0);
+        return (Health() <= 0) || IsKilled();
     }
 
     void Building::IssueAction(const BuildingAction& new_action) {
@@ -253,7 +284,6 @@ namespace eng {
     void Building::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();
-        ImGui::Separator();
         ImGui::Text("%s", action.to_string().c_str());
 #endif
     }
@@ -293,7 +323,7 @@ namespace eng {
         ASSERT_MSG(data->Update != nullptr, "UtilityObject - Update() handler in prefab '{}' isn't setup properly!", data->name);
         bool res = data->Update(*this, *lvl());
         animator.Update(ActionIdx());
-        return res;
+        return res || IsKilled();
     }
 
     void UtilityObject::Inner_DBG_GUI() {

@@ -145,6 +145,11 @@ namespace eng {
 
         void Update(Building& src, Level& level);
 
+        bool IsConstructionAction() const;
+        bool CustomConstructionViz() const;
+
+        bool UseConstructionSize() const { return IsConstructionAction() && !CustomConstructionViz(); }
+
         std::string to_string() const;
     };
 

@@ -22,6 +22,9 @@ namespace eng {
         std::string Name() const { return name; }
 
         SpriteGroup& GetGraphics(int action);
+        bool HasGraphics(int action) const { return anims.count(action); }
+        void AddAction(int actionIdx, const SpriteGroup& graphics);
+
         int ActionCount() const { return anims.size(); }
     private:
         std::map<int, SpriteGroup> anims;

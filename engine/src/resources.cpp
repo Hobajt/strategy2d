@@ -7,6 +7,8 @@
 #include "engine/utils/utils.h"
 #include "engine/utils/timer.h"
 
+#include "engine/game/gameobject.h"
+
 constexpr float DEFAULT_FONT_SCALE = 0.055f;
 
 namespace eng {
@@ -41,6 +43,8 @@ namespace eng::Resources {
 
     void PreloadSpritesheets();
     void PreloadObjects();
+
+    UtilityObjectDataRef SetupCorpseData();
 
     //============
 
@@ -150,6 +154,23 @@ namespace eng::Resources {
     }
 
     //===== Sprites =====
+
+    bool SpriteExists(const std::string& name) {
+        size_t pos = name.find_last_of("/");
+        if(pos == std::string::npos) {
+            return false;
+        }
+
+        std::string spritesheet_name = name.substr(0, pos);
+        std::string sprite_name = name.substr(pos+1);
+        
+        if(!data.spritesheets.count(spritesheet_name))
+            return false;
+        SpritesheetRef spritesheet = data.spritesheets.at(spritesheet_name);
+
+        Sprite sprite;
+        return spritesheet->TryGet(sprite_name, sprite);
+    }
 
     Sprite LoadSprite(const std::string& name) {
         size_t pos = name.find_last_of("/");
@@ -303,8 +324,34 @@ namespace eng::Resources {
             data.objects.at(name)->SetupObjectReferences(refs);
         }
 
+        SetupCorpseData();
+
         float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
         ENG_LOG_TRACE("Resources::PreloadObjects - parsed {} object prefab descriptions ({:.2f}s)", data.objects.size(), time_elapsed);
+    }
+
+    UtilityObjectDataRef SetupCorpseData() {
+        UtilityObjectDataRef corpse = std::dynamic_pointer_cast<UtilityObjectData>(Resources::LoadObjectReference("corpse"));
+        if(corpse == nullptr) {
+            ENG_LOG_ERROR("Resources::SetupCorpseData - 'corpse' prefab not found");
+            throw std::runtime_error("");
+        }
+        
+        AnimatorDataRef anim = corpse->animData;
+        int idx = anim->ActionCount();
+
+        //scan through all the units & retrieve their death animations
+        for(auto& [key, value] : data.objects) {
+            UnitDataRef ptr = std::dynamic_pointer_cast<UnitData>(value);
+            if(ptr != nullptr && ptr->animData->HasGraphics(3)) {
+                anim->AddAction(idx, ptr->animData->GetGraphics(3));
+
+                //mark unit's animation index in the corpse object, for easier access
+                ptr->deathAnimIdx = idx++;
+            }
+        }
+
+        return corpse;
     }
 
 }//namespace eng::Resources

@@ -7,5 +7,22 @@
         "utility_id": 0,
         "animations": [ "misc/effects/arrow" ],
         "duration": 0.25
+    },
+    {
+        "name": "corpse",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 1,
+        "animations": [
+            { "sprite_name": "misc/corpses/corpse1_hu", "duration": 5},
+            { "sprite_name": "misc/corpses/corpse1_oc", "duration": 5},
+            { "sprite_name": "misc/corpses/corpse2", "duration": 5},
+            { "sprite_name": "misc/corpses/corpse_water", "duration": 5},
+            { "sprite_name": "misc/buildings/ruins_ground", "duration": 5},
+            { "sprite_name": "misc/buildings/ruins_ground_wasteland", "duration": 5},
+            { "sprite_name": "misc/buildings/ruins_water", "duration": 5},
+            { "sprite_name": "misc/effects/explosion_big", "duration": 2.0}
+        ]
     }
 ]

@@ -64,6 +64,8 @@ namespace eng {
         UnitsPool units;
         BuildingsPool buildings;
         UtilityObjsPool utilityObjs;
+
+        std::vector<ObjectID::dtype> markedForRemoval;
     };
 
 }//namespace eng

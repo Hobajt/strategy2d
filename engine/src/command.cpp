@@ -10,7 +10,7 @@ namespace eng {
 #define ACTION_FINISHED_SUCCESS         1
 #define ACTION_FINISHED_INTERRUPTED     2
 
-#define CONSTRUCTION_SPEED 5.f
+#define CONSTRUCTION_SPEED 15.f
 
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
@@ -491,6 +491,16 @@ namespace eng {
     void BuildingAction::Update(Building& source, Level& level) {
         ASSERT_MSG(logic.update != nullptr, "BuildingAction::Update - handler should never be null.");
         logic.update(source, level, *this);
+    }
+
+    bool BuildingAction::IsConstructionAction() const {
+        return (logic.type == BuildingActionType::CONSTRUCTION_OR_UPGRADE && !data.flag);
+    }
+
+    bool BuildingAction::CustomConstructionViz() const {
+        float progress = data.t1;
+        int target = data.t3;
+        return int((progress / target) * 4.f) >= 2;
     }
 
     std::string BuildingAction::to_string() const {
