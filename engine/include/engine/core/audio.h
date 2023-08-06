@@ -24,8 +24,12 @@ namespace eng {
         void UpdateListenerPosition(const glm::vec2& position);
 
         void Enabled(bool enabled);
+        void SetVolume_Master(float volume);
+        void SetVolume_Music(float volume);
+        void SetVolume_Digital(float volume);
 
         void DBG_GUI();
+
 
    }//namespace Audio
 

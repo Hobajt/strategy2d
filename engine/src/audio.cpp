@@ -6,6 +6,7 @@
 
 #include "engine/utils/log.h"
 #include "engine/utils/dbg_gui.h"
+#include "engine/game/config.h"
 
 #include <miniaudio.h>
 
@@ -22,19 +23,6 @@ namespace eng {
 
         struct InternalAudioData {
             ma_engine engine;
-
-            bool enabled = true;
-
-            //TODO: initialize volume values from some kind of persistent storage (.config file?)
-            float volume_master = 100.f;
-            float volume_digital = 100.f;
-            float volume_music = 100.f;
-
-            //TODO: setup attenuation distances so that sound grows weaker when it goes out of screen
-            float minDistance = 10.f;
-            float maxDistance = 20.f;
-
-            float outOfScreenRolloff = 0.85f;
 
             ma_sound_group digital_group;
             ma_sound_group music_group;
@@ -100,7 +88,7 @@ namespace eng {
         }
 
         bool Play(const std::string& path) {
-            if(!data.enabled)
+            if(!Config::Audio().enabled)
                 return true;
 
             // ma_result result = ma_engine_play_sound(&data.engine, path.c_str(), &data.digital_group);
@@ -119,7 +107,7 @@ namespace eng {
         }
 
         bool Play(const std::string& path, const glm::vec2& position) {
-            if(!data.enabled)
+            if(!Config::Audio().enabled)
                 return true;
             
             ma_sound* sound = FetchFreeSoundObject();
@@ -134,9 +122,9 @@ namespace eng {
             ma_sound_set_cone(sound, 1.f, 1.f, 1.f);
 
             //distance attenuation setup
-            ma_sound_set_rolloff(sound, data.outOfScreenRolloff);
-            ma_sound_set_min_distance(sound, data.minDistance);
-            ma_sound_set_max_distance(sound, data.maxDistance);
+            ma_sound_set_rolloff(sound, Config::Audio().outOfScreenRolloff);
+            ma_sound_set_min_distance(sound, Config::Audio().minDistance);
+            ma_sound_set_max_distance(sound, Config::Audio().maxDistance);
             ma_sound_set_attenuation_model(sound, ma_attenuation_model_linear);
 
             ma_sound_start(sound);
@@ -149,7 +137,7 @@ namespace eng {
         }
 
         bool PlayMusic(const std::string& path) {
-            if(!data.enabled)
+            if(!Config::Audio().enabled)
                 return true;
 
             if(ma_sound_is_playing(&data.music)) {
@@ -174,34 +162,29 @@ namespace eng {
         }
 
         void Enabled(bool enabled) {
-            data.enabled = enabled;
+            Config::Audio().enabled = enabled;
             //TODO: add music start/stop
+        }
+
+        void SetVolume_Master(float volume) {
+            ma_engine_set_volume(&data.engine, volume * 1e-2f);
+        }
+
+        void SetVolume_Music(float volume) {
+            ma_sound_set_volume(&data.music_group, volume * 1e-2f);
+        }
+
+        void SetVolume_Digital(float volume) {
+            ma_sound_set_volume(&data.digital_group, volume * 1e-2f);
         }
 
         void DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
             ImGui::Begin("Sound");
 
-            ImGui::Checkbox("Enabled", &data.enabled);
-            ImGui::Separator();
-
-            ImGui::Text("Volume");
-            if(ImGui::SliderFloat("Master", &data.volume_master, 0.f, 100.f, "%.1f")) {
-                ma_engine_set_volume(&data.engine, data.volume_master * 1e-2f);
-            }
-
-            if(ImGui::SliderFloat("Music", &data.volume_music, 0.f, 100.f, "%.1f")) {
-                ma_sound_set_volume(&data.music_group, data.volume_music * 1e-2f);
-            }
-
-            if(ImGui::SliderFloat("Digital", &data.volume_digital, 0.f, 100.f, "%.1f")) {
-                ma_sound_set_volume(&data.digital_group, data.volume_digital * 1e-2f);
-            }
-            ImGui::Separator();
-
             static glm::vec2 pos = glm::vec2(0.f);
             if(ImGui::SliderFloat2("listener pos", (float*)&pos, -100.f, 100.f)) {
-                UpdateListenerPosition(pos);
+                Audio::UpdateListenerPosition(pos);
             }
 
             ImGui::End();

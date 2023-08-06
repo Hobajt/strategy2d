@@ -18,6 +18,8 @@ static std::string text = "";
 static char* buf = new char[BUF_LEN];
 
 void Sandbox::OnInit() {
+    Config::Reload();
+
     try {
         ReloadShaders();
         // font = std::make_shared<Font>("res/fonts/PermanentMarker-Regular.ttf", int(fontScale * Window::Get().Height()));
@@ -49,8 +51,6 @@ void Sandbox::OnInit() {
         LOG_ERROR("Failed to load resources; Terminating...");
         throw e;
     }
-
-    Audio::Enabled(false);
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
@@ -161,6 +161,7 @@ void Sandbox::OnUpdate() {
 void Sandbox::OnGUI() {
 #ifdef ENGINE_ENABLE_GUI
     if(gui_enabled) {
+        Config::DBG_GUI();
         Audio::DBG_GUI();
         Camera::Get().DBG_GUI();
 
