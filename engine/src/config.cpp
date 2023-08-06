@@ -46,7 +46,7 @@ namespace eng::Config {
 
         ImGui::Separator();
         ImGui::Text("Speeds");
-        if(ImGui::SliderFloat("Game speed", &data.game_speed, 0.f, 1.f)) {
+        if(ImGui::SliderFloat("Game speed", &data.game_speed, 0.6f, 6.f, "%.1f", ImGuiSliderFlags_Logarithmic)) {
             //....;
         }
 
@@ -86,6 +86,10 @@ namespace eng::Config {
 
     AudioConfig& Audio() {
         return data.audio;
+    }
+
+    float GameSpeed() {
+        return data.game_speed;
     }
 
     //============================

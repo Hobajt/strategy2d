@@ -411,20 +411,20 @@ namespace eng {
         if(d.i1 < 0) {
             //1st anim has invalid idx -> play explosion animation
             d.i3 = 1;
-            d.f2 = (float)Input::CurrentTime() + anim->GetGraphics(CorpseAnimID::EXPLOSION).Duration();
+            d.f2 = Input::GameTimeDelay(anim->GetGraphics(CorpseAnimID::EXPLOSION).Duration());
 
             if(!src.IsUnit()) {
                 //src is a building -> display crater animation (along with explosion)
                 int is_wasteland = int(obj.lvl()->map.GetTileset()->GetType() == TilesetType::WASTELAND);
                 d.i1 = (src.NavigationType() == NavigationBit::GROUND) ? (CorpseAnimID::RUINS_GROUND + is_wasteland) : CorpseAnimID::RUINS_WATER;
-                d.f1 = (float)Input::CurrentTime() + anim->GetGraphics(d.i1).Duration();
+                d.f1 = Input::GameTimeDelay(anim->GetGraphics(d.i1).Duration());
 
                 obj.real_pos() = glm::vec2(src.Position()) + (src.Data()->size - glm::vec2(2.f)) * 0.5f;
                 obj.real_size() = glm::vec2(2.f);
             }
         }
         else {
-            d.f1 = (float)Input::CurrentTime() + anim->GetGraphics(d.i1).Duration() + 1.f;
+            d.f1 = Input::GameTimeDelay(anim->GetGraphics(d.i1).Duration() + 1.f);
             if(src.IsUnit()) {
                 //2nd animation - transitioned to from the 1st one
                 if(src.NavigationType() == NavigationBit::GROUND) {
@@ -445,7 +445,7 @@ namespace eng {
         UtilityObject::LiveData& d = obj.LD();
         Input& input = Input::Get();
 
-        float t = Input::CurrentTime();
+        float t = (float)Input::CurrentTime();
 
         //switch from 1st to 2nd animation when the time runs out
         if(t >= d.f1) {

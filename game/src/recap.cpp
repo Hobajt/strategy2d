@@ -82,7 +82,7 @@ void RecapController::Update() {
         }
         case RecapState::OBJECTIVES:
             //scroll until all the text is gone
-            if(text.ScrollUpdate(input.deltaTime * OBJ_SCROLL_SPEED) && flag == 0) {
+            if(text.ScrollUpdate(input.deltaTime_real * OBJ_SCROLL_SPEED) && flag == 0) {
                 timing = currentTime;
                 flag = 1;
                 LOG_TRACE("RecapState::OBJECTIVES - scroll over");

@@ -26,4 +26,6 @@ namespace eng::Config {
 
     AudioConfig& Audio();
 
+    float GameSpeed();
+
 }//namespace eng

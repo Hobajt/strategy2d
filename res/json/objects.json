@@ -79,7 +79,7 @@
         "armor": 2,
         "basic_damage": 60,
         "pierce_damage": 3,
-        "cooldown": 1.5,
+        "cooldown": 1.0,
         "race": 0,
         "death_sound": 1,
         "sounds": {

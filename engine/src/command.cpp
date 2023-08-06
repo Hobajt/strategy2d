@@ -292,7 +292,7 @@ namespace eng {
         //logic for transition from the action to idling (action cooldown)
         if(!anim_ended && src.AnimationFinished()) {
             anim_ended = true;
-            action_stop_time = (float)input.CurrentTime() + src.Cooldown();
+            action_stop_time = input.GameTimeDelay(src.Cooldown());
         }
 
         //animation values update

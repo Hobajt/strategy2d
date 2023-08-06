@@ -68,6 +68,10 @@ namespace eng {
         void AddKeyCallback(int keycode, KeyPressCallbackFn callback, bool replace = false, void* userData = nullptr);
 
         static double CurrentTime();
+
+        //For delay tracking with game speed modifications applied.
+        //Returns current time + provided delay in game time.
+        static float GameTimeDelay(float delay_s);
     private:
         Input() = default;
         ~Input();
@@ -80,6 +84,7 @@ namespace eng {
         void InitCallbacks(const Window& window);
     public:
         float deltaTime;
+        float deltaTime_real;
         float fps;
 
         glm::vec2 move1, move2;

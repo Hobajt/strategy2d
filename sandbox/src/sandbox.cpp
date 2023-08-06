@@ -38,7 +38,8 @@ void Sandbox::OnInit() {
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(0.f, 0.f)));
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), dummy_faction, glm::vec2(5.f, 0.f));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
-        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), dummy_faction, glm::vec2(5.f, 5.f), false);
+        // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), dummy_faction, glm::vec2(5.f, 5.f), false);
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), dummy_faction, glm::vec2(5.f, 5.f), false);
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);

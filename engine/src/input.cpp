@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 
 #include "engine/utils/setup.h"
+#include "engine/game/config.h"
 
 // #define INPUT_CALLBACK_CHAINING
 
@@ -56,8 +57,9 @@ namespace eng {
     }
 
     void Input::Update() {
-        deltaTime = UpdateDeltaTime();
-        fps = data.fps.Update(deltaTime);
+        deltaTime_real = UpdateDeltaTime();
+        deltaTime = deltaTime_real * Config::GameSpeed();
+        fps = data.fps.Update(deltaTime_real);
 
         UpdateKeys();
         UpdateMouse();
@@ -86,6 +88,12 @@ namespace eng {
 
     double Input::CurrentTime() {
         return glfwGetTime();
+    }
+
+    float Input::GameTimeDelay(float delay) {
+        //TODO: might want to track action starting time, rather then end time
+        //because when game speed changes, end time stays unchanged
+        return float(glfwGetTime()) + delay / Config::GameSpeed();
     }
 
     Input::~Input() {

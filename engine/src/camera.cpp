@@ -27,7 +27,7 @@ namespace eng {
     void Camera::Update() {
         Input& input = Input::Get();
 
-        position += (input.move1 * input.deltaTime * CAM_MOVE_SPEED) / zoom;
+        position += (input.move1 * input.deltaTime_real * CAM_MOVE_SPEED) / zoom;
 
         ZoomUpdate();
 
@@ -39,7 +39,7 @@ namespace eng {
         Input& input = Input::Get();
 
         if(enableZoomUpdates || forced) {
-            zoom_log += input.scroll.y * input.deltaTime * 10.f;
+            zoom_log += input.scroll.y * input.deltaTime_real * 10.f;
             if(zoom_log < -CAM_ZOOM_LOG_RANGE) zoom_log = -CAM_ZOOM_LOG_RANGE;
             else if(zoom_log > CAM_ZOOM_LOG_RANGE) zoom_log = CAM_ZOOM_LOG_RANGE;
             zoom = std::pow(10, zoom_log);
