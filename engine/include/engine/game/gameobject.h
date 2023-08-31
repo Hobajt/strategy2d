@@ -217,6 +217,7 @@ namespace eng {
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
     protected:
         virtual void Inner_DBG_GUI() override;
+        virtual void InnerIntegrate() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
     private:

@@ -101,7 +101,7 @@ namespace eng {
 
         float cooldown;
 
-        int deathSoundIdx;
+        int deathSoundIdx;      //identifies what sound to play on death (from 4 preset sounds)
         int race;
     public:
         virtual int MaxHealth() const override { return health; }
@@ -136,6 +136,7 @@ namespace eng {
     //===== BuildingData =====
 
     struct BuildingData : public FactionObjectData {
+        bool traversable = false;       //detaches building from pathfinding
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

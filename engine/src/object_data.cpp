@@ -152,40 +152,67 @@ namespace eng {
         //animation parsing
         std::map<int, SpriteGroup> animations = {};
 
-        //animations list is optional as most buildings can name all animations from their name
-        if(config.count("animations")) {
-            for(auto& [anim_name, anim_data] : config.at("animations").items()) {
-                //animation ID - either given in JSON or derive from the animation name
-                int anim_id = anim_data.count("id") ? anim_data.at("id") : ResolveBuildingAnimationID(anim_name);
+        if(config.count("custom_sprites") && config.at("custom_sprites")) {
+            //custom sprites loading
+            std::string sprites_prefix = config.at("sprites_prefix");
 
-                std::string sprite_name = anim_data.count("sprite_name") ? anim_data.at("sprite_name") : anim_name;
-                bool anim_repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
+            if(config.count("animations")) {
+                for(auto& [anim_name, anim_data] : config.at("animations").items()) {
+                    int anim_id = ResolveBuildingAnimationID(anim_data.at("id"));
+                    bool is_summer = anim_data.count("summer") ? anim_data.at("summer") : true;
+                    bool both_weathers = anim_data.count("both_weathers") ? anim_data.at("both_weathers") : false;
+                    bool anim_repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
 
-                LoadBuildingSprites(animations, anim_id, name_prefix, sprite_name, anim_repeat);
+                    if(!is_summer && !both_weathers)
+                        anim_id += wo;
+
+                    std::string sprite_path = sprites_prefix + "/" + anim_name;
+                    animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path), anim_repeat, 1.f)) });
+
+                    if(both_weathers)
+                        anim_id += wo;
+                    animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path), anim_repeat, 1.f)) });
+                }
             }
         }
+        else {
+            //animations list is optional as most buildings can name all animations from their name
+            if(config.count("animations")) {
+                for(auto& [anim_name, anim_data] : config.at("animations").items()) {
+                    //animation ID - either given in JSON or derive from the animation name
+                    int anim_id = anim_data.count("id") ? anim_data.at("id") : ResolveBuildingAnimationID(anim_name);
 
-        //try to load defaults for each animation (unless it was explicity defined)
-        if(!animations.count(BuildingAnimationType::IDLE)) {
-            LoadBuildingSprites(animations, BuildingAnimationType::IDLE, name_prefix, name_suffix, false);
-        }
-        if(!animations.count(BuildingAnimationType::BUILD3)) {
-            LoadBuildingSprites(animations, BuildingAnimationType::BUILD3, name_prefix, name_suffix + "_build", false, false);
-        }
-        if(!animations.count(BuildingAnimationType::UPGRADE)) {
-            LoadBuildingSprites(animations, BuildingAnimationType::UPGRADE, name_prefix, name_suffix + "_upgrade", false, false);
-        }
+                    std::string sprite_name = anim_data.count("sprite_name") ? anim_data.at("sprite_name") : anim_name;
+                    bool anim_repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
 
-        //load construction sprites
-        animations.insert({ BuildingAnimationType::BUILD1, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1, Resources::LoadSprite("misc/buildings/construction1"), false, 1.f)) });
-        animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });
-        animations.insert({ BuildingAnimationType::BUILD1 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1 + wo, Resources::LoadSprite("misc/buildings/construction1_winter"), false, 1.f)) });
-        animations.insert({ BuildingAnimationType::BUILD2 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2 + wo, Resources::LoadSprite("misc/buildings/construction2_winter"), false, 1.f)) });
+                    LoadBuildingSprites(animations, anim_id, name_prefix, sprite_name, anim_repeat);
+                }
+            }
+
+            //try to load defaults for each animation (unless it was explicity defined)
+            if(!animations.count(BuildingAnimationType::IDLE)) {
+                LoadBuildingSprites(animations, BuildingAnimationType::IDLE, name_prefix, name_suffix, false);
+            }
+            if(!animations.count(BuildingAnimationType::BUILD3)) {
+                LoadBuildingSprites(animations, BuildingAnimationType::BUILD3, name_prefix, name_suffix + "_build", false, false);
+            }
+            if(!animations.count(BuildingAnimationType::UPGRADE)) {
+                LoadBuildingSprites(animations, BuildingAnimationType::UPGRADE, name_prefix, name_suffix + "_upgrade", false, false);
+            }
+
+            //load construction sprites
+            animations.insert({ BuildingAnimationType::BUILD1, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1, Resources::LoadSprite("misc/buildings/construction1"), false, 1.f)) });
+            animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });
+            animations.insert({ BuildingAnimationType::BUILD1 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1 + wo, Resources::LoadSprite("misc/buildings/construction1_winter"), false, 1.f)) });
+            animations.insert({ BuildingAnimationType::BUILD2 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2 + wo, Resources::LoadSprite("misc/buildings/construction2_winter"), false, 1.f)) });
+        }
 
         data->animData = std::make_shared<AnimatorData>(building_name, std::move(animations));
 
         //parse general unit/building parameters
         ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
+
+        data->traversable = config.count("traversable") ? config.at("traversable") : false;
 
         return std::static_pointer_cast<GameObjectData>(data);
     }
@@ -286,7 +313,7 @@ namespace eng {
     }
 
     int ResolveUnitAnimationID(const std::string& name) {
-        constexpr static std::array<const char*,4> anim_names = { "idle", "walk", "action", "death" };
+        constexpr static std::array<const char*,8> anim_names = { "idle", "walk", "action", "death", "idle2", "idle3", "walk2", "walk3" };
 
         const char* n = name.c_str();
         for(int i = 0; i < anim_names.size(); i++) {
@@ -299,7 +326,7 @@ namespace eng {
     }
 
     int ResolveBuildingAnimationID(const std::string& name) {
-        constexpr static std::array<const char*,5> anim_names = { "idle", "build1", "build2", "build3", "upgrade" };
+        constexpr static std::array<const char*,6> anim_names = { "idle", "idle2", "build1", "build2", "build3", "upgrade" };
 
         const char* n = name.c_str();
         for(int i = 0; i < anim_names.size(); i++) {

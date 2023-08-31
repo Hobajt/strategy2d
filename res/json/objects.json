@@ -90,7 +90,6 @@
             "attack": ["misc/sword", 3]
         }
     },
-
     {
         "name": "human/town_hall",
         "type": 3,
@@ -122,5 +121,113 @@
         "basic_damage": 0,
         "pierce_damage": 0,
         "race": 0
+    },
+    {
+        "name": "misc/gold_mine",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3, 3],
+        "vision_range": 3,
+        "health": 1000,
+        "mana": 0,
+        "build_time": 1,
+        "cost": [0,0,0],
+        "attack_range": 0,
+        "armor": 100,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "custom_sprites": true,
+        "sprites_prefix": "misc/buildings",
+        "animations": {
+            "gm_empty_summer": { "id": "idle" },
+            "gm_full_summer": { "id": "idle2" },
+            "gm_empty_winter": { "id": "idle", "summer": false },
+            "gm_full_winter": { "id": "idle2", "summer": false }
+        }
+    },
+    {
+        "name": "misc/oil",
+        "type": 3,
+        "nav_type": 2,
+        "size": [2, 2],
+        "vision_range": 3,
+        "health": 1000,
+        "mana": 0,
+        "build_time": 1,
+        "cost": [0,0,0],
+        "attack_range": 0,
+        "armor": 100,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "unattackable": true,
+        "traversable": true,
+        "custom_sprites": true,
+        "sprites_prefix": "misc/buildings",
+        "animations": {
+            "oil": { "id": "idle", "both_weathers": true }
+        }
+    },
+    {
+        "name": "human/peasant",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 30,
+        "mana": 0,
+        "build_time": 45,
+        "cost": [400,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 3,
+        "pierce_damage": 2,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 1,
+        "sounds": {
+            "yes": ["peasant/psyessr", 4],
+            "what": ["peasant/pswhat", 4],
+            "pissed": ["peasant/pspissd", 7],
+            "ready": "peasant/psready",
+            "attack": "misc/peonatak"
+        }
+    },
+    {
+        "name": "human/tanker",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "idle2": { "duration": 1.0, "sprite_name": "idle_carry" },
+            "walk2": { "duration": 1.0, "sprite_name": "idle_carry" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 90,
+        "mana": 0,
+        "build_time": 50,
+        "cost": [400,200,0],
+        "attack_range": 1,
+        "armor": 10,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 3,
+        "sounds": {
+            "yes": "ships/foghorn",
+            "what": ["ships/hshpwht", 3],
+            "pissed": ["ships/hshppis", 3],
+            "ready": "ships/hshpredy",
+            "attack": "misc/peonatak"
+        }
     }
 ]

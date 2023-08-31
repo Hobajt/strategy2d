@@ -288,6 +288,11 @@ namespace eng {
 #endif
     }
 
+    void Building::InnerIntegrate() {
+        if(!data->traversable)
+            FactionObject::InnerIntegrate();
+    }
+
     std::ostream& Building::DBG_Print(std::ostream& os) const {
         os << "Building - " << Name() << " (ID=" << ID() << ")";
         return os;
