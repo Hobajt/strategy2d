@@ -37,12 +37,12 @@ namespace eng {
         float zIdx = -0.5f;
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), actionIdx, orientation);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
     }
 
     bool GameObject::Update() {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
-        animator.Update(actionIdx);
+        animator.Update(ActionIdx());
         return killed;
     }
 
@@ -75,7 +75,7 @@ namespace eng {
     void GameObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d", id);
-        ImGui::Text("Action: %d | Orientation: %d", actionIdx, orientation);
+        ImGui::Text("Action: %d (%d) | Orientation: %d", actionIdx, ActionIdx(), orientation);
         ImGui::Text("Position: [%d, %d]", position.x, position.y);
         ImGui::Text("Frame: %d/%d (%.0f%%)", animator.GetCurrentFrameIdx(), animator.GetCurrentFrameCount(), animator.GetCurrentFrame() * 100.f);
 #endif
@@ -180,6 +180,7 @@ namespace eng {
         ImGui::SliderInt("health", &health, 0, data_f->MaxHealth());
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
             ChangeColor(colorIdx);
+        ImGui::SliderInt("variationIdx", &variationIdx, 0, 5);
 #endif
     }
 
@@ -219,6 +220,14 @@ namespace eng {
         command = cmd;
         action.Signal(*this, ActionSignal::COMMAND_SWITCH, command.Type(), prevType);
         ENG_LOG_FINE("IssueCommand: Unit: {} ({}) ... {}", ID(), Name(), command.to_string());
+    }
+
+    int Unit::ActionIdx() const {
+        int idx = GameObject::ActionIdx();
+        //animation variation switching (for idle & move animations)
+        if(idx < ActionType::ACTION && VariationIdx() != 0)
+            idx = idx + (UnitAnimationType::DEATH + VariationIdx());
+        return idx;
     }
 
     void Unit::Inner_DBG_GUI() {
@@ -279,6 +288,14 @@ namespace eng {
     void Building::CancelAction() {
         ENG_LOG_FINE("CancelAction: Building: {} ({}) ... {}", ID(), Name(), action.to_string());
         action = BuildingAction::Idle(CanAttack());
+    }
+
+    int Building::ActionIdx() const {
+        int idx = GameObject::ActionIdx();
+        //animation variation switching (for idle animation)
+        if(idx == BuildingAnimationType::IDLE && VariationIdx() != 0)
+            idx = BuildingAnimationType::IDLE2;
+        return idx;
     }
 
     void Building::Inner_DBG_GUI() {

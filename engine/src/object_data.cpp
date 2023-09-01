@@ -313,7 +313,7 @@ namespace eng {
     }
 
     int ResolveUnitAnimationID(const std::string& name) {
-        constexpr static std::array<const char*,8> anim_names = { "idle", "walk", "action", "death", "idle2", "idle3", "walk2", "walk3" };
+        constexpr static std::array<const char*,8> anim_names = { "idle", "walk", "action", "death", "idle2", "walk2", "idle3", "walk3" };
 
         const char* n = name.c_str();
         for(int i = 0; i < anim_names.size(); i++) {

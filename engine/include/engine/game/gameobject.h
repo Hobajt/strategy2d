@@ -42,7 +42,7 @@ namespace eng {
         bool CheckPosition(const glm::ivec2& map_coords);
 
         int Orientation() const { return orientation; }
-        int ActionIdx() const { return actionIdx; }
+        virtual int ActionIdx() const { return actionIdx; }
         glm::ivec2 Position() const { return position; }
         glm::vec2 Positionf() const { return glm::vec2(position); }
 
@@ -132,6 +132,8 @@ namespace eng {
         virtual bool IsUnit() const { return false; }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
+
+        int VariationIdx() const { return variationIdx; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -143,6 +145,8 @@ namespace eng {
         int colorIdx;
 
         int health;
+
+        int variationIdx = 0;       //to enable variations for certain animations (increment based on how many overridable animations there are)
     };
 
     //===== Unit =====
@@ -164,6 +168,8 @@ namespace eng {
 
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);
+
+        virtual int ActionIdx() const override;
 
         float MoveSpeed() const { return 1.f; }
 
@@ -205,6 +211,8 @@ namespace eng {
 
         void IssueAction(const BuildingAction& action);
         void CancelAction();
+
+        virtual int ActionIdx() const override;
 
         //==== Building properties ====
 

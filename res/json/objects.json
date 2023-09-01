@@ -176,6 +176,10 @@
         "animations": {
             "idle": { "duration": 1.0 },
             "walk": { "duration": 1.0 },
+            "idle2": { "duration": 1.0, "sprite_name": "idle_gold" },
+            "walk2": { "duration": 1.0, "sprite_name": "walk_gold" },
+            "idle3": { "duration": 1.0, "sprite_name": "idle_wood" },
+            "walk3": { "duration": 1.0, "sprite_name": "walk_wood" },
             "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
             "death": { "duration": 1.0, "repeat": false }
         },
@@ -196,6 +200,40 @@
             "what": ["peasant/pswhat", 4],
             "pissed": ["peasant/pspissd", 7],
             "ready": "peasant/psready",
+            "attack": "misc/peonatak"
+        }
+    },
+    {
+        "name": "orc/peon",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "idle2": { "duration": 1.0, "sprite_name": "idle_gold" },
+            "walk2": { "duration": 1.0, "sprite_name": "walk_gold" },
+            "idle3": { "duration": 1.0, "sprite_name": "idle_wood" },
+            "walk3": { "duration": 1.0, "sprite_name": "walk_wood" },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 30,
+        "mana": 0,
+        "build_time": 45,
+        "cost": [400,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 3,
+        "pierce_damage": 2,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 1,
+        "sounds": {
+            "yes": ["orc/oyessir", 4],
+            "what": ["orc/owhat", 6],
+            "pissed": ["orc/opissed", 7],
+            "ready": "peon/pnready",
             "attack": "misc/peonatak"
         }
     },

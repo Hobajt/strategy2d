@@ -22,6 +22,8 @@ namespace eng {
 
     //when changing values, also update ResolveUnitAnimationID() (local fn in object_data.cpp)
     namespace ActionType { enum { INVALID = -1, IDLE = 0, MOVE, ACTION, ENTER, UNLOAD, COUNT }; }
+    namespace UnitAnimationType { enum { IDLE, MOVE, ACTION, DEATH, IDLE2, MOVE2, IDLE3, MOVE3 }; }
+
     namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH }; }
 
     namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, OTHER = 1 }; }

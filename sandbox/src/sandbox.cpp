@@ -41,7 +41,8 @@ void Sandbox::OnInit() {
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), dummy_faction, glm::vec2(5.f, 5.f), false);
-        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), dummy_faction, glm::vec2(5.f, 5.f), false);
+        // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
 
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), dummy_faction, glm::vec2(7.f, 7.f));
 
