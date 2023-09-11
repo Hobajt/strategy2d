@@ -64,6 +64,10 @@ namespace eng {
         return ((unsigned int)(id.type - 1) < ObjectType::UTILITY);
     }
 
+    bool ObjectID::IsHarvestable(const ObjectID& id) {
+        return (id.type == ObjectType::MAP_OBJECT && id.id == TileType::TREES);
+    }
+
     //===== SoundEffect =====
 
     std::string SoundEffect::Random() const {
@@ -213,6 +217,7 @@ namespace eng {
         ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
 
         data->traversable = config.count("traversable") ? config.at("traversable") : false;
+        data->gatherable = config.count("gatherable") ? config.at("gatherable") : false;
 
         return std::static_pointer_cast<GameObjectData>(data);
     }
@@ -249,6 +254,8 @@ namespace eng {
         if(sounds.count("yes"))     data->sound_yes     = ParseSoundEffect(sounds.at("yes"));
         if(sounds.count("what"))    data->sound_what    = ParseSoundEffect(sounds.at("what"));
         if(sounds.count("pissed"))  data->sound_pissed  = ParseSoundEffect(sounds.at("pissed"));
+
+        if(config.count("worker")) data->worker = config.at("worker");
 
         return std::static_pointer_cast<GameObjectData>(data);
     }

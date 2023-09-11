@@ -90,6 +90,12 @@ namespace eng {
 
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action);
 
+    /* HARVEST COMMAND DESCRIPTION:
+        - 
+    */
+
+    void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action);
+
     //=============================
 
     void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action);
@@ -340,6 +346,25 @@ namespace eng {
         return cmd;
     }
 
+    Command Command::Harvest(const glm::ivec2& target_pos) {
+        Command cmd = {};
+
+        cmd.type = CommandType::HARVEST_WOOD;
+        cmd.handler = CommandHandler_Harvest;
+        cmd.target_id = ObjectID();
+        cmd.target_pos = target_pos;
+
+        return cmd;
+    }
+
+    Command Command::Gather(const ObjectID& target_id) {
+        return {};
+    }
+
+    Command Command::ReturnGoods() {
+        return {};
+    }
+
     void Command::Update(Unit& src, Level& level) {
         ASSERT_MSG(handler != nullptr, "Command::Update - handler should never be null.");
         handler(src, level, *this, src.action);
@@ -453,6 +478,25 @@ namespace eng {
                 action = Action::Attack(cmd.target_id, glm::ivec2(pos_min), glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
             }
         }
+    }
+
+    void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action) {
+        //validate that it's issued on a worker unit
+
+        //check worker's carry status
+        //     -> if it's carrying wood -> move to return goods command
+        //     -> if it's carrying gold -> cancel this command (or only do the movement part; peasants cannot drop their load ingame)
+
+        //validate target position
+        //check if target position contains trees
+        //      -> if it doesn't, lookup trees in neighboring tiles (6tile limit) & override target if something's found
+        //      -> nothing found -> terminate the command
+
+        //validate distance to target
+        //      -> initiate movement; stop once distance is 1 tile or destination unreachable
+        //      -> if destination is unreachable, check if any neighboring tiles are wood -> if not, terminate the command
+
+        //keep on issuing harvest actions
     }
 
     //=======================================

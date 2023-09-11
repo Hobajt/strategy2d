@@ -37,6 +37,8 @@ namespace eng {
         //true if it describes a unit/building/gameobject.
         static bool IsObject(const ObjectID& id);
 
+        static bool IsHarvestable(const ObjectID& id);
+
         //for logging purposes
         std::string to_string() const;
         friend std::ostream& operator<<(std::ostream& os, const ObjectID& id);
@@ -120,6 +122,7 @@ namespace eng {
         SoundEffect sound_pissed;
 
         objectReferences refs;
+        bool worker = false;
 
         int deathAnimIdx = -1;
     public:
@@ -137,6 +140,7 @@ namespace eng {
 
     struct BuildingData : public FactionObjectData {
         bool traversable = false;       //detaches building from pathfinding
+        bool gatherable = false;        //building is treated as a resource (workers can enter it to mine it)
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

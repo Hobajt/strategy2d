@@ -104,52 +104,8 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    if(input.rmb.down()) {
-        Unit& troll = level.objects.GetUnit(trollID);
-
-        glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ObjectID target_id = level.map.ObjectIDAt(target_pos);
-        switch(rmb_commandID) {
-            case CommandType::IDLE:     //adaptive command - determined based on click target
-                if(ObjectID::IsAttackable(target_id)) {
-                    if(ObjectID::IsObject(target_id))
-                        ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-                    else
-                        ENG_LOG_INFO("ATTACK {} at {} (map object)", target_id, target_pos);
-                    if(troll.UData()->YesSound().valid) {
-                        Audio::Play(troll.UData()->YesSound().Random());
-                    }
-                    troll.IssueCommand(Command::Attack(target_id, target_pos));
-                }
-                else if(level.map.IsWithinBounds(target_pos)) {
-                    ENG_LOG_INFO("MOVE TO {}", target_pos);
-                    troll.IssueCommand(Command::Move(target_pos));
-                    //TODO: play units voices from wherever player commands are generated (not in the commands themselves)
-                    if(troll.UData()->YesSound().valid) {
-                        Audio::Play(troll.UData()->YesSound().Random());
-                    }
-                }
-                else {
-                    ENG_LOG_INFO("COULDN'T RESOLVE COMMAND");
-                }
-                break;
-            case CommandType::MOVE:
-                ENG_LOG_INFO("MOVE TO {}", target_pos);
-                if(level.map.IsWithinBounds(target_pos)) {
-                    troll.IssueCommand(Command::Move(target_pos));
-                }
-                break;
-            case CommandType::ATTACK:
-                if(ObjectID::IsAttackable(target_id)) {
-                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-                    troll.IssueCommand(Command::Attack(target_id, target_pos));
-                }
-                else {
-                    ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);
-                }
-                break;
-        }
-    }
+    Unit& troll = level.objects.GetUnit(trollID);
+    CommandDispatch(troll);
 
     if(input.lmb.down()) {
         glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
@@ -164,6 +120,81 @@ void Sandbox::OnUpdate() {
     //======================
     
     Renderer::End();
+}
+
+void Sandbox::CommandDispatch(Unit& unit) {
+    Camera& camera = Camera::Get();
+    Input& input = Input::Get();
+
+    //only fire commands on RMB clicks
+    if(!input.rmb.down())
+        return;
+    
+    //click info
+    glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+    ObjectID target_id = level.map.ObjectIDAt(target_pos);
+    TileData tile_info = level.map(target_pos);
+
+    if(adaptiveCommand) {
+        bool harvestable = ObjectID::IsHarvestable(target_id);
+        bool gatherable = (ObjectID::IsObject(target_id) && level.objects.GetObject(target_id).IsGatherable(unit.NavigationType()));
+
+        //resolve what type of command to issue based on unit & click info
+        if(unit.IsWorker() && gatherable) {
+            //issue gather command
+            ENG_LOG_INFO("GATHER FROM {} ({})", target_id, level.objects.GetObject(target_id));
+            unit.IssueCommand(Command::Gather(target_id));
+        }
+        else if(unit.IsWorker() && harvestable) {
+            //issue harvest command
+            ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
+            unit.IssueCommand(Command::Harvest(target_pos));
+        }
+        else if(ObjectID::IsAttackable(target_id)) {
+            if(ObjectID::IsObject(target_id))
+                ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
+            else
+                ENG_LOG_INFO("ATTACK {} at {} (map object)", target_id, target_pos);
+            if(unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
+            unit.IssueCommand(Command::Attack(target_id, target_pos));
+        }
+        else if(level.map.IsWithinBounds(target_pos)) {
+            ENG_LOG_INFO("MOVE TO {}", target_pos);
+            unit.IssueCommand(Command::Move(target_pos));
+            //TODO: play units voices from wherever player commands are generated (not in the commands themselves)
+            if(unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
+        }
+        else {
+            ENG_LOG_WARN("COULDN'T RESOLVE COMMAND");
+        }
+    }
+    else {
+        //force issue specific command
+        switch(commandID) {
+            case CommandType::MOVE:
+                ENG_LOG_INFO("MOVE TO {}", target_pos);
+                if(level.map.IsWithinBounds(target_pos)) {
+                    unit.IssueCommand(Command::Move(target_pos));
+                }
+                break;
+            case CommandType::ATTACK:
+                if(ObjectID::IsAttackable(target_id)) {
+                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
+                    unit.IssueCommand(Command::Attack(target_id, target_pos));
+                }
+                else {
+                    ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);
+                }
+                break;
+            default:
+                ENG_LOG_INFO("BEHAVIOUR FOR COMMAND {} NOT IMPLEMENTED.", commandID);
+                break;
+        }
+    }
 }
 
 void Sandbox::OnGUI() {
@@ -199,7 +230,9 @@ void Sandbox::OnGUI() {
         level.objects.DBG_GUI();
 
         ImGui::Begin("Command");
-        ImGui::Combo("type", &rmb_commandID, "Adaptive\0Move\0Attack\0");
+        ImGui::Checkbox("Adaptive command", &adaptiveCommand);
+        if(!adaptiveCommand)
+            ImGui::Combo("type", &commandID, "Move\0Attack\0");
         ImGui::End();
 
         level.map.DBG_GUI();

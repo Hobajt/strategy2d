@@ -130,6 +130,7 @@ namespace eng {
         void AddHealth(int value);
 
         virtual bool IsUnit() const { return false; }
+        virtual bool IsGatherable(int unitNavType)  const { return false; }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
 
@@ -180,6 +181,8 @@ namespace eng {
         UnitDataRef UData() const { return data; }
         virtual bool IsUnit() const override { return true; }
         virtual int DeathAnimIdx() const override { return data->deathAnimIdx; }
+
+        bool IsWorker() const { return data->worker; }
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -192,6 +195,8 @@ namespace eng {
 
         glm::vec2 move_offset = glm::vec2(0.f);
         bool animation_ended = false;
+
+        int carry_state = 0;        //worker load indicator
     };
 
     //===== Building =====
@@ -213,6 +218,7 @@ namespace eng {
         void CancelAction();
 
         virtual int ActionIdx() const override;
+        virtual bool IsGatherable(int unitNavType) const override;
 
         //==== Building properties ====
 

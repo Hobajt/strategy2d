@@ -298,6 +298,10 @@ namespace eng {
         return idx;
     }
 
+    bool Building::IsGatherable(int unitNavType) const {
+        return data->gatherable && NavigationType() == unitNavType;
+    }
+
     void Building::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();

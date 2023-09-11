@@ -78,7 +78,7 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
@@ -91,6 +91,11 @@ namespace eng {
         static Command Idle();
         static Command Move(const glm::ivec2& target_pos);
         static Command Attack(const ObjectID& target_id, const glm::ivec2& target_pos);
+
+        //worker-only commands
+        static Command Harvest(const glm::ivec2& target_pos);
+        static Command Gather(const ObjectID& target_id);
+        static Command ReturnGoods();
 
         void Update(Unit& src, Level& level);
 

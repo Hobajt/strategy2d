@@ -139,6 +139,7 @@
         "race": 0,
         "custom_sprites": true,
         "sprites_prefix": "misc/buildings",
+        "gatherable": true,
         "animations": {
             "gm_empty_summer": { "id": "idle" },
             "gm_full_summer": { "id": "idle2" },
@@ -195,6 +196,7 @@
         "cooldown": 1.0,
         "race": 0,
         "death_sound": 1,
+        "worker": true,
         "sounds": {
             "yes": ["peasant/psyessr", 4],
             "what": ["peasant/pswhat", 4],
@@ -229,6 +231,7 @@
         "cooldown": 1.0,
         "race": 1,
         "death_sound": 1,
+        "worker": true,
         "sounds": {
             "yes": ["orc/oyessir", 4],
             "what": ["orc/owhat", 6],
@@ -260,6 +263,7 @@
         "cooldown": 1.0,
         "race": 0,
         "death_sound": 3,
+        "worker": true,
         "sounds": {
             "yes": "ships/foghorn",
             "what": ["ships/hshpwht", 3],
