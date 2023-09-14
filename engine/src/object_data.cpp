@@ -85,6 +85,11 @@ namespace eng {
         return std::string(buf);
     }
 
+    SoundEffect& SoundEffect::Wood() {
+        static SoundEffect sound = SoundEffect("misc/tree", 4);
+        return sound;
+    }
+
     //===== UnitData =====
 
     void UnitData::SetupObjectReferences(const referencesRecord& ref_names) {

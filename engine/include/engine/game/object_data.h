@@ -58,6 +58,8 @@ namespace eng {
         std::string Random() const;
 
         static std::string GetPath(const char* name);
+        
+        static SoundEffect& Wood();
     };
 
     //===== GameObjectData =====

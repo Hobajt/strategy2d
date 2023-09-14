@@ -135,6 +135,7 @@ namespace eng {
         int Race() const { return data_f->race; }
 
         int VariationIdx() const { return variationIdx; }
+        void SetVariationIdx(int idx) { variationIdx = idx; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -183,10 +184,14 @@ namespace eng {
         virtual int DeathAnimIdx() const override { return data->deathAnimIdx; }
 
         bool IsWorker() const { return data->worker; }
+        int CarryStatus() const { return carry_state; }
+        void ChangeCarryStatus(int carry_state);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
+
+        void UpdateVariationIdx();
     private:
         UnitDataRef data = nullptr;
 

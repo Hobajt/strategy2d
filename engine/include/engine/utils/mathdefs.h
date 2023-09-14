@@ -25,6 +25,8 @@ namespace eng {
     //Chebyshev(chessboard) distance between two rectangles (returns the lowest distance).
     float get_range(const glm::vec2& m1, const glm::vec2& M1, const glm::vec2& m2, const glm::vec2& M2);
 
+    int chessboard_distance(const glm::ivec2& p1, const glm::ivec2& p2);
+
     //direction conversions (between vector and number identifier)
 
     int DirVectorCoord(int orientation);

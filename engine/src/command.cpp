@@ -9,8 +9,10 @@ namespace eng {
 #define ACTION_INPROGRESS               0
 #define ACTION_FINISHED_SUCCESS         1
 #define ACTION_FINISHED_INTERRUPTED     2
+#define ACTION_FINISHED_FAILURE         4
 
 #define CONSTRUCTION_SPEED 15.f
+#define HARVEST_WOOD_SCAN_RADIUS 6
 
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
@@ -151,6 +153,19 @@ namespace eng {
         return action;
     }
 
+    Action Action::Harvest(const glm::ivec2& target_pos, const glm::ivec2& target_dir) {
+        Action action = {};
+
+        action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
+        action.data.Reset();
+        action.data.target_pos = target_pos;
+
+        action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
+        action.data.j = ActionPayloadType::HARVEST;
+
+        return action;
+    }
+
     int Action::Update(Unit& source, Level& level) {
         ASSERT_MSG(logic.update != nullptr, "Action::Update - handler should never be null.");
         return logic.update(source, level, *this);
@@ -249,6 +264,8 @@ namespace eng {
         float& action_stop_time = action.data.t;
         //===========
 
+        int action_result = ACTION_FINISHED_SUCCESS;
+
         // action.data.DBG_Print();
 
         //payload delivery check
@@ -258,10 +275,14 @@ namespace eng {
 
             switch(payload_id) {
                 case ActionPayloadType::HARVEST:        //harvest action payload
-                    //TODO:
-                    //decrement value in the map data, send out signal when
+                {
                     //harvest could return from here (wood tick - when the tree is felled)
                     ENG_LOG_INFO("ACTION PAYLOAD - HARVEST");
+                    Audio::Play(SoundEffect::Wood().Random(), src.Position());
+                    if(level.map.HarvestTile(action.data.target_pos)) {
+                        src.ChangeCarryStatus(WorkerCarryState::WOOD);
+                    }
+                }
                     break;
                 case ActionPayloadType::MELEE_ATTACK:   //melee attack action payload
                 {
@@ -306,7 +327,7 @@ namespace eng {
         src.ori() = orientation;
 
         //terminate action only once the cooldown is over
-        return (anim_ended && action_stop_time < (float)input.CurrentTime()) ? ACTION_FINISHED_SUCCESS : ACTION_INPROGRESS;
+        return (anim_ended && action_stop_time < (float)input.CurrentTime()) ? action_result : ACTION_INPROGRESS;
     }
 
     void ActionAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev) {
@@ -382,6 +403,9 @@ namespace eng {
             break;
         case CommandType::ATTACK:
             snprintf(buf, sizeof(buf), "Command: Attack %s", target_id.to_string().c_str());
+            break;
+        case CommandType::HARVEST_WOOD:
+            snprintf(buf, sizeof(buf), "Command: Harvest wood at (%d, %d)", target_pos.x, target_pos.y);
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -481,22 +505,60 @@ namespace eng {
     }
 
     void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
         //validate that it's issued on a worker unit
+        if(!src.IsWorker()) {
+            ENG_LOG_WARN("Harvest Command - attempting to invoke on a non worker unit.");
+            cmd = Command::Idle();
+            return;
+        }
 
         //check worker's carry status
-        //     -> if it's carrying wood -> move to return goods command
-        //     -> if it's carrying gold -> cancel this command (or only do the movement part; peasants cannot drop their load ingame)
+        if(src.CarryStatus() != WorkerCarryState::NONE) {
+            //transition to return goods command if already carrying
+            ENG_LOG_TRACE("Harvest Command - return with goods issued.");
+            cmd = Command::ReturnGoods();
+            return;
+        }
 
-        //validate target position
-        //check if target position contains trees
-        //      -> if it doesn't, lookup trees in neighboring tiles (6tile limit) & override target if something's found
-        //      -> nothing found -> terminate the command
+        //lookup new neighboring tile if selected tile doesn't contain trees
+        glm::ivec2 tree_pos = {};
+        if(!level.map(cmd.target_pos).IsTreeTile()) {
+            if(level.map.FindTrees(cmd.target_pos, src.Position(), tree_pos, HARVEST_WOOD_SCAN_RADIUS)) {
+                cmd.target_pos = tree_pos;
+            }
+            else {
+                //terminate command if no tree tiles were found within the radius
+                cmd = Command::Idle();
+                return;
+            }
+        }
 
-        //validate distance to target
-        //      -> initiate movement; stop once distance is 1 tile or destination unreachable
-        //      -> if destination is unreachable, check if any neighboring tiles are wood -> if not, terminate the command
-
-        //keep on issuing harvest actions
+        //check distance to the target tile & move closer if possible
+        if(chessboard_distance(src.Position(), cmd.target_pos) > 1) {
+            //move until the worker is neighboring the tile or there's nowhere else to move
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Forrest(src, cmd.target_pos);
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            //nowhere else to move -> rescan the neighborhood & pick new tree tile
+            else if(!level.map.FindTrees(src.Position(), cmd.target_pos, tree_pos, 1)) {
+                //no neighboring trees found -> terminate the command
+                cmd = Command::Idle();
+            }
+            else {
+                cmd.target_pos = tree_pos;
+                action = Action::Harvest(cmd.target_pos, cmd.target_pos - src.Position());
+            }
+        }
+        else {
+            //tree tile is in range -> issue a harvest action
+            action = Action::Harvest(cmd.target_pos, cmd.target_pos - src.Position());
+        }
     }
 
     //=======================================

@@ -144,11 +144,19 @@ void Sandbox::CommandDispatch(Unit& unit) {
             //issue gather command
             ENG_LOG_INFO("GATHER FROM {} ({})", target_id, level.objects.GetObject(target_id));
             unit.IssueCommand(Command::Gather(target_id));
+
+            if(unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
         }
         else if(unit.IsWorker() && harvestable) {
             //issue harvest command
             ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
             unit.IssueCommand(Command::Harvest(target_pos));
+
+            if(unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
         }
         else if(ObjectID::IsAttackable(target_id)) {
             if(ObjectID::IsObject(target_id))
@@ -232,7 +240,7 @@ void Sandbox::OnGUI() {
         ImGui::Begin("Command");
         ImGui::Checkbox("Adaptive command", &adaptiveCommand);
         if(!adaptiveCommand)
-            ImGui::Combo("type", &commandID, "Move\0Attack\0");
+            ImGui::Combo("type", &commandID, "Idle\0Move\0Attack\0");
         ImGui::End();
 
         level.map.DBG_GUI();

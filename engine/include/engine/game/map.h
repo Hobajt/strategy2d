@@ -68,6 +68,7 @@ namespace eng {
         bool pathtile = false;      //purely for debugging
         float d = HUGE_VALF;
         bool visited = false;
+        bool part_of_forrest = false;
     public:
         //Clears the temporary variables for next pathfinding.
         void Cleanup();
@@ -109,12 +110,15 @@ namespace eng {
 
         //Returns true if a unit with given navigation type can traverse this tile (& the tile isn't taken).
         bool Traversable(int unitNavType) const;
+        bool TraversableOrForrest(int unitNavType) const;
 
         //Returns true if the tile is marked as permanently taken (object occupying it indends to stay there).
         //Also returns true if the tile is not taken, but is untraversable by definition (bcs of a tile type).
         bool PermanentlyTaken(int unitNavType) const;
 
         void UpdateID();
+
+        bool IsTreeTile() const { return tileType == TileType::TREES; }
     private:
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
@@ -198,6 +202,7 @@ namespace eng {
         const TileData& operator()(const glm::ivec2& idx) const;
 
         void NavDataCleanup();
+        int NavData_Forrest_FloodFill(const glm::ivec2& pos);
     private:
         void Move(MapTiles&& m) noexcept;
         void Release() noexcept;
@@ -318,7 +323,13 @@ namespace eng {
 
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
+        //Searches for path to a block of tiles.
         glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max);
+        //Searches for path to nearest trees tile (any tree tile that's part of the same forrest).
+        glm::ivec2 Pathfinding_NextPosition_Forrest(const Unit& unit, const glm::ivec2& target_pos);
+
+        //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
+        bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);
 
         void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, bool is_building);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);

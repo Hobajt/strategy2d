@@ -211,6 +211,7 @@ namespace eng {
     bool Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         command.Update(*this, *lvl());
+        UpdateVariationIdx();
         animation_ended = animator.Update(ActionIdx());
         return (Health() <= 0) || IsKilled();
     }
@@ -230,6 +231,11 @@ namespace eng {
         return idx;
     }
 
+    void Unit::ChangeCarryStatus(int new_state) {
+        ASSERT_MSG(new_state == WorkerCarryState::NONE || carry_state == WorkerCarryState::NONE, "Unit::ChangeCarryStatus - resource override, worker is already carrying something.");
+        carry_state = new_state;
+    }
+
     void Unit::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();
@@ -242,6 +248,10 @@ namespace eng {
     std::ostream& Unit::DBG_Print(std::ostream& os) const {
         os << "Unit - " << Name() << " (ID=" << ID() << ")";
         return os;
+    }
+
+    void Unit::UpdateVariationIdx() {
+        SetVariationIdx((carry_state != WorkerCarryState::NONE) ? (1+(carry_state-1)*2) : 0);
     }
 
     //===== Building =====

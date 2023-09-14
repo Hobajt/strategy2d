@@ -55,6 +55,11 @@ namespace eng {
         return std::min({ std::max(a.x, a.y), std::max(b.x, b.y), std::max(c.x, c.y), std::max(d.x, d.y) });
     }
 
+    int chessboard_distance(const glm::ivec2& p1, const glm::ivec2& p2) {
+        glm::ivec2 v = glm::abs(p2 - p1);
+        return std::max(v.x, v.y);
+    }
+
     int DirVectorCoord(int ori) {
         ori = ori % 8;
         return 1 - 2*(ori/5) - int(ori % 4 == 0);
