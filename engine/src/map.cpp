@@ -33,6 +33,7 @@ namespace eng {
     bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
     bool Pathfinding_AStar_Range(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, int range, const glm::ivec2& m, const glm::ivec2& M, glm::ivec2* result_pos, int navType, heuristic_fn h);
     bool Pathfinding_AStar_Forrest(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType, heuristic_fn h);
+    bool Pathfinding_Dijkstra_NearestBuilding(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const std::vector<buildingMapCoords>& targets, int resourceType, int navType, glm::ivec2& out_dst_pos);
 
     //an element of tmp array, used during tileset parsing
     struct TileDescription {
@@ -555,6 +556,38 @@ namespace eng {
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
     }
+
+    bool Map::Pathfinding_NextPosition_NearestBuilding(const Unit& unit, const std::vector<buildingMapCoords>& buildings, ObjectID& out_id, glm::ivec2& out_nextPos) {
+        ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) (unit {}; nearest building, {} buildings)", unit.Position().x, unit.Position().y, unit.ID(), (int)buildings.size());
+
+        //identify unit's movement type (gnd/water/air)
+        int navType = unit.NavigationType();
+
+        glm::ivec2 dst_pos;
+        if(!Pathfinding_Dijkstra_NearestBuilding(tiles, nav_list, unit.Position(), buildings, unit.CarryStatus(), navType, dst_pos)) {
+            return false;
+        }
+
+        //resolve which building was selected
+        out_id = ObjectID();
+        for(auto& [m,M,ID,resType] : buildings) {
+            if(!HAS_FLAG(resType, unit.CarryStatus()))
+                continue;
+
+            if(dst_pos.x >= m.x && dst_pos.x <= M.x && dst_pos.y >= m.y && dst_pos.y <= M.y) {
+                out_id = ID;
+                break;
+            }
+
+            ENG_LOG_TRACE("Building {}: ({}, {}) - ({}, {})", ID, m.x, m.y, M.x, M.y);
+
+        }
+        ENG_LOG_FINER("    Map::Pathfinding::Result | Building ID: {}, destination = ({}, {})", out_id, dst_pos.x, dst_pos.y);
+        ASSERT_MSG(ObjectID::IsValid(out_id), "Pathfinding_NextPosition_NearestBuilding - there should always be valid building at this point.");
+
+        out_nextPos = Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
+        return true;
+    }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {
         glm::ivec2 lim = glm::ivec2(std::min(worker_pos.x + radius, Size().x-1), std::min(worker_pos.y + radius, Size().y-1));
@@ -755,6 +788,8 @@ namespace eng {
         ImGui::SameLine();
         if(ImGui::Button("Distances", btn_size)) mode = 5;
         ImGui::Separator();
+        if(ImGui::Button("Part-of-forrest", btn_size)) mode = 8;
+        ImGui::Separator();
         
 
         glm::ivec2 size = (mode != 1) ? tiles.Size() : (tiles.Size()+1);
@@ -872,6 +907,10 @@ namespace eng {
                         case 7:
                             ImGui::Text("%d", tiles(y,x).health);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(tiles(y,x).health / 100.f, 0.1f, 0.1f, 1.0f)));
+                            break;
+                        case 8:
+                            ImGui::Text("%d", int(tiles(y,x).nav.part_of_forrest));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.part_of_forrest ? clr2 : clr1);
                             break;
                         default:
                             ImGui::Text("---");
@@ -1549,6 +1588,85 @@ namespace eng {
                     
                     float h = H(pos, pos_dst);
                     open.emplace(h+d, d, pos);
+                }
+            }
+        }
+
+        ENG_LOG_FINEST("    Map::Pathfinding::Alg    | algorithm steps: {} (found: {})", it, found);
+        return found;
+    }
+
+    bool Pathfinding_Dijkstra_NearestBuilding(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const std::vector<buildingMapCoords>& targets, int unit_resourceType, int navType, glm::ivec2& out_dst_pos) {
+        //airborne units only move on even tiles
+        int step = 1 + int(navType == NavigationBit::AIR);
+        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+
+        //prep distance values
+        tiles.NavDataCleanup();
+        tiles(pos_src).nav.d = 0.f;
+
+        //reset the open set tracking
+        open = {};
+        open.emplace(0.f, 0.f, pos_src);
+        glm::ivec2 size = tiles.Size();
+
+        //mark all the buildings in the tile data
+        for(auto& [m,M,ID,resType] : targets) {
+            if(!HAS_FLAG(resType, unit_resourceType))
+                continue;
+
+            for(int y = m.y; y <= M.y; y++) {
+                for(int x = m.x; x <= M.x; x++) {
+                    tiles(y,x).nav.part_of_forrest = true;
+                }
+            }
+        }
+
+        int it = 0;
+        bool found = false;
+        while (open.size() > 0) {
+            NavEntry entry = open.top();
+            open.pop();
+            TileData& td = tiles(entry.pos);
+
+            //skip if (already visited) or (untraversable & not starting pos (that one's untraversable bcs unit's standing there))
+            if(td.nav.visited || !(td.TraversableOrForrest(navType) || entry.pos == pos_src))
+                continue;
+            
+            it++;
+            
+            //mark as visited, set distance value
+            ASSERT_MSG(fabsf(entry.d - td.nav.d) < 1e-5f, "Value here should already be a minimal distance ({} < {})", entry.d, td.nav.d);
+            // if(entry.d > td.nav.d) ENG_LOG_WARN("HOPE IT'S JUST A ROUNDING ERROR (distance mismatch): {}, {}", entry.d, td.nav.d);
+            td.nav.visited = true;
+            td.nav.d = std::min(entry.d, td.nav.d);
+
+            //path to the target destination found - terminate
+            if(td.nav.part_of_forrest) {
+                out_dst_pos = entry.pos;
+                found = true;
+                break;
+            }
+
+            for(int y = -step; y <= step; y += step) {
+                for(int x = -step; x <= step; x += step) {
+                    glm::ivec2 pos = glm::ivec2(entry.pos.x+x, entry.pos.y+y);
+
+                    //skip out of bounds or central tile
+                    if(pos.y < 0 || pos.x < 0 || pos.y >= size.y || pos.x >= size.x || pos == entry.pos)
+                        continue;
+                    
+                    TileData& td = tiles(pos);
+                    float d = entry.d + (((std::abs(x+y)/step) % 2 == 0) ? 1.414213f : 1.f) * step;
+
+                    //skip when (untraversable) or (already visited) or (marked as open & current distance is worse than existing distance)
+                    if(!td.TraversableOrForrest(navType) || (td.nav.visited && d > td.nav.d) || (!std::isinf(td.nav.d) && d > td.nav.d))
+                        continue;
+
+                    //tmp distance value (tile is still open)
+                    td.nav.d = d;
+                    
+                    open.emplace(d, d, pos);
                 }
             }
         }

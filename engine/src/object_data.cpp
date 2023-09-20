@@ -56,6 +56,10 @@ namespace eng {
         return os;
     }
 
+    bool operator==(const ObjectID& lhs, const ObjectID& rhs) {
+        return lhs.id == rhs.id && lhs.idx == rhs.idx && lhs.type == rhs.type;
+    }
+
     bool ObjectID::IsAttackable(const ObjectID& id) {
         return ((unsigned int)(id.type - 1) < ObjectType::UTILITY) || (id.type == ObjectType::MAP_OBJECT && IsWallTile(id.id));
     }
@@ -223,6 +227,7 @@ namespace eng {
 
         data->traversable = config.count("traversable") ? config.at("traversable") : false;
         data->gatherable = config.count("gatherable") ? config.at("gatherable") : false;
+        data->dropoff_mask = config.count("dropoff_mask") ? config.at("dropoff_mask") : 0;
 
         return std::static_pointer_cast<GameObjectData>(data);
     }

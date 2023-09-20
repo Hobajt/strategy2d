@@ -136,6 +136,8 @@ namespace eng {
 
         int VariationIdx() const { return variationIdx; }
         void SetVariationIdx(int idx) { variationIdx = idx; }
+
+        FactionControllerRef Faction() { return faction; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -229,11 +231,15 @@ namespace eng {
 
         //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
         int UpgradeTime() const { return data->upgrade_time; }
+        int DropoffMask() const { return data->dropoff_mask; }
 
         //How much health should the building start with when constructing.
         int StartingHealth() const { return MaxHealth() > 100 ? 40 : 10; }
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
+
+        void OnConstructionFinished(bool registerDropoffPoint = true);
+        void OnUpgradeFinished();
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -242,6 +248,8 @@ namespace eng {
     private:
         BuildingDataRef data = nullptr;
         BuildingAction action = BuildingAction();
+
+        bool constructed = false;
     };
 
     //===== UtilityObject =====

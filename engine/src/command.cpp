@@ -93,10 +93,25 @@ namespace eng {
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action);
 
     /* HARVEST COMMAND DESCRIPTION:
-        - 
+        - auto-cancels for non worker units
+        - automatically transitions to ReturnGoods command when the worker is already carrying
+        - checks the selected tile for trees, looks up new nearby location if there are none
+        - then checks the distance, possibly moves towards the tile & cycles Harvest actions on the tile
     */
 
     void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action);
+
+    /* RETURN GOODS DESCRIPTION:
+        - auto-cancels for non worker units & when the unit isn't carrying a resource
+        - looks up nearest dropoff point for the resource that is being carried (pathfinding)
+            - repeats this lookup whenever the old one is found invalid
+        - moves towards the building
+        - once the worker is standing next to the building, requests entry on the EntranceController and stops the command
+            - cycling back to previous gather/harvest command is handled by EntranceController (when the worker leaves the building)
+            - previous command info is passed through target_pos variable
+    */
+
+    void CommandHandler_ReturnGoods(Unit& src, Level& level, Command& cmd, Action& action);
 
     //=============================
 
@@ -383,7 +398,13 @@ namespace eng {
     }
 
     Command Command::ReturnGoods() {
-        return {};
+        Command cmd = {};
+
+        cmd.type = CommandType::HARVEST_WOOD;
+        cmd.handler = CommandHandler_ReturnGoods;
+        cmd.target_id = ObjectID();
+
+        return cmd;
     }
 
     void Command::Update(Unit& src, Level& level) {
@@ -561,6 +582,70 @@ namespace eng {
         }
     }
 
+    void CommandHandler_ReturnGoods(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+        
+        //validate that it's issued on a worker unit
+        if(!src.IsWorker()) {
+            ENG_LOG_WARN("ReturnGoods Command - attempting to invoke on a non worker unit.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        if(src.CarryStatus() == WorkerCarryState::NONE) {
+            ENG_LOG_WARN("ReturnGoods Command - selected worker doesn't carry any resources.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        //retrieve the nearest dropoff point for given resource type
+        Building* dropoff = nullptr;
+        if(!ObjectID::IsValid(cmd.target_id) || cmd.target_id.type != ObjectType::BUILDING || !level.objects.GetBuilding(cmd.target_id, dropoff)) {
+            glm::ivec2 next_pos = glm::ivec2();
+
+            //dropoff not set or is invalid -> lookup new one
+            if(level.map.Pathfinding_NextPosition_NearestBuilding(src, src.Faction()->DropoffPoints(), cmd.target_id, next_pos)) {
+                dropoff = &level.objects.GetBuilding(cmd.target_id);
+                ENG_LOG_TRACE("ReturnGoods - using '{}' as dropoff point for '{}'", *dropoff, src);
+
+                //path found, issue movement action
+                if(next_pos != src.Position()) {
+                    ASSERT_MSG(has_valid_direction(next_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                    action = Action::Move(src.Position(), next_pos);
+                    return;
+                }
+            }
+            else {
+                //terminate the command if there's no reachable dropoff point
+                cmd = Command::Idle();
+                return;
+            }
+        }
+        ASSERT_MSG(dropoff != nullptr, "ReturnGoods command - dropoff building should always be set here.");
+
+        //distance check & movement
+        if(get_range(src.Position(), dropoff->MinPos(), dropoff->MaxPos()) > 1) {
+            //move until the worker stands next to the building
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos() - 1.f, dropoff->MaxPos() + 1.f);
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            else {
+                //destination unreachable
+                cmd = Command::Idle();
+            }
+        }
+        else {
+            //worker is next to the building -> inform entrance controller and terminate the command
+            ENG_LOG_INFO("ReturnGoods - EntranceController informed");
+            //TODO: inform entranceController, pass it previous command info (target_pos & resource type)
+            cmd = Command::Idle();
+        }
+    }
+
     //=======================================
 
     //===== BuildingAction =====
@@ -687,10 +772,12 @@ namespace eng {
 
         //construction finished condition
         if(progress >= target) {
-            action = BuildingAction::Idle(src.CanAttack());
 
-            if(!is_construction) {
-                //TODO: modify building object by changing the data pointers (update animator too)
+            if(is_construction) {
+                src.OnConstructionFinished();
+            }
+            else {
+                src.OnUpgradeFinished();
             }
         }
     }

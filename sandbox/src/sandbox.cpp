@@ -35,7 +35,7 @@ void Sandbox::OnInit() {
 
         FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
-        level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(0.f, 0.f)));
+        level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(0.f, 0.f), true));
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), dummy_faction, glm::vec2(5.f, 0.f));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), dummy_faction, glm::vec2(5.f, 5.f), false);
@@ -47,6 +47,9 @@ void Sandbox::OnInit() {
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), dummy_faction, glm::vec2(7.f, 7.f));
 
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), dummy_faction, glm::vec2(16.f, 7.f));
+
+        Unit& troll = level.objects.GetUnit(trollID);
+        troll.ChangeCarryStatus(WorkerCarryState::WOOD);
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
@@ -104,8 +107,10 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    Unit& troll = level.objects.GetUnit(trollID);
-    CommandDispatch(troll);
+    Unit* troll = nullptr;
+    if(level.objects.GetUnit(trollID, troll)) {
+        CommandDispatch(*troll);
+    }
 
     if(input.lmb.down()) {
         glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);

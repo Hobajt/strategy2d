@@ -20,10 +20,10 @@ namespace eng {
     glm::ivec2 make_even(const glm::ivec2& v);
 
     //Chebyshev(chessboard) distance between a point and the closest point on a rectangle.
-    float get_range(const glm::vec2& pos, const glm::vec2& m, const glm::vec2& M);
+    int get_range(const glm::ivec2& pos, const glm::ivec2& m, const glm::ivec2& M);
 
     //Chebyshev(chessboard) distance between two rectangles (returns the lowest distance).
-    float get_range(const glm::vec2& m1, const glm::vec2& M1, const glm::vec2& m2, const glm::vec2& M2);
+    int get_range(const glm::ivec2& m1, const glm::ivec2& M1, const glm::ivec2& m2, const glm::ivec2& M2);
 
     int chessboard_distance(const glm::ivec2& p1, const glm::ivec2& p2);
 

@@ -88,6 +88,7 @@ namespace eng {
         friend void CommandHandler_Move(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Attack(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Harvest(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_ReturnGoods(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
         Command();

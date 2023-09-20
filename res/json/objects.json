@@ -104,7 +104,8 @@
         "armor": 20,
         "basic_damage": 0,
         "pierce_damage": 0,
-        "race": 0
+        "race": 0,
+        "dropoff_mask": 3
     },
     {
         "name": "human/farm",

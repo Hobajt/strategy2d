@@ -232,8 +232,14 @@ namespace eng {
     }
 
     void Unit::ChangeCarryStatus(int new_state) {
-        ASSERT_MSG(new_state == WorkerCarryState::NONE || carry_state == WorkerCarryState::NONE, "Unit::ChangeCarryStatus - resource override, worker is already carrying something.");
-        carry_state = new_state;
+        if(IsWorker()) {
+            ASSERT_MSG(new_state == WorkerCarryState::NONE || carry_state == WorkerCarryState::NONE, "Unit::ChangeCarryStatus - resource override, worker is already carrying something.");
+            carry_state = new_state;
+        }
+        else {
+            ENG_LOG_WARN("Attempting to set carry state on a non-worker unit ({})", *this);
+            carry_state = WorkerCarryState::NONE;
+        }
     }
 
     void Unit::Inner_DBG_GUI() {
@@ -260,8 +266,8 @@ namespace eng {
         : FactionObject(level_, data_, faction_, position_), data(data_) {
         
         if(constructed) {
-            //change action to idle for constructed buildings
-            action = BuildingAction::Idle(CanAttack());
+            //can't register dropoff point from constructor - ID isn't setup properly yet (called from IntegrateIntoLevel() instead)
+            OnConstructionFinished(false);
         }
         else {
             //starting health uptick
@@ -269,7 +275,13 @@ namespace eng {
         }
     }
 
-    Building::~Building() {}
+    Building::~Building() {
+        if(lvl() != nullptr && Data() != nullptr) {
+            if(data->dropoff_mask != 0) {
+                Faction()->RemoveDropoffPoint(*this);
+            }
+        }
+    }
 
     void Building::Render() {
         glm::vec2 rendering_size, rendering_offset;
@@ -312,6 +324,22 @@ namespace eng {
         return data->gatherable && NavigationType() == unitNavType;
     }
 
+    void Building::OnConstructionFinished(bool registerDropoffPoint) {
+        ASSERT_MSG(!constructed, "Building::OnConstructionFinished - multiple invokations (building already constructed, {})", OID());
+        constructed = true;
+
+        action = BuildingAction::Idle(CanAttack());
+
+        if(registerDropoffPoint && data->dropoff_mask != 0) {
+            Faction()->AddDropoffPoint(*this);
+        }
+    }
+
+    void Building::OnUpgradeFinished() {
+        action = BuildingAction::Idle(CanAttack());
+        //TODO: modify building object by changing the data pointers (update animator too)
+    }
+
     void Building::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();
@@ -322,6 +350,12 @@ namespace eng {
     void Building::InnerIntegrate() {
         if(!data->traversable)
             FactionObject::InnerIntegrate();
+        
+        if(constructed) {
+            if(data->dropoff_mask != 0) {
+                Faction()->AddDropoffPoint(*this);
+            }
+        }
     }
 
     std::ostream& Building::DBG_Print(std::ostream& os) const {

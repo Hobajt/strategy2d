@@ -41,13 +41,13 @@ namespace eng {
         return glm::ivec2((v.x >> 1) << 1, (v.y >> 1) << 1);
     }
 
-    float get_range(const glm::vec2& pos, const glm::vec2& m, const glm::vec2& M) {
+    int get_range(const glm::ivec2& pos, const glm::ivec2& m, const glm::ivec2& M) {
         glm::ivec2 a = glm::abs(pos - m);
         glm::ivec2 b = glm::abs(pos - M);
         return std::min({ std::max(a.x, a.y), std::max(b.x, b.y) });
     }
 
-    float get_range(const glm::vec2& m1, const glm::vec2& M1, const glm::vec2& m2, const glm::vec2& M2) {
+    int get_range(const glm::ivec2& m1, const glm::ivec2& M1, const glm::ivec2& m2, const glm::ivec2& M2) {
         glm::ivec2 a = glm::abs(m1 - m2);
         glm::ivec2 b = glm::abs(m1 - M2);
         glm::ivec2 c = glm::abs(M1 - m2);

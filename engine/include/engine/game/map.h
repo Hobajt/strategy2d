@@ -14,6 +14,8 @@ namespace eng {
 
     class Unit;
 
+    using buildingMapCoords = std::tuple<glm::ivec2, glm::ivec2, ObjectID, int>;
+
     //TODO: maybe setup tiletypes so that specific bits signal specific functionality (traversable, buildable, etc.)
     //can still use an index when loading descriptions from a file
 
@@ -327,6 +329,9 @@ namespace eng {
         glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max);
         //Searches for path to nearest trees tile (any tree tile that's part of the same forrest).
         glm::ivec2 Pathfinding_NextPosition_Forrest(const Unit& unit, const glm::ivec2& target_pos);
+
+        //Searches for path to a nearest building (buildings defined in argument). Returns false if no path is found. On success, building's ObjectID and next position for movement is returned via arguments.
+        bool Pathfinding_NextPosition_NearestBuilding(const Unit& unit, const std::vector<buildingMapCoords>& buildings, ObjectID& out_id, glm::ivec2& out_nextPos);
 
         //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);
