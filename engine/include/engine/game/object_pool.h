@@ -7,6 +7,41 @@
 
 namespace eng {
 
+    class ObjectPool;
+
+    //===== EntranceController =====
+
+    class EntranceController {
+        struct Entry {
+            ObjectID entered;
+            ObjectID enteree;
+            bool construction;
+        };
+        struct WorkEntry {
+            ObjectID entered;
+            ObjectID enteree;
+            glm::ivec2 cmd_target;
+            int cmd_type;
+            float start_time;
+        };
+    public:
+        void Update(ObjectPool& objects);
+
+        bool IssueEntrance_Work(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmd_type);
+
+        bool IssueEntrance_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID);
+        //exit can fail if there's nowhere to spawn the unit
+        bool IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID);
+
+        bool IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
+        bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
+    private:
+        bool IssueExit_Work(ObjectPool& objects, const WorkEntry& entry);
+    private:
+        std::vector<Entry> entries;
+        std::vector<WorkEntry> workEntries;
+    };
+
     //===== ObjectPool =====
 
     class ObjectPool {
@@ -16,6 +51,16 @@ namespace eng {
     public:
         void Update();
         void Render();
+
+        //===== entrance controller API =====
+
+        bool IssueEntrance_Work(const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmdType) { return entranceController.IssueEntrance_Work(*this, buildingID, workerID, cmd_target, cmdType); }
+
+        bool IssueEntrance_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueEntrance_Transport(*this, transportID, unitID); }
+        bool IssueExit_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueEntrance_Transport(*this, transportID, unitID); }
+
+        bool IssueEntrance_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueEntrance_Construction(*this, buildingID, workerID); }
+        bool IssueExit_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueExit_Transport(*this, buildingID, workerID); }
 
         //===== getters =====
 
@@ -66,6 +111,8 @@ namespace eng {
         UtilityObjsPool utilityObjs;
 
         std::vector<ObjectID::dtype> markedForRemoval;
+
+        EntranceController entranceController;
     };
 
 }//namespace eng

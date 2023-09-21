@@ -41,6 +41,10 @@ namespace eng {
         //Check if this object covers given map coordinates.
         bool CheckPosition(const glm::ivec2& map_coords);
 
+        //Checks nearby tiles & returns the first tile, where a unit can be spawned.
+        //Coords are returned through parameter, function itself returns spawnpoint's chessboard distance from the building corner.
+        int NearbySpawnCoords(int navType, int preferred_direction, glm::ivec2& out_coords, int max_range = -1);
+
         int Orientation() const { return orientation; }
         virtual int ActionIdx() const { return actionIdx; }
         glm::ivec2 Position() const { return position; }
@@ -249,6 +253,7 @@ namespace eng {
         //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
         int UpgradeTime() const { return data->upgrade_time; }
         int DropoffMask() const { return data->dropoff_mask; }
+        bool CanDropoffResource(int resourceType) const { return (data->dropoff_mask & resourceType) != 0; }
 
         //How much health should the building start with when constructing.
         int StartingHealth() const { return MaxHealth() > 100 ? 40 : 10; }

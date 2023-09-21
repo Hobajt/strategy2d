@@ -88,6 +88,7 @@ namespace eng {
         friend void CommandHandler_Move(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Attack(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Harvest(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_ReturnGoods(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
@@ -101,6 +102,7 @@ namespace eng {
         static Command Harvest(const glm::ivec2& target_pos);
         static Command Gather(const ObjectID& target_id);
         static Command ReturnGoods();
+        static Command ReturnGoods(const glm::ivec2& prev_target);
 
         void Update(Unit& src, Level& level);
 

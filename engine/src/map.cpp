@@ -195,6 +195,14 @@ namespace eng {
         return operator()(idx.y, idx.x);
     }
 
+    bool MapTiles::IsWithinBounds(const glm::ivec2& coords) const {
+        return IsWithinBounds(coords.y, coords.x);
+    }
+
+    bool MapTiles::IsWithinBounds(int y, int x) const {
+        return ((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x)));
+    }
+
     void MapTiles::NavDataCleanup() {
         int area = (size.x+1)*(size.y+1);
         for(int i = 0; i < area; i++)
@@ -587,6 +595,69 @@ namespace eng {
 
         out_nextPos = Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
         return true;
+    }
+
+    int Map::NearbySpawnCoords(const glm::ivec2& building_pos, const glm::ivec2& building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range) {
+        ASSERT_MSG(preferred_dir >= 0 && preferred_dir <= 3, "preferred_dir has to be in range <0,3> (identifies preferred side of the building)");
+
+        /*     2
+            -------
+          3 |     | 1
+            |     |
+            -------
+               0
+        */
+
+        //cap search at map size in case of unlimited range
+        if(max_range < 1) {
+            max_range = std::max(tiles.Size().x, tiles.Size().y);
+        }
+
+        glm::ivec2 pref_dir = glm::ivec2(
+            ((preferred_dir+1) % 2) * (-2*(preferred_dir / 2)+1), 
+            ((preferred_dir+0) % 2) * (-2*(preferred_dir / 2)+1)
+        );
+
+        // ENG_LOG_INFO("pos: ({}, {}), size: ({}, {}), dir: {} -> ({}, {})", building_pos.x, building_pos.y, building_size.x, building_size.y, preferred_dir, pref_dir.x, pref_dir.y);
+
+        glm::ivec2 start_offset_dir = glm::ivec2(((preferred_dir+1)%4)/2, preferred_dir / 2);
+        // ENG_LOG_INFO("DBG - ({}, {})", start_offset_dir.x, start_offset_dir.y);
+
+        //start searching at neighboring tiles & slowly increase the searched radius
+        for(int r = 1; r < max_range; r++) {
+            glm::ivec2 size = building_size-1 + 2*r;
+            glm::ivec2 pos = building_pos - r + start_offset_dir * size;
+            glm::ivec2 dir = pref_dir;
+            // ENG_LOG_INFO("R={}", r);
+
+            bool stillValid = false;
+
+            //fillout the coords to visit - square radius around the building
+            for(int i = 0; i < 4; i++) {
+                int sz = size[int((preferred_dir+i) % 2 != 0)];
+                for(int j = 0; j < sz; j++) {
+                    bool withinBounds = tiles.IsWithinBounds(pos);
+                    stillValid |= withinBounds;
+                    
+                    // ENG_LOG_INFO("   - ({}, {})", pos.x, pos.y);
+                    if(withinBounds && tiles(pos).Traversable(nav_type)) {
+                        out_coords = pos;
+                        return r;
+                    }
+
+                    pos += dir;
+                }
+
+                //rotate 90 degrees
+                dir = glm::ivec2(-dir.y, dir.x);
+            }
+
+            //terminate early, if not a single coordinate on current range was in map bounds
+            if(!stillValid)
+                break;
+        }
+
+        return -1;
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {

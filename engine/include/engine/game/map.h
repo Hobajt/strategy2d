@@ -203,6 +203,10 @@ namespace eng {
         TileData& operator()(const glm::ivec2& idx);
         const TileData& operator()(const glm::ivec2& idx) const;
 
+        //Returns true if provided coordinates are within valid map bounds.
+        bool IsWithinBounds(const glm::ivec2& coords) const;
+        bool IsWithinBounds(int y, int x) const;
+
         void NavDataCleanup();
         int NavData_Forrest_FloodFill(const glm::ivec2& pos);
     private:
@@ -332,6 +336,11 @@ namespace eng {
 
         //Searches for path to a nearest building (buildings defined in argument). Returns false if no path is found. On success, building's ObjectID and next position for movement is returned via arguments.
         bool Pathfinding_NextPosition_NearestBuilding(const Unit& unit, const std::vector<buildingMapCoords>& buildings, ObjectID& out_id, glm::ivec2& out_nextPos);
+
+        //Searches for valid tile (non-taken & matching navigation type) in the neighborhood of the building.
+        //Tiles are searched in squares - from lowest to higher & higher chessboard distance from the building.
+        //Search starts at one of the corners of the building (defined by preferred_dir) & continues counter-clockwise around the building (increasing radius on full revolutions).
+        int NearbySpawnCoords(const glm::ivec2& building_pos, const glm::ivec2& building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range = -1);
 
         //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);

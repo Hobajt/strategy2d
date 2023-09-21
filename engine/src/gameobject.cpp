@@ -50,6 +50,10 @@ namespace eng {
         return map_coords.x >= position.x && map_coords.x < (position.x + data->size.x) && map_coords.y >= position.y && map_coords.y < (position.y + data->size.y);
     }
 
+    int GameObject::NearbySpawnCoords(int nav_type, int preferred_direction, glm::ivec2& out_coords, int max_range) {
+        return lvl()->map.NearbySpawnCoords(position, data->size, preferred_direction, nav_type, out_coords, max_range);
+    }
+
     Level* GameObject::lvl() {
         ASSERT_MSG(level != nullptr, "GameObject isn't properly initialized!");
         return level;
@@ -291,6 +295,7 @@ namespace eng {
         ImGui::Text("move_offset: %s", to_string(move_offset).c_str());
         ImGui::Text("%s", command.to_string().c_str());
         ImGui::Text("Action type: %d", action.logic.type);
+        ImGui::Text("Carry state: %d", carry_state);
 #endif
     }
 
@@ -404,6 +409,14 @@ namespace eng {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();
         ImGui::Text("%s", action.to_string().c_str());
+
+        static int dir = 0;
+        ImGui::DragInt("preferred_dir", &dir);
+        if(ImGui::Button("NearbySpawnCoords")) {
+            glm::ivec2 coords;
+            NearbySpawnCoords(NavigationBit::GROUND, dir, coords);
+            ENG_LOG_INFO("RESULT: ({}, {})", coords.x, coords.y);
+        }
 #endif
     }
 

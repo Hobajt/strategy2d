@@ -43,11 +43,11 @@ namespace eng {
 
     //===== Level =====
 
-    Level::Level() : map(Map(glm::ivec2(0,0), nullptr)) {}
+    Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects({}) {}
 
-    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)) {}
+    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)) {}
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}) {}
 
     void Level::Update() {
         objects.Update();

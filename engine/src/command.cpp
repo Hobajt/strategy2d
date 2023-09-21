@@ -101,6 +101,12 @@ namespace eng {
 
     void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action);
 
+    /* GATHER COMMAND DESCRIPTION:
+        - 
+    */
+
+    void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
+
     /* RETURN GOODS DESCRIPTION:
         - auto-cancels for non worker units & when the unit isn't carrying a resource
         - looks up nearest dropoff point for the resource that is being carried (pathfinding)
@@ -398,11 +404,16 @@ namespace eng {
     }
 
     Command Command::ReturnGoods() {
+        return ReturnGoods(glm::ivec2(-1));
+    }
+
+    Command Command::ReturnGoods(const glm::ivec2& prev_target) {
         Command cmd = {};
 
         cmd.type = CommandType::HARVEST_WOOD;
         cmd.handler = CommandHandler_ReturnGoods;
         cmd.target_id = ObjectID();
+        cmd.target_pos = prev_target;
 
         return cmd;
     }
@@ -541,7 +552,7 @@ namespace eng {
         if(src.CarryStatus() != WorkerCarryState::NONE) {
             //transition to return goods command if already carrying
             ENG_LOG_TRACE("Harvest Command - return with goods issued.");
-            cmd = Command::ReturnGoods();
+            cmd = Command::ReturnGoods(cmd.target_pos);
             return;
         }
 
@@ -580,6 +591,10 @@ namespace eng {
             //tree tile is in range -> issue a harvest action
             action = Action::Harvest(cmd.target_pos, cmd.target_pos - src.Position());
         }
+    }
+
+    void CommandHandler_Gather(Unit& src, Level& level, Command& cmd, Action& action) {
+        //will be very similar to ReturnGoods, except that the carry_state checks are inverted
     }
 
     void CommandHandler_ReturnGoods(Unit& src, Level& level, Command& cmd, Action& action) {
@@ -629,7 +644,7 @@ namespace eng {
         //distance check & movement
         if(get_range(src.Position(), dropoff->MinPos(), dropoff->MaxPos()) > 1) {
             //move until the worker stands next to the building
-            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos() - 1.f, dropoff->MaxPos() + 1.f);
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos(), dropoff->MaxPos());
             if(target_pos != src.Position()) {
                 ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                 action = Action::Move(src.Position(), target_pos);
@@ -641,8 +656,9 @@ namespace eng {
         }
         else {
             //worker is next to the building -> inform entrance controller and terminate the command
-            ENG_LOG_INFO("ReturnGoods - EntranceController informed");
-            //TODO: inform entranceController, pass it previous command info (target_pos & resource type)
+            level.objects.IssueEntrance_Work(cmd.target_id, src.OID(), cmd.target_pos, src.CarryStatus());
+            ENG_LOG_INFO("ReturnGoods - resource uptick");
+            //TODO: faction -> resource uptick
             cmd = Command::Idle();
         }
     }
