@@ -25,9 +25,9 @@ namespace eng {
         Building& GetBuilding(const ObjectID& id);
         FactionObject& GetObject(const ObjectID& id);
 
-        bool GetUnit(const ObjectID& id, Unit*& ref_unit);
-        bool GetBuilding(const ObjectID& id, Building*& ref_building);
-        bool GetObject(const ObjectID& id, FactionObject*& ref_object);
+        bool GetUnit(const ObjectID& id, Unit*& ref_unit, bool exclude_inactive = true);
+        bool GetBuilding(const ObjectID& id, Building*& ref_building, bool exclude_inactive = true);
+        bool GetObject(const ObjectID& id, FactionObject*& ref_object, bool exclude_inactive = true);
 
         //===== insert =====
 

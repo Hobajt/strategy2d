@@ -110,6 +110,7 @@ namespace eng {
         int race;
     public:
         virtual int MaxHealth() const override { return health; }
+        virtual bool IntegrateInMap() const { return true; }
 
         bool CanAttack() const { return basic_damage + pierce_damage > 0; }
     };
@@ -145,6 +146,8 @@ namespace eng {
         bool traversable = false;       //detaches building from pathfinding
         bool gatherable = false;        //building is treated as a resource (workers can enter it to mine it)
         int dropoff_mask = 0;
+    public:
+        virtual bool IntegrateInMap() const override { return !traversable; }
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

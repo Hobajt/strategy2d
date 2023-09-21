@@ -101,10 +101,7 @@ namespace eng {
     }
 
     FactionObject::~FactionObject() {
-        if(lvl() != nullptr && Data() != nullptr) {
-            lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
-        }
-
+        RemoveFromMap();
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
 
@@ -173,9 +170,39 @@ namespace eng {
         health = (health <= MaxHealth()) ? health : MaxHealth();
     }
 
+    void FactionObject::WithdrawObject() {
+        if(active) {
+            RemoveFromMap();
+            active = false;
+        }
+    }
+
+    void FactionObject::ReinsertObject() {
+        ReinsertObject(Position());
+    }
+
+    void FactionObject::ReinsertObject(const glm::ivec2& position) {
+        if(!active) {
+            pos() = position;
+            ClearState();
+            InnerIntegrate();
+            active = true;
+        }
+    }
+
     void FactionObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         GameObject::Inner_DBG_GUI();
+        ImGui::Text("Active: %s", active ? "True" : "False");
+        const char* btn_labels[2] { "Reinsert object", "Withdraw object" };
+        if(ImGui::Button(btn_labels[(int)active])) {
+            if(active)
+                WithdrawObject();
+            else
+                ReinsertObject();
+        }
+        ImGui::Separator();
+
         ImGui::Text("Health: %d/%d", health, data_f->MaxHealth());
         ImGui::SliderInt("health", &health, 0, data_f->MaxHealth());
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
@@ -187,6 +214,18 @@ namespace eng {
     void FactionObject::InnerIntegrate() {
         //register the object with the map
         lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), Data()->objectType == ObjectType::BUILDING);
+    }
+
+    void FactionObject::RemoveFromMap() {
+        if(active) {
+            if(lvl() != nullptr && Data() != nullptr) {
+                if(data_f->IntegrateInMap()) {
+                    //remove from pathfinding (if it's a part of it to begin with)
+                    lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
+                }
+            }
+            active = false;
+        }
     }
 
     bool FactionObject::ValidColor(int idx) {
@@ -205,11 +244,15 @@ namespace eng {
     Unit::~Unit() {}
 
     void Unit::Render() {
+        if(!IsActive())
+            return;
         RenderAt(glm::vec2(Position()) + move_offset);
     }
 
     bool Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
+        if(!IsActive())
+            return false;
         command.Update(*this, *lvl());
         UpdateVariationIdx();
         animation_ended = animator.Update(ActionIdx());
@@ -256,6 +299,14 @@ namespace eng {
         return os;
     }
 
+    void Unit::ClearState() {
+        move_offset = glm::vec2(0.f);
+        command = Command();
+        action = Action();
+        carry_state = WorkerCarryState::NONE;
+        animation_ended = false;
+    }
+
     void Unit::UpdateVariationIdx() {
         SetVariationIdx((carry_state != WorkerCarryState::NONE) ? (1+(carry_state-1)*2) : 0);
     }
@@ -277,13 +328,13 @@ namespace eng {
 
     Building::~Building() {
         if(lvl() != nullptr && Data() != nullptr) {
-            if(data->dropoff_mask != 0) {
-                Faction()->RemoveDropoffPoint(*this);
-            }
+            UnregisterDropoffPoint();
         }
     }
 
     void Building::Render() {
+        if(!IsActive())
+            return;
         glm::vec2 rendering_size, rendering_offset;
         if(!action.UseConstructionSize()) {
             rendering_offset = glm::vec2(0.f);
@@ -298,6 +349,8 @@ namespace eng {
     }
 
     bool Building::Update() {
+        if(!IsActive())
+            return false;
         action.Update(*this, *lvl());
         return (Health() <= 0) || IsKilled();
     }
@@ -324,6 +377,13 @@ namespace eng {
         return data->gatherable && NavigationType() == unitNavType;
     }
 
+    void Building::WithdrawObject() {
+        if(IsActive()) {
+            UnregisterDropoffPoint();
+            FactionObject::WithdrawObject();
+        }
+    }
+
     void Building::OnConstructionFinished(bool registerDropoffPoint) {
         ASSERT_MSG(!constructed, "Building::OnConstructionFinished - multiple invokations (building already constructed, {})", OID());
         constructed = true;
@@ -348,7 +408,7 @@ namespace eng {
     }
 
     void Building::InnerIntegrate() {
-        if(!data->traversable)
+        if(data->IntegrateInMap())
             FactionObject::InnerIntegrate();
         
         if(constructed) {
@@ -358,9 +418,19 @@ namespace eng {
         }
     }
 
+    void Building::ClearState() {
+        action = BuildingAction::Idle(CanAttack());
+    }
+
     std::ostream& Building::DBG_Print(std::ostream& os) const {
         os << "Building - " << Name() << " (ID=" << ID() << ")";
         return os;
+    }
+
+    void Building::UnregisterDropoffPoint() {
+        if(data->dropoff_mask != 0) {
+            Faction()->RemoveDropoffPoint(*this);
+        }
     }
 
     //===== UtilityObject =====

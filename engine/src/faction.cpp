@@ -9,17 +9,14 @@ namespace eng {
     }
 
     void FactionController::AddDropoffPoint(const Building& building) {
-        //TODO: print out legit faction identifier
-        ENG_LOG_TRACE("Faction {} - registered dropoff point '{}' (mask={})", 0, building, building.DropoffMask());
-
-        dropoff_points.push_back({ building.MinPos(), building.MaxPos(), building.OID(), building.DropoffMask() });
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...
+        dropoff_points.push_back({ building.MinPos(), building.MaxPos(), building.OID(), building.DropoffMask() });
+
+        //TODO: print out legit faction identifier
+        ENG_LOG_TRACE("Faction {} - registered dropoff point '{}' (mask={}, count={})", 0, building, building.DropoffMask(), dropoff_points.size());
     }
 
     void FactionController::RemoveDropoffPoint(const Building& building) {
-        //TODO: print out legit faction identifier
-        ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={})", 0, building, building.DropoffMask());
-
         buildingMapCoords entry = { building.MinPos(), building.MaxPos(), building.OID(), building.DropoffMask() };
         auto pos = std::find(dropoff_points.begin(), dropoff_points.end(), entry);
         if(pos != dropoff_points.end()) {
@@ -28,6 +25,9 @@ namespace eng {
         else {
             ENG_LOG_WARN("Dropoff point entry not found.");
         }
+
+        //TODO: print out legit faction identifier
+        ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={}, count={})", 0, building, building.DropoffMask(), dropoff_points.size());
     }
 
 }//namespace eng

@@ -138,9 +138,21 @@ namespace eng {
         void SetVariationIdx(int idx) { variationIdx = idx; }
 
         FactionControllerRef Faction() { return faction; }
+
+        bool IsActive() const { return active; }
+
+        //Deactivates the object & removes it from pathfinding
+        virtual void WithdrawObject();
+        //Reactivates the object & adds it back to pathfinding.
+        void ReinsertObject();
+        void ReinsertObject(const glm::ivec2& position);
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
+        void RemoveFromMap();
+
+        //Resets object's state, used when reinserting object into the level.
+        virtual void ClearState() { variationIdx = 0; }
     private:
         static bool ValidColor(int idx);
     private:
@@ -151,6 +163,8 @@ namespace eng {
         int health;
 
         int variationIdx = 0;       //to enable variations for certain animations (increment based on how many overridable animations there are)
+
+        bool active = true;
     };
 
     //===== Unit =====
@@ -192,6 +206,7 @@ namespace eng {
         virtual void Inner_DBG_GUI() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
+        virtual void ClearState() override;
 
         void UpdateVariationIdx();
     private:
@@ -203,7 +218,7 @@ namespace eng {
         glm::vec2 move_offset = glm::vec2(0.f);
         bool animation_ended = false;
 
-        int carry_state = 0;        //worker load indicator
+        int carry_state = WorkerCarryState::NONE;        //worker load indicator
     };
 
     //===== Building =====
@@ -227,6 +242,8 @@ namespace eng {
         virtual int ActionIdx() const override;
         virtual bool IsGatherable(int unitNavType) const override;
 
+        virtual void WithdrawObject() override;
+
         //==== Building properties ====
 
         //Defines the speed of upgrade operation (not relevant when building cannot upgrade).
@@ -243,8 +260,10 @@ namespace eng {
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
+        virtual void ClearState() override;
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const override;
+        void UnregisterDropoffPoint();
     private:
         BuildingDataRef data = nullptr;
         BuildingAction action = BuildingAction();

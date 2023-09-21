@@ -608,6 +608,7 @@ namespace eng {
             //dropoff not set or is invalid -> lookup new one
             if(level.map.Pathfinding_NextPosition_NearestBuilding(src, src.Faction()->DropoffPoints(), cmd.target_id, next_pos)) {
                 dropoff = &level.objects.GetBuilding(cmd.target_id);
+                ASSERT_MSG(dropoff->IsActive(), "DropoffPoints() list should always contain only active buildings.");
                 ENG_LOG_TRACE("ReturnGoods - using '{}' as dropoff point for '{}'", *dropoff, src);
 
                 //path found, issue movement action

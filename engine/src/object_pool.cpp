@@ -103,7 +103,7 @@ namespace eng {
         }
     }
 
-    bool ObjectPool::GetUnit(const ObjectID& id, Unit*& ref_unit) {
+    bool ObjectPool::GetUnit(const ObjectID& id, Unit*& ref_unit, bool exclude_inactive) {
         ASSERT_MSG(id.type != ObjectType::INVALID, "ObjectPool::GetUnit - Using an invalid ID to access a unit.");
         if(id.type != ObjectType::UNIT) {
             ENG_LOG_ERROR("ObjectPool::GetUnit - provided ID doesn't belong to a unit (type={})", id.type);
@@ -113,12 +113,17 @@ namespace eng {
         UnitsPool::key key = UnitsPool::key(id.idx, id.id);
         if(units.exists(key)) {
             ref_unit = &units[key];
-            return true;
+            if(!ref_unit->IsActive()) {
+                ref_unit = nullptr;
+                return false;
+            }
+            else
+                return true;
         }
         return false;
     }
 
-    bool ObjectPool::GetBuilding(const ObjectID& id, Building*& ref_building) {
+    bool ObjectPool::GetBuilding(const ObjectID& id, Building*& ref_building, bool exclude_inactive) {
         ASSERT_MSG(id.type != ObjectType::INVALID, "ObjectPool::GetBuilding - Using an invalid ID to access a building.");
         if(id.type != ObjectType::BUILDING) {
             ENG_LOG_ERROR("ObjectPool::GetBuilding - provided ID doesn't belong to a building (type={})", id.type);
@@ -128,17 +133,22 @@ namespace eng {
         BuildingsPool::key key = BuildingsPool::key(id.idx, id.id);
         if(buildings.exists(key)) {
             ref_building = &buildings[key];
-            return true;
+            if(!ref_building->IsActive()) {
+                ref_building = nullptr;
+                return false;
+            }
+            else
+                return true;
         }
         return false;
     }
 
-    bool ObjectPool::GetObject(const ObjectID& id, FactionObject*& ref_object) {
+    bool ObjectPool::GetObject(const ObjectID& id, FactionObject*& ref_object, bool exclude_inactive) {
         switch(id.type) {
             case ObjectType::BUILDING:
-                return GetBuilding(id, (Building*&)ref_object);
+                return GetBuilding(id, (Building*&)ref_object, exclude_inactive);
             case ObjectType::UNIT:
-                return GetUnit(id, (Unit*&)ref_object);
+                return GetUnit(id, (Unit*&)ref_object, exclude_inactive);
             default:
                 ENG_LOG_ERROR("ObjectPool::GetObject - invalid ID provided ({})", id);
                 throw std::invalid_argument("Invalid ID used when accessing an object.");
