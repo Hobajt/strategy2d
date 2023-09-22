@@ -16,6 +16,7 @@ namespace eng {
             ObjectID entered;
             ObjectID enteree;
             bool construction;
+            int carry_state;
         };
         struct WorkEntry {
             ObjectID entered;
@@ -34,12 +35,16 @@ namespace eng {
         bool IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID);
 
         bool IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
-        bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
+        bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID);
     private:
         bool IssueExit_Work(ObjectPool& objects, const WorkEntry& entry);
+
+        void Goldmine_Increment(const ObjectID& gmID, Building* gm);
+        void Goldmine_Decrement(const ObjectID& gmID, Building* gm);
     private:
         std::vector<Entry> entries;
         std::vector<WorkEntry> workEntries;
+        std::vector<std::pair<ObjectID, int>> gms;
     };
 
     //===== ObjectPool =====
@@ -60,7 +65,7 @@ namespace eng {
         bool IssueExit_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueEntrance_Transport(*this, transportID, unitID); }
 
         bool IssueEntrance_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueEntrance_Construction(*this, buildingID, workerID); }
-        bool IssueExit_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueExit_Transport(*this, buildingID, workerID); }
+        bool IssueExit_Construction(const ObjectID& buildingID) { return entranceController.IssueExit_Construction(*this, buildingID); }
 
         //===== getters =====
 

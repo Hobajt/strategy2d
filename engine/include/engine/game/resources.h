@@ -58,6 +58,7 @@ namespace eng::Resources {
 
     UtilityObjectDataRef LoadUtilityObj(const std::string& name);
     BuildingDataRef LoadBuilding(const std::string& name);
+    BuildingDataRef LoadBuilding(int buildingID, bool isOrc);
     UnitDataRef LoadUnit(const std::string& name);
 
 }//namespace eng::Resources

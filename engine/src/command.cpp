@@ -102,7 +102,10 @@ namespace eng {
     void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action);
 
     /* GATHER COMMAND DESCRIPTION:
-        - 
+        - auto-cancels for non worker units
+        - automatically transitions to ReturnGoods command when the worker is already carrying
+        - validates that the resource building still exists, then controls movement towards the resource
+        - once standing next to it, requests entrance to the resource
     */
 
     void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
@@ -118,6 +121,12 @@ namespace eng {
     */
 
     void CommandHandler_ReturnGoods(Unit& src, Level& level, Command& cmd, Action& action);
+
+    /* BUILD COMMAND DESCRIPTION:
+        - 
+    */
+
+    void CommandHandler_Build(Unit& src, Level& level, Command& cmd, Action& action);
 
     //=============================
 
@@ -416,10 +425,21 @@ namespace eng {
     Command Command::ReturnGoods(const glm::ivec2& prev_target) {
         Command cmd = {};
 
-        cmd.type = CommandType::HARVEST_WOOD;
+        cmd.type = CommandType::RETURN_GOODS;
         cmd.handler = CommandHandler_ReturnGoods;
         cmd.target_id = ObjectID();
         cmd.target_pos = prev_target;
+
+        return cmd;
+    }
+
+    Command Command::Build(int buildingID, const glm::ivec2& target_pos) {
+        Command cmd = {};
+
+        cmd.type = CommandType::BUILD;
+        cmd.handler = CommandHandler_Build;
+        cmd.target_id = ObjectID(ObjectType::INVALID, 0, buildingID);
+        cmd.target_pos = target_pos;
 
         return cmd;
     }
@@ -444,6 +464,15 @@ namespace eng {
             break;
         case CommandType::HARVEST_WOOD:
             snprintf(buf, sizeof(buf), "Command: Harvest wood at (%d, %d)", target_pos.x, target_pos.y);
+            break;
+        case CommandType::GATHER_RESOURCES:
+            snprintf(buf, sizeof(buf), "Command: Gather resources from %s", target_id.to_string().c_str());
+            break;
+        case CommandType::RETURN_GOODS:
+            snprintf(buf, sizeof(buf), "Command: Return goods to %s", target_id.to_string().c_str());
+            break;
+        case CommandType::BUILD:
+            snprintf(buf, sizeof(buf), "Command: Build '%zd' at (%d, %d)", target_id.id, target_pos.x, target_pos.y);
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -628,10 +657,16 @@ namespace eng {
         }
         ASSERT_MSG(resource != nullptr, "Gather command - resource point should always be set here.");
 
+        if(!resource->IsGatherable(src.NavigationType())) {
+            ENG_LOG_WARN("Gather Command - target is not a gatherable resource ({}).", *resource);
+            cmd = Command::Idle();
+            return;
+        }
+
         //distance check & movement
         if(get_range(src.Position(), resource->MinPos(), resource->MaxPos()) > 1) {
             //move until the worker stands next to the building
-            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, resource->MinPos(), resource->MaxPos());
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, resource->MinPos(), resource->MaxPos(), 1);
             if(target_pos != src.Position()) {
                 ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                 action = Action::Move(src.Position(), target_pos);
@@ -695,7 +730,7 @@ namespace eng {
         //distance check & movement
         if(get_range(src.Position(), dropoff->MinPos(), dropoff->MaxPos()) > 1) {
             //move until the worker stands next to the building
-            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos(), dropoff->MaxPos());
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos(), dropoff->MaxPos(), 1);
             if(target_pos != src.Position()) {
                 ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                 action = Action::Move(src.Position(), target_pos);
@@ -710,6 +745,56 @@ namespace eng {
             level.objects.IssueEntrance_Work(cmd.target_id, src.OID(), cmd.target_pos, src.CarryStatus());
             ENG_LOG_INFO("ReturnGoods - resource uptick");
             //TODO: faction -> resource uptick
+            cmd = Command::Idle();
+        }
+    }
+
+    void CommandHandler_Build(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //validate that it's issued on a worker unit
+        if(!src.IsWorker()) {
+            ENG_LOG_WARN("Build Command - attempting to invoke on a non worker unit.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        //retrieve data of the building to be built (also serves as conditions check)
+        BuildingDataRef buildingData = src.Faction()->FetchBuildingData(cmd.target_id.id, (bool)src.Race());
+        if(buildingData == nullptr) {
+            //building cannot be built
+            cmd = Command::Idle();
+            return;
+        }
+
+        glm::ivec2 building_size = buildingData->size;
+
+        if(get_range(src.Position(), cmd.target_pos, cmd.target_pos + building_size) >= 1) {
+            //move until the worker stands within the rectangle (where the building is to be built)
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, cmd.target_pos, cmd.target_pos + building_size, 0);
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            else {
+                //destination unreachable
+                ENG_LOG_TRACE("Command::Build - cannot reach the destination");
+                cmd = Command::Idle();
+            }
+        }
+        else {
+            //validate that the area is clear & all the building conditions are met
+            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position()) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
+                //start the construction
+                src.WithdrawObject();
+                ObjectID buildingID = level.objects.EmplaceBuilding(level, buildingData, src.Faction(), cmd.target_pos, false);
+                level.objects.IssueEntrance_Construction(buildingID, src.OID());
+            }
+            else {
+                ENG_LOG_TRACE("Command::Build - cannot build at ({}, {})", cmd.target_pos.x, cmd.target_pos.y);
+            }
             cmd = Command::Idle();
         }
     }

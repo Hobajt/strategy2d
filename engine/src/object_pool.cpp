@@ -70,6 +70,11 @@ namespace eng {
             return false;
         }
 
+        //goldmine visuals update
+        if(building->IsGatherable(NavigationBit::GROUND)) {
+            Goldmine_Increment(buildingID, building);
+        }
+
         worker->WithdrawObject();
         workEntries.push_back({ buildingID, workerID, cmd_target, cmd_type, (float)Input::CurrentTime() });
         ENG_LOG_TRACE("EntranceController::WorkEntrance - Worker '{}' entered '{}'.", *worker, *building);
@@ -87,13 +92,59 @@ namespace eng {
     }
 
     bool EntranceController::IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID) {
-        //TODO:
-        throw std::runtime_error("not implemented yet");
+        Unit* worker = nullptr;
+        Building* building = nullptr;
+        if(!objects.GetUnit(workerID, worker, false) || !objects.GetBuilding(buildingID, building)) {
+            ENG_LOG_WARN("EntranceController::ConstructionEntrance - object not found.");
+            return false;
+        }
+
+        if(!worker->IsWorker()) {
+            ENG_LOG_WARN("EntranceController::ConstructionEntrance - provided unit is not a worker.");
+            return false;
+        }
+
+        //worker has to be inactive prior to entering (otherwise, it would obstruct the spawning of the construction site)
+        if(worker->IsActive() || !building->IsActive()) {
+            ENG_LOG_WARN("EntranceController::ConstructionEntrance - object activity error.");
+            return false;
+        }
+        
+        entries.push_back({ buildingID, workerID, true, worker->CarryStatus() });
+        ENG_LOG_TRACE("EntranceController::ConstructionEntrance - Worker '{}' entered '{}'.", *worker, *building);
+        return true;
     }
 
-    bool EntranceController::IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID) {
-        //TODO:
-        throw std::runtime_error("not implemented yet");
+    bool EntranceController::IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID) {
+        Building* building;
+        if(buildingID.type != ObjectType::BUILDING || !objects.GetBuilding(buildingID, building)) {
+            ENG_LOG_WARN("EntranceController::ConstructionExit - building not found.");
+            return false;
+        }
+
+        Unit* worker;
+        int num_workers = 0;
+        glm::ivec2 respawn_position;
+        for(int i = (int)entries.size()-1; i >= 0; i--) {
+            if(entries[i].construction && entries[i].entered == buildingID) {
+                if(objects.GetUnit(entries[i].enteree, worker, false)) {
+                    num_workers++;
+                    building->NearbySpawnCoords(worker->NavigationType(), 3, respawn_position);
+                    ASSERT_MSG(!worker->IsActive(), "EntranceController::ConstructionExit - construction worker cannot be active.");
+                    worker->ReinsertObject(respawn_position);
+                    worker->ChangeCarryStatus(entries[i].carry_state);
+                }
+                else {
+                    ENG_LOG_WARN("EntranceController::ConstructionExit - entry located, but worker object not found ({}).", *building);
+                }
+                entries.erase(entries.begin() + i);
+            }
+        }
+
+        if(num_workers != 1) {
+            ENG_LOG_WARN("EntranceController::ConstructionExit - suspicious number of workers ({}) left the building '{}'.", num_workers, *building);
+        }
+        return (num_workers > 0);
     }
 
     bool EntranceController::IssueExit_Work(ObjectPool& objects, const WorkEntry& entry) {
@@ -108,34 +159,84 @@ namespace eng {
         glm::ivec2 respawn_position;
         int preferred_direction = 3;
         bool set_carry_state = false;
+        bool no_prev_command = (entry.cmd_target.x == -1) && (entry.cmd_target.y == -1);
         switch(entry.cmd_type) {
             case WorkerCarryState::GOLD:        //worker entered with gold -> return to Gather command
             {
-                ObjectID goldmineID = ObjectID(ObjectType::BUILDING, entry.cmd_target.x, entry.cmd_target.y);
-                Building* goldmine = nullptr;
-                cmd = Command::Gather(goldmineID);
-                if(objects.GetBuilding(goldmineID, goldmine)) {
-                    preferred_direction = GetPreferredDirection(goldmine->Position(), building->Position());
+                if(!no_prev_command) {
+                    ObjectID goldmineID = ObjectID(ObjectType::BUILDING, entry.cmd_target.x, entry.cmd_target.y);
+                    Building* goldmine = nullptr;
+                    cmd = Command::Gather(goldmineID);
+                    if(objects.GetBuilding(goldmineID, goldmine)) {
+                        preferred_direction = GetPreferredDirection(goldmine->Position(), building->Position());
+                    }
                 }
                 break;
             }
             case WorkerCarryState::WOOD:        //worker entered with wood -> return to Harvest command
-                cmd = Command::Harvest(entry.cmd_target);
-                preferred_direction = GetPreferredDirection(entry.cmd_target, building->Position());
+                if(!no_prev_command) {
+                    cmd = Command::Harvest(entry.cmd_target);
+                    preferred_direction = GetPreferredDirection(entry.cmd_target, building->Position());
+                }
                 break;
             default:                            //worker entered empty handed -> is in resource deposit -> ReturnGoods command
                 cmd = Command::ReturnGoods(entry.cmd_target);
                 set_carry_state = true;
+                if(building->IsGatherable(NavigationBit::GROUND)) {
+                    Goldmine_Decrement(entry.entered, building);
+                }
                 break;
         }
 
         building->NearbySpawnCoords(worker->NavigationType(), preferred_direction, respawn_position);
         worker->ReinsertObject(respawn_position);
         if(set_carry_state) worker->ChangeCarryStatus(WorkerCarryState::GOLD);
-        worker->IssueCommand(cmd);
+        if(!no_prev_command) {
+            worker->IssueCommand(cmd);
+        }
 
         ENG_LOG_TRACE("EntranceController::WorkExit - Worker '{}' left '{}'.", *worker, *building);
         return true;
+    }
+
+    void EntranceController::Goldmine_Increment(const ObjectID& gmID, Building* gm) {
+        bool found = false;
+        size_t i = 0;
+        for(i = 0; i < gms.size(); i++) {
+            if(gms[i].first == gmID) {
+                gms[i].second++;
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            gms.push_back({ gmID, 1 });
+            i = gms.size()-1;
+        }
+        
+        gm->SetVariationIdx(1);
+    }
+    
+    void EntranceController::Goldmine_Decrement(const ObjectID& gmID, Building* gm) {
+        bool found = false;
+        size_t i = 0;
+        for(i = 0; i < gms.size(); i++) {
+            if(gms[i].first == gmID) {
+                gms[i].second = std::max(gms[i].second-1, 0);
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            gms.push_back({ gmID, 0 });
+            i = gms.size()-1;
+        }
+        
+        if(gms[i].second <= 0) {
+            gm->SetVariationIdx(0);
+        }
     }
 
     //===== ObjectPool =====

@@ -29,6 +29,7 @@ private:
 
     bool adaptiveCommand = true;
     int commandID = eng::CommandType::MOVE;
+    int buildingID = 0;
 
     eng::ObjectID trollID;
 };

@@ -1,6 +1,8 @@
 #include "engine/game/faction.h"
 #include "engine/game/gameobject.h"
 
+#include "engine/game/resources.h"
+
 namespace eng {
 
     int FactionController::GetColorIdx() const {
@@ -28,6 +30,20 @@ namespace eng {
 
         //TODO: print out legit faction identifier
         ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={}, count={})", 0, building, building.DropoffMask(), dropoff_points.size());
+    }
+
+    bool FactionController::CanBeBuilt(int buildingID, bool orcBuildings) const {
+        //have a precomputed bitmap - condition check for each building type
+        //have values for both races, in case you somehow obtain worker of the other race
+        //do resources check on the fly
+        return true;
+    }
+
+    BuildingDataRef FactionController::FetchBuildingData(int buildingID, bool orcBuildings) {
+        if(CanBeBuilt(buildingID, orcBuildings))
+            return Resources::LoadBuilding(buildingID, orcBuildings);
+        else
+            return nullptr;
     }
 
 }//namespace eng

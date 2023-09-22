@@ -32,6 +32,7 @@ namespace eng::Resources {
         std::unordered_map<std::string, TilesetRef> tilesets;
 
         std::unordered_map<std::string, GameObjectDataRef> objects;
+        std::array<std::array<BuildingDataRef, 2>, BuildingType::COUNT> buildings;
         bool linkable = false;
         bool preloaded = false;
     };
@@ -45,6 +46,7 @@ namespace eng::Resources {
     void PreloadObjects();
 
     UtilityObjectDataRef SetupCorpseData();
+    void SetupBuildingsIndex();
 
     //============
 
@@ -255,6 +257,14 @@ namespace eng::Resources {
         return res;
     }
 
+    BuildingDataRef LoadBuilding(int buildingID, bool isOrc) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadBuilding - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        return data.buildings[buildingID][(int)(isOrc)];
+    }
+
     UnitDataRef LoadUnit(const std::string& name) {
         GameObjectDataRef data = LoadObject(name);
         UnitDataRef res = std::dynamic_pointer_cast<UnitData>(data);
@@ -325,6 +335,7 @@ namespace eng::Resources {
         }
 
         SetupCorpseData();
+        SetupBuildingsIndex();
 
         float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
         ENG_LOG_TRACE("Resources::PreloadObjects - parsed {} object prefab descriptions ({:.2f}s)", data.objects.size(), time_elapsed);
@@ -352,6 +363,29 @@ namespace eng::Resources {
         }
 
         return corpse;
+    }
+
+    void SetupBuildingsIndex() {
+        using json = nlohmann::json;
+        auto config = json::parse(ReadFile("res/json/buildings_index.json"));
+
+        ASSERT_MSG(config.size() == BuildingType::COUNT, "Resources::SetupBuildingsIndex - JSON file is invalid.");
+
+        for(int i = 0; i < BuildingType::COUNT; i++) {
+            auto& entry = config.at(i);
+            if(entry.is_array()) {
+                BuildingDataRef hu = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry[0]));
+                BuildingDataRef oc = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry[1]));
+                data.buildings[i] = { hu, oc };
+            }
+            else {
+                BuildingDataRef hu = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry));
+                BuildingDataRef oc = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry));
+                data.buildings[i] = { hu, oc };
+            }
+
+            ASSERT_MSG(data.buildings[i][0] != nullptr && data.buildings[i][1] != nullptr, "Resources::SetupBuildingsIndex - Missing building data for ID:{}", i);
+        }
     }
 
 }//namespace eng::Resources

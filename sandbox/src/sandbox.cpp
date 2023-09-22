@@ -44,9 +44,9 @@ void Sandbox::OnInit() {
         trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), dummy_faction, glm::vec2(7.f, 7.f));
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), dummy_faction, glm::vec2(7.f, 7.f), true);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), dummy_faction, glm::vec2(16.f, 7.f));
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), dummy_faction, glm::vec2(16.f, 7.f), true);
 
         Unit& troll = level.objects.GetUnit(trollID);
         troll.ChangeCarryStatus(WorkerCarryState::WOOD);
@@ -203,6 +203,29 @@ void Sandbox::CommandDispatch(Unit& unit) {
                     ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);
                 }
                 break;
+            case CommandType::HARVEST_WOOD:
+                ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
+                if(level.map.IsWithinBounds(target_pos)) {
+                    unit.IssueCommand(Command::Harvest(target_pos));
+                }
+                break;
+            case CommandType::GATHER_RESOURCES:
+                ENG_LOG_INFO("GATHER FROM {}", target_id);
+                if(ObjectID::IsValid(target_id)) {
+                    unit.IssueCommand(Command::Gather(target_id));
+                }
+                break;
+            case CommandType::RETURN_GOODS:
+                ENG_LOG_INFO("RETURN GOODS ISSUED");
+                unit.IssueCommand(Command::ReturnGoods());
+                break;
+            case CommandType::BUILD:
+                ENG_LOG_INFO("BUILD ISSUED (ID={}, pos= ({}, {}))", buildingID, target_pos.x, target_pos.y);
+                if(level.map.IsWithinBounds(target_pos)) {
+                    //should probably do other sanity checks here - placement check, conditions check, worker check, etc. etc.
+                    unit.IssueCommand(Command::Build(buildingID, target_pos));
+                }
+                break;
             default:
                 ENG_LOG_INFO("BEHAVIOUR FOR COMMAND {} NOT IMPLEMENTED.", commandID);
                 break;
@@ -245,7 +268,10 @@ void Sandbox::OnGUI() {
         ImGui::Begin("Command");
         ImGui::Checkbox("Adaptive command", &adaptiveCommand);
         if(!adaptiveCommand)
-            ImGui::Combo("type", &commandID, "Idle\0Move\0Attack\0");
+            ImGui::Combo("type", &commandID, "Idle\0Move\0Attack\0Harvest\0Gather\0ReturnGoods\0Build");
+        if(commandID == CommandType::BUILD) {
+            ImGui::SliderInt("building ID", &buildingID, 0, BuildingType::COUNT);
+        }
         ImGui::End();
 
         level.map.DBG_GUI();

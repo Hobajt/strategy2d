@@ -329,8 +329,8 @@ namespace eng {
 
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
-        //Searches for path to a block of tiles.
-        glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max);
+        //Searches for path that moves object to specified distance from given block of tiles (distance < 0 -> use unit's attack range).
+        glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max, int distance = -1);
         //Searches for path to nearest trees tile (any tree tile that's part of the same forrest).
         glm::ivec2 Pathfinding_NextPosition_Forrest(const Unit& unit, const glm::ivec2& target_pos);
 
@@ -341,6 +341,8 @@ namespace eng {
         //Tiles are searched in squares - from lowest to higher & higher chessboard distance from the building.
         //Search starts at one of the corners of the building (defined by preferred_dir) & continues counter-clockwise around the building (increasing radius on full revolutions).
         int NearbySpawnCoords(const glm::ivec2& building_pos, const glm::ivec2& building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range = -1);
+
+        bool IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos);
 
         //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);

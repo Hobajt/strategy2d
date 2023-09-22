@@ -323,7 +323,7 @@ namespace eng {
         
         if(constructed) {
             //can't register dropoff point from constructor - ID isn't setup properly yet (called from IntegrateIntoLevel() instead)
-            OnConstructionFinished(false);
+            OnConstructionFinished(false, false);
         }
         else {
             //starting health uptick
@@ -389,7 +389,7 @@ namespace eng {
         }
     }
 
-    void Building::OnConstructionFinished(bool registerDropoffPoint) {
+    void Building::OnConstructionFinished(bool registerDropoffPoint, bool kickoutWorkers) {
         ASSERT_MSG(!constructed, "Building::OnConstructionFinished - multiple invokations (building already constructed, {})", OID());
         constructed = true;
 
@@ -397,6 +397,12 @@ namespace eng {
 
         if(registerDropoffPoint && data->dropoff_mask != 0) {
             Faction()->AddDropoffPoint(*this);
+        }
+
+        static constexpr std::array<const char*, 2> sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
+        if(kickoutWorkers) {
+            Audio::Play(SoundEffect::GetPath(sound_name[data->race]), Position());
+            lvl()->objects.IssueExit_Construction(OID());
         }
     }
 

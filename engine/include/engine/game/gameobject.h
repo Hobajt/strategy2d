@@ -13,6 +13,14 @@ namespace eng {
 
     class Level;
 
+    namespace BuildingType {
+        enum { 
+            TOWN_HALL, BARRACKS, FARM, LUMBER_MILL, BLACKSMITH, TOWER, 
+            SHIPYARD, FOUNDRY, OIL_REFINERY, INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
+            COUNT
+        };
+    }
+
     //===== GameObject =====
     
     class GameObject {
@@ -260,7 +268,7 @@ namespace eng {
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
 
-        void OnConstructionFinished(bool registerDropoffPoint = true);
+        void OnConstructionFinished(bool registerDropoffPoint = true, bool kickoutWorkers = true);
         void OnUpgradeFinished();
     protected:
         virtual void Inner_DBG_GUI() override;

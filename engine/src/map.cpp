@@ -519,11 +519,13 @@ namespace eng {
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
     }
 
-    glm::ivec2 Map::Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& m, const glm::ivec2& M) {
+    glm::ivec2 Map::Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& m, const glm::ivec2& M, int distance) {
         ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to block [({},{})-({},{})] (unit {}, range {})", unit.Position().x, unit.Position().y, m.x, m.y, M.x, M.y, unit.ID(), unit.AttackRange());
 
+        if(distance < 0) distance = unit.AttackRange();
+
         //already within the range
-        if(get_range(unit.Position(), m, M) <= unit.AttackRange())
+        if(get_range(unit.Position(), m, M) <= distance)
             return unit.Position();
 
         //identify unit's movement type (gnd/water/air)
@@ -535,7 +537,7 @@ namespace eng {
 
         //fills distance values in the tile data
         glm::ivec2 dst_pos = glm::ivec2(-1);
-        if(!Pathfinding_AStar_Range(tiles, nav_list, unit.Position(), unit.AttackRange(), dm, dM, &dst_pos, navType, &heuristic_euclidean)) {
+        if(!Pathfinding_AStar_Range(tiles, nav_list, unit.Position(), distance, dm, dM, &dst_pos, navType, &heuristic_euclidean)) {
             //destination unreachable
             return unit.Position();
         }
@@ -658,6 +660,17 @@ namespace eng {
         }
 
         return -1;
+    }
+
+    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos) {
+        for(int y = position.y; y < position.y + building_size.y; y++) {
+            for(int x = position.x; x < position.x + building_size.x; x++) {
+                if(glm::ivec2(x,y) != worker_pos && (!tiles.IsWithinBounds(y,x) || !tiles(y,x).Traversable(nav_type))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {
