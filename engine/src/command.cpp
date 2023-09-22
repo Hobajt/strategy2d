@@ -400,7 +400,13 @@ namespace eng {
     }
 
     Command Command::Gather(const ObjectID& target_id) {
-        return {};
+        Command cmd = {};
+
+        cmd.type = CommandType::GATHER_RESOURCES;
+        cmd.handler = CommandHandler_Gather;
+        cmd.target_id = target_id;
+
+        return cmd;
     }
 
     Command Command::ReturnGoods() {
@@ -594,7 +600,52 @@ namespace eng {
     }
 
     void CommandHandler_Gather(Unit& src, Level& level, Command& cmd, Action& action) {
-        //will be very similar to ReturnGoods, except that the carry_state checks are inverted
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //validate that it's issued on a worker unit
+        if(!src.IsWorker()) {
+            ENG_LOG_WARN("Gather Command - attempting to invoke on a non worker unit.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        glm::ivec2 target_info = glm::ivec2(cmd.target_id.idx, cmd.target_id.id);
+        if(src.CarryStatus() != WorkerCarryState::NONE) {
+            ENG_LOG_TRACE("Gather Command - return with goods issued.");
+            cmd = Command::ReturnGoods(target_info);
+            return;
+        }
+        
+        //retrieve the nearest dropoff point for given resource type
+        Building* resource = nullptr;
+        if(!ObjectID::IsValid(cmd.target_id) || cmd.target_id.type != ObjectType::BUILDING || !level.objects.GetBuilding(cmd.target_id, resource)) {
+            //target resource point not found, terminate the command
+            ENG_LOG_TRACE("Gather command - target not found.");
+            cmd = Command::Idle();
+            return;
+        }
+        ASSERT_MSG(resource != nullptr, "Gather command - resource point should always be set here.");
+
+        //distance check & movement
+        if(get_range(src.Position(), resource->MinPos(), resource->MaxPos()) > 1) {
+            //move until the worker stands next to the building
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, resource->MinPos(), resource->MaxPos());
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            else {
+                //destination unreachable
+                cmd = Command::Idle();
+            }
+        }
+        else {
+            //worker is next to the resource -> inform entrance controller and terminate the command
+            level.objects.IssueEntrance_Work(cmd.target_id, src.OID(), target_info, src.CarryStatus());
+            cmd = Command::Idle();
+        }
     }
 
     void CommandHandler_ReturnGoods(Unit& src, Level& level, Command& cmd, Action& action) {

@@ -107,16 +107,16 @@ namespace eng {
         Command cmd;
         glm::ivec2 respawn_position;
         int preferred_direction = 3;
+        bool set_carry_state = false;
         switch(entry.cmd_type) {
             case WorkerCarryState::GOLD:        //worker entered with gold -> return to Gather command
             {
-                throw std::runtime_error("not implemented yet");
-                // ObjectID goldmineID = convert entry.cmd_target to ObjectID;
-                // Building* goldmine = nullptr;
-                // cmd = Command::Gather(goldmineID);
-                // if(objects.GetBuilding(goldmineID, goldmine)) {
-                //     preferred_direction = GetPreferredDirection(goldmine->Position(), building->Position());
-                // }
+                ObjectID goldmineID = ObjectID(ObjectType::BUILDING, entry.cmd_target.x, entry.cmd_target.y);
+                Building* goldmine = nullptr;
+                cmd = Command::Gather(goldmineID);
+                if(objects.GetBuilding(goldmineID, goldmine)) {
+                    preferred_direction = GetPreferredDirection(goldmine->Position(), building->Position());
+                }
                 break;
             }
             case WorkerCarryState::WOOD:        //worker entered with wood -> return to Harvest command
@@ -124,12 +124,14 @@ namespace eng {
                 preferred_direction = GetPreferredDirection(entry.cmd_target, building->Position());
                 break;
             default:                            //worker entered empty handed -> is in resource deposit -> ReturnGoods command
-                cmd = Command::ReturnGoods();
+                cmd = Command::ReturnGoods(entry.cmd_target);
+                set_carry_state = true;
                 break;
         }
 
         building->NearbySpawnCoords(worker->NavigationType(), preferred_direction, respawn_position);
         worker->ReinsertObject(respawn_position);
+        if(set_carry_state) worker->ChangeCarryStatus(WorkerCarryState::GOLD);
         worker->IssueCommand(cmd);
 
         ENG_LOG_TRACE("EntranceController::WorkExit - Worker '{}' left '{}'.", *worker, *building);
