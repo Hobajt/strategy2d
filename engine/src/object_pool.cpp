@@ -147,6 +147,39 @@ namespace eng {
         return (num_workers > 0);
     }
 
+    int EntranceController::KillObjectsInside(ObjectPool& objects, const ObjectID& id) {
+        int count = 0;
+        Unit* unit;
+
+        for(int i = (int)entries.size()-1; i >= 0; i--) {
+            if(entries[i].entered == id) {
+                if(objects.GetUnit(entries[i].enteree, unit, false)) {
+                    unit->Kill(true);
+                }
+                else {
+                    ENG_LOG_WARN("EntranceController::KillObjectsInside - invalid unit ID '{}'", entries[i].enteree);
+                }
+                entries.erase(entries.begin() + i);
+                count++;
+            }
+        }
+
+        for(int i = (int)workEntries.size()-1; i >= 0; i--) {
+            if(workEntries[i].entered == id) {
+                if(objects.GetUnit(workEntries[i].enteree, unit, false)) {
+                    unit->Kill(true);
+                }
+                else {
+                    ENG_LOG_WARN("EntranceController::KillObjectsInside - invalid unit ID '{}'", workEntries[i].enteree);
+                }
+                workEntries.erase(workEntries.begin() + i);
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     bool EntranceController::IssueExit_Work(ObjectPool& objects, const WorkEntry& entry) {
         Unit* worker;
         Building* building;

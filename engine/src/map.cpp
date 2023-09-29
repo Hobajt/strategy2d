@@ -61,7 +61,7 @@ namespace eng {
     }
 
     TileData::TileData(int tileType_, int variation_, int cornerType_, int health_)
-        : tileType(tileType_), cornerType(cornerType_), variation(variation_), health(health_) {
+        : tileType(tileType_), cornerType(cornerType_), variation(variation_), health(health_), factionId(-1) {
         UpdateID();
     }
 
@@ -695,7 +695,38 @@ namespace eng {
         return D < (unsigned int)(-1);
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, bool is_building) {
+    bool Map::SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID) {
+        int range = src.AttackRange();
+        glm::ivec2 sz = glm::ivec2(src.Data()->size) - 1;
+        glm::ivec2 pos = src.Position();
+        int src_factionId = src.FactionIdx();
+
+        //scan the neighboring tiles
+        for(int y = -range; y <= range+sz.y; y++) {
+            int d_y = std::abs(y) - std::clamp(y, 0, sz.y);
+
+            for(int x = -range; x <= range+sz.x; x++) {
+                int d_x = std::abs(x) - std::clamp(x, 0, sz.x);
+                int distance = d_x + d_y;
+                
+                //ignore tiles with that are outside of attack range (manhattan distance, accounting for object size > 1)
+                if(distance > range)
+                    continue;
+
+                glm::ivec2 p = glm::ivec2(pos.x + x, pos.y + y);
+                if(tiles.IsWithinBounds(pos) && diplomacy.AreHostile(src_factionId, tiles(pos).factionId)) {
+                    out_targetID = tiles(pos).id;
+                    return true;
+                }
+            }
+        }
+
+        //add factionIdx into the tile data (same way ObjectID is part of tile data)
+
+        return false;
+    }
+
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, bool is_building) {
         ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -708,6 +739,7 @@ namespace eng {
                     ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
                 tiles(idx).nav.Claim(navType, true, is_building);
                 tiles(idx).id = id;
+                tiles(idx).factionId = factionId;
             }
         }
     }
@@ -725,6 +757,7 @@ namespace eng {
                     ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
                 tiles(idx).nav.Unclaim(navType, is_building);
                 tiles(idx).id = ObjectID();
+                tiles(idx).factionId = -1;
             }
         }
     }
@@ -735,6 +768,9 @@ namespace eng {
 
         tiles(pos_next).id = tiles(pos_prev).id;
         tiles(pos_prev).id = ObjectID();
+
+        tiles(pos_next).factionId = tiles(pos_prev).factionId;
+        tiles(pos_prev).factionId = -1;
     }
 
     ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {

@@ -2,8 +2,23 @@
 #include "engine/game/gameobject.h"
 
 #include "engine/game/resources.h"
+#include "engine/utils/dbg_gui.h"
 
 namespace eng {
+
+    //===== Techtree =====
+
+    void Techtree::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        //....
+#endif
+    }
+
+    //===== FactionController =====
+
+    int FactionController::idCounter = 0;
+    
+    FactionController::FactionController(const std::string& name_) : id(idCounter++), name(name_) {}
 
     int FactionController::GetColorIdx() const {
         //TODO:
@@ -44,6 +59,160 @@ namespace eng {
             return Resources::LoadBuilding(buildingID, orcBuildings);
         else
             return nullptr;
+    }
+
+    void FactionController::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGui::Text("ID: %d | Name: %s", id, name.c_str());
+        if(ImGui::CollapsingHeader("Techtree")) {
+            techtree.DBG_GUI();
+        }
+
+        Inner_DBG_GUI();
+#endif
+    }
+
+    //===== DiplomacyMatrix =====
+
+    DiplomacyMatrix::DiplomacyMatrix(int factionCount_) : factionCount(factionCount_) {
+        relation = new int[factionCount * factionCount];
+        for(int i = 0; i < factionCount * factionCount; i++)
+            relation[i] = 0;
+        //TODO: could maybe only use half of the matrix, since it's a symmetrical relation
+    }
+
+    DiplomacyMatrix::DiplomacyMatrix(int factionCount, const std::vector<glm::ivec3>& relations) : DiplomacyMatrix(factionCount) {
+        for(auto& entry : relations) {
+            operator()(entry.x, entry.y) = entry.z;
+            operator()(entry.y, entry.x) = entry.z;
+        }
+    }
+
+    DiplomacyMatrix::~DiplomacyMatrix() {
+        Release();
+    }
+
+    DiplomacyMatrix::DiplomacyMatrix(DiplomacyMatrix&& d) noexcept {
+        Move(std::move(d));
+    }
+
+    DiplomacyMatrix& DiplomacyMatrix::operator=(DiplomacyMatrix&& d) noexcept {
+        Release();
+        Move(std::move(d));
+        return *this;
+    }
+
+    bool DiplomacyMatrix::AreHostile(int f1, int f2) const {
+        ASSERT_MSG(relation != nullptr, "DiplomacyMatrix is not initialized properly!");
+
+        //invalid faction idx (can just mean empty tile)
+        if((unsigned int)(f1) >= factionCount || (unsigned int)(f2) >= factionCount)
+            return false;
+        return this->operator()(f1, f2) != 0;
+    }
+
+    void DiplomacyMatrix::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        if(relation == nullptr || factionCount < 1) {
+            ImGui::Text("Uninitialized or invalid");
+            return;
+        }
+
+        ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
+        // flags |= ImGuiTableFlags_NoHostExtendY;
+        flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
+
+        int num_cols = factionCount;
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * 3.f;
+
+        ImU32 clr_red    = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
+        ImU32 clr_green  = ImGui::GetColorU32(ImVec4(0.1f, 1.0f, 0.1f, 1.0f));
+        ImU32 clr_gray   = ImGui::GetColorU32(ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImU32 clr_purple = ImGui::GetColorU32(ImVec4(0.59f, 0.21f, 0.76f, 1.0f));
+
+        if (ImGui::BeginTable("table1", num_cols, flags)) {
+            for(int x = 0; x < num_cols; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+
+            ImGuiStyle& style = ImGui::GetStyle();
+            for(int y = 0; y < factionCount; y++) {
+                ImGui::TableNextRow();
+                for(int x = 0; x < factionCount; x++) {
+                    ImGui::TableNextColumn();
+
+                    int value = operator()(y, x);
+                    ImGui::Text("%d", value);
+                    if(x != y)
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, (value == 0) ? clr_gray : clr_red);
+                    else
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr_purple);
+                }
+            }
+            ImGui::EndTable();
+        }
+#endif
+    }
+
+    int& DiplomacyMatrix::operator()(int y, int x) {
+        ASSERT_MSG((unsigned int)(y) < factionCount && (unsigned int)(x) < factionCount, "DiplomacyMatrix - factionIdx out of bounds.");
+        return relation[x + y*factionCount];
+    }
+
+    const int& DiplomacyMatrix::operator()(int y, int x) const {
+        ASSERT_MSG((unsigned int)(y) < factionCount && (unsigned int)(x) < factionCount, "DiplomacyMatrix - factionIdx out of bounds.");
+        return relation[x + y*factionCount];
+    }
+
+
+    void DiplomacyMatrix::Move(DiplomacyMatrix&& d) noexcept {
+        relation = d.relation;
+        factionCount = d.factionCount;
+        d.factionCount = 0;
+        d.relation = nullptr;
+    }
+
+    void DiplomacyMatrix::Release() noexcept {
+        if(relation != nullptr) {
+            delete[] relation;
+            factionCount = 0;
+        }
+    }
+
+    //===== Factions =====
+
+    Factions::Factions(const FactionsFile& data) : initialized(true), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+        for(const FactionsFile::FactionEntry& entry : data.factions) {
+            //TODO: init each faction - pick proper controller based on controllerID; move Techtree
+            factions.push_back(std::make_shared<FactionController>());
+
+            //TODO: make some lookup fn that translates controllerID to proper type
+            //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
+        }
+    }
+
+    void Factions::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGui::Begin("Factions");
+
+        ImGui::Text("Faction count: %d", (int)factions.size());
+        if(ImGui::CollapsingHeader("Diplomacy")) {
+            diplomacy.DBG_GUI();
+        }
+        ImGui::Separator();
+
+        char buf[256];
+        for(int i = 0; i < (int)factions.size(); i++) {
+            snprintf(buf, sizeof(buf), "Faction[%d]", i);
+            if(ImGui::CollapsingHeader(buf)) {
+                ImGui::Indent();
+                factions[i]->DBG_GUI();
+                ImGui::Unindent();
+            }
+        }
+
+        ImGui::End();
+#endif
     }
 
 }//namespace eng

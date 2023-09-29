@@ -15,6 +15,7 @@ namespace eng {
 
     struct Savefile {
         Mapfile map;
+        FactionsFile factions;
     public:
         Savefile() = default;
         Savefile(const std::string& filepath);
@@ -42,8 +43,7 @@ namespace eng {
     public:
         Map map;
         ObjectPool objects;
-        std::vector<FactionControllerRef> factions;
-        Diplomacy diplomacy;
+        Factions factions;
     };
 
     // class Savefile {

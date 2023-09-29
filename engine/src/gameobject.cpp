@@ -101,11 +101,16 @@ namespace eng {
         health = (health_p * 1e-2f) * data_->MaxHealth();
 
         ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
+        factionIdx = faction->ID();
         ChangeColor(colorIdx_);
     }
 
     FactionObject::~FactionObject() {
         RemoveFromMap();
+        lvl()->objects.KillObjectsInside(OID());
+        if(lvl() != nullptr && Data() != nullptr) {
+            ENG_LOG_TRACE("Removing {}", OID());
+        }
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
 
@@ -114,19 +119,20 @@ namespace eng {
         animator.SetPaletteIdx((float)colorIdx);
     }
 
-    void FactionObject::Kill() {
+    void FactionObject::Kill(bool silent) {
         if(IsKilled())
             return;
-        GameObject::Kill();
+        GameObject::Kill(silent);
         
-        UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
-
-        //spawn a corpse utility object
-        lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
-        
-        //play the dying sound effect
-        static constexpr std::array<const char*, 4> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", };
-        Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
+        if(!silent) {
+            UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
+            //spawn a corpse utility object
+            lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
+            
+            //play the dying sound effect
+            static constexpr std::array<const char*, 4> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", };
+            Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
+        }
     }
 
     bool FactionObject::RangeCheck(GameObject& target) const {
@@ -217,7 +223,7 @@ namespace eng {
 
     void FactionObject::InnerIntegrate() {
         //register the object with the map
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), Data()->objectType == ObjectType::BUILDING);
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), FactionIdx(), Data()->objectType == ObjectType::BUILDING);
     }
 
     void FactionObject::RemoveFromMap() {
@@ -256,7 +262,7 @@ namespace eng {
     bool Unit::Update() {
         ASSERT_MSG(data != nullptr, "Unit isn't properly initialized!");
         if(!IsActive())
-            return false;
+            return (Health() <= 0) || IsKilled();
         command.Update(*this, *lvl());
         UpdateVariationIdx();
         animation_ended = animator.Update(ActionIdx());
@@ -355,7 +361,7 @@ namespace eng {
 
     bool Building::Update() {
         if(!IsActive())
-            return false;
+            return (Health() <= 0) || IsKilled();
         action.Update(*this, *lvl());
         return (Health() <= 0) || IsKilled();
     }

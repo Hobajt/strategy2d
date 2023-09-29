@@ -44,7 +44,7 @@ namespace eng {
         //Return true when requesting object removal.
         virtual bool Update();
 
-        virtual void Kill() { killed = true; }
+        virtual void Kill(bool silent = false) { killed = true; }
 
         //Check if this object covers given map coordinates.
         bool CheckPosition(const glm::ivec2& map_coords);
@@ -117,7 +117,7 @@ namespace eng {
 
         void ChangeColor(int colorIdx);
 
-        virtual void Kill() override;
+        virtual void Kill(bool silent = false) override;
 
         //Return true if given object is within this object's attack range.
         bool RangeCheck(GameObject& target) const;
@@ -150,14 +150,20 @@ namespace eng {
         void SetVariationIdx(int idx) { variationIdx = idx; }
 
         FactionControllerRef Faction() { return faction; }
+        int FactionIdx() const { return factionIdx; }
 
         bool IsActive() const { return active; }
+
+        //TODO: use to implement bloodlust
+        float AttackSpeed() const { return 1.f; }
 
         //Deactivates the object & removes it from pathfinding
         virtual void WithdrawObject();
         //Reactivates the object & adds it back to pathfinding.
         void ReinsertObject();
         void ReinsertObject(const glm::ivec2& position);
+
+        GameObjectDataRef FetchRef(int idx) const { return data_f->refs[idx]; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -170,6 +176,7 @@ namespace eng {
     private:
         FactionObjectDataRef data_f = nullptr;
         FactionControllerRef faction = nullptr;
+        int factionIdx;
         int colorIdx;
 
         int health;

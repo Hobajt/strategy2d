@@ -143,6 +143,7 @@ namespace eng {
             float t3 = 0.f;
             int i = 0;
             bool flag = false;
+            ObjectID target_id = ObjectID();
         };
     public:
         Logic logic;
@@ -156,8 +157,8 @@ namespace eng {
         static BuildingAction IdleAttack();
         static BuildingAction Construction();
 
-        // static BuildingAction Train();
-        // static BuildingAction Upgrade();
+        static BuildingAction TrainOrResearch();
+        static BuildingAction Upgrade();
 
         void Update(Building& src, Level& level);
 

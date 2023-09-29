@@ -12,7 +12,9 @@
 
 namespace eng {
 
+    class FactionObject;
     class Unit;
+    class DiplomacyMatrix;
 
     using buildingMapCoords = std::tuple<glm::ivec2, glm::ivec2, ObjectID, int>;
 
@@ -106,6 +108,7 @@ namespace eng {
         NavData nav;                //navigation variables
 
         ObjectID id = {};           //id of an object located on this tile (invalid means empty)
+        int factionId = -1;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -347,7 +350,10 @@ namespace eng {
         //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, bool is_building);
+        //Searches tiles around provided object for gameobjects that belong to enemy factions.
+        bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID);
+
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, bool is_building);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 

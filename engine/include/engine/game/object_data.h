@@ -108,6 +108,8 @@ namespace eng {
 
         int deathSoundIdx;      //identifies what sound to play on death (from 4 preset sounds)
         int race;
+
+        objectReferences refs;
     public:
         virtual int MaxHealth() const override { return health; }
         virtual bool IntegrateInMap() const { return true; }
@@ -125,7 +127,6 @@ namespace eng {
         SoundEffect sound_what;
         SoundEffect sound_pissed;
 
-        objectReferences refs;
         bool worker = false;
 
         int deathAnimIdx = -1;

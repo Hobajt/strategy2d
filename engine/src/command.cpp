@@ -14,6 +14,9 @@ namespace eng {
 #define CONSTRUCTION_SPEED 15.f
 #define HARVEST_WOOD_SCAN_RADIUS 6
 
+#define BUILDING_ATTACK_SCAN_INTERVAL 5
+#define BUILDING_ATTACK_SPEED 5.f
+
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
     */
@@ -330,13 +333,11 @@ namespace eng {
                 {
                     ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
                     //use payload_id to get the prefab from Unit's data
-                    UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.UData()->refs[payload_id]);
+
+                    UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(payload_id));
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
                         level.objects.EmplaceUtilityObj(level, obj, action.data.target_pos, action.data.target, src);
-
-                        if(src.UData()->AttackSound().valid)
-                            Audio::Play(src.UData()->AttackSound().Random(), src.Position());
                     }
                     else {
                         ENG_LOG_ERROR("ActionAction - action payload not delivered - invalid object.");
@@ -883,7 +884,73 @@ namespace eng {
         }
 
         src.act() = BuildingAnimationType::IDLE;
-        //TODO:
+        
+        //=====
+        Input& input = Input::Get();
+        float& attack_tick = action.data.t1;
+        bool& engaged = action.data.flag;
+        int& scan_counter = action.data.i;
+        ObjectID& targetID = action.data.target_id;
+        //=====
+
+        //attack disengaged, because of no target
+        if(!engaged) {
+            //periodically rescan the vincinity for possible targets
+            if((++scan_counter) > BUILDING_ATTACK_SCAN_INTERVAL) {
+                scan_counter = 0;
+                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
+                    engaged = true;
+                    attack_tick = (float)input.CurrentTime();
+                }
+            }
+            return;
+        }
+        
+        //attack timer tick
+        float attack_gap = input.GameTimeDelay(src.AttackSpeed());
+        if(attack_tick + attack_gap <= (float)Input::CurrentTime()) {
+            //validate the target or search for new one within range
+            FactionObject* target;
+            if(!level.objects.GetObject(targetID, target) || !src.RangeCheck(*target)) {
+                //previous target no longer exists or is out of range, so search for new one
+                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
+                    engaged = false;
+                    scan_counter = 0;
+                }
+                else {
+                    target = &level.objects.GetObject(targetID);
+                }
+            }
+            ASSERT_MSG(target != nullptr, "Target should always be set here.");
+            
+            //target still valid (or found new one)
+            if(engaged) {
+                //spawn a projectile
+                UtilityObjectDataRef projectile_data = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(ActionPayloadType::RANGED_ATTACK));
+                if(projectile_data != nullptr) {
+                    level.objects.EmplaceUtilityObj(level, projectile_data, target->Position(), targetID, src);
+                }
+
+                //reset the attack timer
+                attack_tick = (float)input.CurrentTime();
+            }
+        }
+
+
+        
+
+
+        /* command overview:
+            - keep a state variable - to indicate if building is engaged in attack or not (can be timing variable)
+                - if it's not engaged -> scan tiles within attack range (can do every other frame or so)
+            - otherwise increment timing variable
+            - whenever the timer overflows:
+                - validate that the target still exists
+                - if it doesn't rescan the range to find a new one
+                - if there is a target to attack, spawn a projectile
+                - reset timer (or go to "not engaged" state if there's no target)
+
+        */
     }
 
     void BuildingAction_TrainOrResearch(Building& src, Level& level, BuildingAction& action) {

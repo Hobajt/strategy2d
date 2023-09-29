@@ -55,8 +55,7 @@
             "yes": ["elves/eyessir", 4],
             "what": ["elves/ewhat", 4],
             "pissed": ["elves/epissed", 3],
-            "ready": "elves/eready",
-            "attack": "misc/bowfire"
+            "ready": "elves/eready"
         },
         "refs": ["arrow"]
     },
@@ -121,6 +120,22 @@
         "armor": 20,
         "basic_damage": 0,
         "pierce_damage": 0,
+        "race": 0
+    },
+    {
+        "name": "human/tower_guard",
+        "type": 3,
+        "nav_type": 1,
+        "size": [2, 2],
+        "vision_range": 3,
+        "health": 400,
+        "mana": 0,
+        "build_time": 100,
+        "cost": [500,250,0],
+        "attack_range": 3,
+        "armor": 20,
+        "basic_damage": 4,
+        "pierce_damage": 12,
         "race": 0
     },
     {

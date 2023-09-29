@@ -36,6 +36,8 @@ namespace eng {
 
         bool IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
         bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID);
+
+        int KillObjectsInside(ObjectPool& objects, const ObjectID& id);
     private:
         bool IssueExit_Work(ObjectPool& objects, const WorkEntry& entry);
 
@@ -66,6 +68,8 @@ namespace eng {
 
         bool IssueEntrance_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueEntrance_Construction(*this, buildingID, workerID); }
         bool IssueExit_Construction(const ObjectID& buildingID) { return entranceController.IssueExit_Construction(*this, buildingID); }
+
+        int KillObjectsInside(const ObjectID& id) { return entranceController.KillObjectsInside(*this, id); }
 
         //===== getters =====
 
