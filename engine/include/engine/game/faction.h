@@ -19,6 +19,21 @@ namespace eng {
     private:
 
     };
+
+    //===== FactionsFile =====
+
+    //Struct for serialization.
+    struct FactionsFile {
+        struct FactionEntry {
+            int controllerID;
+            int colorIdx;
+            std::string name;
+            Techtree techtree;
+        };
+    public:
+        std::vector<FactionEntry> factions;
+        std::vector<glm::ivec3> diplomacy;
+    };
     
     //===== FactionController =====
 
@@ -26,11 +41,11 @@ namespace eng {
     class FactionController {
     public:
         FactionController() = default;
-        FactionController(const std::string& name);
+        FactionController(FactionsFile::FactionEntry&& entry);
 
         int ID() const { return id; }
 
-        int GetColorIdx() const;
+        int GetColorIdx() const { return colorIdx; }
 
         void AddDropoffPoint(const Building& building);
         void RemoveDropoffPoint(const Building& building);
@@ -50,6 +65,7 @@ namespace eng {
         std::vector<buildingMapCoords> dropoff_points;
 
         int id = -1;
+        int colorIdx = 0;
         std::string name = "unnamed_faction";
 
         static int idCounter;
@@ -89,28 +105,17 @@ namespace eng {
         int factionCount = 0;
     };
 
-    //===== FactionsFile =====
-
-    //Struct for serialization.
-    struct FactionsFile {
-        struct FactionEntry {
-            int controllerID;
-            Techtree techtree;
-            std::string name;
-        };
-    public:
-        std::vector<FactionEntry> factions;
-        std::vector<glm::ivec3> diplomacy;
-    };
-
     //===== Factions =====
 
     class Factions {
     public:
         Factions() = default;
-        Factions(const FactionsFile& data);
+        Factions(FactionsFile&& data);
 
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
+
+        FactionControllerRef operator[](int i);
+        const FactionControllerRef operator[](int i) const;
 
         void DBG_GUI();
     private:

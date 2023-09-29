@@ -698,7 +698,7 @@ namespace eng {
     bool Map::SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID) {
         int range = src.AttackRange();
         glm::ivec2 sz = glm::ivec2(src.Data()->size) - 1;
-        glm::ivec2 pos = src.Position();
+        glm::ivec2 src_pos = src.Position();
         int src_factionId = src.FactionIdx();
 
         //scan the neighboring tiles
@@ -713,15 +713,13 @@ namespace eng {
                 if(distance > range)
                     continue;
 
-                glm::ivec2 p = glm::ivec2(pos.x + x, pos.y + y);
+                glm::ivec2 pos = glm::ivec2(src_pos.x + x, src_pos.y + y);
                 if(tiles.IsWithinBounds(pos) && diplomacy.AreHostile(src_factionId, tiles(pos).factionId)) {
                     out_targetID = tiles(pos).id;
                     return true;
                 }
             }
         }
-
-        //add factionIdx into the tile data (same way ObjectID is part of tile data)
 
         return false;
     }
@@ -899,6 +897,8 @@ namespace eng {
         if(ImGui::Button("ObjectIDs", btn_size)) mode = 6;
         ImGui::SameLine();
         if(ImGui::Button("Tile Health", btn_size)) mode = 7;
+        ImGui::SameLine();
+        if(ImGui::Button("FactionIdx", btn_size)) mode = 9;
         ImGui::Separator();
 
         ImGui::Text("Pathfinding");
@@ -1031,6 +1031,16 @@ namespace eng {
                         case 8:
                             ImGui::Text("%d", int(tiles(y,x).nav.part_of_forrest));
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.part_of_forrest ? clr2 : clr1);
+                            break;
+                        case 9:
+                            ImGui::Text("%d", tiles(y,x).factionId);
+                            if(tiles(y,x).factionId >= 0) {
+                                int a = tiles(y,x).factionId / 4;
+                                int b = tiles(y,x).factionId % 4;
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(0.1f, 0.1f + 0.9f * ((1+b)*0.25f), 0.1f, 1.0f)));
+                            }
+                            else
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr3);
                             break;
                         default:
                             ImGui::Text("---");

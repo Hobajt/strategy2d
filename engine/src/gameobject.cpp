@@ -100,7 +100,7 @@ namespace eng {
 
         health = (health_p * 1e-2f) * data_->MaxHealth();
 
-        ASSERT_MSG(faction != nullptr, "FactionObject must be assigned to a Faction!");
+        ASSERT_MSG((faction != nullptr) && (faction->ID() >= 0), "FactionObject must be assigned to a valid faction!");
         factionIdx = faction->ID();
         ChangeColor(colorIdx_);
     }

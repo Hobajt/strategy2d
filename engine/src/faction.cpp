@@ -17,13 +17,9 @@ namespace eng {
     //===== FactionController =====
 
     int FactionController::idCounter = 0;
-    
-    FactionController::FactionController(const std::string& name_) : id(idCounter++), name(name_) {}
 
-    int FactionController::GetColorIdx() const {
-        //TODO:
-        return 0;
-    }
+    FactionController::FactionController(FactionsFile::FactionEntry&& entry)
+        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx) {}
 
     void FactionController::AddDropoffPoint(const Building& building) {
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...
@@ -181,14 +177,22 @@ namespace eng {
 
     //===== Factions =====
 
-    Factions::Factions(const FactionsFile& data) : initialized(true), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
-        for(const FactionsFile::FactionEntry& entry : data.factions) {
+    Factions::Factions(FactionsFile&& data) : initialized(true), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+        for(FactionsFile::FactionEntry& entry : data.factions) {
             //TODO: init each faction - pick proper controller based on controllerID; move Techtree
-            factions.push_back(std::make_shared<FactionController>());
+            factions.push_back(std::make_shared<FactionController>(std::move(entry)));
 
             //TODO: make some lookup fn that translates controllerID to proper type
             //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
         }
+    }
+
+    FactionControllerRef Factions::operator[](int i) {
+        return factions.at(i);
+    }
+
+    const FactionControllerRef Factions::operator[](int i) const {
+        return factions.at(i);
     }
 
     void Factions::DBG_GUI() {

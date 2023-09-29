@@ -3,6 +3,7 @@
 #include "engine/core/input.h"
 #include "engine/game/level.h"
 #include "engine/core/audio.h"
+#include "engine/game/config.h"
 
 namespace eng {
 
@@ -901,21 +902,23 @@ namespace eng {
                 if(level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
                     engaged = true;
                     attack_tick = (float)input.CurrentTime();
+                    ENG_LOG_TRACE("BuildingAttack - Found target to attack.");
                 }
             }
             return;
         }
         
         //attack timer tick
-        float attack_gap = input.GameTimeDelay(src.AttackSpeed());
+        float attack_gap = src.AttackSpeed() / Config::GameSpeed();
         if(attack_tick + attack_gap <= (float)Input::CurrentTime()) {
             //validate the target or search for new one within range
             FactionObject* target;
             if(!level.objects.GetObject(targetID, target) || !src.RangeCheck(*target)) {
                 //previous target no longer exists or is out of range, so search for new one
-                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
+                if(!level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
                     engaged = false;
                     scan_counter = 0;
+                    ENG_LOG_TRACE("BuildingAttack - Target lost.");
                 }
                 else {
                     target = &level.objects.GetObject(targetID);
@@ -929,6 +932,10 @@ namespace eng {
                 UtilityObjectDataRef projectile_data = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(ActionPayloadType::RANGED_ATTACK));
                 if(projectile_data != nullptr) {
                     level.objects.EmplaceUtilityObj(level, projectile_data, target->Position(), targetID, src);
+                    ENG_LOG_TRACE("BuildingAttack - Projectile spawned (target = {}).", *target);
+                }
+                else {
+                    ENG_LOG_WARN("BuildingAttack - cannot spawn projectile, reference is missing.");
                 }
 
                 //reset the attack timer

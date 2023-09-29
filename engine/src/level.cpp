@@ -45,9 +45,9 @@ namespace eng {
 
     Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects({}) {}
 
-    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions({}) {}
+    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions(Factions()) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(savefile.factions) {}
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions)) {}
 
     void Level::Update() {
         objects.Update();

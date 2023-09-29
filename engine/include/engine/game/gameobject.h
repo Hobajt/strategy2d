@@ -154,9 +154,6 @@ namespace eng {
 
         bool IsActive() const { return active; }
 
-        //TODO: use to implement bloodlust
-        float AttackSpeed() const { return 1.f; }
-
         //Deactivates the object & removes it from pathfinding
         virtual void WithdrawObject();
         //Reactivates the object & adds it back to pathfinding.
@@ -272,6 +269,8 @@ namespace eng {
 
         //How much health should the building start with when constructing.
         int StartingHealth() const { return MaxHealth() > 100 ? 40 : 10; }
+
+        float AttackSpeed() const { return data->attack_speed; }
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
 

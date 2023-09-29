@@ -33,39 +33,34 @@ void Sandbox::OnInit() {
 
         Level::Load("res/ignored/tst.json", level);
 
-        FactionControllerRef dummy_faction = std::make_shared<FactionController>();
+        // FactionControllerRef dummy_faction = std::make_shared<FactionController>();
 
         FactionsFile tst = {};
-        tst.factions.push_back({1, {}, "faction_1"});
-        tst.factions.push_back({1, {}, "faction_2"});
-        tst.factions.push_back({1, {}, "faction_3"});
-        tst.factions.push_back({1, {}, "faction_4"});
-        tst.factions.push_back({1, {}, "faction_5"});
-        tst.factions.push_back({1, {}, "faction_6"});
-        tst.factions.push_back({1, {}, "faction_7"});
-        tst.factions.push_back({1, {}, "faction_8"});
-        tst.factions.push_back({1, {}, "faction_9"});
-        tst.factions.push_back({1, {}, "faction_10"});
-        tst.factions.push_back({1, {}, "faction_11"});
-        tst.factions.push_back({1, {}, "faction_12"});
-        tst.diplomacy.push_back({0, 2, 1});
-        level.factions = Factions(tst);
+        tst.factions.push_back({1, 5, "neutral", Techtree{}});
+        tst.factions.push_back({1, 0, "faction_1", Techtree{}});
+        tst.factions.push_back({1, 1, "faction_2", Techtree{}});
+        tst.diplomacy.push_back({1, 2, 1});
+        level.factions = Factions(std::move(tst));
+
+        FactionControllerRef f_n = level.factions[0];
+        FactionControllerRef f1 = level.factions[1];
+        FactionControllerRef f2 = level.factions[2];
 
         //TODO: for custom games - override level.factions with new object (initialized based on starting locations & faction count)
 
-        level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), dummy_faction, glm::vec2(0.f, 0.f), true));
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), dummy_faction, glm::vec2(5.f, 0.f));
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/tower_guard"), dummy_faction, glm::vec2(11.f, 5.f), true);
+        level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), f1, glm::vec2(5.f, 0.f));
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
+
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/tower_guard"), f2, glm::vec2(11.f, 5.f), true);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), dummy_faction, glm::vec2(5.f, 5.f), false);
-        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), dummy_faction, glm::vec2(7.f, 7.f), true);
-
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), dummy_faction, glm::vec2(16.f, 7.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), f_n, glm::vec2(7.f, 7.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), f_n, glm::vec2(16.f, 7.f), true);
 
         Unit& troll = level.objects.GetUnit(trollID);
         troll.ChangeCarryStatus(WorkerCarryState::WOOD);

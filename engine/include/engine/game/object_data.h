@@ -115,6 +115,8 @@ namespace eng {
         virtual bool IntegrateInMap() const { return true; }
 
         bool CanAttack() const { return basic_damage + pierce_damage > 0; }
+
+        virtual void SetupObjectReferences(const referencesRecord& refs) override;
     };
     using FactionObjectDataRef = std::shared_ptr<FactionObjectData>;
 
@@ -136,8 +138,6 @@ namespace eng {
         const SoundEffect& YesSound() const { return sound_yes; }
         const SoundEffect& WhatSound() const { return sound_what; }
         const SoundEffect& PissedSound() const { return sound_pissed; }
-
-        virtual void SetupObjectReferences(const referencesRecord& refs) override;
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 
@@ -147,6 +147,7 @@ namespace eng {
         bool traversable = false;       //detaches building from pathfinding
         bool gatherable = false;        //building is treated as a resource (workers can enter it to mine it)
         int dropoff_mask = 0;
+        float attack_speed = 2.f;
     public:
         virtual bool IntegrateInMap() const override { return !traversable; }
     };
