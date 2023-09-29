@@ -464,7 +464,7 @@ namespace eng {
         return glm::vec2(source_pos) + f * glm::vec2(target_pos - source_pos);
     }
 
-    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, const ObjectID& targetID_, FactionObject& src_)
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
         
         live_data.target_pos = target_pos_;
@@ -474,6 +474,10 @@ namespace eng {
 
         ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
         data->Init(*this, src_);
+
+        if(play_sound && data->on_spawn.valid) {
+            Audio::Play(data->on_spawn.Random(), Position());
+        }
     }
 
     UtilityObject::~UtilityObject() {}

@@ -311,7 +311,7 @@ namespace eng {
         };
     public:
         UtilityObject() = default;
-        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, const ObjectID& targetID, FactionObject& src);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
         virtual ~UtilityObject();
 
         //move enabled

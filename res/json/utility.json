@@ -6,7 +6,10 @@
         "size": [1, 1],
         "utility_id": 0,
         "animations": [ "misc/effects/arrow" ],
-        "duration": 0.25
+        "duration": 0.25,
+        "sounds": {
+            "on_spawn": "misc/bowfire"
+        }
     },
     {
         "name": "corpse",

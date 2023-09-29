@@ -321,6 +321,12 @@ namespace eng {
         }
         data->animData = std::make_shared<AnimatorData>(config.at("name"), std::move(animations));
 
+        if(config.count("sounds")) {
+            auto& sounds = config.at("sounds");
+
+            if(sounds.count("on_spawn")) data->on_spawn = ParseSoundEffect(sounds.at("on_spawn"));
+        }
+
         switch(data->utility_id) {
             case UtilityObjectType::PROJECTILE:
                 data->duration = config.at("duration");
