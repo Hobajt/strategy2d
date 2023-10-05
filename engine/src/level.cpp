@@ -50,6 +50,7 @@ namespace eng {
     Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions)) {}
 
     void Level::Update() {
+        factions.Update();
         objects.Update();
     }
 

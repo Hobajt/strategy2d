@@ -32,13 +32,11 @@ void Sandbox::OnInit() {
         Camera::Get().SetBounds(level.map.Size());
 
         Level::Load("res/ignored/tst.json", level);
-
-        // FactionControllerRef dummy_faction = std::make_shared<FactionController>();
-
+        
         FactionsFile tst = {};
-        tst.factions.push_back({1, 5, "neutral", Techtree{}});
-        tst.factions.push_back({1, 0, "faction_1", Techtree{}});
-        tst.factions.push_back({1, 1, "faction_2", Techtree{}});
+        tst.factions.push_back({FactionControllerID::INVALID,       5, "neutral", Techtree{}});
+        tst.factions.push_back({FactionControllerID::LOCAL_PLAYER,  0, "faction_1", Techtree{}});
+        tst.factions.push_back({FactionControllerID::INVALID,       1, "faction_2", Techtree{}});
         tst.diplomacy.push_back({1, 2, 1});
         level.factions = Factions(std::move(tst));
 
@@ -135,6 +133,7 @@ void Sandbox::OnUpdate() {
     level.Update();
 
     level.Render();
+    level.factions.Player()->Render();
 
     //======================
     

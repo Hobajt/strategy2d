@@ -4,6 +4,8 @@
 #include "engine/game/resources.h"
 #include "engine/utils/dbg_gui.h"
 
+#include "engine/game/controllers.h"
+
 namespace eng {
 
     //===== Techtree =====
@@ -17,6 +19,18 @@ namespace eng {
     //===== FactionController =====
 
     int FactionController::idCounter = 0;
+
+    FactionControllerRef FactionController::CreateController(FactionsFile::FactionEntry&& entry) {
+        switch(entry.controllerID) {
+            case FactionControllerID::LOCAL_PLAYER:
+                return std::make_shared<PlayerFactionController>(std::move(entry));
+            default:
+                return std::make_shared<FactionController>(std::move(entry));
+            // default:
+            //     ENG_LOG_ERROR("Invalid FactionControllerID encountered.");
+            //     throw std::runtime_error("");
+        }
+    }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry)
         : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx) {}
@@ -177,13 +191,19 @@ namespace eng {
 
     //===== Factions =====
 
-    Factions::Factions(FactionsFile&& data) : initialized(true), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+    Factions::Factions(FactionsFile&& data) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
         for(FactionsFile::FactionEntry& entry : data.factions) {
-            //TODO: init each faction - pick proper controller based on controllerID; move Techtree
-            factions.push_back(std::make_shared<FactionController>(std::move(entry)));
+            factions.push_back(FactionController::CreateController(std::move(entry)));
 
-            //TODO: make some lookup fn that translates controllerID to proper type
-            //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
+            //setup reference to player faction controller
+            if(entry.controllerID == FactionControllerID::LOCAL_PLAYER) {
+                ASSERT_MSG(player == nullptr, "There can never be more than 1 local player owned factions!");
+                player = std::static_pointer_cast<PlayerFactionController>(factions.back());
+            }
+        }
+
+        if(player == nullptr) {
+            initialized = false;
         }
     }
 
@@ -193,6 +213,14 @@ namespace eng {
 
     const FactionControllerRef Factions::operator[](int i) const {
         return factions.at(i);
+    }
+
+    void Factions::Update() {
+        ASSERT_MSG(initialized, "Factions are not initialized properly!");
+        
+        for(auto& faction : factions) {
+            faction->Update();
+        }
     }
 
     void Factions::DBG_GUI() {

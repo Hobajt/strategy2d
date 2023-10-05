@@ -84,6 +84,7 @@ namespace eng {
             }
             data.keyCallbacks.push_back({ keycode, { callback, userData } });
         }
+        ENG_LOG_TRACE("Input::AddKeyCallback - new callback for '{}' ({} callbacks in total)", keycode, data.keyCallbacks.size());
     }
 
     double Input::CurrentTime() {

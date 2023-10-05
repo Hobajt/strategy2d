@@ -6,7 +6,7 @@
 
 namespace GameStartType { enum { INVALID, CAMPAIGN = 0, CUSTOM, LOAD }; }
 
-class IngameController : public GameStageController {
+class IngameController : public GameStageController, public eng::PlayerFactionController::GUIRequestHandler {
 public:
     IngameController();
 

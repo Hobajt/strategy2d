@@ -37,8 +37,14 @@ namespace eng {
     
     //===== FactionController =====
 
+    class FactionController;
+    using FactionControllerRef = std::shared_ptr<FactionController>;
+
     //TODO: make abstract
     class FactionController {
+    public:
+        //Factory method, creates proper controller type (based on controllerID).
+        static FactionControllerRef CreateController(FactionsFile::FactionEntry&& entry);
     public:
         FactionController() = default;
         FactionController(FactionsFile::FactionEntry&& entry);
@@ -57,6 +63,8 @@ namespace eng {
         //Returns data object for particular type of building. Returns nullptr if the building cannot be built.
         BuildingDataRef FetchBuildingData(int buildingID, bool orcBuildings);
 
+        virtual void Update() {}
+
         void DBG_GUI();
     private:
         virtual void Inner_DBG_GUI() {}
@@ -70,7 +78,6 @@ namespace eng {
 
         static int idCounter;
     };
-    using FactionControllerRef = std::shared_ptr<FactionController>;
 
     //===== DiplomacyMatrix =====
 
@@ -107,6 +114,9 @@ namespace eng {
 
     //===== Factions =====
 
+    class PlayerFactionController;
+    using PlayerFactionControllerRef = std::shared_ptr<PlayerFactionController>;
+
     class Factions {
     public:
         Factions() = default;
@@ -114,14 +124,20 @@ namespace eng {
 
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
 
+        PlayerFactionControllerRef Player() { return player; }
+
         FactionControllerRef operator[](int i);
         const FactionControllerRef operator[](int i) const;
+
+        void Update();
 
         void DBG_GUI();
     private:
         std::vector<FactionControllerRef> factions;
         DiplomacyMatrix diplomacy;
         bool initialized = false;
+
+        PlayerFactionControllerRef player = nullptr;
     };
     
 }//namespace eng
