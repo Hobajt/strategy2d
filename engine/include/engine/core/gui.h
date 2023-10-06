@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <array>
 #include <unordered_map>
 
 #include "engine/utils/mathdefs.h"
@@ -378,6 +379,24 @@ namespace eng::GUI {
         Sprite sprite;
         glm::ivec2 idx;
         float image_scaledown;
+    };
+
+    //===== ImageButtonGrid =====
+
+    //9x9 grid of image buttons with modifiable image indices.
+    class ImageButtonGrid : public Element {
+    public:
+        ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, int rows, int cols, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void OnHighlight() override {}
+    private:
+        std::vector<ImageButton*> btns;
+        glm::ivec2 grid_size;
+
+        ButtonCallbackType callback = nullptr;
+        ButtonCallbackHandler* handler = nullptr;
     };
 
 }//namespace eng::GUI

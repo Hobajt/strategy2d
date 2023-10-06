@@ -707,9 +707,27 @@ namespace eng::GUI {
 
     void ImageButton::InnerRender() {
         Button::InnerRender();
-        
+
         glm::vec2 sz = size * image_scaledown;
         sprite.Render(glm::vec3(position.x - sz.x, -position.y - sz.y,  Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), glm::vec2(sz * 2.f), idx.y, idx.x);
+    }
+
+    //===== ImageButtonGrid =====
+
+    ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& btn_style_, const Sprite& sprite_, int rows, int cols, ButtonCallbackHandler* handler_, ButtonCallbackType callback_) 
+        : Element(offset_, size_, zOffset_, Style::Default(), nullptr), handler(handler_), callback(callback_), grid_size(glm::ivec2(cols, rows)) {
+
+        glm::vec2 btn_size = 1.f / glm::vec2(cols, rows);
+
+        for(int y = 0; y < rows; y++) {
+            for(int x = 0; x < cols; x++) {
+                int i = x+y*cols;
+                ImageButton* btn = new ImageButton((btn_size * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                // ImageButton* btn = new ImageButton(glm::vec2(1.f, 0.f), btn_size, 0.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                AddChild(btn, true);
+                btns.push_back(btn);
+            }
+        }
     }
 
 }//namespace eng::GUI

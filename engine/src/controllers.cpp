@@ -191,11 +191,17 @@ namespace eng {
             }),
             new GUI::TextButton(glm::vec2(0.75f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Pause", this, [](GUI::ButtonCallbackHandler* handler, int id){
                 // static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
+            }),
+
+            new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.5f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, this, [](GUI::ButtonCallbackHandler* handler, int id){
+                ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
             })
 
-            //temporary, test for ImageButtons logic
-            , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
-            , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
+
+
+            // //temporary, test for ImageButtons logic
+            // , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
+            // , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
         });
 
         //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
@@ -244,7 +250,7 @@ namespace eng {
             - will use that to redirect inputs into this class (have handler function directly in here)
         */
 
-        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (ActionButtons, SelectionTab, maybe IconButton too)
+        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (ActionButtons, SelectionTab)
     }
 
     void PlayerFactionController::Render() {
