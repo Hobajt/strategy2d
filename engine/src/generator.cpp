@@ -10,6 +10,8 @@ namespace eng {
         using rgba = glm::u8vec4;
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading);
+        void basicButton2(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow);
+        void basicButton3(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w);
         void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up);
         template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio);
 
@@ -32,6 +34,44 @@ namespace eng {
             char buf[256];
             const char* c = "rgb";
             snprintf(buf, sizeof(buf), "btnTex_clear_%c%s", c[channel], flipShading ? "_flip" : "");
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow) {
+            rgb* data = new rgb[width * height];
+
+            basicButton2(data, width, height, bw, sw, fill, border, light, shadow);
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Clear_2borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w) {
+            rgb* data = new rgb[width * height];
+
+            basicButton3(data, width, height, bw, sw, fill, border, light, shadow, b2, b2w);
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
 
             TextureRef texture = std::make_shared<Texture>(
                 TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
@@ -83,10 +123,13 @@ namespace eng {
         }
 
         TextureRef ButtonHighlightTexture(int width, int height, int bw) {
+            return ButtonHighlightTexture(width, height, bw, rgba(255, 255, 0, 255));
+        }
+
+        TextureRef ButtonHighlightTexture(int width, int height, int bw, const rgba& highlight) {
             rgba* data = new rgba[width * height];
 
             rgba fill = rgba(255, 255, 255, 0);
-            rgba highlight = rgba(255, 255, 0, 255);
 
             //--------------------------
             //fill
@@ -197,6 +240,123 @@ namespace eng {
                     }
                 }
             }            
+        }
+
+        void basicButton2(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow) {
+
+            //fill
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = fill;
+                }
+            }
+
+            //borders - top & bottom
+            for(int y = 0; y < bw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = border;
+                    data[(height-1-y) * width + x] = border;
+                }
+            }
+            //shading - top & bottom
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[(y+bw) * width + x] = light;
+                    data[(height-1-y-bw) * width + x] = shadow;
+                }
+            }
+            //borders - left & right
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < bw; x++) {
+                    data[y * width + x] = border;
+                    data[y * width + width-1-x] = border;
+                }
+            }
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    data[y * width + x+bw] = light;
+                    data[y * width + width-1-x-bw] = shadow;
+                }
+            }
+            //3d outlines - corners (botLeft & topRight)
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    if(atan2(y, x) > glm::pi<double>() * 0.25) {
+                        data[(y+bw) * width + width-1-x-bw] = shadow;
+                        data[(height-1-y-bw) * width + x+bw] = light;
+                    }
+                    else {
+                        data[(y+bw) * width + width-1-x-bw] = light;
+                        data[(height-1-y-bw) * width + x+bw] = shadow;
+                    }
+                }
+            }            
+        }
+
+        void basicButton3(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w) {
+
+            //fill
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = fill;
+                }
+            }
+
+            //borders - top & bottom
+            for(int y = 0; y < bw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = border;
+                    data[(height-1-y) * width + x] = border;
+                }
+            }
+            //shading - top & bottom
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[(y+bw) * width + x] = light;
+                    data[(height-1-y-bw) * width + x] = shadow;
+                }
+            }
+            //borders - left & right
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < bw; x++) {
+                    data[y * width + x] = border;
+                    data[y * width + width-1-x] = border;
+                }
+            }
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    data[y * width + x+bw] = light;
+                    data[y * width + width-1-x-bw] = shadow;
+                }
+            }
+            //3d outlines - corners (botLeft & topRight)
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    if(atan2(y, x) > glm::pi<double>() * 0.25) {
+                        data[(y+bw) * width + width-1-x-bw] = shadow;
+                        data[(height-1-y-bw) * width + x+bw] = light;
+                    }
+                    else {
+                        data[(y+bw) * width + width-1-x-bw] = light;
+                        data[(height-1-y-bw) * width + x+bw] = shadow;
+                    }
+                }
+            }            
+
+
+            //2nd border
+            for(int y = 0; y < b2w; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = b2;
+                    data[(height-1-y) * width + x] = b2;
+                }
+            }
+            for(int y = b2w; y < height-b2w; y++) {
+                for(int x = 0; x < b2w; x++) {
+                    data[y * width + x] = b2;
+                    data[y * width + width-1-x] = b2;
+                }
+            }
         }
 
         void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up) {

@@ -143,6 +143,7 @@ namespace eng {
         glm::ivec2 textureSize = ts * upscaleFactor;
         int borderWidth = 2 * upscaleFactor;
 
+        //general style for menu buttons
         GUI::StyleRef menu_btn_style = std::make_shared<GUI::Style>();
         menu_btn_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
         menu_btn_style->hoverTexture = menu_btn_style->texture;
@@ -152,6 +153,7 @@ namespace eng {
         menu_btn_style->font = font;
         menu_btn_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 
+        //style for the menu background
         GUI::StyleRef menu_style = std::make_shared<GUI::Style>();
         menu_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
         menu_style->hoverTexture = menu_style->texture;
@@ -160,6 +162,25 @@ namespace eng {
         menu_style->textColor = textClr;
         menu_style->font = font;
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
+
+        buttonSize = glm::vec2(0.25f, 0.25f);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        borderWidth = 7 * upscaleFactor;
+
+        //style for icon buttons
+        GUI::StyleRef icon_btn_style = std::make_shared<GUI::Style>();
+        icon_btn_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125));
+        icon_btn_style->hoverTexture = TextureGenerator::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125), glm::uvec3(125), borderWidth / 2);
+        icon_btn_style->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(170), glm::uvec3(20), glm::uvec3(170), glm::uvec3(110));
+        icon_btn_style->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth / 2, glm::u8vec4(66, 245, 84, 255));
+        icon_btn_style->textColor = textClr;
+        icon_btn_style->font = font;
+        icon_btn_style->holdOffset = glm::ivec2(borderWidth);
+
+        SpritesheetRef icons = Resources::LoadSpritesheet("misc/icons");
+        Sprite icon = (*icons)("icon");
 
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
             // new GUI::SelectionTab(),    //selection tab
@@ -171,6 +192,10 @@ namespace eng {
             new GUI::TextButton(glm::vec2(0.75f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Pause", this, [](GUI::ButtonCallbackHandler* handler, int id){
                 // static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
             })
+
+            //temporary, test for ImageButtons logic
+            , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
+            , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
         });
 
         //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
@@ -218,6 +243,8 @@ namespace eng {
             - have a function on the IngameStageController that registers custom key callback
             - will use that to redirect inputs into this class (have handler function directly in here)
         */
+
+        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (ActionButtons, SelectionTab, maybe IconButton too)
     }
 
     void PlayerFactionController::Render() {

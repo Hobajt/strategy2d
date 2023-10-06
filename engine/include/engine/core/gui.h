@@ -10,6 +10,7 @@
 #include "engine/core/text.h"
 
 #include "engine/core/selection.h"
+#include "engine/core/sprite.h"
 
 namespace eng::GUI {
 
@@ -353,6 +354,30 @@ namespace eng::GUI {
         glm::vec2 lineSize = glm::vec2(0.f);
         float visibleLinesCount = 0.f;
         float pos = 0.f;
+    };
+
+    //===== ImageButton =====
+
+    class ImageButton : public Button {
+    public:
+        ImageButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& idx,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1, float image_scaledown = 0.95f
+        );
+        ImageButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& idx,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType, float image_scaledown = 0.95f
+        );
+        ImageButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& idx, float image_scaledown,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
+        );
+        ImageButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& idx, float image_scaledown,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
+        );
+    protected:
+        virtual void InnerRender() override;
+    private:
+        Sprite sprite;
+        glm::ivec2 idx;
+        float image_scaledown;
     };
 
 }//namespace eng::GUI

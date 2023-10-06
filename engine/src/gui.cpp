@@ -681,4 +681,35 @@ namespace eng::GUI {
         }
     }
 
+    //===== ImageButton =====
+
+    ImageButton::ImageButton(
+        const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
+        const Sprite& sprite_, const glm::ivec2& idx_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, float image_scaledown_)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
+
+    ImageButton::ImageButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
+        const Sprite& sprite_, const glm::ivec2& idx_, 
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_, float image_scaledown_)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, fireType_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
+    
+    ImageButton::ImageButton(
+        const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
+        const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
+
+    ImageButton::ImageButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
+        const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, fireType_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
+
+    void ImageButton::InnerRender() {
+        Button::InnerRender();
+        
+        glm::vec2 sz = size * image_scaledown;
+        sprite.Render(glm::vec3(position.x - sz.x, -position.y - sz.y,  Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), glm::vec2(sz * 2.f), idx.y, idx.x);
+    }
+
 }//namespace eng::GUI
