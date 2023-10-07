@@ -129,6 +129,17 @@ namespace eng {
     //     }
     // }
 
+    //===== GUI::SelectionTab =====
+
+    GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& btn_style_, const Sprite& sprite_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
+        : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
+        
+        // btns = new ImageButtonGrid(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.5f), 1.f, btn_style_, sprite_, 3, 3, handler_, callback_);
+        // AddChild(btns, true);
+
+
+    }
+
     //===== PlayerFactionController =====
 
     static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
@@ -185,12 +196,26 @@ namespace eng {
         icon_btn_style->font = font;
         icon_btn_style->holdOffset = glm::ivec2(borderWidth);
 
+        //style for icon buttons bar
+        buttonSize = glm::vec2(0.25f, 0.25f * 0.1f);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        borderWidth = 7 * upscaleFactor;
+        glm::vec2 bar_border_size = 7.f / ts;
+        ENG_LOG_TRACE("({}, {}), ({}, {}), {}", ts.x, ts.y, bar_border_size.x, bar_border_size.y, upscaleFactor);
+
+        GUI::StyleRef bar_style = std::make_shared<GUI::Style>();
+        bar_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(70), glm::uvec3(20), glm::uvec3(70), glm::uvec3(70));
+
         SpritesheetRef icons = Resources::LoadSpritesheet("misc/icons");
         Sprite icon = (*icons)("icon");
 
+        actionButtons = new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.475f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, glm::vec2(0.975f / 3.f), this, [](GUI::ButtonCallbackHandler* handler, int id){
+            ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
+        });
+
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
-            // new GUI::SelectionTab(),    //selection tab
-            // new GUI::Menu(),            //action button tab
             // new GUI::Map(),             //map view
             new GUI::TextButton(glm::vec2(0.25f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
                 static_cast<PlayerFactionController*>(handler)->SwitchMenu(true);
@@ -199,16 +224,24 @@ namespace eng {
                 // static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
             }),
 
-            new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.5f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, this, [](GUI::ButtonCallbackHandler* handler, int id){
-                ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
-            })
+            //action buttons tab
+            // actionButtons,
 
+            //selection tab (& unit info)
+            // new GUI::SelectionTab()
 
+            new GUI::ImageButtonWithBar(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, bar_style, bar_border_size, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
+            new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
 
             // //temporary, test for ImageButtons logic
             // , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
             // , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
         });
+
+        //testing only
+        // actionButtons->GetButton(2)->Enable(false);
+        // actionButtons->GetButton(4)->Enable(false);
+        // actionButtons->GetButton(6)->Enable(false);
 
         float b = BORDER_SIZE * Window::Get().Ratio();
         float xOff = 0.01f;

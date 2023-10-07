@@ -97,9 +97,11 @@ namespace eng::GUI {
     }
 
     void Element::Render() {
-        InnerRender();
-        for(Element* child : children)
-            child->Render();
+        if(enabled) {
+            InnerRender();
+            for(Element* child : children)
+                child->Render();
+        }
     }
 
     void Element::Recalculate() {
@@ -107,6 +109,9 @@ namespace eng::GUI {
     }
 
     Element* Element::ResolveMouseSelection(const glm::vec2& mousePos_n) {
+        if(!enabled)
+            return nullptr;
+
         //ignoring overlaps -> returns the first found element
         for(Element* child : children) {
             Element* selected = child->ResolveMouseSelection(mousePos_n);
@@ -686,8 +691,7 @@ namespace eng::GUI {
 
     //===== ImageButton =====
 
-    ImageButton::ImageButton(
-        const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
+    ImageButton::ImageButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
         const Sprite& sprite_, const glm::ivec2& idx_,
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, float image_scaledown_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
@@ -697,8 +701,7 @@ namespace eng::GUI {
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_, float image_scaledown_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, fireType_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
     
-    ImageButton::ImageButton(
-        const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
+    ImageButton::ImageButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, 
         const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
@@ -715,17 +718,87 @@ namespace eng::GUI {
         sprite.Render(glm::vec3(position.x - sz.x, -position.y - sz.y,  Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), glm::vec2(sz * 2.f), idx.y, idx.x);
     }
 
+    //===== ImageButtonWithBar =====
+
+    ImageButtonWithBar::ImageButtonWithBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& style_, const StyleRef& bar_style_, const glm::vec2& borders_size_, const Sprite& sprite_, const glm::ivec2& idx_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, float image_scaledown_)
+        : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
+
+    ImageButtonWithBar::ImageButtonWithBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& style_, const StyleRef& bar_style_, const glm::vec2& borders_size_, const Sprite& sprite_, const glm::ivec2& idx_, 
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_, float image_scaledown_)
+        : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
+    
+    ImageButtonWithBar::ImageButtonWithBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& style_, const StyleRef& bar_style_, const glm::vec2& borders_size_, const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_)
+        : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
+
+    ImageButtonWithBar::ImageButtonWithBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& style_, const StyleRef& bar_style_, const glm::vec2& borders_size_, const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
+        ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
+        : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
+
+    AABB ImageButtonWithBar::GetAABB() {
+        glm::vec2 sz = glm::vec2(size.x, size.y * 1.1f);
+        return AABB(
+            (position + 1.f - sz) * 0.5f,
+            (position + 1.f + sz) * 0.5f
+        );
+    }
+
+    void ImageButtonWithBar::InnerRender() {
+        ImageButton::InnerRender();
+
+        glm::vec2 sz = glm::vec2(size.x, size.y * 0.1f);
+        glm::vec2 bs = borders_size * 2.f * sz;
+        glm::vec2 pos = glm::vec2(position.x, -position.y - size.y - sz.y);
+
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(pos.x, pos.y + bs.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT), sz, bar_style->color, bar_style->texture));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(pos.x - sz.x + bs.x, pos.y - sz.y + 2.f*bs.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), (sz - bs) * 2.f * glm::vec2(value, 1.f), ColorFromValue(), nullptr));
+    }
+
+    glm::vec4 ImageButtonWithBar::ColorFromValue() const {
+        if(value >= 0.75f)
+            return glm::vec4(0.1f, 0.7f, 0.f, 1.f);
+        else if(value >= 0.5f)
+            return glm::vec4(0.95f, 0.8f, 0.05f, 1.f);
+        else
+            return glm::vec4(0.9f, 0.f, 0.f, 1.f);
+    }
+
     //===== ImageButtonGrid =====
 
-    ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& btn_style_, const Sprite& sprite_, int rows, int cols, ButtonCallbackHandler* handler_, ButtonCallbackType callback_) 
+    ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+            const StyleRef& btn_style_, const Sprite& sprite_, int rows, int cols,  const glm::vec2& btn_size,
+            ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr), handler(handler_), callback(callback_), grid_size(glm::ivec2(cols, rows)) {
 
-        glm::vec2 btn_size = 1.f / glm::vec2(cols, rows);
+        glm::vec2 btn_step = 1.f / glm::vec2(cols, rows);
 
         for(int y = 0; y < rows; y++) {
             for(int x = 0; x < cols; x++) {
                 int i = x+y*cols;
-                ImageButton* btn = new ImageButton((btn_size * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                ImageButton* btn = new ImageButton((btn_step * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                // ImageButton* btn = new ImageButton(glm::vec2(1.f, 0.f), btn_size, 0.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                AddChild(btn, true);
+                btns.push_back(btn);
+            }
+        }
+    }
+
+    ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+            const StyleRef& btn_style_, const StyleRef& bar_style_, const Sprite& sprite_, int rows, int cols,  const glm::vec2& btn_size,
+            ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
+        : Element(offset_, size_, zOffset_, Style::Default(), nullptr), handler(handler_), callback(callback_), grid_size(glm::ivec2(cols, rows)) {
+
+        glm::vec2 btn_step = 1.f / glm::vec2(cols, rows);
+
+        for(int y = 0; y < rows; y++) {
+            for(int x = 0; x < cols; x++) {
+                int i = x+y*cols;
+                ImageButton* btn = new ImageButton((btn_step * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
                 // ImageButton* btn = new ImageButton(glm::vec2(1.f, 0.f), btn_size, 0.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
                 AddChild(btn, true);
                 btns.push_back(btn);

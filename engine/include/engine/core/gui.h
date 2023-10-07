@@ -104,6 +104,7 @@ namespace eng::GUI {
         virtual void OnHighlight() override;
 
         void Interactable(bool state) { interactable = state; }
+        void Enable(bool enabled_) { enabled = enabled_; }
 
         void UpdateOffset(const glm::vec2& offset, bool recalculate = true);
 
@@ -142,6 +143,7 @@ namespace eng::GUI {
         bool highlight = false;
 
         bool interactable = true;
+        bool enabled = true;
     };
 
     //===== SelectionHandler =====
@@ -382,16 +384,62 @@ namespace eng::GUI {
         float image_scaledown;
     };
 
+    //===== ImageButtonWithBar =====
+
+    class ImageButtonWithBar : public ImageButton {
+    public:
+        ImageButtonWithBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& style, const StyleRef& bar_style, const glm::vec2& borders_size, 
+            const Sprite& sprite, const glm::ivec2& idx,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1, float image_scaledown = 0.95f
+        );
+        ImageButtonWithBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& style, const StyleRef& bar_style, const glm::vec2& borders_size, 
+            const Sprite& sprite, const glm::ivec2& idx,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType, float image_scaledown = 0.95f
+        );
+        ImageButtonWithBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& style, const StyleRef& bar_style, const glm::vec2& borders_size, 
+            const Sprite& sprite, const glm::ivec2& idx, float image_scaledown,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID = -1
+        );
+        ImageButtonWithBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& style, const StyleRef& bar_style, const glm::vec2& borders_size, 
+            const Sprite& sprite, const glm::ivec2& idx, float image_scaledown,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
+        );
+
+        //override in order for the button to work even when hovering over the bar
+        virtual AABB GetAABB() override;
+    protected:
+        virtual void InnerRender() override;
+        glm::vec4 ColorFromValue() const;
+    private:
+        float value = 1.f;
+        StyleRef bar_style;
+        glm::vec2 borders_size;
+    };
+
     //===== ImageButtonGrid =====
 
     //9x9 grid of image buttons with modifiable image indices.
     class ImageButtonGrid : public Element {
     public:
-        ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, int rows, int cols, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+        ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& btn_style, const Sprite& sprite, int rows, int cols, const glm::vec2& btn_size,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback
+        );
+
+        ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& btn_style, const StyleRef& bar_style, const Sprite& sprite, int rows, int cols, const glm::vec2& btn_size,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback
+        );
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void OnHighlight() override {}
+
+        ImageButton* GetButton(int idx) { return btns.at(idx); }
     private:
         std::vector<ImageButton*> btns;
         glm::ivec2 grid_size;

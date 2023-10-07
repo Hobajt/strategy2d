@@ -13,6 +13,19 @@ namespace eng {
         enum { INVALID = 0, LOCAL_PLAYER, };
     }
 
+    //===== GUI::SelectionTab =====
+
+    namespace GUI {
+        class SelectionTab : public Element {
+        public:
+            SelectionTab(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+            // ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, int rows, int cols, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+        private:
+            GUI::ImageButtonGrid* btns;
+
+        };
+    }
+
     //===== PlayerFactionController =====
 
     class PlayerFactionController : public FactionController, public GUI::ButtonCallbackHandler {
@@ -39,6 +52,8 @@ namespace eng {
         GUI::Menu menu_panel;
         GUI::SelectionHandler gui_handler;
         GUI::TextLabel text_prompt;
+
+        GUI::ImageButtonGrid* actionButtons;
 
         std::array<ObjectID, 6> selection;
         int selected_count = 0;
