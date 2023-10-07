@@ -203,13 +203,16 @@ namespace eng::GUI {
 
     //===== TextLabel =====
 
-    TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)
-        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_) {}
+    TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_, bool centered_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_), centered(centered_) {}
     
     void TextLabel::InnerRender() {
         Element::InnerRender();
         ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
-        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        if(centered)
+            style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        else
+            style->font->RenderTextAlignLeft(text.c_str(), glm::vec2(position.x - size.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
     //===== Button =====

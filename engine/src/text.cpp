@@ -87,6 +87,19 @@ namespace eng {
         RenderText(text, center - offset, scale, color, zIndex, info);
     }
 
+    void Font::RenderTextAlignLeft(const char* text, const glm::vec2 center, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        int height = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+        }
+
+        glm::vec2 offset = glm::vec2(0.f, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, center - offset, scale, color, zIndex, info);
+    }
+
     void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, 
             int letterIdx, float zIndex, const glm::uvec4& info) {
         

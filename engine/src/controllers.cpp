@@ -163,6 +163,12 @@ namespace eng {
         menu_style->font = font;
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 
+        //style for the menu background
+        GUI::StyleRef prompt_style = std::make_shared<GUI::Style>();
+        prompt_style->textColor = textClr;
+        prompt_style->font = font;
+        prompt_style->color = glm::vec4(0.f);
+
         buttonSize = glm::vec2(0.25f, 0.25f);
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
         upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
@@ -203,6 +209,10 @@ namespace eng {
             // , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
             // , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
         });
+
+        float b = BORDER_SIZE * Window::Get().Ratio();
+        float xOff = 0.01f;
+        text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, prompt_style, "TEXT PROMPT", false);
 
         //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
         menu_panel = GUI::Menu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, menu_style, std::vector<GUI::Element*>{
@@ -250,7 +260,8 @@ namespace eng {
             - will use that to redirect inputs into this class (have handler function directly in here)
         */
 
-        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (ActionButtons, SelectionTab)
+        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (SelectionTab - probably reuse ImageButtonGrid within)
+        //NEED TO ADD VISIBILITY FUNCTIONALITY TO THE ImageButtonGrid - REQUIRED FOR BOTH SelectionTab AND FOR ActionButtons
     }
 
     void PlayerFactionController::Render() {
@@ -263,6 +274,7 @@ namespace eng {
         }
 
         game_panel.Render();
+        text_prompt.Render();
 
         
         //ingame GUI render - left-side panel, resources bar, GUI borders

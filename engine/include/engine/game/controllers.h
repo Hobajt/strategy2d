@@ -38,6 +38,7 @@ namespace eng {
         GUI::Menu game_panel;
         GUI::Menu menu_panel;
         GUI::SelectionHandler gui_handler;
+        GUI::TextLabel text_prompt;
 
         std::array<ObjectID, 6> selection;
         int selected_count = 0;

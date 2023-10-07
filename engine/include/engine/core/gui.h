@@ -161,7 +161,7 @@ namespace eng::GUI {
     class TextLabel : public Element {
     public:
         TextLabel() = default;
-        TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text);
+        TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text, bool centered = true);
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
@@ -170,6 +170,7 @@ namespace eng::GUI {
         virtual void InnerRender() override;
     private:
         std::string text;
+        bool centered;
     };
 
     //===== Button =====
