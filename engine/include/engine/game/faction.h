@@ -63,7 +63,7 @@ namespace eng {
         //Returns data object for particular type of building. Returns nullptr if the building cannot be built.
         BuildingDataRef FetchBuildingData(int buildingID, bool orcBuildings);
 
-        virtual void Update() {}
+        virtual void Update(Level& level) {}
 
         void DBG_GUI();
     private:
@@ -129,7 +129,7 @@ namespace eng {
         FactionControllerRef operator[](int i);
         const FactionControllerRef operator[](int i) const;
 
-        void Update();
+        void Update(Level& level);
 
         void DBG_GUI();
     private:

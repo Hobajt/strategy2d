@@ -411,6 +411,8 @@ namespace eng::GUI {
 
         //override in order for the button to work even when hovering over the bar
         virtual AABB GetAABB() override;
+
+        static float BarHeightRatio();
     protected:
         virtual void InnerRender() override;
         glm::vec4 ColorFromValue() const;
@@ -418,6 +420,18 @@ namespace eng::GUI {
         float value = 1.f;
         StyleRef bar_style;
         glm::vec2 borders_size;
+    };
+
+    //===== ValueBar =====
+
+    class ValueBar : public Element {
+
+    };
+
+    //===== KeyValue =====
+
+    class KeyValue : public Element {
+        
     };
 
     //===== ImageButtonGrid =====
@@ -431,7 +445,7 @@ namespace eng::GUI {
         );
 
         ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
-            const StyleRef& btn_style, const StyleRef& bar_style, const Sprite& sprite, int rows, int cols, const glm::vec2& btn_size,
+            const StyleRef& btn_style, const StyleRef& bar_style, const glm::vec2& bar_borders_size, const Sprite& sprite, int rows, int cols, const glm::vec2& btn_size,
             ButtonCallbackHandler* handler, ButtonCallbackType callback
         );
 

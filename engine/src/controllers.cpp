@@ -131,13 +131,79 @@ namespace eng {
 
     //===== GUI::SelectionTab =====
 
-    GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& btn_style_, const Sprite& sprite_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
+    GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& borders_style_, const StyleRef& text_style, const StyleRef& text_style_small,
+        const StyleRef& btn_style_, const StyleRef& bar_style_, const glm::vec2& bar_borders_size_, const Sprite& sprite_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
         
-        // btns = new ImageButtonGrid(glm::vec2(-1.f, -1.f), glm::vec2(0.5f, 0.5f), 1.f, btn_style_, sprite_, 3, 3, handler_, callback_);
-        // AddChild(btns, true);
+        // icon button grid, when there's multiple objects selected
+        btns = static_cast<ImageButtonGrid*>(AddChild(new ImageButtonGrid(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.f, btn_style_, bar_style_, bar_borders_size_, sprite_, 3, 3, glm::vec2(0.975f / 3.f, 0.9f / 3.f), handler_, callback_), true));
+        
+
+        //unit name & current level fields; next to the image
+        name = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.333f, -0.8f), glm::vec2(0.666f, 0.1f), 2.f, text_style, "Unit Name"), true));
+        level = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.333f, -0.6f), glm::vec2(0.666f, 0.1f), 2.f, text_style, "Level X"), true));
+
+        //text with health value (curr/max); directly underneath the health bar
+        health = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.666f, -0.3f), glm::vec2(0.333f, 0.05f), 2.f, text_style_small, "xxx/yyy"), true));
+
+        //headline for the stats ("Production" or "Food Usage" written above the actual stats)
+        headline = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.05f, -0.1f), glm::vec2(0.8f, 0.05f), 2.f, text_style, "Stats headline", false), true));
+
+        // //stats fields
+        // for(size_t i = 0; i < stats.size(); i++) {
+        //     stats[i] = static_cast<KeyValue*>(AddChild(new KeyValue(...), true));
+        // }
+
+        // //mana bar
+        // mana_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
+
+        // //production icon
+        // production_icon = static_cast<ImageButton*>(AddChild(new ImageButton(...), true));
+
+        // //production bar
+        // production_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
 
 
+        /*types of data to display:
+            - unit info - when single unit is selected (stats, level, etc)
+            - selection group - unit icons, when multiple units are selected
+            - production info - for town hall, refinery, lumber mill
+            - food usage - for farms
+            - production progress - whenever building is researching, upgrading or producing a unit
+
+          regarding the text alignment:
+            - it'd probably be easier if I've made align right functionality as well
+            - could split the text into two objects - label and value
+        */
+
+        //TODO: GUI ELEMENTS TO CREATE - ValueBar (for mana & progress tracking), KeyValueLabel (for various entries in the GUI), 
+
+        
+
+        // //armor, damage, range, sight, speed, magic (if unit has it)
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Armor: X", false), true));
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Damage: X", false), true));
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Range: X", false), true));
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Sight: X", false), true));
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Speed: X", false), true));
+        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Magic:", false), true));
+        // mana_bar = new ManaBar(glm::vec2(), glm::vec2(), 1.f, text_style, bar_style_, bar_borders_size_, color);
+
+        // //render labels without centering, so that changing digits doesn't fuck it all up
+
+
+        //frame borders around the entire area
+        borders = AddChild(new Menu(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.5f, borders_style_, {}), true);
+    }
+
+    void GUI::SelectionTab::Update(const Level& level, const PlayerSelection& selection) {
+        //TODO:
+        //pass in current selection data
+        //if single unit selected -> disable all but one icons, enable & update the text
+        //else hide the text & display all icons (+ update icon indices)
+
+        //also update health bar values
     }
 
     //===== PlayerFactionController =====
@@ -175,10 +241,22 @@ namespace eng {
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 
         //style for the menu background
-        GUI::StyleRef prompt_style = std::make_shared<GUI::Style>();
-        prompt_style->textColor = textClr;
-        prompt_style->font = font;
-        prompt_style->color = glm::vec4(0.f);
+        GUI::StyleRef text_style = std::make_shared<GUI::Style>();
+        text_style->textColor = textClr;
+        text_style->font = font;
+        text_style->color = glm::vec4(0.f);
+
+        GUI::StyleRef text_style_small = std::make_shared<GUI::Style>();
+        text_style_small->textColor = textClr;
+        text_style_small->font = font;
+        text_style_small->textScale = 0.5f;
+        text_style_small->color = glm::vec4(0.f);
+
+        //dbg only - to visualize the element size
+        text_style->color = glm::vec4(1.f);
+        text_style_small->color = glm::vec4(1.f);
+        text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        text_style_small->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
 
         buttonSize = glm::vec2(0.25f, 0.25f);
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -196,8 +274,16 @@ namespace eng {
         icon_btn_style->font = font;
         icon_btn_style->holdOffset = glm::ivec2(borderWidth);
 
+        buttonSize = glm::vec2(0.25f, 0.25f);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        borderWidth = 3 * upscaleFactor;
+        GUI::StyleRef borders_style = std::make_shared<GUI::Style>();
+        borders_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::u8vec4(0,0,0,0), glm::u8vec4(20,20,20,255), glm::u8vec4(240,240,240,255), glm::u8vec4(125,125,125,255));
+
         //style for icon buttons bar
-        buttonSize = glm::vec2(0.25f, 0.25f * 0.1f);
+        buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
         upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
         textureSize = ts * upscaleFactor;
@@ -215,6 +301,12 @@ namespace eng {
             ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
         });
 
+        selectionTab = new GUI::SelectionTab(glm::vec2(0.5f, 0.f), glm::vec2(0.475f, 0.35f), 1.f, 
+            borders_style, text_style, text_style_small,
+            icon_btn_style, bar_style, bar_border_size, icon, this, [](GUI::ButtonCallbackHandler* handler, int id){
+            ENG_LOG_TRACE("SelectionTab - Button [{}, {}] clicked", id % 3, id / 3);
+        });
+
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
             // new GUI::Map(),             //map view
             new GUI::TextButton(glm::vec2(0.25f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
@@ -224,14 +316,11 @@ namespace eng {
                 // static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
             }),
 
-            //action buttons tab
-            // actionButtons,
+            actionButtons,
+            selectionTab,
 
-            //selection tab (& unit info)
-            // new GUI::SelectionTab()
-
-            new GUI::ImageButtonWithBar(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, bar_style, bar_border_size, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
-            new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
+            // new GUI::ImageButtonWithBar(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, bar_style, bar_border_size, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
+            // new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
 
             // //temporary, test for ImageButtons logic
             // , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
@@ -245,7 +334,7 @@ namespace eng {
 
         float b = BORDER_SIZE * Window::Get().Ratio();
         float xOff = 0.01f;
-        text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, prompt_style, "TEXT PROMPT", false);
+        text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style, "TEXT PROMPT", false);
 
         //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
         menu_panel = GUI::Menu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, menu_style, std::vector<GUI::Element*>{
@@ -314,7 +403,7 @@ namespace eng {
         //probably also render selection highlights from here (guess it should have lower z-index so that it's behind the actual object visuals)
     }
 
-    void PlayerFactionController::Update() {
+    void PlayerFactionController::Update(Level& level) {
         // gui.Update();
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);

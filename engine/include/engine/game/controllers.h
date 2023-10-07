@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "engine/game/faction.h"
 #include "engine/core/gui.h"
@@ -13,16 +14,34 @@ namespace eng {
         enum { INVALID = 0, LOCAL_PLAYER, };
     }
 
+    struct PlayerSelection {
+        std::array<ObjectID, 9> selection;
+        int selected_count = 0;
+    };
+
     //===== GUI::SelectionTab =====
 
     namespace GUI {
         class SelectionTab : public Element {
         public:
-            SelectionTab(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
-            // ImageButtonGrid(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const Sprite& sprite, int rows, int cols, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+            SelectionTab(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+                const StyleRef& borders_style, const StyleRef& text_style, const StyleRef& text_style_small,
+                const StyleRef& btn_style, const StyleRef& bar_style, const glm::vec2& bar_borders_size, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
+            
+            void Update(const Level& level, const PlayerSelection& selection);
         private:
-            GUI::ImageButtonGrid* btns;
+            ImageButtonGrid* btns;
+            Element* borders;
 
+            TextLabel* name;
+            TextLabel* level;
+            TextLabel* health;
+            std::array<KeyValue*, 6> stats;
+            TextLabel* headline;
+            ValueBar* mana_bar;
+
+            ValueBar* production_bar;
+            ImageButton* production_icon;
         };
     }
 
@@ -42,7 +61,7 @@ namespace eng {
         //Render player's GUI.
         void Render();
 
-        virtual void Update() override;
+        virtual void Update(Level& level) override;
 
         void SwitchMenu(bool active);
     private:
@@ -54,9 +73,9 @@ namespace eng {
         GUI::TextLabel text_prompt;
 
         GUI::ImageButtonGrid* actionButtons;
+        GUI::SelectionTab* selectionTab;
 
-        std::array<ObjectID, 6> selection;
-        int selected_count = 0;
+        PlayerSelection selection;
 
         bool is_menu_active = false;
     };

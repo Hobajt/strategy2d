@@ -11,6 +11,8 @@
 
 namespace eng::GUI {
 
+    constexpr float HEALTH_BAR_HEIGHT_RATIO = 0.14f;
+
     //===== Style =====
 
     StyleRef CreateDefaultStyle() {
@@ -741,17 +743,21 @@ namespace eng::GUI {
         : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
 
     AABB ImageButtonWithBar::GetAABB() {
-        glm::vec2 sz = glm::vec2(size.x, size.y * 1.1f);
+        glm::vec2 sz = glm::vec2(size.x, size.y * (1.f + HEALTH_BAR_HEIGHT_RATIO));
         return AABB(
             (position + 1.f - sz) * 0.5f,
             (position + 1.f + sz) * 0.5f
         );
     }
 
+    float ImageButtonWithBar::BarHeightRatio() {
+        return HEALTH_BAR_HEIGHT_RATIO;
+    }
+
     void ImageButtonWithBar::InnerRender() {
         ImageButton::InnerRender();
 
-        glm::vec2 sz = glm::vec2(size.x, size.y * 0.1f);
+        glm::vec2 sz = glm::vec2(size.x, size.y * HEALTH_BAR_HEIGHT_RATIO);
         glm::vec2 bs = borders_size * 2.f * sz;
         glm::vec2 pos = glm::vec2(position.x, -position.y - size.y - sz.y);
 
@@ -789,7 +795,7 @@ namespace eng::GUI {
     }
 
     ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
-            const StyleRef& btn_style_, const StyleRef& bar_style_, const Sprite& sprite_, int rows, int cols,  const glm::vec2& btn_size,
+            const StyleRef& btn_style_, const StyleRef& bar_style_, const glm::vec2& bar_borders_size_, const Sprite& sprite_, int rows, int cols,  const glm::vec2& btn_size,
             ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr), handler(handler_), callback(callback_), grid_size(glm::ivec2(cols, rows)) {
 
@@ -798,7 +804,7 @@ namespace eng::GUI {
         for(int y = 0; y < rows; y++) {
             for(int x = 0; x < cols; x++) {
                 int i = x+y*cols;
-                ImageButton* btn = new ImageButton((btn_step * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
+                ImageButton* btn = new ImageButtonWithBar((btn_step * glm::vec2(x,y)) * 2.f - 1.f + btn_size, btn_size, 1.f, btn_style_, bar_style_, bar_borders_size_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
                 // ImageButton* btn = new ImageButton(glm::vec2(1.f, 0.f), btn_size, 0.f, btn_style_, sprite_, glm::ivec2(0, 0), 0.9f, handler, callback, i);
                 AddChild(btn, true);
                 btns.push_back(btn);

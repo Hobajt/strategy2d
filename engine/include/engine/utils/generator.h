@@ -9,6 +9,7 @@ namespace eng {
         //Creates a very basic button texture (plain color, borders & simple shading).
         TextureRef ButtonTexture_Clear(int width, int height, int borderWidth, int shadingWidth, int channel, bool flipShading);
         TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const glm::u8vec3& fill, const glm::u8vec3& border, const glm::u8vec3& light, const glm::u8vec3& shadow);
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const glm::u8vec4& fill, const glm::u8vec4& border, const glm::u8vec4& light, const glm::u8vec4& shadow);
         TextureRef ButtonTexture_Clear_2borders(int width, int height, int bw, int sw, const glm::u8vec3& fill, const glm::u8vec3& border, const glm::u8vec3& light, const glm::u8vec3& shadow, const glm::u8vec3& b2, int b2w);
         TextureRef ButtonTexture_Triangle(int width, int height, int borderWidth, bool flipShading, bool up);
 

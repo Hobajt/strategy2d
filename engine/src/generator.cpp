@@ -11,6 +11,7 @@ namespace eng {
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading);
         void basicButton2(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow);
+        void basicButton2(rgba* data, int width, int height, int bw, int sw, const rgba& fill, const rgba& border, const rgba& light, const rgba& shadow);
         void basicButton3(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w);
         void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up);
         template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio);
@@ -56,6 +57,25 @@ namespace eng {
 
             TextureRef texture = std::make_shared<Texture>(
                 TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const rgba& fill, const rgba& border, const rgba& light, const rgba& shadow) {
+            rgba* data = new rgba[width * height];
+
+            basicButton2(data, width, height, bw, sw, fill, border, light, shadow);
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -243,6 +263,57 @@ namespace eng {
         }
 
         void basicButton2(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow) {
+
+            //fill
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = fill;
+                }
+            }
+
+            //borders - top & bottom
+            for(int y = 0; y < bw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[y * width + x] = border;
+                    data[(height-1-y) * width + x] = border;
+                }
+            }
+            //shading - top & bottom
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < width; x++) {
+                    data[(y+bw) * width + x] = light;
+                    data[(height-1-y-bw) * width + x] = shadow;
+                }
+            }
+            //borders - left & right
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < bw; x++) {
+                    data[y * width + x] = border;
+                    data[y * width + width-1-x] = border;
+                }
+            }
+            for(int y = bw; y < height-bw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    data[y * width + x+bw] = light;
+                    data[y * width + width-1-x-bw] = shadow;
+                }
+            }
+            //3d outlines - corners (botLeft & topRight)
+            for(int y = 0; y < sw; y++) {
+                for(int x = 0; x < sw; x++) {
+                    if(atan2(y, x) > glm::pi<double>() * 0.25) {
+                        data[(y+bw) * width + width-1-x-bw] = shadow;
+                        data[(height-1-y-bw) * width + x+bw] = light;
+                    }
+                    else {
+                        data[(y+bw) * width + width-1-x-bw] = light;
+                        data[(height-1-y-bw) * width + x+bw] = shadow;
+                    }
+                }
+            }            
+        }
+
+        void basicButton2(rgba* data, int width, int height, int bw, int sw, const rgba& fill, const rgba& border, const rgba& light, const rgba& shadow) {
 
             //fill
             for(int y = 0; y < height; y++) {

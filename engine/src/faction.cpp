@@ -215,11 +215,11 @@ namespace eng {
         return factions.at(i);
     }
 
-    void Factions::Update() {
+    void Factions::Update(Level& level) {
         ASSERT_MSG(initialized, "Factions are not initialized properly!");
         
         for(auto& faction : factions) {
-            faction->Update();
+            faction->Update(level);
         }
     }
 
