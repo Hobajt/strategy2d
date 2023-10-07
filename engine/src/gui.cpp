@@ -774,6 +774,21 @@ namespace eng::GUI {
             return glm::vec4(0.9f, 0.f, 0.f, 1.f);
     }
 
+    //===== KeyValue =====
+
+    KeyValue::KeyValue(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_) {
+        
+        sep_pos = text.find(':');
+        sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
+    }
+    
+    void KeyValue::InnerRender() {
+        Element::InnerRender();
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+        style->font->RenderTextKeyValue(text.c_str(), sep_pos, glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+    }
+
     //===== ImageButtonGrid =====
 
     ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 

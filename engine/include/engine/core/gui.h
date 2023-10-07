@@ -431,7 +431,20 @@ namespace eng::GUI {
     //===== KeyValue =====
 
     class KeyValue : public Element {
-        
+    public:
+        //Position identifies where the separator is going to be located. If there's no separator, the whole text is aligned to the right.
+        KeyValue(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text);
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void OnHighlight() override {}
+
+        void UpdateText(const std::string& text);
+    protected:
+        virtual void InnerRender() override;
+    private:
+        std::string text;
+        size_t sep_pos;
     };
 
     //===== ImageButtonGrid =====

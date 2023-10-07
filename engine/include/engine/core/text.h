@@ -44,8 +44,14 @@ namespace eng {
         glm::vec2 AtlasSize_Inv() const { return atlasSize_inv; }
 
         void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        void RenderText(const char* text, size_t max_len, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+
+        //Text is still centered vertically (topLeft.x = leftmost position, topLeft.y = vertical center).
         void RenderTextAlignLeft(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        void RenderTextAlignRight(const char* text, size_t max_len, const glm::vec2 topRight, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+
+        void RenderTextKeyValue(const char* text, size_t sep_pos, const glm::vec2 center, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
         //clipped = top/bottom parts of the letters are cut off; cutPos.x = fromTop, .y = fromBottom
         void RenderTextClippedTop(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));

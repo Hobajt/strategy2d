@@ -42,6 +42,20 @@ namespace eng {
         }
     }
 
+    void Font::RenderText(const char* text, size_t max_len, const glm::vec2 topLeft, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
+        glm::vec2 pos = topLeft;
+
+        int i = 0;
+        for(const char* c = text; *c && i < max_len; c++, i++) {
+            const CharInfo& ch = GetChar(*c);
+
+            Renderer::RenderQuad(Quad::Char(info, ch, pos, size_mult, atlasSize_inv, color, texture, zIndex));
+
+            pos += glm::vec2(ch.advance) * size_mult;
+        }
+    }
+
     void Font::RenderTextClippedTop(const char* text, const glm::vec2 topLeft, float scale, float cutPos, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
         glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
         glm::vec2 pos = topLeft;
@@ -98,6 +112,49 @@ namespace eng {
 
         glm::vec2 offset = glm::vec2(0.f, height / 2) / glm::vec2(Window::Get().Size());
         RenderText(text, center - offset, scale, color, zIndex, info);
+    }
+
+    void Font::RenderTextAlignRight(const char* text, size_t max_len, const glm::vec2 center, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        int height = 0;
+        int width = 0;
+        int i = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+            width += ch.advance.x * scale;
+
+            if(i++ >= max_len)
+                break;
+        }
+
+        glm::vec2 offset = glm::vec2(width, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, max_len, center - offset, scale, color, zIndex, info);
+    }
+
+    void Font::RenderTextKeyValue(const char* text, size_t max_len, const glm::vec2 center, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
+        int height = 0;
+        int width = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+
+            if(c < text+max_len) {
+                width += ch.advance.x * scale;
+            }
+        }
+        glm::vec2 offset;
+
+        //render key - aligned right (center anchors separator character)
+        offset = glm::vec2(width, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, max_len, center - offset, scale, color, zIndex, info);
+
+        //render value - aligned left
+        offset = glm::vec2(0.f, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text + max_len, center - offset, scale, color, zIndex, info);
     }
 
     void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, 

@@ -150,18 +150,18 @@ namespace eng {
         //headline for the stats ("Production" or "Food Usage" written above the actual stats)
         headline = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.05f, -0.1f), glm::vec2(0.8f, 0.05f), 2.f, text_style, "Stats headline", false), true));
 
-        // //stats fields
-        // for(size_t i = 0; i < stats.size(); i++) {
-        //     stats[i] = static_cast<KeyValue*>(AddChild(new KeyValue(...), true));
-        // }
+        //stats fields
+        for(size_t i = 0; i < stats.size(); i++) {
+            stats[i] = static_cast<KeyValue*>(AddChild(new KeyValue(glm::vec2(0.f, -0.1f + 0.1f * i), glm::vec2(0.8f, 0.05f), 2.f, text_style, "Key: Value"), true));
+        }
 
-        // //mana bar
+        //mana bar
         // mana_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
 
-        // //production icon
+        //production icon
         // production_icon = static_cast<ImageButton*>(AddChild(new ImageButton(...), true));
 
-        // //production bar
+        //production bar
         // production_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
 
 
@@ -245,6 +245,7 @@ namespace eng {
         text_style->textColor = textClr;
         text_style->font = font;
         text_style->color = glm::vec4(0.f);
+        text_style->textScale = 0.9f;
 
         GUI::StyleRef text_style_small = std::make_shared<GUI::Style>();
         text_style_small->textColor = textClr;
