@@ -26,6 +26,7 @@ namespace eng {
         public:
             SelectionTab(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
                 const StyleRef& borders_style, const StyleRef& text_style, const StyleRef& text_style_small,
+                const StyleRef& mana_bar_style, const glm::vec2& mana_borders_size, const StyleRef& progress_bar_style, const glm::vec2& progress_borders_size, const StyleRef& passive_btn_style,
                 const StyleRef& btn_style, const StyleRef& bar_style, const glm::vec2& bar_borders_size, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
             
             void Update(const Level& level, const PlayerSelection& selection);
@@ -42,6 +43,7 @@ namespace eng {
 
             ValueBar* production_bar;
             ImageButton* production_icon;
+            TextLabel* production_headline;
         };
     }
 

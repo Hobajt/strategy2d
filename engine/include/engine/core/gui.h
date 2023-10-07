@@ -425,7 +425,20 @@ namespace eng::GUI {
     //===== ValueBar =====
 
     class ValueBar : public Element {
-
+    public:
+        ValueBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
+            const StyleRef& bar_style, const glm::vec2& borders_size, const StyleRef& text_style, const glm::vec4 filler_clr, const std::string& text);
+        
+        void SetValue(float value);
+        void SetText(const std::string& text);
+    protected:
+        virtual void InnerRender() override;
+    private:
+        float value;
+        std::string text;
+        glm::vec4 filler_clr;
+        StyleRef text_style;
+        glm::vec2 borders_size;
     };
 
     //===== KeyValue =====

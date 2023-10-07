@@ -133,10 +133,11 @@ namespace eng {
 
     GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
         const StyleRef& borders_style_, const StyleRef& text_style, const StyleRef& text_style_small,
+        const StyleRef& mana_bar_style_, const glm::vec2& mana_borders_size_, const StyleRef& progress_bar_style_, const glm::vec2& progress_borders_size_, const StyleRef& passive_btn_style_,
         const StyleRef& btn_style_, const StyleRef& bar_style_, const glm::vec2& bar_borders_size_, const Sprite& sprite_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
         
-        // icon button grid, when there's multiple objects selected
+        //icon button grid, when there's multiple objects selected
         btns = static_cast<ImageButtonGrid*>(AddChild(new ImageButtonGrid(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.f, btn_style_, bar_style_, bar_borders_size_, sprite_, 3, 3, glm::vec2(0.975f / 3.f, 0.9f / 3.f), handler_, callback_), true));
         
 
@@ -156,42 +157,14 @@ namespace eng {
         }
 
         //mana bar
-        // mana_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
+        mana_bar = static_cast<ValueBar*>(AddChild(new ValueBar(glm::vec2(0.525f, 0.4f), glm::vec2(0.45f, 0.05f), 3.f, mana_bar_style_, mana_borders_size_, text_style_small, glm::vec4(0.f, 0.69f, 0.79f, 1.f), "123"), true));
 
-        //production icon
-        // production_icon = static_cast<ImageButton*>(AddChild(new ImageButton(...), true));
+        //production stuff
+        production_bar = static_cast<ValueBar*>(AddChild(new ValueBar(glm::vec2(0.0f, 0.85f), glm::vec2(0.95f, 0.1f), 3.f, progress_bar_style_, progress_borders_size_, text_style, glm::vec4(0.0f, 0.5f, 0.125f, 1.f), "% Complete"), true));
+        production_icon = static_cast<ImageButton*>(AddChild(new ImageButton(glm::vec2(0.5f, 0.2f), glm::vec2(0.9f / 3.f), 5.f, btn_style_, sprite_, glm::ivec2(0), 0.9f, handler_, callback_), true));
 
-        //production bar
-        // production_bar = static_cast<ValueBar*>(AddChild(new ValueBar(...), true));
-
-
-        /*types of data to display:
-            - unit info - when single unit is selected (stats, level, etc)
-            - selection group - unit icons, when multiple units are selected
-            - production info - for town hall, refinery, lumber mill
-            - food usage - for farms
-            - production progress - whenever building is researching, upgrading or producing a unit
-
-          regarding the text alignment:
-            - it'd probably be easier if I've made align right functionality as well
-            - could split the text into two objects - label and value
-        */
-
-        //TODO: GUI ELEMENTS TO CREATE - ValueBar (for mana & progress tracking), KeyValueLabel (for various entries in the GUI), 
-
-        
-
-        // //armor, damage, range, sight, speed, magic (if unit has it)
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Armor: X", false), true));
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Damage: X", false), true));
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Range: X", false), true));
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Sight: X", false), true));
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Speed: X", false), true));
-        // text_fields.push_back(AddChild(new TextLabel(glm::vec2(), glm::vec2(), 1.f, text_style, "Magic:", false), true));
-        // mana_bar = new ManaBar(glm::vec2(), glm::vec2(), 1.f, text_style, bar_style_, bar_borders_size_, color);
-
-        // //render labels without centering, so that changing digits doesn't fuck it all up
-
+        mana_bar->SetValue(0.75f);
+        production_bar->SetValue(0.75f);
 
         //frame borders around the entire area
         borders = AddChild(new Menu(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.5f, borders_style_, {}), true);
@@ -254,10 +227,10 @@ namespace eng {
         text_style_small->color = glm::vec4(0.f);
 
         //dbg only - to visualize the element size
-        text_style->color = glm::vec4(1.f);
-        text_style_small->color = glm::vec4(1.f);
-        text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
-        text_style_small->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style->color = glm::vec4(1.f);
+        // text_style_small->color = glm::vec4(1.f);
+        // text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style_small->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
 
         buttonSize = glm::vec2(0.25f, 0.25f);
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -290,10 +263,22 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         borderWidth = 7 * upscaleFactor;
         glm::vec2 bar_border_size = 7.f / ts;
-        ENG_LOG_TRACE("({}, {}), ({}, {}), {}", ts.x, ts.y, bar_border_size.x, bar_border_size.y, upscaleFactor);
 
         GUI::StyleRef bar_style = std::make_shared<GUI::Style>();
         bar_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(70), glm::uvec3(20), glm::uvec3(70), glm::uvec3(70));
+
+        buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        borderWidth = 7 * upscaleFactor;
+        glm::vec2 mana_bar_borders_size = 7.f / ts;
+        GUI::StyleRef mana_bar_style = std::make_shared<GUI::Style>();
+        mana_bar_style->texture = TextureGenerator::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2);
+
+        glm::vec2 progress_bar_borders_size = 7.f / ts;
+        GUI::StyleRef progress_bar_style = std::make_shared<GUI::Style>();
+        progress_bar_style->texture = TextureGenerator::ButtonTexture_Clear_3borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(252,208,61), 2*borderWidth/3, glm::uvec3(20), borderWidth/3);
 
         SpritesheetRef icons = Resources::LoadSpritesheet("misc/icons");
         Sprite icon = (*icons)("icon");
@@ -304,6 +289,7 @@ namespace eng {
 
         selectionTab = new GUI::SelectionTab(glm::vec2(0.5f, 0.f), glm::vec2(0.475f, 0.35f), 1.f, 
             borders_style, text_style, text_style_small,
+            mana_bar_style, mana_bar_borders_size, progress_bar_style, progress_bar_borders_size, icon_btn_style,
             icon_btn_style, bar_style, bar_border_size, icon, this, [](GUI::ButtonCallbackHandler* handler, int id){
             ENG_LOG_TRACE("SelectionTab - Button [{}, {}] clicked", id % 3, id / 3);
         });

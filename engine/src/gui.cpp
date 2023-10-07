@@ -774,6 +774,31 @@ namespace eng::GUI {
             return glm::vec4(0.9f, 0.f, 0.f, 1.f);
     }
 
+    //===== ValueBar =====
+
+    ValueBar::ValueBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
+        const StyleRef& bar_style_, const glm::vec2& borders_size_, const StyleRef& text_style_, const glm::vec4 filler_clr_, const std::string& text_)
+        : Element(offset_, size_, zOffset_, bar_style_, nullptr), text(text_), value(1.f), text_style(text_style_), filler_clr(filler_clr_), borders_size(borders_size_) {}
+
+    void ValueBar::SetValue(float value_) {
+        value = value_;
+    }
+
+    void ValueBar::SetText(const std::string& text_) {
+        text = text_;
+    }
+
+    void ValueBar::InnerRender() {
+        Element::InnerRender();
+
+        //render filler bar
+        glm::vec2 bs = borders_size * 2.f * size;
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(position.x - size.x + bs.x, -position.y - size.y + bs.y, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), (size - bs) * 2.f * glm::vec2(value, 1.f), filler_clr, nullptr));
+
+        //render the text
+        text_style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), text_style->textScale, text_style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - 2.f*Z_TEXT_OFFSET);
+    }
+
     //===== KeyValue =====
 
     KeyValue::KeyValue(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)
