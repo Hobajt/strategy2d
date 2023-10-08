@@ -87,8 +87,8 @@ namespace eng {
         float deltaTime_real;
         float fps;
 
-        glm::vec2 move1, move2;
-        bool isMove1, isMove2;
+        glm::vec2 move1, move2, move_arrows;
+        bool isMove1, isMove2, isMoveArrows;
         float zoom;
 
         InputButton lmb,rmb,mmb;

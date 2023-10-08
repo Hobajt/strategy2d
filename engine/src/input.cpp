@@ -117,6 +117,13 @@ namespace eng {
         move1 = glm::vec2(float(int(d) - int(a)), float(int(w) - int(s)));
         isMove1 = (w || a || s || d);
 
+        bool up    = window.GetKeyState(GLFW_KEY_UP);
+        bool left  = window.GetKeyState(GLFW_KEY_LEFT);
+        bool down  = window.GetKeyState(GLFW_KEY_DOWN);
+        bool right = window.GetKeyState(GLFW_KEY_RIGHT);
+        move_arrows = glm::vec2(float(int(right) - int(left)), float(int(up) - int(down)));
+        isMoveArrows = (up || left || down || right);
+
         bool i = window.GetKeyState(GLFW_KEY_I);
         bool j = window.GetKeyState(GLFW_KEY_J);
         bool k = window.GetKeyState(GLFW_KEY_K);

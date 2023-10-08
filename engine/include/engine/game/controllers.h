@@ -49,6 +49,11 @@ namespace eng {
 
     //===== PlayerFactionController =====
 
+    class PlayerFactionController;
+    using PlayerFactionControllerRef = std::shared_ptr<PlayerFactionController>;
+
+    namespace PlayerControllerState { enum { IDLE, SELECTION, CAMERA_CENTERING }; }
+
     class PlayerFactionController : public FactionController, public GUI::ButtonCallbackHandler {
     public:
         //Class, where the controller dispatches it's requests from the GUI.
@@ -56,6 +61,12 @@ namespace eng {
         public:
             virtual void PauseRequest(bool pause) {}
             virtual void PauseToggleRequest() {}
+
+            void LinkController(const PlayerFactionControllerRef& ctrl);
+        protected:
+            void SignalKeyPress(int keycode, int modifiers);
+        private:
+            PlayerFactionControllerRef playerController = nullptr;
         };
     public:
         PlayerFactionController(FactionsFile::FactionEntry&& entry);
@@ -66,6 +77,13 @@ namespace eng {
         virtual void Update(Level& level) override;
 
         void SwitchMenu(bool active);
+    private:
+        void OnKeyPressed(int keycode, int modifiers);
+
+        bool CursorInGameView(const glm::vec2& pos) const;
+        bool CursorInMapView(const glm::vec2& pos) const;
+
+        void InitializeGUI();
     private:
         GUIRequestHandler* handler = nullptr;
 
@@ -80,7 +98,9 @@ namespace eng {
         PlayerSelection selection;
 
         bool is_menu_active = false;
+        int state = PlayerControllerState::IDLE;
+
+        glm::vec2 coords_start;
     };
-    using PlayerFactionControllerRef = std::shared_ptr<PlayerFactionController>;
 
 }//namespace eng

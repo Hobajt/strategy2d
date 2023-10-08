@@ -2,6 +2,11 @@
 
 #include <engine/engine.h>
 
+class MockIngameStageController : public eng::PlayerFactionController::GUIRequestHandler {
+public:
+    void RegisterKeyCallback();
+};
+
 class Sandbox : public eng::App {
 public:
     Sandbox(int argc, char** argv);
@@ -32,4 +37,6 @@ private:
     int buildingID = 0;
 
     eng::ObjectID trollID;
+
+    MockIngameStageController ingameStage;
 };

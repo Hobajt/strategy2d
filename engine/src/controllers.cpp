@@ -4,11 +4,15 @@
 #include "engine/core/renderer.h"
 #include "engine/utils/generator.h"
 #include "engine/game/resources.h"
+#include "engine/game/camera.h"
+#include "engine/game/config.h"
 
 namespace eng {
 
     constexpr float GUI_WIDTH = 0.25f;
     constexpr float BORDER_SIZE = 0.025f;
+
+    static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
     void RenderGUIBorders(bool isOrc, float z);
 
@@ -177,13 +181,133 @@ namespace eng {
         //else hide the text & display all icons (+ update icon indices)
 
         //also update health bar values
+
+        //TODO: NEXT UP - PREP INTERNAL CONTROLLER STATES (Idle, Selection, etc.) AND TRANSITIONS BETWEEN THEM
+        //ALSO START WORKING ON KEY PRESS HANDLING
     }
 
     //===== PlayerFactionController =====
 
-    static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
+    void PlayerFactionController::GUIRequestHandler::LinkController(const PlayerFactionControllerRef& ctrl) {
+        playerController = ctrl;
+        playerController->handler = this;
+    }
 
-    PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry) : FactionController(std::move(entry)), gui_handler({}) {
+    void PlayerFactionController::GUIRequestHandler::SignalKeyPress(int keycode, int modifiers) {
+        ASSERT_MSG(playerController != nullptr, "PlayerController was not linked! Call LinkController()...");
+        playerController->OnKeyPressed(keycode, modifiers);
+    }
+
+    PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry) : FactionController(std::move(entry)) {
+        InitializeGUI();
+    }
+
+    void PlayerFactionController::Render() {
+        //TODO: retrieve proper value
+        bool isOrc = false;
+
+        //render GUI borders based on player's race
+        RenderGUIBorders(isOrc, -0.89f);
+
+        //render the game menu if activated
+        if(is_menu_active) {
+            menu_panel.Render();
+        }
+
+        //render individual GUI elements
+        game_panel.Render();
+        text_prompt.Render();
+
+        //render selection highlights
+        //TODO: ideally without having to query objects & level data
+    }
+
+    void PlayerFactionController::Update(Level& level) {
+        Camera& camera = Camera::Get();
+        Input& input = Input::Get();
+
+        //update the GUI - selection & input processing
+        gui_handler.Update(&game_panel);
+
+        //hotkey signaling will be handled directly from the callback fn
+
+        state = PlayerControllerState::IDLE;
+
+
+        glm::vec2 pos = input.mousePos_n;
+        switch(state) {
+            case PlayerControllerState::IDLE:       //default state
+                //lmb.down in game view -> start selection
+                //rmb.down in game view -> adaptive command for current selection
+                //lmb.down in map view  -> center camera
+                //rmb.down in map view  -> adaptive command for current selection
+                //cursor at borders     -> move camera
+
+                if(CursorInGameView(pos)) {
+                    glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
+                    if(input.lmb.down()) {
+                        //transition to object selection state
+                        coords_start = coords;
+                        state = PlayerControllerState::SELECTION;
+                    }
+                    else if (input.rmb.down()) {
+                        //TODO: issue adaptive command to current selection
+                    }
+                }
+                else if(CursorInMapView(pos)) {
+                    // glm::vec2 coords = ... coords from map image position ...
+                    if(input.lmb.down()) {
+                        //transition to camera movement state
+                        state = PlayerControllerState::CAMERA_CENTERING;
+                    }
+                    else if (input.rmb.down()) {
+                        //TODO: issue adaptive command to current selection
+                    }
+                }
+                else {
+                    //camera panning
+                    glm::ivec2 vec = glm::ivec2(int(pos.x > 0.95f) - int(pos.x < 0.05f), -int(pos.y > 0.95f) + int(pos.y < 0.05f));
+                    if(vec.x != 0 || vec.y != 0) {
+                        camera.Move(vec);
+                    }
+                }
+                break;
+            case PlayerControllerState::SELECTION:          //selection in progress (lmb click or drag)
+                break;
+            case PlayerControllerState::CAMERA_CENTERING:   //camera centering (lmb drag in the map view)
+                break;
+        }
+    }
+
+    void PlayerFactionController::SwitchMenu(bool active) {
+        ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
+        is_menu_active = active;
+        handler->PauseRequest(active);
+    }
+
+    void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
+        ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
+
+        switch(keycode) {
+            case GLFW_KEY_ESCAPE:
+                break;
+            default:
+                //dispatch to current selection
+                break;
+        }
+    }
+
+    bool PlayerFactionController::CursorInGameView(const glm::vec2& pos) const {
+        return pos.x > GUI_WIDTH && pos.x < (1.f-BORDER_SIZE) && pos.y > BORDER_SIZE && pos.y < (1.f-BORDER_SIZE);
+    }
+
+    bool PlayerFactionController::CursorInMapView(const glm::vec2& pos) const {
+        return false;
+    }
+
+    void PlayerFactionController::InitializeGUI() {
+        gui_handler = GUI::SelectionHandler();
+
         FontRef font = Resources::DefaultFont();
         glm::vec2 buttonSize = glm::vec2(0.33f, 0.06f);
 
@@ -300,24 +424,13 @@ namespace eng {
                 static_cast<PlayerFactionController*>(handler)->SwitchMenu(true);
             }),
             new GUI::TextButton(glm::vec2(0.75f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Pause", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                // static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
+                ASSERT_MSG(static_cast<PlayerFactionController*>(handler)->handler != nullptr, "PlayerFactionController is not initialized properly!");
+                static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
             }),
 
             actionButtons,
             selectionTab,
-
-            // new GUI::ImageButtonWithBar(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, bar_style, bar_border_size, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
-            // new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}),
-
-            // //temporary, test for ImageButtons logic
-            // , new GUI::ImageButton(glm::vec2(0.5f, 0.f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, icon, glm::ivec2(0,0), 0.9f, this, [](GUI::ButtonCallbackHandler* handler, int id){})
-            // , new GUI::Button(glm::vec2(0.5f, 0.6f), glm::vec2(0.25f * Window::Get().Ratio(), 0.25f), 1.f, icon_btn_style, this, [](GUI::ButtonCallbackHandler* handler, int id){})
         });
-
-        //testing only
-        // actionButtons->GetButton(2)->Enable(false);
-        // actionButtons->GetButton(4)->Enable(false);
-        // actionButtons->GetButton(6)->Enable(false);
 
         float b = BORDER_SIZE * Window::Get().Ratio();
         float xOff = 0.01f;
@@ -368,40 +481,6 @@ namespace eng {
             - have a function on the IngameStageController that registers custom key callback
             - will use that to redirect inputs into this class (have handler function directly in here)
         */
-
-        //NEXT UP - START WORKING ON THE INDIVIDUAL GUI ELEMENTS (SelectionTab - probably reuse ImageButtonGrid within)
-        //NEED TO ADD VISIBILITY FUNCTIONALITY TO THE ImageButtonGrid - REQUIRED FOR BOTH SelectionTab AND FOR ActionButtons
-    }
-
-    void PlayerFactionController::Render() {
-        //TODO: retrieve proper value
-        bool isOrc = false;
-        RenderGUIBorders(isOrc, -0.89f);
-
-        if(is_menu_active) {
-            menu_panel.Render();
-        }
-
-        game_panel.Render();
-        text_prompt.Render();
-
-        
-        //ingame GUI render - left-side panel, resources bar, GUI borders
-        //probably also render selection highlights from here (guess it should have lower z-index so that it's behind the actual object visuals)
-    }
-
-    void PlayerFactionController::Update(Level& level) {
-        // gui.Update();
-        //update the GUI - selection & input processing
-        gui_handler.Update(&game_panel);
-
-        //TODO: maybe move all GUI related stuff to its own class (if there's going to be more stuff managed within the class)
-    }
-
-    void PlayerFactionController::SwitchMenu(bool active) {
-        // ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
-        is_menu_active = active;
-        // handler->PauseRequest(active);
     }
 
     //==============================================================
@@ -412,7 +491,7 @@ namespace eng {
         //render GUI overlay (borders)
         float w = GUI_WIDTH*2.f;
         float b = BORDER_SIZE*2.f;
-        glm::vec4 clr = glm::vec4(0.44f, 0.44f, 0.44f, 1.f);
+        glm::vec4 clr = glm::vec4(0.33f, 0.33f, 0.33f, 1.f);
 
         //gui panel background
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f, -1.f, z), glm::vec2(GUI_WIDTH*2.f, 2.f), clr));

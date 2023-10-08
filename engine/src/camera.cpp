@@ -4,6 +4,8 @@
 #include "engine/core/input.h"
 #include "engine/core/window.h"
 
+#include "engine/game/config.h"
+
 //TODO: reorganize camera constants
 
 //speed constants
@@ -27,9 +29,37 @@ namespace eng {
     void Camera::Update() {
         Input& input = Input::Get();
 
-        position += (input.move1 * input.deltaTime_real * CAM_MOVE_SPEED) / zoom;
+        // position += (input.move1 * input.deltaTime_real * CAM_MOVE_SPEED) / zoom;
+
+        //discrete movement, controlled by arrow keys
+        if(input.isMoveArrows) {
+            arrows_movement_acc += (input.deltaTime_real * Config::Map_KeySpeed()) / zoom;
+            while(arrows_movement_acc >= 1.f) {
+                position += input.move_arrows;
+                arrows_movement_acc -= 1.f;
+            }
+        }
 
         ZoomUpdate();
+
+        if(checkForBounds)
+            BoundariesCheck();
+    }
+
+    void Camera::Move(const glm::vec2& step) {
+        mouse_movement_acc += (Input::Get().deltaTime_real * Config::Map_MouseSpeed()) / zoom;
+        while(mouse_movement_acc >= 1.f) {
+            position += step;
+            mouse_movement_acc -= 1.f;
+        }
+
+        // movement_acc += Input::Get().deltaTime_real;
+
+        // float thresh = Config::Map_MouseSpeed();
+        // while(movement_acc >= thresh) {
+        //     position += step;
+        //     movement_acc -= thresh;
+        // }
 
         if(checkForBounds)
             BoundariesCheck();
@@ -61,6 +91,7 @@ namespace eng {
         ImGui::Begin("Camera");
 
         ImGui::SliderFloat2("position", (float*)&position, -10.f, 10.f, "%.2f");
+        ImGui::DragFloat("GUI bounds offset", &GUI_bounds_offset);
 
         ImGui::Separator();
         if(ImGui::SliderFloat("zoom", &zoom, CAM_ZOOM_MIN, CAM_ZOOM_MAX, "%.4f", ImGuiSliderFlags_Logarithmic)) {
@@ -126,13 +157,14 @@ namespace eng {
     void Camera::BoundariesCheck() {
         glm::vec2 screen_half = 1.f / mult;
         glm::vec2 b = bounds - screen_half - 0.5f;
+        float xOff = GUI_bounds_offset / mult.x;
 
         glm::vec2 v = screen_half * 2.f;
         if(v.x < bounds.x && v.y < bounds.y) {
             if(position.x > b.x)
                 position.x = b.x;
-            else if (position.x < screen_half.x - 0.5f)
-                position.x = screen_half.x - 0.5f;
+            else if (position.x < screen_half.x - 0.5f - xOff)
+                position.x = screen_half.x - 0.5f - xOff;
 
             if(position.y > b.y)
                 position.y = b.y;

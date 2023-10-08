@@ -19,6 +19,12 @@ public:
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
+
+    //TODO: implement these - do some checks if game can be paused (single player only)
+    // virtual void PauseRequest(bool pause) override;
+    // virtual void PauseToggleRequest() override;
+private:
+    void KeyPressCallback(int keycode, int modifiers);
 private:
     eng::Level level;
 };

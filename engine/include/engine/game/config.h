@@ -28,4 +28,7 @@ namespace eng::Config {
 
     float GameSpeed();
 
+    float Map_MouseSpeed();
+    float Map_KeySpeed();
+
 }//namespace eng

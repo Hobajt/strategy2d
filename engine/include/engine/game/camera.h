@@ -20,6 +20,8 @@ namespace eng {
         //Camera update method. Relies on values from Input class.
         void Update();
 
+        void Move(const glm::vec2& step);
+
         //Update zoom based on scroll input.
         void ZoomUpdate(bool forced = false);
 
@@ -46,6 +48,7 @@ namespace eng {
 
         void EnableBoundaries(bool enabled) { checkForBounds = enabled; }
         void SetBounds(const glm::vec2& bounds_) { bounds = bounds_; }
+        void SetGUIBoundsOffset(float offset) { GUI_bounds_offset = offset; }
 
         //Mapping from screen space to map coords. mousePos_n should be in NDC (<-1,1> range).
         glm::vec2 GetMapCoords(const glm::vec2& mousePos_ndc) const;
@@ -70,6 +73,11 @@ namespace eng {
 
         bool checkForBounds = true;
         glm::vec2 bounds = glm::vec2(10.f);
+
+        float arrows_movement_acc = 0.f;
+        float mouse_movement_acc = 0.f;
+
+        float GUI_bounds_offset = 0.f;
     };
 
 }//namespace eng

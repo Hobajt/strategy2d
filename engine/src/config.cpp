@@ -13,6 +13,9 @@ namespace eng::Config {
     struct ConfigData {
         AudioConfig audio = {};
         float game_speed = 1.f;
+
+        float map_mouse_speed = 1.f;
+        float map_key_speed = 1.f;
     };
     static ConfigData data = {};
 
@@ -47,6 +50,12 @@ namespace eng::Config {
         ImGui::Separator();
         ImGui::Text("Speeds");
         if(ImGui::SliderFloat("Game speed", &data.game_speed, 0.6f, 6.f, "%.1f", ImGuiSliderFlags_Logarithmic)) {
+            //....;
+        }
+        if(ImGui::SliderFloat("Mouse scroll", &data.map_mouse_speed, 0.1f, 10.f, "%.1f", ImGuiSliderFlags_Logarithmic)) {
+            //....;
+        }
+        if(ImGui::SliderFloat("Key scroll", &data.map_key_speed, 0.1f, 10.f, "%.1f", ImGuiSliderFlags_Logarithmic)) {
             //....;
         }
 
@@ -92,6 +101,14 @@ namespace eng::Config {
         return data.game_speed;
     }
 
+    float Map_MouseSpeed() {
+        return data.map_mouse_speed;
+    }
+
+    float Map_KeySpeed() {
+        return data.map_key_speed;
+    }
+
     //============================
 
     ConfigData Load(const char* filepath) {
@@ -106,7 +123,9 @@ namespace eng::Config {
         if(config.count("volume_music"))    data.audio.volume_music = config.at("volume_music");
         if(config.count("volume_digital"))  data.audio.volume_digital = config.at("volume_digital");
 
-        if(config.count("game_speed"))   data.game_speed = config.at("game_speed");
+        if(config.count("game_speed"))          data.game_speed = config.at("game_speed");
+        if(config.count("map_mouse_speed"))     data.map_mouse_speed = config.at("map_mouse_speed");
+        if(config.count("map_key_speed"))       data.map_key_speed = config.at("map_key_speed");
 
         return data;
     }
@@ -122,6 +141,8 @@ namespace eng::Config {
         out["volume_digital"] = data.audio.volume_digital;
 
         out["game_speed"] = data.game_speed;
+        out["map_mouse_speed"] = data.map_mouse_speed;
+        out["map_key_speed"] = data.map_key_speed;
 
         return TryWriteFile(filepath, out.dump());
     }

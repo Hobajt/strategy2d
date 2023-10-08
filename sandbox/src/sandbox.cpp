@@ -17,6 +17,12 @@ static std::string text = "";
 #define BUF_LEN (1 << 20)
 static char* buf = new char[BUF_LEN];
 
+void MockIngameStageController::RegisterKeyCallback() {
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
+        static_cast<MockIngameStageController*>(handler)->SignalKeyPress(keycode, modifiers);
+    }, true, this);
+}
+
 void Sandbox::OnInit() {
     Config::Reload();
 
@@ -29,10 +35,10 @@ void Sandbox::OnInit() {
 
         TilesetRef tileset = Resources::LoadTileset("summer");
         level = Level(glm::ivec2(10), tileset);
-        Camera::Get().SetBounds(level.map.Size());
 
         Level::Load("res/ignored/tst.json", level);
         
+        //temporary faction initialization - will be done on level loads or during custom game initialization
         FactionsFile tst = {};
         tst.factions.push_back({FactionControllerID::INVALID,       5, "neutral", Techtree{}});
         tst.factions.push_back({FactionControllerID::LOCAL_PLAYER,  0, "faction_1", Techtree{}});
@@ -43,6 +49,11 @@ void Sandbox::OnInit() {
         FactionControllerRef f_n = level.factions[0];
         FactionControllerRef f1 = level.factions[1];
         FactionControllerRef f2 = level.factions[2];
+
+        //TODO: link an actual ingame stage after the level init (sandbox has none tho, so using mock instead)
+        ingameStage = {};
+        ingameStage.LinkController(level.factions.Player());
+        ingameStage.RegisterKeyCallback();
 
         //TODO: for custom games - override level.factions with new object (initialized based on starting locations & faction count)
 
@@ -66,8 +77,10 @@ void Sandbox::OnInit() {
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
+        Camera::Get().SetBounds(level.map.Size());
         Camera::Get().SetupZoomUpdates(true);
         Camera::Get().ZoomToFit(glm::vec2(12.f));
+        Camera::Get().SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -119,16 +132,16 @@ void Sandbox::OnUpdate() {
 
     colorPalette.Bind(shader);
 
-    Unit* troll = nullptr;
-    if(level.objects.GetUnit(trollID, troll)) {
-        CommandDispatch(*troll);
-    }
+    // Unit* troll = nullptr;
+    // if(level.objects.GetUnit(trollID, troll)) {
+    //     CommandDispatch(*troll);
+    // }
 
-    if(input.lmb.down()) {
-        glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ObjectID id = level.objects.GetObjectAt(coords);
-        ENG_LOG_INFO("CLICK at {} - ID = {}", coords, id);
-    }
+    // if(input.lmb.down()) {
+    //     glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+    //     ObjectID id = level.objects.GetObjectAt(coords);
+    //     ENG_LOG_INFO("CLICK at {} - ID = {}", coords, id);
+    // }
     
     level.Update();
 
