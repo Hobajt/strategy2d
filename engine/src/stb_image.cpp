@@ -61,3 +61,24 @@ bool eng::Texture::LoadFromFile(const std::string& filepath, int flags) {
     ENG_LOG_TRACE("[R] Loaded texture from '{}' ({}x{}).", name.c_str(), params.width, params.height);
     return true;
 }
+
+bool eng::Image::LoadFromFile(const std::string& filepath, int flags) {
+    bool srgb = ((flags & TextureFlags::LOAD_SRGB) != 0);
+    bool flip = ((flags & TextureFlags::VERTICAL_FLIP) != 0);
+    stbi_set_flip_vertically_on_load(flip);
+
+    //load image data
+    uint8_t* buf = stbi_load(filepath.c_str(), &width, &height, &channels, 0);
+    if (buf == nullptr) {
+        ENG_LOG_WARN("Failed to load image from '{}'.", filepath.c_str());
+        return false;
+    }
+
+    buf = new uint8_t[width * height * channels];
+    memcpy(data, buf, sizeof(uint8_t) * width * height * channels);
+
+    stbi_image_free(buf);
+
+    ENG_LOG_TRACE("[R] Loaded image from '{}' ({}x{}).", name.c_str(), width, height);
+    return true;
+}

@@ -153,5 +153,45 @@ namespace eng {
         return *this;
     }
 
+    //===== Image =====
+
+    Image::Image(const std::string& filepath, int flags) : name(GetFilename(filepath)) {
+        if(!LoadFromFile(filepath, flags)) {
+            ENG_LOG_DEBUG("Image - Failed to load from '{}'.", filepath.c_str());
+            throw std::exception();
+        }
+        ENG_LOG_TRACE("[C] Image '{}'", name.c_str());
+    }
+
+    Image::~Image() {
+        Release();
+    }
+
+    Image::Image(Image&& i) noexcept {
+        Move(std::move(i));
+    }
+
+    Image& Image::operator=(Image&& i) noexcept {
+        Release();
+        Move(std::move(i));
+        return *this;
+    }
+
+    void Image::Release() noexcept {
+        if(data != nullptr) {
+            ENG_LOG_TRACE("[D] Image '{}'", name.c_str());
+            delete[] data;
+            width = height = channels = 0;
+        }
+    }
+
+    void Image::Move(Image&& i) noexcept {
+        width = i.width;
+        height = i.height;
+        channels = i.channels;
+        data = i.data;
+        i.data = nullptr;
+        i.width = i.height = i.channels = 0;
+    }
 
 }//namespace eng

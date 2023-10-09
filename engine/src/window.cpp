@@ -138,6 +138,12 @@ namespace eng {
         return glm::vec2(xpos - offset.x, ypos - offset.y);
     }
 
+    void Window::SetMousePos(const glm::vec2& mousePos_n) const {
+        glm::vec2 pos = glm::vec2(size) * mousePos_n + glm::vec2(offset);
+        ENG_LOG_TRACE("({}, {}), ({}, {})", mousePos_n.x, mousePos_n.y, pos.x, pos.y);
+        glfwSetCursorPos(window, pos.x, pos.y);
+    }
+
     void Window::SetFullscreen(bool fullscreen) {
         GLFWmonitor* mon = glfwGetPrimaryMonitor();
         const GLFWvidmode* vid = glfwGetVideoMode(mon);

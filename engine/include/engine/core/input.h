@@ -72,6 +72,8 @@ namespace eng {
         //For delay tracking with game speed modifications applied.
         //Returns current time + provided delay in game time.
         static float GameTimeDelay(float delay_s);
+
+        void ClampCursorPos(const glm::vec2& min, const glm::vec2& max);
     private:
         Input() = default;
         ~Input();

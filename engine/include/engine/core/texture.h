@@ -125,4 +125,35 @@ namespace eng {
         TexCoords& operator +=(const glm::vec2& offset);
     };
 
+    //===== Image =====
+
+    //Image buffer (not a texture, not uploaded to the GPU).
+    class Image {
+    public:
+        Image(const std::string& filepath, int flags = 0);
+
+        Image() = default;
+        ~Image();
+
+        //copy disabled
+        Image(const Image&) = delete;
+        Image& operator=(const Image&) = delete;
+
+        //move enabled
+        Image(Image&&) noexcept;
+        Image& operator=(Image&&) noexcept;
+    private:
+        void Release() noexcept;
+        void Move(Image&&) noexcept;
+
+        bool LoadFromFile(const std::string& filepath, int flags);
+    private:
+        uint8_t* data;
+        int channels;
+        int height;
+        int width;
+
+        std::string name;
+    };
+
 }//namespace eng

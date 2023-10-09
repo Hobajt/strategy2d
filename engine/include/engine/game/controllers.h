@@ -17,6 +17,8 @@ namespace eng {
     struct PlayerSelection {
         std::array<ObjectID, 9> selection;
         int selected_count = 0;
+    public:
+        void Select(Level& level, const glm::vec2& start, const glm::vec2& end);
     };
 
     //===== GUI::SelectionTab =====
@@ -83,6 +85,8 @@ namespace eng {
         bool CursorInGameView(const glm::vec2& pos) const;
         bool CursorInMapView(const glm::vec2& pos) const;
 
+        void RenderSelectionRectangle();
+
         void InitializeGUI();
     private:
         GUIRequestHandler* handler = nullptr;
@@ -101,6 +105,7 @@ namespace eng {
         int state = PlayerControllerState::IDLE;
 
         glm::vec2 coords_start;
+        glm::vec2 coords_end;
     };
 
 }//namespace eng

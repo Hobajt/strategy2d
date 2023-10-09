@@ -61,6 +61,7 @@ namespace eng {
         bool GetKeyState(int keycode) const;
         bool GetMouseKeyState(int keycode) const;
         glm::vec2 GetMousePos() const;
+        void SetMousePos(const glm::vec2& mousePos_n) const;
 
         void SetFullscreen(bool fullscreen);
         void SetRatio(float r);

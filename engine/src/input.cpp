@@ -97,6 +97,37 @@ namespace eng {
         return float(glfwGetTime()) + delay / Config::GameSpeed();
     }
 
+    void Input::ClampCursorPos(const glm::vec2& min, const glm::vec2& max) {
+        // ENG_LOG_TRACE("({}, {}), ({}, {}), ({}, {}), ({}, {})", mousePos.x, mousePos.y, mousePos_n.x, mousePos_n.y, min.x, min.y, max.x, max.y);
+        bool update = false;
+        if(mousePos_n.x < min.x) {
+            mousePos_n.x = min.x;
+            update = true;
+        }
+        else if(mousePos_n.x > max.x) {
+            mousePos_n.x = max.x;
+            update = true;
+        }
+
+        if(mousePos_n.y < min.y) {
+            mousePos_n.y = min.y;
+            update = true;
+        }
+        else if(mousePos_n.y > max.y) {
+            mousePos_n.y = max.y;
+            update = true;
+        }
+
+        if(update) {
+            Window& window = Window::Get();
+            window.SetMousePos(mousePos_n);
+            mousePos = window.GetMousePos();
+            mousePos_n = mousePos / glm::vec2(window.Size());
+        }
+
+        // ENG_LOG_TRACE("({}, {}), ({}, {})", mousePos.x, mousePos.y, mousePos_n.x, mousePos_n.y);
+    }
+
     Input::~Input() {
         ENG_LOG_TRACE("[D] Input");
     }

@@ -133,6 +133,12 @@ namespace eng {
     //     }
     // }
 
+    void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end) {
+        //sort start & end coords -> min, max
+        //properly round up the coords into actual map indices
+
+    }
+
     //===== GUI::SelectionTab =====
 
     GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
@@ -218,6 +224,12 @@ namespace eng {
         game_panel.Render();
         text_prompt.Render();
 
+        switch(state) {
+            case PlayerControllerState::SELECTION:
+                RenderSelectionRectangle();
+                break;
+        }
+
         //render selection highlights
         //TODO: ideally without having to query objects & level data
     }
@@ -228,11 +240,6 @@ namespace eng {
 
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);
-
-        //hotkey signaling will be handled directly from the callback fn
-
-        state = PlayerControllerState::IDLE;
-
 
         glm::vec2 pos = input.mousePos_n;
         switch(state) {
@@ -247,7 +254,7 @@ namespace eng {
                     glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
                     if(input.lmb.down()) {
                         //transition to object selection state
-                        coords_start = coords;
+                        coords_start = coords_end = coords;
                         state = PlayerControllerState::SELECTION;
                     }
                     else if (input.rmb.down()) {
@@ -273,10 +280,21 @@ namespace eng {
                 }
                 break;
             case PlayerControllerState::SELECTION:          //selection in progress (lmb click or drag)
+                input.ClampCursorPos(glm::vec2(GUI_WIDTH, BORDER_SIZE), glm::vec2(1.f-BORDER_SIZE, 1.f-BORDER_SIZE));
+                pos = input.mousePos_n;
+
+                coords_end = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
+                if(input.lmb.up()) {
+                    selection.Select(level, coords_start, coords_end);
+                    state = PlayerControllerState::IDLE;
+                }
                 break;
             case PlayerControllerState::CAMERA_CENTERING:   //camera centering (lmb drag in the map view)
+                //TODO:
                 break;
         }
+
+        //TODO: setup current cursor from here as well (based on current state'n'stuff)
     }
 
     void PlayerFactionController::SwitchMenu(bool active) {
@@ -303,6 +321,32 @@ namespace eng {
 
     bool PlayerFactionController::CursorInMapView(const glm::vec2& pos) const {
         return false;
+    }
+
+    void PlayerFactionController::RenderSelectionRectangle() {
+        Camera& camera = Camera::Get();
+        glm::vec2 mult = camera.Mult();
+        float zIdx = -0.9999f;
+        float line_width = 0.05f;
+        glm::vec4 highlight_clr = glm::vec4(0.f, 1.f, 0.f, 1.f);
+
+        glm::vec2 m = (coords_start.x < coords_end.x) ? glm::vec2(coords_start.x, coords_end.x) : glm::vec2(coords_end.x, coords_start.x);
+        glm::vec2 M = (coords_start.y < coords_end.y) ? glm::vec2(coords_start.y, coords_end.y) : glm::vec2(coords_end.y, coords_start.y);
+        float t = m.y;
+        m.y = M.x;
+        M.x = t;
+
+        m = camera.map2screen(m);
+        M = camera.map2screen(M);
+        glm::vec2 v = M - m;
+
+        if(fabsf(v.x) + fabsf(v.y) < 1e-2f)
+            return;
+
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, zIdx), glm::vec2(v.x, line_width * mult.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, M.y, zIdx), glm::vec2(v.x, line_width * mult.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, zIdx), glm::vec2(line_width * mult.x, v.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, zIdx), glm::vec2(line_width * mult.x, v.y + line_width*mult.y), highlight_clr));
     }
 
     void PlayerFactionController::InitializeGUI() {
