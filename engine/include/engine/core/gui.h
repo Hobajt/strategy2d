@@ -152,9 +152,12 @@ namespace eng::GUI {
     struct SelectionHandler {
         Element* lastSelected;
         Element* clickedElement;
+        Element* hovering;
     public:
         //Uses current mouse pos to detect & signal clicks/hovers/holds in given gui subtree.
         void Update(Element* gui);
+
+        Element* HoveringElement() { return hovering; }
     };
 
     //===== TextLabel =====
@@ -381,6 +384,8 @@ namespace eng::GUI {
 
         virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true);
         virtual void SetValue(float value) {}
+
+        std::string Name() const { return name; }
     protected:
         virtual void InnerRender() override;
     private:

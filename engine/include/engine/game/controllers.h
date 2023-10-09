@@ -63,8 +63,12 @@ namespace eng {
         //Picks new objects from selected area in the map.
         void Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID);
 
+        void SelectFromSelection(int id);
+
         void Render();
         void Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ImageButtonGrid* actionButtons, int playerFactionID);
+
+        int ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID);
     };
 
     //===== PlayerFactionController =====

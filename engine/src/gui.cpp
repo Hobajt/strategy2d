@@ -203,6 +203,7 @@ namespace eng::GUI {
                 selection->OnHover();
             }
         }
+        hovering = selection;
 
         if(lastSelected != nullptr)
             lastSelected->OnHighlight();

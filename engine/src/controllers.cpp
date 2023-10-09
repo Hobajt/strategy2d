@@ -58,7 +58,6 @@ namespace eng {
         
         //icon button grid, when there's multiple objects selected
         btns = static_cast<ImageButtonGrid*>(AddChild(new ImageButtonGrid(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.f, btn_style_, bar_style_, bar_borders_size_, sprite_, 3, 3, glm::vec2(0.975f / 3.f, 0.9f / 3.f), handler_, callback_), true));
-        
 
         //unit name & current level fields; next to the image
         name = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.3f, -0.8f), glm::vec2(0.625f, 0.1f), 2.f, text_style, "Unit Name"), true));
@@ -178,7 +177,11 @@ namespace eng {
             }
         }
         else if(selection.selected_count > 1) {
-            
+            FactionObject* object;
+            for(int i = 0; i < selection.selected_count; i++) {
+                object = &level.objects.GetObject(selection.selection[i]);
+                btns->GetButton(i)->Setup(object->Name(), object->Icon(), object->HealthPercentage());
+            }
         }
     }
 
@@ -193,7 +196,11 @@ namespace eng {
             health->Setup(std::string(buf));
         }
         else if(selection.selected_count > 1) {
-            
+            FactionObject* object;
+            for(int i = 0; i < selection.selected_count; i++) {
+                object = &level.objects.GetObject(selection.selection[i]);
+                btns->GetButton(i)->SetValue(object->HealthPercentage());
+            }
         }
     }
 
@@ -245,7 +252,7 @@ namespace eng {
                     continue;
                 
                 //under which category does current object belong; reset object counting when more important category is picked
-                int object_mode = 1*int(td.id.type == ObjectType::UNIT) + 2*int(td.factionId == playerFactionID);
+                int object_mode = ObjectSelectionType(td.id, td.factionId, playerFactionID);
                 if(selection_mode < object_mode) {
                     selection_mode = object_mode;
                     object_count = 0;
@@ -269,6 +276,21 @@ namespace eng {
         else {
             ENG_LOG_FINE("PlayerSelection::Select - no change");
         }
+    }
+
+    void PlayerSelection::SelectFromSelection(int id) {
+        if(id < 0 || id >= selected_count) {
+            ENG_LOG_WARN("PlayerSelection::SelectFromSelection - index out of bounds (idx={}, current selection={})", id, selected_count);
+            return;
+        }
+
+        selected_count = 1;
+        selection[0] = selection[id];
+        update_flag = true;
+    }
+
+    int PlayerSelection::ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID) {
+        return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
     void PlayerSelection::Render() {
@@ -374,6 +396,22 @@ namespace eng {
 
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);
+
+        //update text prompt - content of the button that is being hovered over
+        GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
+        if(btn != nullptr) {
+            text_prompt.Setup(btn->Name());
+        }
+        else {
+            text_prompt.Setup("");
+        }
+
+        //TODO: add resource values rendering
+
+        //TODO: add research/training price rendering - this one needs to be displayed on button hovers
+        //          - price can be stored within the button (the same way button name is stored)
+        //          - might want to add letter highlight functionality to the text_prompt tho (to highlight hotkeys for given buttons)
+
 
         glm::vec2 pos = input.mousePos_n;
         switch(state) {
@@ -590,7 +628,8 @@ namespace eng {
             borders_style, text_style, text_style_small,
             mana_bar_style, mana_bar_borders_size, progress_bar_style, progress_bar_borders_size, icon_btn_style,
             icon_btn_style, bar_style, bar_border_size, icon, this, [](GUI::ButtonCallbackHandler* handler, int id){
-            ENG_LOG_TRACE("SelectionTab - Button [{}, {}] clicked", id % 3, id / 3);
+            // ENG_LOG_TRACE("SelectionTab - Button [{}, {}] clicked", id % 3, id / 3);
+            static_cast<PlayerFactionController*>(handler)->selection.SelectFromSelection(id);
         });
 
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
