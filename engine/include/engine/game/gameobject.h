@@ -129,10 +129,16 @@ namespace eng {
         int PierceDamage() const { return data_f->pierce_damage; }
         float Cooldown() const { return data_f->cooldown; }
         int Armor() const { return data_f->armor; }
+        int VisionRange() const { return data_f->vision_range; }
+
+        int MinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
+        int MaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
         int Health() const { return health; }
+        float HealthPercentage() const { return float(health) / data_f->health; }
+        glm::ivec2 Icon() const { return data_f->icon; }
 
         //For melee damage application.
         void ApplyDirectDamage(const FactionObject& source);
@@ -205,7 +211,10 @@ namespace eng {
 
         virtual int ActionIdx() const override;
 
-        float MoveSpeed() const { return 1.f; }
+        float MoveSpeed() const { return 1.f; } //TODO:
+        int UnitLevel() const { return 0; } //TODO:
+        bool IsCaster() const { return data->caster; }
+        int Mana() const { return int(mana); }
 
         glm::vec2& m_offset() { return move_offset; }
 
@@ -225,6 +234,7 @@ namespace eng {
         virtual void ClearState() override;
 
         void UpdateVariationIdx();
+        void ManaIncrement();
     private:
         UnitDataRef data = nullptr;
 
@@ -235,6 +245,7 @@ namespace eng {
         bool animation_ended = false;
 
         int carry_state = WorkerCarryState::NONE;        //worker load indicator
+        float mana = 0;
     };
 
     //===== Building =====

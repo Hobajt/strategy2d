@@ -22,122 +22,31 @@ namespace eng {
 
     void RenderGUIBorders(bool isOrc, float z);
 
-    // PlayerFactionController::PlayerGUI::PlayerGUI() {
-    //     //map, action buttons, selection icons
+    /*how to manage button callbacks:
+        - first of all, don't have to make this class as callback handler - can use faction controller directly
+        - action buttons:
+            - they just invoke commands (IssueCommand()) on current selection
+            - only need to track button state (when selecting command target)
+        - selection icons:
+            - only change selection (select 1 unit from selected group)
+        - menu buttons:
+            - one pauses the game, the other also invokes game menu
+            - haven't really thought through how to handle game pauses, nor ingame menu for that manner
 
-        
+        - game menu could just be located within the player controller & completely managed by it
+        - there's still the need to propagate the choices from it to the game stage controller (ingame stage)
+        - also need to communicate the request for game pause to the controller
+    */
 
-
-    //     /*how to manage button callbacks:
-    //         - first of all, don't have to make this class as callback handler - can use faction controller directly
-    //         - action buttons:
-    //             - they just invoke commands (IssueCommand()) on current selection
-    //             - only need to track button state (when selecting command target)
-    //         - selection icons:
-    //             - only change selection (select 1 unit from selected group)
-    //         - menu buttons:
-    //             - one pauses the game, the other also invokes game menu
-    //             - haven't really thought through how to handle game pauses, nor ingame menu for that manner
-
-    //         - game menu could just be located within the player controller & completely managed by it
-    //         - there's still the need to propagate the choices from it to the game stage controller (ingame stage)
-    //         - also need to communicate the request for game pause to the controller
-    //     */
-    // }
-
-    
-
-    // void PlayerFactionController::PlayerGUI::Render() {
-        
-        
-    //     //render the GUI elements in the panel
-    //     panel.Render();
-
-
-    //     //validate selection existance again
-
-
-    //     //render green boxes around currently selected objects
-    //     //maybe render cursor from here as well (i think it changes based on current logic of the click)
-    // }
-
-    // void PlayerFactionController::PlayerGUI::Update() {
-    //     /* process inputs - mouse clicks & hotkey presses
-    //         do command dispatch
-    //         take into consideration current selection (hotkeys & mouse logic is determined by that)
-    //         also take into consideration button state (ie. if a command is currently clicked)
-    //     */
-    //     Input& input = Input::Get();
-
-    //     // handler.Update(panel);
-
-    //     // ENG_LOG_INFO("({}, {}) ({}, {})", input.mousePos.x, input.mousePos.y, input.mousePos_n.x, input.mousePos_n.y);
-
-    //     /* selection update
-    //         - toss out objects that no longer exist
-    //         - identify selection type (commandable, group/individual, ...)
-    //         - cancel selected command if selection updates (unit dies for example)
-    //     */
-
-    //     // selected_count = 0;
-    //     // for(int i = 0; i < (int)selection.size(); i++) {
-            
-    //     //     selected_count++;
-    //     // }
-
-    //     // switch(gui_state) {
-    //     //     case PlayerGUIState::NONE:
-    //     //         break;
-    //     //     case PlayerGUIState::
-    //     // }
-
-    //     // if(input.mousePos_n.x < GUI_WIDTH) {
-    //     //     ENG_LOG_INFO("IN GUI");
-    //     //     //mouse pos in GUI
-
-    //     //     //LMB   -> button clicks
-    //     //     //RMB   -> only when clicked in map (issue movement for the selection)
-    //     //     //hover -> write out description in the chat prompt
-    //     //     //cursor is always default (hand)
-    //     // }
-    //     // else {
-    //         //mouse hovering over the game
-
-    //         /* if command selected:
-    //                 LMB -> issue command
-    //                 RMB -> cancel command
-    //                 hotkeys -> only ESC (cancel command), others ignored
-    //            else:
-    //                 LMB -> select object
-    //                 RMB -> issue adaptive command
-    //                 hotkeys -> 
-
-
-    //             edge conditions:
-    //                 - check that there is selection when issuing commands
-    //                 - validate selection properly - player owned objects
-    //         */
-
-    //         /* cursor visuals:
-    //             - switching conditions - what is being hovered over, is command selected
-    //             - command selected
-    //                 - render eagle
-    //                 - green if hovering over object, yellow otherwise
-    //             - no command:   
-    //                 - render magnifying glass if hovering over object, or hand otherwise
-    //         */
-    //     // }
-
-    //     if(input.lmb.down()) {
-
-    //     }
-    //     else if (input.rmb.down()) {
-
-    //     }
-    //     else {
-    //         //hotkeys dispatch
-    //     }
-    // }
+    //cancel ongoing command target selection when selection updates (unit dies for example)
+    /* cursor visuals:
+        - switching conditions - what is being hovered over, is command selected
+        - command selected
+            - render eagle
+            - green if hovering over object, yellow otherwise
+        - no command:   
+            - render magnifying glass if hovering over object, or hand otherwise
+    */
 
     //===== GUI::SelectionTab =====
 
@@ -152,11 +61,11 @@ namespace eng {
         
 
         //unit name & current level fields; next to the image
-        name = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.333f, -0.8f), glm::vec2(0.666f, 0.1f), 2.f, text_style, "Unit Name"), true));
-        level = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.333f, -0.6f), glm::vec2(0.666f, 0.1f), 2.f, text_style, "Level X"), true));
+        name = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.3f, -0.8f), glm::vec2(0.625f, 0.1f), 2.f, text_style, "Unit Name"), true));
+        level_text = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.3f, -0.6f), glm::vec2(0.625f, 0.1f), 2.f, text_style, "Level X"), true));
 
         //text with health value (curr/max); directly underneath the health bar
-        health = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.666f, -0.3f), glm::vec2(0.333f, 0.05f), 2.f, text_style_small, "xxx/yyy"), true));
+        health = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.625f, -0.3f), glm::vec2(0.33f, 0.05f), 2.f, text_style_small, "xxx/yyy"), true));
 
         //headline for the stats ("Production" or "Food Usage" written above the actual stats)
         headline = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(-0.05f, -0.1f), glm::vec2(0.8f, 0.05f), 2.f, text_style, "Stats headline", false), true));
@@ -178,28 +87,137 @@ namespace eng {
 
         //frame borders around the entire area
         borders = AddChild(new Menu(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.5f, borders_style_, {}), true);
+
+        Reset();
     }
 
-    void GUI::SelectionTab::Update(const Level& level, const PlayerSelection& selection) {
-        //TODO:
-        //pass in current selection data
-        //if single unit selected -> disable all but one icons, enable & update the text
-        //else hide the text & display all icons (+ update icon indices)
+    void GUI::SelectionTab::Update(Level& level, const PlayerSelection& selection) {
+        //reset all the GUI elements into its default state
+        Reset();
+        char buf[1024];
 
-        if(selection.update_flag) {
-            Reset();
+        if(selection.selected_count == 1) {
+            FactionObject* object = &level.objects.GetObject(selection.selection[0]);
+            borders->Enable(true);
 
+            //TODO: need to add separate ingame-name field to the object data (what's now treated as name essentially serves as an identifier)
+            //TODO: need to think through where to take the icon idx (probably just another field in object data)
+            //TODO: how to compute the unit Level
+            //TODO: how to display various stats for various objects (it's not unified, not even among buildings - farms have stats, but barracks dont for example)
+
+            /*UNIT LEVEL:
+                - is computed from upgrades that affect the unit
+                - not sure how exactly is it computed, but can probably treat it as a sum of all the upgrades
+                - how are upgrades going to work:
+                    - they'll be stored in faction data
+                    - unit will have getters for various data properties
+                    - the getters will query faction data and do conditional additions to the property
+                - how will the value increments be handled internally in the faction data:
+                    - could maybe create a table with increment values for each unit
+                    - the unit can then just lookup a row based on unit type & column based on value type
+                    - level could be stored in the table as well
+            */
+
+            /*STATS:
+                - for units, always display armor, damage, range, sight, speed
+                    - if unit has magic, also display mana bar
+                - buildings:
+                    - if it's a gatherable resource, display only the amount left
+                    - if it's a dropoff point for a resource, display "Production" headline and the resource that you can dropoff
+                    - if it's a farm, display population stats
+                    - else display no stats at all
+            */
+
+            /*HOW TO HANDLE KNIGHT-PALA and OGRE-MAGI TRANSITIONS:
+                - they could be two separate unit types or a single one
+                    - having single unit would simplify the upgrade process
+                    - but also causes troubles in object_data - need to track multiple icons & separate properties bcs of a singel unit type
+                    - GOING TO BE 2 SEPARATE UNIT TYPES (think the game does this too, based on values in the game editor)
+            */
+
+            //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
+            //TODO: maybe redo the object sizes (there's map size and graphics size)
+
+            //TODO: transition from string resource identifiers to numbers & enums
+            //      - gonna need it anyway for the resource indexes
+            //      - after that's done, might want to altogether remove the generic object_data loading
+
+            //icon & health bar setup
+            btns->GetButton(0)->Setup(object->Name(), object->Icon(), object->HealthPercentage());
+            snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
+            health->Setup(std::string(buf));
+            
+            name->Setup(object->Name());
+
+            if(object->IsUnit()) {
+                Unit* unit = static_cast<Unit*>(object);
+
+                snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
+                level_text->Setup(std::string(buf));
+
+                snprintf(buf, sizeof(buf), "Armor: %d", unit->Armor());
+                stats[0]->Setup(buf);
+
+                snprintf(buf, sizeof(buf), "Damage: %d-%d", unit->MinDamage(), unit->MaxDamage());
+                stats[1]->Setup(buf);
+
+                snprintf(buf, sizeof(buf), "Range: %d", unit->AttackRange());
+                stats[2]->Setup(buf);
+
+                snprintf(buf, sizeof(buf), "Sight: %d", unit->VisionRange());
+                stats[3]->Setup(buf);
+
+                snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
+                stats[4]->Setup(buf);
+
+                if(unit->IsCaster()) {
+                    stats[5]->Setup("Magic:");
+                    snprintf(buf, sizeof(buf), "%d", unit->Mana());
+                    mana_bar->Setup(unit->Mana(), buf);
+                }
+            }
         }
+        else if(selection.selected_count > 1) {
+            
+        }
+    }
 
+    void GUI::SelectionTab::ValuesUpdate(Level& level, const PlayerSelection& selection) {
+        char buf[1024];
 
-        //also update health bar values
+        if(selection.selected_count == 1) {
+            FactionObject* object = &level.objects.GetObject(selection.selection[0]);
 
-        //TODO: NEXT UP - PREP INTERNAL CONTROLLER STATES (Idle, Selection, etc.) AND TRANSITIONS BETWEEN THEM
-        //ALSO START WORKING ON KEY PRESS HANDLING
+            btns->GetButton(0)->SetValue(object->HealthPercentage());
+            snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
+            health->Setup(std::string(buf));
+        }
+        else if(selection.selected_count > 1) {
+            
+        }
     }
 
     void GUI::SelectionTab::Reset() {
-        
+        //hide all the icon btns
+        for(int i = 0; i < 9; i++) {
+            btns->GetButton(i)->Enable(false);
+        }
+
+        borders->Enable(false);
+
+        name->Enable(false);
+        level_text->Enable(false);
+        health->Enable(false);
+
+        headline->Enable(false);
+        mana_bar->Enable(false);
+
+        production_bar->Enable(false);
+        production_icon->Enable(false);
+
+        for(size_t i = 0; i < stats.size(); i++) {
+            stats[i]->Enable(false);
+        }
     }
 
     //===== PlayerSelection =====
@@ -209,15 +227,18 @@ namespace eng {
 
         //coordinates rounding (includes any tile that is even partially within the rectangle)
         glm::ivec2 im = glm::ivec2(std::floor(m.x), std::floor(m.y));
-        glm::ivec2 iM = glm::ivec2(std::ceil(M.x), std::ceil(M.y));
+        glm::ivec2 iM = glm::ivec2(std::floor(M.x), std::floor(M.y));
 
         glm::ivec2 bounds = level.map.Size();
+        im = glm::ivec2(std::max(im.x, 0), std::max(im.y, 0));
         iM = glm::ivec2(std::min(bounds.x-1, iM.x), std::min(bounds.y-1, iM.y));
+
+        ENG_LOG_FINE("PlayerSelection::Select - range: ({}, {}) - ({}, {})", im.x, im.y, iM.x, iM.y);
 
         int object_count = 0;
         int selection_mode = 0;
-        for(int y = std::max(im.y, 0); y <= iM.y; y++) {
-            for(int x = std::max(im.x, 0); x <= iM.x; x++) {
+        for(int y = im.y; y <= iM.y; y++) {
+            for(int x = im.x; x <= iM.x; x++) {
                 const TileData& td = level.map(y, x);
 
                 if(!ObjectID::IsObject(td.id) || !ObjectID::IsValid(td.id))
@@ -292,11 +313,14 @@ namespace eng {
         }
         selected_count = new_count;
 
-        selectionTab->Update(level, *this);
         
         if(update_flag) {
+            selectionTab->Update(level, *this);
             //update action buttons
             //TODO: maybe add a wrapper class for action buttons - could store additional data (like the button text, thats displayed on hover)
+        }
+        else {
+            selectionTab->ValuesUpdate(level, *this);
         }
 
         update_flag = false;

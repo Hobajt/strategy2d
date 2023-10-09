@@ -25,16 +25,20 @@ namespace eng {
                 const StyleRef& borders_style, const StyleRef& text_style, const StyleRef& text_style_small,
                 const StyleRef& mana_bar_style, const glm::vec2& mana_borders_size, const StyleRef& progress_bar_style, const glm::vec2& progress_borders_size, const StyleRef& passive_btn_style,
                 const StyleRef& btn_style, const StyleRef& bar_style, const glm::vec2& bar_borders_size, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
-            
-            void Update(const Level& level, const PlayerSelection& selection);
+
+            //Update when selection changes.            
+            void Update(Level& level, const PlayerSelection& selection);
+            //Values update, no real GUI changes tho.
+            void ValuesUpdate(Level& level, const PlayerSelection& selection);
         private:
+            //Reverts elements into their default state (as if nothing is selected).
             void Reset();
         private:
             ImageButtonGrid* btns;
             Element* borders;
 
             TextLabel* name;
-            TextLabel* level;
+            TextLabel* level_text;
             TextLabel* health;
             std::array<KeyValue*, 6> stats;
             TextLabel* headline;
@@ -42,7 +46,6 @@ namespace eng {
 
             ValueBar* production_bar;
             ImageButton* production_icon;
-            TextLabel* production_headline;
         };
     }
 

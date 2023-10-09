@@ -108,6 +108,7 @@ namespace eng {
 
         int deathSoundIdx;      //identifies what sound to play on death (from 4 preset sounds)
         int race;
+        glm::ivec2 icon;
 
         objectReferences refs;
     public:
@@ -130,6 +131,7 @@ namespace eng {
         SoundEffect sound_pissed;
 
         bool worker = false;
+        bool caster = false;
 
         int deathAnimIdx = -1;
     public:

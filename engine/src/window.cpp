@@ -140,7 +140,7 @@ namespace eng {
 
     void Window::SetMousePos(const glm::vec2& mousePos_n) const {
         glm::vec2 pos = glm::vec2(size) * mousePos_n + glm::vec2(offset);
-        ENG_LOG_TRACE("({}, {}), ({}, {})", mousePos_n.x, mousePos_n.y, pos.x, pos.y);
+        // ENG_LOG_TRACE("({}, {}), ({}, {})", mousePos_n.x, mousePos_n.y, pos.x, pos.y);
         glfwSetCursorPos(window, pos.x, pos.y);
     }
 

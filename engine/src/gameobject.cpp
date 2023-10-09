@@ -8,8 +8,11 @@
 #include "engine/utils/dbg_gui.h"
 #include "engine/utils/randomness.h"
 #include "engine/core/audio.h"
+#include "engine/core/input.h"
 
 namespace eng {
+
+#define UNIT_MANA_REGEN_SPEED 1.f
 
     //===== GameObject =====
 
@@ -265,6 +268,7 @@ namespace eng {
             return (Health() <= 0) || IsKilled();
         command.Update(*this, *lvl());
         UpdateVariationIdx();
+        ManaIncrement();
         animation_ended = animator.Update(ActionIdx());
         return (Health() <= 0) || IsKilled();
     }
@@ -320,6 +324,14 @@ namespace eng {
 
     void Unit::UpdateVariationIdx() {
         SetVariationIdx((carry_state != WorkerCarryState::NONE) ? (1+(carry_state-1)*2) : 0);
+    }
+
+    void Unit::ManaIncrement() {
+        if(IsCaster()) {
+            mana += Input::Get().deltaTime * UNIT_MANA_REGEN_SPEED;
+            if(mana > 255.f)
+                mana = 255.f;
+        }
     }
 
     //===== Building =====

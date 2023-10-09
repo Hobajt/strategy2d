@@ -222,6 +222,12 @@ namespace eng::GUI {
             style->font->RenderTextAlignLeft(text.c_str(), glm::vec2(position.x - size.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
+    void TextLabel::Setup(const std::string& text_, bool enable) {
+        text = text_;
+        if(enable)
+            Enable(true);
+    }
+
     //===== Button =====
 
     Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
@@ -713,6 +719,13 @@ namespace eng::GUI {
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, fireType_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
 
+    void ImageButton::Setup(const std::string& name_, const glm::ivec2& idx_, float value, bool enable) {
+        name = name_;
+        idx = idx_;
+        if(enable)
+            Enable(true);
+    }
+
     void ImageButton::InnerRender() {
         Button::InnerRender();
 
@@ -741,6 +754,15 @@ namespace eng::GUI {
         const StyleRef& style_, const StyleRef& bar_style_, const glm::vec2& borders_size_, const Sprite& sprite_, const glm::ivec2& idx_, float image_scaledown_,
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
         : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
+
+    void ImageButtonWithBar::Setup(const std::string& name_, const glm::ivec2& idx_, float value_, bool enable) {
+        value = value_;
+        ImageButton::Setup(name_, idx_, value_, enable);
+    }
+
+    void ImageButtonWithBar::SetValue(float value_) {
+        value = value_;
+    }
 
     AABB ImageButtonWithBar::GetAABB() {
         glm::vec2 sz = glm::vec2(size.x, size.y * (1.f + HEALTH_BAR_HEIGHT_RATIO));
@@ -788,6 +810,13 @@ namespace eng::GUI {
         text = text_;
     }
 
+    void ValueBar::Setup(float value_, const std::string& text_, bool enable) {
+        value = value_;
+        text = text_;
+        if(enable)
+            Enable(true);
+    }
+
     void ValueBar::InnerRender() {
         Element::InnerRender();
 
@@ -806,6 +835,15 @@ namespace eng::GUI {
         
         sep_pos = text.find(':');
         sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
+    }
+
+    void KeyValue::Setup(const std::string& text_, bool enable) {
+        text = text_;
+        sep_pos = text.find(':');
+        sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
+
+        if(enable)
+            Enable(true);
     }
     
     void KeyValue::InnerRender() {

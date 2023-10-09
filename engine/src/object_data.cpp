@@ -267,6 +267,7 @@ namespace eng {
         if(sounds.count("pissed"))  data->sound_pissed  = ParseSoundEffect(sounds.at("pissed"));
 
         if(config.count("worker")) data->worker = config.at("worker");
+        if(config.count("caster")) data->caster = config.at("caster");
 
         return std::static_pointer_cast<GameObjectData>(data);
     }
@@ -288,6 +289,7 @@ namespace eng {
 
         data.cooldown = config.count("cooldown") ? config.at("cooldown") : 0.f;
         data.race = config.count("race") ? config.at("race") : 0;
+        data.icon = config.count("icon") ? json::parse_ivec2(config.at("icon")) : glm::ivec2(0);
     }
 
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {

@@ -168,6 +168,8 @@ namespace eng::GUI {
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void OnHighlight() override {}
+
+        void Setup(const std::string& text, bool enable = true);
     protected:
         virtual void InnerRender() override;
     private:
@@ -376,12 +378,17 @@ namespace eng::GUI {
         ImageButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& idx, float image_scaledown,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
         );
+
+        virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true);
+        virtual void SetValue(float value) {}
     protected:
         virtual void InnerRender() override;
     private:
         Sprite sprite;
-        glm::ivec2 idx;
         float image_scaledown;
+
+        glm::ivec2 idx;
+        std::string name;
     };
 
     //===== ImageButtonWithBar =====
@@ -409,6 +416,9 @@ namespace eng::GUI {
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
         );
 
+        virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true) override;
+        virtual void SetValue(float value) override;
+
         //override in order for the button to work even when hovering over the bar
         virtual AABB GetAABB() override;
 
@@ -431,6 +441,8 @@ namespace eng::GUI {
         
         void SetValue(float value);
         void SetText(const std::string& text);
+
+        void Setup(float value, const std::string& text, bool enable = true);
     protected:
         virtual void InnerRender() override;
     private:
@@ -452,7 +464,7 @@ namespace eng::GUI {
         virtual void OnHold() override {}
         virtual void OnHighlight() override {}
 
-        void UpdateText(const std::string& text);
+        void Setup(const std::string& text, bool enable = true);
     protected:
         virtual void InnerRender() override;
     private:
