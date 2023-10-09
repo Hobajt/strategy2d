@@ -34,4 +34,7 @@ namespace eng {
     int VectorOrientation(const glm::ivec2& v);
     int VectorOrientation(const glm::vec2& v);
 
+    //Returns vectors of min & max values ({min(a.x, b.x), min(a.y, b.y)}, {max(a.x, b.x), max(a.y, b.y)})
+    std::pair<glm::vec2, glm::vec2> order_vals(const glm::vec2& a, const glm::vec2& b);
+
 }//namespace eng

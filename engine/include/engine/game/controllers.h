@@ -17,8 +17,10 @@ namespace eng {
     struct PlayerSelection {
         std::array<ObjectID, 9> selection;
         int selected_count = 0;
+        int selection_type = 0;
     public:
-        void Select(Level& level, const glm::vec2& start, const glm::vec2& end);
+        //Picks new objects from selected area in the map.
+        void Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID);
     };
 
     //===== GUI::SelectionTab =====

@@ -6,6 +6,7 @@
 #include "engine/game/resources.h"
 #include "engine/game/camera.h"
 #include "engine/game/config.h"
+#include "engine/game/level.h"
 
 namespace eng {
 
@@ -133,10 +134,49 @@ namespace eng {
     //     }
     // }
 
-    void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end) {
-        //sort start & end coords -> min, max
-        //properly round up the coords into actual map indices
+    //===== PlayerSelection =====
 
+    void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
+        auto [m, M] = order_vals(start, end);
+
+        //coordinates rounding (includes any tile that is even partially within the rectangle)
+        glm::ivec2 im = glm::ivec2(std::floor(m.x), std::floor(m.y));
+        glm::ivec2 iM = glm::ivec2(std::ceil(M.x), std::ceil(M.y));
+
+        glm::ivec2 bounds = level.map.Size();
+        iM = glm::ivec2(std::min(bounds.x-1, iM.x), std::min(bounds.y-1, iM.y));
+
+        int object_count = 0;
+        int selection_mode = 0;
+        for(int y = std::max(im.y, 0); y <= iM.y; y++) {
+            for(int x = std::max(im.x, 0); x <= iM.x; x++) {
+                const TileData& td = level.map(y, x);
+
+                if(!ObjectID::IsObject(td.id) || !ObjectID::IsValid(td.id))
+                    continue;
+                
+                //under which category does current object belong; reset object counting when more important category is picked
+                int object_mode = 1*int(td.id.type == ObjectType::UNIT) + 2*int(td.factionId == playerFactionID);
+                if(selection_mode < object_mode) {
+                    selection_mode = object_mode;
+                    object_count = 0;
+                }
+
+                if(object_mode == selection_mode) {
+                    if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
+                        selection[object_count++] = td.id;
+                    }
+                }
+            }
+        }
+        
+        //dont update values if there was nothing selected (keep the old selection)
+        if(object_count != 0) {
+            selected_count = object_count;
+            selection_type = selection_mode;
+        }
+        
+        ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
     }
 
     //===== GUI::SelectionTab =====
@@ -285,7 +325,7 @@ namespace eng {
 
                 coords_end = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
                 if(input.lmb.up()) {
-                    selection.Select(level, coords_start, coords_end);
+                    selection.Select(level, coords_start, coords_end, ID());
                     state = PlayerControllerState::IDLE;
                 }
                 break;
@@ -330,11 +370,7 @@ namespace eng {
         float line_width = 0.05f;
         glm::vec4 highlight_clr = glm::vec4(0.f, 1.f, 0.f, 1.f);
 
-        glm::vec2 m = (coords_start.x < coords_end.x) ? glm::vec2(coords_start.x, coords_end.x) : glm::vec2(coords_end.x, coords_start.x);
-        glm::vec2 M = (coords_start.y < coords_end.y) ? glm::vec2(coords_start.y, coords_end.y) : glm::vec2(coords_end.y, coords_start.y);
-        float t = m.y;
-        m.y = M.x;
-        M.x = t;
+        auto [m, M] = order_vals(coords_start, coords_end);
 
         m = camera.map2screen(m);
         M = camera.map2screen(M);

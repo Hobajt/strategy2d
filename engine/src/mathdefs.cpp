@@ -83,4 +83,15 @@ namespace eng {
         return orientation;
     }
 
+    std::pair<glm::vec2, glm::vec2> order_vals(const glm::vec2& a, const glm::vec2& b) {
+        glm::vec2 m = (a.x < b.x) ? glm::vec2(a.x, b.x) : glm::vec2(b.x, a.x);
+        glm::vec2 M = (a.y < b.y) ? glm::vec2(a.y, b.y) : glm::vec2(b.y, a.y);
+        
+        float t = m.y;
+        m.y = M.x;
+        M.x = t;
+
+        return { m, M };
+    }
+
 }//namespace eng
