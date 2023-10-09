@@ -14,14 +14,7 @@ namespace eng {
         enum { INVALID = 0, LOCAL_PLAYER, };
     }
 
-    struct PlayerSelection {
-        std::array<ObjectID, 9> selection;
-        int selected_count = 0;
-        int selection_type = 0;
-    public:
-        //Picks new objects from selected area in the map.
-        void Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID);
-    };
+    struct PlayerSelection;
 
     //===== GUI::SelectionTab =====
 
@@ -34,6 +27,8 @@ namespace eng {
                 const StyleRef& btn_style, const StyleRef& bar_style, const glm::vec2& bar_borders_size, const Sprite& sprite, ButtonCallbackHandler* handler, ButtonCallbackType callback);
             
             void Update(const Level& level, const PlayerSelection& selection);
+        private:
+            void Reset();
         private:
             ImageButtonGrid* btns;
             Element* borders;
@@ -50,6 +45,24 @@ namespace eng {
             TextLabel* production_headline;
         };
     }
+
+    //===== PlayerSelection =====
+
+    struct PlayerSelection {
+        std::array<ObjectID, 9> selection;
+        std::array<std::pair<glm::vec2, glm::vec2>, 9> location;
+        int selected_count = 0;
+        int selection_type = 0;
+        int clr_idx = 0;
+
+        bool update_flag = false;
+    public:
+        //Picks new objects from selected area in the map.
+        void Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID);
+
+        void Render();
+        void Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ImageButtonGrid* actionButtons, int playerFactionID);
+    };
 
     //===== PlayerFactionController =====
 

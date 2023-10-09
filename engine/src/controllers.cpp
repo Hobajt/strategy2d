@@ -13,6 +13,11 @@ namespace eng {
     constexpr float GUI_WIDTH = 0.25f;
     constexpr float BORDER_SIZE = 0.025f;
 
+    constexpr float GUI_BORDERS_ZIDX = -0.89f;
+
+    constexpr float SELECTION_ZIDX = GUI_BORDERS_ZIDX + 0.01f;
+    constexpr float SELECTION_HIGHLIGHT_WIDTH = 0.025f;
+
     static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
     void RenderGUIBorders(bool isOrc, float z);
@@ -134,51 +139,6 @@ namespace eng {
     //     }
     // }
 
-    //===== PlayerSelection =====
-
-    void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
-        auto [m, M] = order_vals(start, end);
-
-        //coordinates rounding (includes any tile that is even partially within the rectangle)
-        glm::ivec2 im = glm::ivec2(std::floor(m.x), std::floor(m.y));
-        glm::ivec2 iM = glm::ivec2(std::ceil(M.x), std::ceil(M.y));
-
-        glm::ivec2 bounds = level.map.Size();
-        iM = glm::ivec2(std::min(bounds.x-1, iM.x), std::min(bounds.y-1, iM.y));
-
-        int object_count = 0;
-        int selection_mode = 0;
-        for(int y = std::max(im.y, 0); y <= iM.y; y++) {
-            for(int x = std::max(im.x, 0); x <= iM.x; x++) {
-                const TileData& td = level.map(y, x);
-
-                if(!ObjectID::IsObject(td.id) || !ObjectID::IsValid(td.id))
-                    continue;
-                
-                //under which category does current object belong; reset object counting when more important category is picked
-                int object_mode = 1*int(td.id.type == ObjectType::UNIT) + 2*int(td.factionId == playerFactionID);
-                if(selection_mode < object_mode) {
-                    selection_mode = object_mode;
-                    object_count = 0;
-                }
-
-                if(object_mode == selection_mode) {
-                    if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
-                        selection[object_count++] = td.id;
-                    }
-                }
-            }
-        }
-        
-        //dont update values if there was nothing selected (keep the old selection)
-        if(object_count != 0) {
-            selected_count = object_count;
-            selection_type = selection_mode;
-        }
-        
-        ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
-    }
-
     //===== GUI::SelectionTab =====
 
     GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
@@ -226,10 +186,120 @@ namespace eng {
         //if single unit selected -> disable all but one icons, enable & update the text
         //else hide the text & display all icons (+ update icon indices)
 
+        if(selection.update_flag) {
+            Reset();
+
+        }
+
+
         //also update health bar values
 
         //TODO: NEXT UP - PREP INTERNAL CONTROLLER STATES (Idle, Selection, etc.) AND TRANSITIONS BETWEEN THEM
         //ALSO START WORKING ON KEY PRESS HANDLING
+    }
+
+    void GUI::SelectionTab::Reset() {
+        
+    }
+
+    //===== PlayerSelection =====
+
+    void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
+        auto [m, M] = order_vals(start, end);
+
+        //coordinates rounding (includes any tile that is even partially within the rectangle)
+        glm::ivec2 im = glm::ivec2(std::floor(m.x), std::floor(m.y));
+        glm::ivec2 iM = glm::ivec2(std::ceil(M.x), std::ceil(M.y));
+
+        glm::ivec2 bounds = level.map.Size();
+        iM = glm::ivec2(std::min(bounds.x-1, iM.x), std::min(bounds.y-1, iM.y));
+
+        int object_count = 0;
+        int selection_mode = 0;
+        for(int y = std::max(im.y, 0); y <= iM.y; y++) {
+            for(int x = std::max(im.x, 0); x <= iM.x; x++) {
+                const TileData& td = level.map(y, x);
+
+                if(!ObjectID::IsObject(td.id) || !ObjectID::IsValid(td.id))
+                    continue;
+                
+                //under which category does current object belong; reset object counting when more important category is picked
+                int object_mode = 1*int(td.id.type == ObjectType::UNIT) + 2*int(td.factionId == playerFactionID);
+                if(selection_mode < object_mode) {
+                    selection_mode = object_mode;
+                    object_count = 0;
+                }
+
+                if(object_mode == selection_mode) {
+                    if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
+                        selection[object_count++] = td.id;
+                    }
+                }
+            }
+        }
+        
+        //dont update values if there was nothing selected (keep the old selection)
+        if(object_count != 0) {
+            selected_count = object_count;
+            selection_type = selection_mode;
+            update_flag = true;
+            ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
+        }
+        else {
+            ENG_LOG_FINE("PlayerSelection::Select - no change");
+        }
+    }
+
+    void PlayerSelection::Render() {
+        Camera& camera = Camera::Get();
+        glm::vec2 mult = camera.Mult();
+        glm::vec4 highlight_clrs[3] = {
+            glm::vec4(0.f, 1.f, 0.f, 1.f),
+            glm::vec4(1.f, 1.f, 0.f, 1.f),
+            glm::vec4(1.f, 0.f, 0.f, 1.f),
+        };
+        glm::vec4 clr = highlight_clrs[clr_idx];
+
+        for(int i = 0; i < selected_count; i++) {
+            auto& [pos, size] = location[i];
+            glm::vec2 m = camera.map2screen(pos);
+            glm::vec2 M = camera.map2screen(pos+size);
+            glm::vec2 v = M - m;
+
+            Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, SELECTION_ZIDX), glm::vec2(v.x, SELECTION_HIGHLIGHT_WIDTH * mult.y), clr));
+            Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, M.y, SELECTION_ZIDX), glm::vec2(v.x, SELECTION_HIGHLIGHT_WIDTH * mult.y), clr));
+            Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y), clr));
+            Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y + SELECTION_HIGHLIGHT_WIDTH*mult.y), clr));
+        }
+    }
+
+    void PlayerSelection::Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ImageButtonGrid* actionButtons, int playerFactionID) {
+        //check that all the objects still exist & toss out invalid ones
+        int new_count = 0;
+        for(int i = 0; i < selected_count; i++) {
+            FactionObject* object = nullptr;
+            if(!level.objects.GetObject(selection[i], object)) {
+                update_flag = true;
+            }
+            else {
+                selection[new_count] = selection[i];
+                location[new_count] = { object->Position(), object->Data()->size };
+                new_count++;
+
+                int fID = object->FactionIdx();
+                clr_idx = int(playerFactionID != fID) + int(level.factions.Diplomacy().AreHostile(playerFactionID, fID));
+            }
+        }
+        selected_count = new_count;
+
+        selectionTab->Update(level, *this);
+        
+        if(update_flag) {
+            //update action buttons
+            //TODO: maybe add a wrapper class for action buttons - could store additional data (like the button text, thats displayed on hover)
+        }
+
+        update_flag = false;
     }
 
     //===== PlayerFactionController =====
@@ -253,7 +323,7 @@ namespace eng {
         bool isOrc = false;
 
         //render GUI borders based on player's race
-        RenderGUIBorders(isOrc, -0.89f);
+        RenderGUIBorders(isOrc, GUI_BORDERS_ZIDX);
 
         //render the game menu if activated
         if(is_menu_active) {
@@ -271,7 +341,7 @@ namespace eng {
         }
 
         //render selection highlights
-        //TODO: ideally without having to query objects & level data
+        selection.Render();
     }
 
     void PlayerFactionController::Update(Level& level) {
@@ -334,6 +404,9 @@ namespace eng {
                 break;
         }
 
+        //selection data update (& gui updates that display selection)
+        selection.Update(level, selectionTab, actionButtons, ID());
+
         //TODO: setup current cursor from here as well (based on current state'n'stuff)
     }
 
@@ -366,8 +439,6 @@ namespace eng {
     void PlayerFactionController::RenderSelectionRectangle() {
         Camera& camera = Camera::Get();
         glm::vec2 mult = camera.Mult();
-        float zIdx = -0.9999f;
-        float line_width = 0.05f;
         glm::vec4 highlight_clr = glm::vec4(0.f, 1.f, 0.f, 1.f);
 
         auto [m, M] = order_vals(coords_start, coords_end);
@@ -379,10 +450,10 @@ namespace eng {
         if(fabsf(v.x) + fabsf(v.y) < 1e-2f)
             return;
 
-        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, zIdx), glm::vec2(v.x, line_width * mult.y), highlight_clr));
-        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, M.y, zIdx), glm::vec2(v.x, line_width * mult.y), highlight_clr));
-        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, zIdx), glm::vec2(line_width * mult.x, v.y), highlight_clr));
-        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, zIdx), glm::vec2(line_width * mult.x, v.y + line_width*mult.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, SELECTION_ZIDX), glm::vec2(v.x, SELECTION_HIGHLIGHT_WIDTH * mult.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, M.y, SELECTION_ZIDX), glm::vec2(v.x, SELECTION_HIGHLIGHT_WIDTH * mult.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y), highlight_clr));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y + SELECTION_HIGHLIGHT_WIDTH*mult.y), highlight_clr));
     }
 
     void PlayerFactionController::InitializeGUI() {
