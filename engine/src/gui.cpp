@@ -727,6 +727,11 @@ namespace eng::GUI {
             Enable(true);
     }
 
+    void ImageButton::Setup(const std::string& name_, const glm::ivec2& idx_, const glm::ivec4& price_, bool enable) {
+        price = price_;
+        Setup(name_, idx_, 0.f, enable);
+    }
+
     void ImageButton::InnerRender() {
         Button::InnerRender();
 

@@ -123,6 +123,8 @@ namespace eng {
 
     //===== UnitData =====
 
+    namespace UnitUpgradeSource { enum { NONE = 0, BLACKSMITH, FOUNDRY, CASTER, LUMBERMILL, BLACKSMITH_BALLISTA, COUNT }; }
+
     struct UnitData : public FactionObjectData {
         SoundEffect sound_attack;
         SoundEffect sound_ready;
@@ -134,6 +136,8 @@ namespace eng {
         bool caster = false;
 
         int deathAnimIdx = -1;
+
+        glm::ivec2 upgrade_src;
     public:
         const SoundEffect& AttackSound() const { return sound_attack; }
         const SoundEffect& ReadySound() const { return sound_ready; }

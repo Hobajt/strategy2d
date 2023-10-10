@@ -216,6 +216,9 @@ namespace eng {
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
 
+        int AttackUpgradeSource() const { return data->upgrade_src[0]; }
+        int DefenseUpgradeSource() const { return data->upgrade_src[1]; }
+
         glm::vec2& m_offset() { return move_offset; }
 
         bool AnimationFinished() const { return animation_ended; }

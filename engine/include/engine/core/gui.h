@@ -383,6 +383,7 @@ namespace eng::GUI {
         );
 
         virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true);
+        virtual void Setup(const std::string& name, const glm::ivec2& idx, const glm::ivec4& price, bool enable = true);
         virtual void SetValue(float value) {}
 
         std::string Name() const { return name; }
@@ -394,6 +395,7 @@ namespace eng::GUI {
 
         glm::ivec2 idx;
         std::string name;
+        glm::ivec4 price;
     };
 
     //===== ImageButtonWithBar =====

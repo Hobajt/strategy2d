@@ -27,8 +27,12 @@ namespace eng {
         struct FactionEntry {
             int controllerID;
             int colorIdx;
+            int race;
             std::string name;
             Techtree techtree;
+        public:
+            FactionEntry() = default;
+            FactionEntry(int controllerID, int race, const std::string& name, int colorIdx);
         };
     public:
         std::vector<FactionEntry> factions;
@@ -50,6 +54,7 @@ namespace eng {
         FactionController(FactionsFile::FactionEntry&& entry);
 
         int ID() const { return id; }
+        int Race() const { return race; }
 
         int GetColorIdx() const { return colorIdx; }
 
@@ -63,6 +68,9 @@ namespace eng {
         //Returns data object for particular type of building. Returns nullptr if the building cannot be built.
         BuildingDataRef FetchBuildingData(int buildingID, bool orcBuildings);
 
+        //Lookup research tier for unit upgrades.
+        int UnitUpgradeTier(bool attack_upgrade, int upgrade_type);
+
         virtual void Update(Level& level) {}
 
         void DBG_GUI();
@@ -75,6 +83,8 @@ namespace eng {
         int id = -1;
         int colorIdx = 0;
         std::string name = "unnamed_faction";
+
+        int race = 0;
 
         static int idCounter;
     };

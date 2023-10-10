@@ -16,6 +16,9 @@ namespace eng {
 #endif
     }
 
+    FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_)
+        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}) {}
+
     //===== FactionController =====
 
     int FactionController::idCounter = 0;
@@ -33,7 +36,7 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry)
-        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx) {}
+        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race) {}
 
     void FactionController::AddDropoffPoint(const Building& building) {
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...
@@ -69,6 +72,11 @@ namespace eng {
             return Resources::LoadBuilding(buildingID, orcBuildings);
         else
             return nullptr;
+    }
+
+    int FactionController::UnitUpgradeTier(bool attack_upgrade, int upgrade_type) {
+        //TODO: lookup in the research values, translate input arguments to proper research index
+        return 2;
     }
 
     void FactionController::DBG_GUI() {

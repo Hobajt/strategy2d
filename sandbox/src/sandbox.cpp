@@ -40,9 +40,9 @@ void Sandbox::OnInit() {
         
         //temporary faction initialization - will be done on level loads or during custom game initialization
         FactionsFile tst = {};
-        tst.factions.push_back({FactionControllerID::INVALID,       5, "neutral", Techtree{}});
-        tst.factions.push_back({FactionControllerID::LOCAL_PLAYER,  0, "faction_1", Techtree{}});
-        tst.factions.push_back({FactionControllerID::INVALID,       1, "faction_2", Techtree{}});
+        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "neutral", 5));
+        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  0, "faction_1", 0));
+        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "faction_2", 1));
         tst.diplomacy.push_back({1, 2, 1});
         level.factions = Factions(std::move(tst));
 
@@ -63,6 +63,7 @@ void Sandbox::OnInit() {
 
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), f1, glm::vec2(5.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), f1, glm::vec2(5.f, 3.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"), f1, glm::vec2(6.f, 3.f), false);
 
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/tower_guard"), f2, glm::vec2(11.f, 5.f), true);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), dummy_faction, glm::vec2(0.f, 0.f));

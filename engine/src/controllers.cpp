@@ -227,6 +227,216 @@ namespace eng {
         }
     }
 
+    //===== GUI::ActionButtons =====
+
+    GUI::ActionButtonDescription::ActionButtonDescription() : name("INVALID"), price(glm::ivec4(0)), icon(glm::ivec2(0)) {}
+
+    GUI::ActionButtonDescription::ActionButtonDescription(int cID, int pID, bool has_hk, char hk, int hk_idx, const std::string& name_, const glm::ivec2& icon_, const glm::ivec4& price_)
+        : command_id(cID), payload_id(pID), has_hotkey(has_hk), hotkey(hk), hotkey_idx(hk_idx), name(name_), icon(icon_), price(price_) {}
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Move(bool isOrc, bool water_units) {
+        glm::ivec2 icon = water_units ? glm::ivec2(6, 15) : glm::ivec2(3, 8);
+        icon.x += int(isOrc);
+        return ActionButtonDescription(ActionButton_CommandType::MOVE, -1, true, 'm', 0, "MOVE", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Patrol(bool isOrc, bool water_units) {
+        glm::ivec2 icon = water_units ? glm::ivec2(6, 17) : glm::ivec2(0, 17);
+        icon.x += int(isOrc);
+        return ActionButtonDescription(ActionButton_CommandType::PATROL, -1, true, 'p', 0, "PATROL", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::StandGround(bool isOrc) {
+        glm::ivec2 icon = glm::ivec2(2 + int(isOrc), 17);
+        return ActionButtonDescription(ActionButton_CommandType::STAND_GROUND, -1, true, 't', 1, "STAND GROUND", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::AttackGround() {
+        return ActionButtonDescription(ActionButton_CommandType::ATTACK_GROUND, -1, true, 'g', 7, "ATTACK GROUND", glm::ivec2(4, 17));
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Stop(bool isOrc, int upgrade_type, int upgrade_tier) {
+        int idx = GetIconIdx(false, upgrade_type, upgrade_tier, isOrc);
+        glm::ivec2 icon = glm::ivec2(idx % 10, idx / 10);
+        return ActionButtonDescription(ActionButton_CommandType::STOP, -1, true, 's', 0, "STOP", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Attack(bool isOrc, int upgrade_type, int upgrade_tier) {
+        int idx = GetIconIdx(true, upgrade_type, upgrade_tier, isOrc);
+        glm::ivec2 icon = glm::ivec2(idx % 10, idx / 10);
+        return ActionButtonDescription(ActionButton_CommandType::ATTACK, -1, true, 'a', 0, "ATTACK", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Repair() {
+        return ActionButtonDescription(ActionButton_CommandType::REPAIR, -1, true, 'r', 0, "REPAIR", glm::ivec2(5,8));
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::Harvest(bool water_units) {
+        if(!water_units)
+            return ActionButtonDescription(ActionButton_CommandType::HARVEST, -1, true, 'h', 0, "HARVEST LUMBER/MINE GOLD", glm::ivec2(6,8));
+        else
+            return ActionButtonDescription(ActionButton_CommandType::REPAIR, -1, true, 'h', 0, "HAUL OIL", glm::ivec2(1,16));
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::ReturnGoods(bool isOrc, bool water_units) {
+        glm::ivec2 icon = water_units ? glm::ivec2(8, 15) : (isOrc ? glm::ivec2(9, 8) : glm::ivec2(0, 9));
+        return ActionButtonDescription(ActionButton_CommandType::RETURN_GOODS, -1, true, 'g', 13, "RETURN WITH GOODS", icon);
+    }
+
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::CancelButton() {
+        return ActionButtonDescription(ActionButton_CommandType::PAGE_CHANGE, 0, false, '-', -1, "Cancel", glm::ivec2(1, 9));
+    }
+
+    int GUI::ActionButtonDescription::GetIconIdx(bool attack, int upgrade_type, int upgrade_tier, bool isOrc) {
+        constexpr static std::array<glm::ivec2, UnitUpgradeSource::COUNT> vals = {
+            glm::ivec2(116, 164),     //NONE
+            glm::ivec2(116, 164),     //BLACKSMITH
+            glm::ivec2(144, 150),     //FOUNDRY
+            glm::ivec2( 99, 164),     //CASTER
+            glm::ivec2(124, 164),     //LUMBERMILL
+            glm::ivec2(116, 164),     //BLACKSMITH_BALLISTA
+        };
+        return vals.at(upgrade_type)[1-int(attack)] + 3*int(isOrc) + upgrade_tier * int(upgrade_type > 0 && upgrade_type != UnitUpgradeSource::BLACKSMITH_BALLISTA);
+    }
+
+    GUI::ActionButtons::ActionButtons(ImageButtonGrid* btns_) : btns(btns_) {
+        for(int i = 0; i < 4; i++)
+            ResetPage(i);
+        pages[3][8] = ActionButtonDescription::CancelButton();
+        ChangePage(0);
+    }
+
+    void GUI::ActionButtons::Update(Level& level, const PlayerSelection& selection) {
+        //TODO: pick what unit's buttons to display (from the current selection)
+        //can use generic button descriptions if there're multiple unit types selected
+        //can also hide the action buttons altogether (when selecting non-owned object)
+
+        //buildup pages for the currently selected objects
+        ResetPage(0);
+        PageData& p = pages[0];
+        
+        //no player owned selection -> no pages
+        if(selection.selection_type < SelectionType::PLAYER_BUILDING)
+            return;
+
+        if(selection.selection_type == SelectionType::PLAYER_UNIT) {
+            //scan through the selection & obtain properties that define how the GUI will look
+            bool can_attack = false;
+            bool all_workers = true;
+            bool carrying_goods = false;
+            bool can_attack_ground = false;
+            bool all_water_units = true;
+            int att_upgrade_src = UnitUpgradeSource::NONE;
+            int def_upgrade_src = UnitUpgradeSource::NONE;
+            FactionControllerRef faction = nullptr;
+
+            for(size_t i = 0; i < selection.selected_count; i++) {
+                Unit& unit = level.objects.GetUnit(selection.selection[i]);
+
+                all_workers         &= unit.IsWorker();
+                all_water_units     &= (unit.NavigationType() == NavigationBit::WATER);
+                can_attack          |= unit.CanAttack();
+                carrying_goods      |= unit.IsWorker() && (unit.CarryStatus() != WorkerCarryState::NONE);
+                can_attack_ground   |= false;   //TODO: once there's the command for that
+
+                if(i == 0) {
+                    att_upgrade_src = unit.AttackUpgradeSource();
+                    def_upgrade_src = unit.DefenseUpgradeSource();
+                    faction = unit.Faction();
+                }
+                else {
+                    if(att_upgrade_src != unit.AttackUpgradeSource())  att_upgrade_src = UnitUpgradeSource::NONE;
+                    if(def_upgrade_src != unit.DefenseUpgradeSource()) def_upgrade_src = UnitUpgradeSource::NONE;
+                }
+            }
+
+            bool isOrc = bool(faction->Race());
+            att_upgrade_src = (att_upgrade_src == UnitUpgradeSource::BLACKSMITH_BALLISTA) ? UnitUpgradeSource::BLACKSMITH : att_upgrade_src;
+            def_upgrade_src = (def_upgrade_src >  UnitUpgradeSource::FOUNDRY) ? UnitUpgradeSource::BLACKSMITH : def_upgrade_src;
+
+            //add default unit commands for unit selection
+            p[0] = ActionButtonDescription::Move(isOrc, all_water_units);
+            p[1] = ActionButtonDescription::Stop(isOrc, def_upgrade_src, faction->UnitUpgradeTier(false, def_upgrade_src));
+            p[3] = ActionButtonDescription::Patrol(isOrc, all_water_units);
+            p[4] = ActionButtonDescription::StandGround(isOrc);
+
+            //attack command only if there's at least one unit that can attack
+            if(can_attack) {
+                p[2] = ActionButtonDescription::Attack(isOrc, att_upgrade_src, faction->UnitUpgradeTier(true, att_upgrade_src));
+            }
+
+            //repair & harvest if they're all workers
+            if(all_workers) {
+                p[3] = ActionButtonDescription::Repair();
+                p[4] = ActionButtonDescription::Harvest(all_water_units);
+
+                //returns goods if one of them is carrying
+                if(carrying_goods) {
+                    p[5] = ActionButtonDescription::ReturnGoods(isOrc, all_water_units);
+                }
+            }
+
+            if(can_attack_ground) {
+                p[5] = ActionButtonDescription::AttackGround();
+            }
+        }
+
+        //display specialized buttons only if there's no more than 1 object in the selection
+        if(selection.selected_count == 1) {
+            //retrieve object_data reference & page descriptions from that
+
+            //the precondition checks wont be done here
+
+            //TODO:
+        }
+
+        
+        ChangePage(0);
+
+
+        //compose the pages
+        //  - 1st page can have predefined buttons (based on selected group properties)
+        //  - other pages are entirely from definitions
+
+        //unit selection? -> move, stop, stand ground, patrol commands (idx=0,1,3,4)
+        //can at least 1 unit attack? -> attack command (idx=2)
+        //all units are workers? -> repair & harvest commands (idx=3,4 - will override stand ground & patrol)
+        //ballista in the mix? - attack ground command (idx=5)
+
+        //is single object selected? -> custom button definitions from object_data
+        //this will add spells for casters, building options for workers, research & training options
+        //will have to also add precondition checks
+    }
+
+    void GUI::ActionButtons::ValuesUpdate(Level& level, const PlayerSelection& selection) {
+        //TODO: do button precondition checks here
+
+        //based on the payload ID, lookup condition in the faction data
+        //then disable the button if condition isn't met
+
+        //only have to do this for currently active page
+    }
+
+    void GUI::ActionButtons::ChangePage(int idx) {
+        page = idx;
+
+        PageData& p = pages[idx];
+        for(size_t i = 0; i < p.size(); i++) {
+            ActionButtonDescription& btn = p[i];
+            if(btn.command_id != ActionButton_CommandType::DISABLED)
+                btns->GetButton(i)->Setup(btn.name, btn.icon, btn.price);
+            else
+                btns->GetButton(i)->Enable(false);
+        }
+    }
+
+    void GUI::ActionButtons::ResetPage(int idx) {
+        PageData& page = pages[idx];
+        for(size_t i = 0; i < page.size(); i++) {
+            page[i] = ActionButtonDescription();
+        }
+    }
+
     //===== PlayerSelection =====
 
     void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
@@ -316,7 +526,7 @@ namespace eng {
         }
     }
 
-    void PlayerSelection::Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ImageButtonGrid* actionButtons, int playerFactionID) {
+    void PlayerSelection::Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ActionButtons* actionButtons, int playerFactionID) {
         //check that all the objects still exist & toss out invalid ones
         int new_count = 0;
         for(int i = 0; i < selected_count; i++) {
@@ -338,11 +548,11 @@ namespace eng {
         
         if(update_flag) {
             selectionTab->Update(level, *this);
-            //update action buttons
-            //TODO: maybe add a wrapper class for action buttons - could store additional data (like the button text, thats displayed on hover)
+            actionButtons->Update(level, *this);
         }
         else {
             selectionTab->ValuesUpdate(level, *this);
+            actionButtons->ValuesUpdate(level, *this);
         }
 
         update_flag = false;
@@ -365,11 +575,8 @@ namespace eng {
     }
 
     void PlayerFactionController::Render() {
-        //TODO: retrieve proper value
-        bool isOrc = false;
-
         //render GUI borders based on player's race
-        RenderGUIBorders(isOrc, GUI_BORDERS_ZIDX);
+        RenderGUIBorders(bool(Race()), GUI_BORDERS_ZIDX);
 
         //render the game menu if activated
         if(is_menu_active) {
@@ -394,6 +601,9 @@ namespace eng {
         Camera& camera = Camera::Get();
         Input& input = Input::Get();
 
+        //unset any previous btn clicks (to detect the new one)
+        clicked_btn_id = -1;
+
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);
 
@@ -401,10 +611,34 @@ namespace eng {
         GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
         if(btn != nullptr) {
             text_prompt.Setup(btn->Name());
+            //TODO: render btn's price tag (if it has one)
         }
         else {
             text_prompt.Setup("");
         }
+
+        //TODO: add hotkey highlight to the text prompt (data values are already prepared in the ActionButtonDescription)
+
+        /*action buttons impl:
+            - object_data will have button descriptions
+                - these will describe what action should the button do (+ visual data, name, ...)
+                - buttons will also be organized in pages
+                - possible button actions:
+                    - command invokation (btn carries command data; target selection handled here tho, based on command type)
+                    - page change ()
+
+            - current page will have to be contained in here
+        */
+
+        /*map view impl:
+            - need to maintain a texture with miniaturized map
+            - texture needs to be uploaded to the GPU - this is going to be painful
+            - what do I need in order to render it:
+                - map data
+                - fog of war & visibility mask (will be stored in faction_data)
+            - map view can then just be rendered as a texture (not even a part of GUI)
+            - player interaction'll be handled same way as clicks into the game view (detect clicked region, then transition states)
+        */
 
         //TODO: add resource values rendering
 
@@ -422,7 +656,10 @@ namespace eng {
                 //rmb.down in map view  -> adaptive command for current selection
                 //cursor at borders     -> move camera
 
-                if(CursorInGameView(pos)) {
+                if(clicked_btn_id != -1) {
+                    ResolveActionButtonClick();
+                }
+                else if(CursorInGameView(pos)) {
                     glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
                     if(input.lmb.down()) {
                         //transition to object selection state
@@ -437,6 +674,7 @@ namespace eng {
                     // glm::vec2 coords = ... coords from map image position ...
                     if(input.lmb.down()) {
                         //transition to camera movement state
+                        //maybe update the camera from here as well
                         state = PlayerControllerState::CAMERA_CENTERING;
                     }
                     else if (input.rmb.down()) {
@@ -464,10 +702,13 @@ namespace eng {
             case PlayerControllerState::CAMERA_CENTERING:   //camera centering (lmb drag in the map view)
                 //TODO:
                 break;
+            case PlayerControllerState::COMMAND_TARGET_SELECTION:
+                //TODO:
+                break;
         }
 
         //selection data update (& gui updates that display selection)
-        selection.Update(level, selectionTab, actionButtons, ID());
+        selection.Update(level, selectionTab, &actionButtons, ID());
 
         //TODO: setup current cursor from here as well (based on current state'n'stuff)
     }
@@ -488,6 +729,16 @@ namespace eng {
                 //dispatch to current selection
                 break;
         }
+    }
+
+    void PlayerFactionController::ResolveActionButtonClick() {
+        if(clicked_btn_id < 0)
+            return;
+            
+        
+        //page change -> change page (wow, who would've thought)
+        //targetable command -> change state to target selection, keep track of the command (or button), change page to cancel page
+        //other commands -> issue the command on current selection
     }
 
     bool PlayerFactionController::CursorInGameView(const glm::vec2& pos) const {
@@ -620,9 +871,10 @@ namespace eng {
         SpritesheetRef icons = Resources::LoadSpritesheet("misc/icons");
         Sprite icon = (*icons)("icon");
 
-        actionButtons = new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.475f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, glm::vec2(0.975f / 3.f), this, [](GUI::ButtonCallbackHandler* handler, int id){
-            ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
-        });
+        actionButtons = GUI::ActionButtons(new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.475f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, glm::vec2(0.975f / 3.f), this, [](GUI::ButtonCallbackHandler* handler, int id){
+            // ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
+            static_cast<PlayerFactionController*>(handler)->clicked_btn_id = id;
+        }));
 
         selectionTab = new GUI::SelectionTab(glm::vec2(0.5f, 0.f), glm::vec2(0.475f, 0.35f), 1.f, 
             borders_style, text_style, text_style_small,
@@ -642,7 +894,7 @@ namespace eng {
                 static_cast<PlayerFactionController*>(handler)->handler->PauseToggleRequest();
             }),
 
-            actionButtons,
+            actionButtons.Buttons(),
             selectionTab,
         });
 
@@ -705,7 +957,9 @@ namespace eng {
         //render GUI overlay (borders)
         float w = GUI_WIDTH*2.f;
         float b = BORDER_SIZE*2.f;
-        glm::vec4 clr = glm::vec4(0.33f, 0.33f, 0.33f, 1.f);
+
+        //TODO: modify based on race (at least the color, if not using textures)
+        glm::vec4 clr = isOrc ? glm::vec4(0.3f, 0.16f, 0.f, 1.f) : glm::vec4(0.33f, 0.33f, 0.33f, 1.f);
 
         //gui panel background
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f, -1.f, z), glm::vec2(GUI_WIDTH*2.f, 2.f), clr));
@@ -714,8 +968,6 @@ namespace eng {
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(1.f - b, -1.f, z-2e-3f), glm::vec2(b, 2.f), clr));
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f + w, -1.f, z-1e-3f), glm::vec2(2.f - w, b*window.Ratio()), clr));
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f + w,  1.f-b*window.Ratio(), z-1e-3f), glm::vec2(2.f - w, b*window.Ratio()), clr));
-
-        //TODO: modify based on race (at least the color, if not using textures)
     }
 
 }//namespace eng
