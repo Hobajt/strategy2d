@@ -10,6 +10,10 @@ namespace eng::json {
         return glm::ivec3(json.at(0), json.at(1), json.at(2));
     }
 
+    glm::ivec4 parse_ivec4(const nlohmann::json& json) {
+        return glm::ivec4(json.at(0), json.at(1), json.at(2), json.at(3));
+    }
+
     glm::vec2 parse_vec2(const nlohmann::json& json) {
         return glm::vec2(json.at(0), json.at(1));
     }

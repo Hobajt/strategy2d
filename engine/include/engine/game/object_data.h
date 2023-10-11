@@ -2,6 +2,7 @@
 
 #include "engine/utils/mathdefs.h"
 #include "engine/core/animator.h"
+#include "engine/core/gui_action_buttons.h"
 
 #include <string>
 #include <memory>
@@ -88,6 +89,11 @@ namespace eng {
         virtual void SetupObjectReferences(const referencesRecord& refs) {}
     };
 
+    struct ButtonDescriptions {
+        using PageEntry = std::vector<std::pair<int, GUI::ActionButtonDescription>>;
+        std::vector<PageEntry> pages;
+    };
+
     //===== FactionObjectData =====
 
     struct FactionObjectData : public GameObjectData {
@@ -111,6 +117,7 @@ namespace eng {
         glm::ivec2 icon;
 
         objectReferences refs;
+        ButtonDescriptions gui_btns;
     public:
         virtual int MaxHealth() const override { return health; }
         virtual bool IntegrateInMap() const { return true; }

@@ -27,6 +27,7 @@
 #include "game/camera.h"
 #include "game/level.h"
 #include "game/faction.h"
+#include "game/player_controller.h"
 #include "game/controllers.h"
 #include "game/gameobject.h"
 #include "game/object_data.h"

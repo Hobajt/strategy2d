@@ -269,7 +269,18 @@
             "pissed": ["orc/opissed", 7],
             "ready": "peon/pnready",
             "attack": "misc/peonatak"
-        }
+        },
+        "buttons": [
+            [
+                { "idx": 6, "cmd": -1, "pid": 1, "hotkey": ["b", 6], "visuals": ["BUILD BASIC STRUCTURE", [7,8]] },
+                { "idx": 7, "cmd": -1, "pid": 2, "hotkey": ["v", 8], "visuals": ["BUILD ADVANCED STRUCTURE", [8,8]] }
+            ],
+            [
+                { "idx": 0, "cmd": 9, "pid": 1, "hotkey": ["f", 6] },
+                { "idx": 1, "cmd": 9, "pid": 1, "hotkey": ["b", 6] },
+                { "idx": 2, "cmd": 9, "pid": 1, "hotkey": ["h", 12] }
+            ]
+        ]
     },
     {
         "name": "human/tanker",

@@ -292,6 +292,48 @@ namespace eng {
         data.cooldown = config.count("cooldown") ? config.at("cooldown") : 0.f;
         data.race = config.count("race") ? config.at("race") : 0;
         data.icon = config.count("icon") ? json::parse_ivec2(config.at("icon")) : glm::ivec2(0);
+
+        if(config.count("buttons")) {
+            int page_idx = 0;
+            for(auto& page_entry : config.at("buttons")) {
+                if((++page_idx) > 3) {
+                    ENG_LOG_WARN("ParseConfig_Faction - object contains too many button page definitions (some will be discarded)");
+                    break;
+                }
+
+                ButtonDescriptions::PageEntry page_data = {};
+                for(auto& btn_entry : page_entry) {
+                    int btn_idx = btn_entry.at("idx");
+                    int cmd_id  = btn_entry.at("cmd");
+                    int payload = btn_entry.count("pid") ? btn_entry.at("pid") : -1;
+                    
+                    int hotkey_idx = -1;
+                    char hotkey = '-';
+                    bool has_hotkey = false;
+                    if(btn_entry.count("hotkey")) {
+                        auto& hk = btn_entry.at("hotkey");
+                        has_hotkey = true;
+                        hotkey = std::string(hk.at(0)).at(0);
+                        hotkey_idx = hk.at(1);
+                    }
+                    
+                    std::string name = "missing";
+                    glm::ivec2 icon = glm::ivec2(-1);
+                    glm::ivec4 price = GUI::ActionButtonDescription::MissingVisuals();
+                    if(btn_entry.count("visuals")) {
+                        auto& visuals = btn_entry.at("visuals");
+                        name = visuals.at(0);
+                        icon = json::parse_ivec2(visuals.at(1));
+                        price = (visuals.size() > 2) ? json::parse_ivec4(visuals.at(2)) : glm::ivec4(0);
+                    }
+
+                    page_data.push_back({ btn_idx, GUI::ActionButtonDescription(cmd_id, payload, has_hotkey, hotkey, hotkey_idx, name, icon, price) });
+                }
+
+
+                data.gui_btns.pages.push_back(page_data);
+            }
+        }
     }
 
     GameObjectDataRef ParseConfig_Utility(const nlohmann::json& config) {

@@ -4,6 +4,7 @@
 #include "engine/game/resources.h"
 #include "engine/utils/dbg_gui.h"
 
+#include "engine/game/player_controller.h"
 #include "engine/game/controllers.h"
 
 namespace eng {
