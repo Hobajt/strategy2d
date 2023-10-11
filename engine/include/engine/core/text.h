@@ -50,6 +50,8 @@ namespace eng {
         //Text is still centered vertically (topLeft.x = leftmost position, topLeft.y = vertical center).
         void RenderTextAlignLeft(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextAlignRight(const char* text, size_t max_len, const glm::vec2 topRight, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        
+        void RenderTextAlignLeft(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
         void RenderTextKeyValue(const char* text, size_t sep_pos, const glm::vec2 center, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 

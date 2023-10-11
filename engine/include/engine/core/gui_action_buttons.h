@@ -20,7 +20,7 @@ namespace eng::GUI {
             int command_id = ActionButton_CommandType::DISABLED;
             int payload_id = -1;     //relevant only when command_id \in { PAGE_CHANGE, CAST, BUILD, TRAIN_OR_RESEARCH }
 
-            bool has_hotkey;
+            bool has_hotkey = false;
             char hotkey;
             int hotkey_idx;
             

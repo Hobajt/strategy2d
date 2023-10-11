@@ -64,6 +64,11 @@ namespace eng {
             ImageButtonGrid* Buttons() const { return btns; }
             const ActionButtonDescription& ButtonData(int idx) const { return pages[page][idx]; }
 
+            void DispatchHotkey(char hotkey);
+            void ClearClick() { clicked_btn_idx = -1; }
+            int ClickIdx() const { return clicked_btn_idx; }
+            void SetClickIdx(int idx) { clicked_btn_idx = idx; }
+
             void ChangePage(int idx);
         private:
             void ResetPage(int idx);
@@ -71,6 +76,8 @@ namespace eng {
             ImageButtonGrid* btns = nullptr;
             std::array<PageData, 4> pages;
             int page = 0;
+
+            int clicked_btn_idx = -1;
         };
     }
 
@@ -154,7 +161,6 @@ namespace eng {
 
         bool is_menu_active = false;
         int state = PlayerControllerState::IDLE;
-        int clicked_btn_id = -1;
 
         glm::vec2 coords_start;
         glm::vec2 coords_end;

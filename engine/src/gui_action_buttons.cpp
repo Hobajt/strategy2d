@@ -54,11 +54,11 @@ namespace eng::GUI {
 
     GUI::ActionButtonDescription GUI::ActionButtonDescription::ReturnGoods(bool isOrc, bool water_units) {
         glm::ivec2 icon = water_units ? glm::ivec2(8, 15) : (isOrc ? glm::ivec2(9, 8) : glm::ivec2(0, 9));
-        return ActionButtonDescription(ActionButton_CommandType::RETURN_GOODS, -1, true, 'g', 13, "RETURN WITH GOODS", icon);
+        return ActionButtonDescription(ActionButton_CommandType::RETURN_GOODS, -1, true, 'g', 12, "RETURN WITH GOODS", icon);
     }
 
     GUI::ActionButtonDescription GUI::ActionButtonDescription::CancelButton() {
-        return ActionButtonDescription(ActionButton_CommandType::PAGE_CHANGE, 0, false, '/', -1, "Cancel", glm::ivec2(1, 9));
+        return ActionButtonDescription(ActionButton_CommandType::PAGE_CHANGE, 0, true, char(255), -1, "Cancel", glm::ivec2(1, 9));
     }
 
     int GUI::ActionButtonDescription::GetIconIdx(bool attack, int upgrade_type, int upgrade_tier, bool isOrc) {

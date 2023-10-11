@@ -214,17 +214,21 @@ namespace eng::GUI {
     TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_, bool centered_)
         : Element(offset_, size_, zOffset_, style_, nullptr), text(text_), centered(centered_) {}
     
+    TextLabel::TextLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, int highlightIdx_, const StyleRef& style_, const std::string& text_, bool centered_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_), centered(centered_), highlightIdx(highlightIdx_) {}
+    
     void TextLabel::InnerRender() {
         Element::InnerRender();
         ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
         if(centered)
-            style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+            style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, style->textColor, style->hoverColor, highlightIdx, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
         else
-            style->font->RenderTextAlignLeft(text.c_str(), glm::vec2(position.x - size.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+            style->font->RenderTextAlignLeft(text.c_str(), glm::vec2(position.x - size.x, -position.y), style->textScale, style->textColor, style->hoverColor, highlightIdx, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
-    void TextLabel::Setup(const std::string& text_, bool enable) {
+    void TextLabel::Setup(const std::string& text_, int highlightIdx_, bool enable) {
         text = text_;
+        highlightIdx = highlightIdx_;
         if(enable)
             Enable(true);
     }
@@ -720,16 +724,17 @@ namespace eng::GUI {
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
         : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, fireType_), sprite(sprite_), idx(idx_), image_scaledown(image_scaledown_) {}
 
-    void ImageButton::Setup(const std::string& name_, const glm::ivec2& idx_, float value, bool enable) {
+    void ImageButton::Setup(const std::string& name_, int highlightIdx_, const glm::ivec2& idx_, float value, bool enable) {
         name = name_;
         idx = idx_;
+        highlightIdx = highlightIdx_;
         if(enable)
             Enable(true);
     }
 
-    void ImageButton::Setup(const std::string& name_, const glm::ivec2& idx_, const glm::ivec4& price_, bool enable) {
+    void ImageButton::Setup(const std::string& name_, int highlightIdx_, const glm::ivec2& idx_, const glm::ivec4& price_, bool enable) {
         price = price_;
-        Setup(name_, idx_, 0.f, enable);
+        Setup(name_, highlightIdx_, idx_, 0.f, enable);
     }
 
     void ImageButton::InnerRender() {
@@ -761,9 +766,9 @@ namespace eng::GUI {
         ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int buttonID_, int fireType_)
         : ImageButton(offset_, size_, zOffset_, style_, sprite_, idx_, handler_, callback_, buttonID_, image_scaledown_), bar_style(bar_style_), borders_size(borders_size_) {}
 
-    void ImageButtonWithBar::Setup(const std::string& name_, const glm::ivec2& idx_, float value_, bool enable) {
+    void ImageButtonWithBar::Setup(const std::string& name_, int highlightIdx_, const glm::ivec2& idx_, float value_, bool enable) {
         value = value_;
-        ImageButton::Setup(name_, idx_, value_, enable);
+        ImageButton::Setup(name_, highlightIdx_, idx_, value_, enable);
     }
 
     void ImageButtonWithBar::SetValue(float value_) {

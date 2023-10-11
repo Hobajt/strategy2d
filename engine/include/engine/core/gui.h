@@ -167,17 +167,19 @@ namespace eng::GUI {
     public:
         TextLabel() = default;
         TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text, bool centered = true);
+        TextLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, int highlightIdx, const StyleRef& style, const std::string& text, bool centered = true);
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void OnHighlight() override {}
 
-        void Setup(const std::string& text, bool enable = true);
+        void Setup(const std::string& text, int highlightIdx = -1, bool enable = true);
     protected:
         virtual void InnerRender() override;
     private:
         std::string text;
         bool centered;
+        int highlightIdx = -1;
     };
 
     //===== Button =====
@@ -382,11 +384,12 @@ namespace eng::GUI {
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
         );
 
-        virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true);
-        virtual void Setup(const std::string& name, const glm::ivec2& idx, const glm::ivec4& price, bool enable = true);
+        virtual void Setup(const std::string& name, int highlightIdx, const glm::ivec2& idx, float value, bool enable = true);
+        virtual void Setup(const std::string& name, int highlightIdx, const glm::ivec2& idx, const glm::ivec4& price, bool enable = true);
         virtual void SetValue(float value) {}
 
         std::string Name() const { return name; }
+        int HighlightIdx() const { return highlightIdx; }
     protected:
         virtual void InnerRender() override;
     private:
@@ -396,6 +399,7 @@ namespace eng::GUI {
         glm::ivec2 idx;
         std::string name;
         glm::ivec4 price;
+        int highlightIdx;
     };
 
     //===== ImageButtonWithBar =====
@@ -423,7 +427,7 @@ namespace eng::GUI {
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int buttonID, int fireType
         );
 
-        virtual void Setup(const std::string& name, const glm::ivec2& idx, float value, bool enable = true) override;
+        virtual void Setup(const std::string& name, int highlightIdx, const glm::ivec2& idx, float value, bool enable = true) override;
         virtual void SetValue(float value) override;
 
         //override in order for the button to work even when hovering over the bar

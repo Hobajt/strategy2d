@@ -142,7 +142,7 @@ namespace eng {
             //      - after that's done, might want to altogether remove the generic object_data loading
 
             //icon & health bar setup
-            btns->GetButton(0)->Setup(object->Name(), object->Icon(), object->HealthPercentage());
+            btns->GetButton(0)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
             snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
             health->Setup(std::string(buf));
             
@@ -180,7 +180,7 @@ namespace eng {
             FactionObject* object;
             for(int i = 0; i < selection.selected_count; i++) {
                 object = &level.objects.GetObject(selection.selection[i]);
-                btns->GetButton(i)->Setup(object->Name(), object->Icon(), object->HealthPercentage());
+                btns->GetButton(i)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
             }
         }
     }
@@ -349,6 +349,20 @@ namespace eng {
         //only have to do this for currently active page
     }
 
+    void GUI::ActionButtons::DispatchHotkey(char hotkey) {
+        PageData& pd = pages[page];
+
+        // ENG_LOG_FINE("ActionButtons::DispatchHotkey - looking for hotkey '{}' ({})", hotkey, int(hotkey));
+        for(size_t i = 0; i < pd.size(); i++) {
+            // ENG_LOG_FINE("btn[{}] - ({}, {}), '{}' ({}), {}", i, pd[i].command_id, pd[i].has_hotkey, pd[i].hotkey, int(pd[i].hotkey), pd[i].hotkey_idx);
+            if(pd[i].command_id != ActionButton_CommandType::DISABLED && pd[i].has_hotkey && pd[i].hotkey == hotkey) {
+                ENG_LOG_FINE("ActionButtons::DispatchHotkey - key {:3d} -> button[{}] ({})", int(hotkey), i, pd[i].name);
+                clicked_btn_idx = int(i);
+                return;
+            }
+        }
+    }
+
     void GUI::ActionButtons::ChangePage(int idx) {
         page = idx;
 
@@ -356,7 +370,7 @@ namespace eng {
         for(size_t i = 0; i < p.size(); i++) {
             ActionButtonDescription& btn = p[i];
             if(btn.command_id != ActionButton_CommandType::DISABLED)
-                btns->GetButton(i)->Setup(btn.name, btn.icon, btn.price);
+                btns->GetButton(i)->Setup(btn.name, btn.hotkey_idx, btn.icon, btn.price);
             else
                 btns->GetButton(i)->Enable(false);
         }
@@ -533,34 +547,18 @@ namespace eng {
         Camera& camera = Camera::Get();
         Input& input = Input::Get();
 
-        //unset any previous btn clicks (to detect the new one)
-        clicked_btn_id = -1;
-
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);
 
         //update text prompt - content of the button that is being hovered over
         GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
         if(btn != nullptr) {
-            text_prompt.Setup(btn->Name());
+            text_prompt.Setup(btn->Name(), btn->HighlightIdx());
             //TODO: render btn's price tag (if it has one)
         }
         else {
             text_prompt.Setup("");
         }
-
-        //TODO: add hotkey highlight to the text prompt (data values are already prepared in the ActionButtonDescription)
-
-        /*action buttons impl:
-            - object_data will have button descriptions
-                - these will describe what action should the button do (+ visual data, name, ...)
-                - buttons will also be organized in pages
-                - possible button actions:
-                    - command invokation (btn carries command data; target selection handled here tho, based on command type)
-                    - page change ()
-
-            - current page will have to be contained in here
-        */
 
         /*map view impl:
             - need to maintain a texture with miniaturized map
@@ -588,7 +586,7 @@ namespace eng {
                 //rmb.down in map view  -> adaptive command for current selection
                 //cursor at borders     -> move camera
 
-                if(clicked_btn_id != -1) {
+                if(actionButtons.ClickIdx() != -1) {
                     ResolveActionButtonClick();
                 }
                 else if(CursorInGameView(pos)) {
@@ -642,6 +640,9 @@ namespace eng {
         //selection data update (& gui updates that display selection)
         selection.Update(level, selectionTab, &actionButtons, ID());
 
+        //unset any previous btn clicks (to detect the new one)
+        actionButtons.ClearClick();
+
         //TODO: setup current cursor from here as well (based on current state'n'stuff)
     }
 
@@ -652,22 +653,26 @@ namespace eng {
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
-        ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
+        // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
 
-        switch(keycode) {
-            case GLFW_KEY_ESCAPE:
-                break;
-            default:
-                //dispatch to current selection
-                break;
+        //TODO: implement selection groups
+        if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
+            // selection.SelectionGroupsHotkey(keycode, modifiers);
         }
+
+        if((keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z) || keycode == GLFW_KEY_ESCAPE) {
+            char c = (keycode != GLFW_KEY_ESCAPE) ? char(keycode - GLFW_KEY_A + 'a') : char(255);
+            actionButtons.DispatchHotkey(c);
+        }
+        
+        //TODO: add hotkeys for game speed control (can only work in single player games tho)
     }
 
     void PlayerFactionController::ResolveActionButtonClick() {
-        if(clicked_btn_id < 0)
+        if(actionButtons.ClickIdx() < 0)
             return;
             
-        const GUI::ActionButtonDescription& btn = actionButtons.ButtonData(clicked_btn_id);
+        const GUI::ActionButtonDescription& btn = actionButtons.ButtonData(actionButtons.ClickIdx());
         if(btn.command_id == GUI::ActionButton_CommandType::PAGE_CHANGE) {
             actionButtons.ChangePage(btn.payload_id);
         }
@@ -810,7 +815,7 @@ namespace eng {
 
         actionButtons = GUI::ActionButtons(new GUI::ImageButtonGrid(glm::vec2(0.5f, 0.675f), glm::vec2(0.475f, 0.3f), 1.f, icon_btn_style, icon, 3, 3, glm::vec2(0.975f / 3.f), this, [](GUI::ButtonCallbackHandler* handler, int id){
             // ENG_LOG_TRACE("ActionButtons - Button [{}, {}] clicked", id % 3, id / 3);
-            static_cast<PlayerFactionController*>(handler)->clicked_btn_id = id;
+            static_cast<PlayerFactionController*>(handler)->actionButtons.SetClickIdx(id);
         }));
 
         selectionTab = new GUI::SelectionTab(glm::vec2(0.5f, 0.f), glm::vec2(0.475f, 0.35f), 1.f, 
