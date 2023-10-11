@@ -70,6 +70,9 @@ namespace eng {
             void SetClickIdx(int idx) { clicked_btn_idx = idx; }
 
             void ChangePage(int idx);
+
+            void ShowCancelPage() { ChangePage(3); }
+            bool IsAtCancelPage() const { return page == 3; }
         private:
             void ResetPage(int idx);
         private:
@@ -103,6 +106,10 @@ namespace eng {
         void Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ActionButtons* actionButtons, int playerFactionID);
 
         int ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID);
+
+        void IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data);
+        void IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
+        void IssueCommand(Level& level, const glm::ivec2& cmd_data);
     };
 
     //===== PlayerFactionController =====
@@ -110,7 +117,7 @@ namespace eng {
     class PlayerFactionController;
     using PlayerFactionControllerRef = std::shared_ptr<PlayerFactionController>;
 
-    namespace PlayerControllerState { enum { IDLE, SELECTION, CAMERA_CENTERING, COMMAND_TARGET_SELECTION }; }
+    namespace PlayerControllerState { enum { IDLE, OBJECT_SELECTION, CAMERA_CENTERING, COMMAND_TARGET_SELECTION }; }
 
     class PlayerFactionController : public FactionController, public GUI::ButtonCallbackHandler {
     public:
@@ -164,6 +171,8 @@ namespace eng {
 
         glm::vec2 coords_start;
         glm::vec2 coords_end;
+        glm::ivec2 command_data;
+        bool nontarget_cmd_issued = false;
     };
 
 }//namespace eng

@@ -445,10 +445,6 @@ namespace eng {
         update_flag = true;
     }
 
-    int PlayerSelection::ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID) {
-        return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
-    }
-
     void PlayerSelection::Render() {
         Camera& camera = Camera::Get();
         glm::vec2 mult = camera.Mult();
@@ -504,6 +500,29 @@ namespace eng {
         update_flag = false;
     }
 
+    int PlayerSelection::ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID) {
+        return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
+    }
+
+    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data) {
+        //do various sanity checks
+        //command requirements checks (resources for example)
+        //play unit "command issued" sound from here
+
+        ENG_LOG_INFO("COMMAND ISSUED ({}, {}) (TODO)", cmd_data.x, cmd_data.y);
+    }
+
+    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id) {
+        //adaptive command -> decide on command type, then invoke IssueCommand with proper params
+        //TODO:
+        ENG_LOG_INFO("ADAPTIVE COMMAND ISSUED (TODO)");
+    }
+
+    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& cmd_data) {
+        //targetless command -> same logic as targeted command
+        ENG_LOG_INFO("COMMAND ISSUED ({}, {}) (TODO)", cmd_data.x, cmd_data.y);
+    }
+
     //===== PlayerFactionController =====
 
     void PlayerFactionController::GUIRequestHandler::LinkController(const PlayerFactionControllerRef& ctrl) {
@@ -534,7 +553,7 @@ namespace eng {
         text_prompt.Render();
 
         switch(state) {
-            case PlayerControllerState::SELECTION:
+            case PlayerControllerState::OBJECT_SELECTION:
                 RenderSelectionRectangle();
                 break;
         }
@@ -588,16 +607,24 @@ namespace eng {
 
                 if(actionButtons.ClickIdx() != -1) {
                     ResolveActionButtonClick();
+
+                    if(nontarget_cmd_issued) {
+                        selection.IssueCommand(level, command_data);
+                        command_data = glm::ivec2(-1);
+                    }
                 }
                 else if(CursorInGameView(pos)) {
                     glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
                     if(input.lmb.down()) {
                         //transition to object selection state
                         coords_start = coords_end = coords;
-                        state = PlayerControllerState::SELECTION;
+                        state = PlayerControllerState::OBJECT_SELECTION;
                     }
                     else if (input.rmb.down()) {
-                        //TODO: issue adaptive command to current selection
+                        //issue adaptive command to current selection
+                        glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+                        ObjectID target_id = level.map.ObjectIDAt(target_pos);
+                        selection.IssueCommand(level, target_pos, target_id);
                     }
                 }
                 else if(CursorInMapView(pos)) {
@@ -619,7 +646,7 @@ namespace eng {
                     }
                 }
                 break;
-            case PlayerControllerState::SELECTION:          //selection in progress (lmb click or drag)
+            case PlayerControllerState::OBJECT_SELECTION:          //selection in progress (lmb click or drag)
                 input.ClampCursorPos(glm::vec2(GUI_WIDTH, BORDER_SIZE), glm::vec2(1.f-BORDER_SIZE, 1.f-BORDER_SIZE));
                 pos = input.mousePos_n;
 
@@ -633,7 +660,43 @@ namespace eng {
                 //TODO:
                 break;
             case PlayerControllerState::COMMAND_TARGET_SELECTION:
-                //TODO:
+                //selection canceled by the cancel button
+                if(!actionButtons.IsAtCancelPage()) {
+                    state = PlayerControllerState::IDLE;
+                    command_data = glm::ivec2(-1);
+                }
+                else {
+                    if(actionButtons.ClickIdx() == 8) {
+                        //cancel button clicked
+                        state = PlayerControllerState::IDLE;
+                        command_data = glm::ivec2(-1);
+                        actionButtons.ChangePage(0);
+                    }
+                    else if(CursorInGameView(pos)) {
+                        if(input.lmb.down()) {
+                            //issue the command & go back to idle state
+                            glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+                            ObjectID target_id = level.map.ObjectIDAt(target_pos);
+                            selection.IssueCommand(level, target_pos, target_id, command_data);
+                            state = PlayerControllerState::IDLE;
+                            command_data = glm::ivec2(-1);
+                            actionButtons.ChangePage(0);
+                        }
+                        else if (input.rmb.down()) {
+                            state = PlayerControllerState::IDLE;
+                            command_data = glm::ivec2(-1);
+                            actionButtons.ChangePage(0);
+                        }
+                    }
+                    else if(CursorInMapView(pos)) {
+                        if(input.lmb.down()) {
+                            //issue the command
+                        }
+                        else if (input.rmb.down()) {
+                            //center the camera at the click pos
+                        }
+                    }
+                }
                 break;
         }
 
@@ -642,6 +705,7 @@ namespace eng {
 
         //unset any previous btn clicks (to detect the new one)
         actionButtons.ClearClick();
+        nontarget_cmd_issued = false;
 
         //TODO: setup current cursor from here as well (based on current state'n'stuff)
     }
@@ -673,14 +737,32 @@ namespace eng {
             return;
             
         const GUI::ActionButtonDescription& btn = actionButtons.ButtonData(actionButtons.ClickIdx());
-        if(btn.command_id == GUI::ActionButton_CommandType::PAGE_CHANGE) {
-            actionButtons.ChangePage(btn.payload_id);
+
+        switch(btn.command_id) {
+            case GUI::ActionButton_CommandType::DISABLED:
+                ENG_LOG_WARN("Somehow, you managed to click on a disabled button.");
+                break;
+            case GUI::ActionButton_CommandType::PAGE_CHANGE:
+                //page change -> change page (wow, who would've thought)
+                actionButtons.ChangePage(btn.payload_id);
+                break;
+            case GUI::ActionButton_CommandType::UPGRADE:
+            case GUI::ActionButton_CommandType::TRAIN_OR_RESEARCH:
+            case GUI::ActionButton_CommandType::STOP:
+            case GUI::ActionButton_CommandType::STAND_GROUND:
+                //commands without target, issue immediately on current selection
+                command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                nontarget_cmd_issued = true;
+                break;
+            default:
+                //targetable commands, move to target selection
+                //keep track of the command (or button), watch out for selection changes -> selection cancel?
+                //also do conditions check (enough resources), maybe do one after the target is selected as well
+                state = PlayerControllerState::COMMAND_TARGET_SELECTION;
+                actionButtons.ShowCancelPage();
+                command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                break;
         }
-
-
-        //page change -> change page (wow, who would've thought)
-        //targetable command -> change state to target selection, keep track of the command (or button), change page to cancel page
-        //other commands -> issue the command on current selection
     }
 
     bool PlayerFactionController::CursorInGameView(const glm::vec2& pos) const {
