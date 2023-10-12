@@ -479,7 +479,7 @@ namespace eng {
             }
             else {
                 selection[new_count] = selection[i];
-                location[new_count] = { object->Position(), object->Data()->size };
+                location[new_count] = { object->RenderPosition(), object->Data()->size };
                 new_count++;
 
                 int fID = object->FactionIdx();

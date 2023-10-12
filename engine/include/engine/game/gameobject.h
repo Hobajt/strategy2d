@@ -57,6 +57,7 @@ namespace eng {
         virtual int ActionIdx() const { return actionIdx; }
         glm::ivec2 Position() const { return position; }
         glm::vec2 Positionf() const { return glm::vec2(position); }
+        virtual glm::vec2 RenderPosition() const { return glm::vec2(position); }
 
         glm::vec2 MinPos() const { return glm::vec2(position); }
         glm::vec2 MaxPos() const { return glm::vec2(position) + data->size - 1.f; }
@@ -223,6 +224,7 @@ namespace eng {
         int DefenseUpgradeSource() const { return data->upgrade_src[1]; }
 
         glm::vec2& m_offset() { return move_offset; }
+        virtual glm::vec2 RenderPosition() const override { return glm::vec2(Position()) + move_offset; }
 
         bool AnimationFinished() const { return animation_ended; }
 
