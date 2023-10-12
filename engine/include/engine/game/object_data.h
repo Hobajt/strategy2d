@@ -118,6 +118,8 @@ namespace eng {
 
         objectReferences refs;
         ButtonDescriptions gui_btns;
+
+        SoundEffect sound_yes;
     public:
         virtual int MaxHealth() const override { return health; }
         virtual bool IntegrateInMap() const { return true; }
@@ -135,7 +137,6 @@ namespace eng {
     struct UnitData : public FactionObjectData {
         SoundEffect sound_attack;
         SoundEffect sound_ready;
-        SoundEffect sound_yes;
         SoundEffect sound_what;
         SoundEffect sound_pissed;
 
@@ -145,12 +146,6 @@ namespace eng {
         int deathAnimIdx = -1;
 
         glm::ivec2 upgrade_src;
-    public:
-        const SoundEffect& AttackSound() const { return sound_attack; }
-        const SoundEffect& ReadySound() const { return sound_ready; }
-        const SoundEffect& YesSound() const { return sound_yes; }
-        const SoundEffect& WhatSound() const { return sound_what; }
-        const SoundEffect& PissedSound() const { return sound_pissed; }
     };
     using UnitDataRef = std::shared_ptr<UnitData>;
 

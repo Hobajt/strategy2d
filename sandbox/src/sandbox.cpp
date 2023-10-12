@@ -181,8 +181,8 @@ void Sandbox::CommandDispatch(Unit& unit) {
             ENG_LOG_INFO("GATHER FROM {} ({})", target_id, level.objects.GetObject(target_id));
             unit.IssueCommand(Command::Gather(target_id));
 
-            if(unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
         }
         else if(unit.IsWorker() && harvestable) {
@@ -190,8 +190,8 @@ void Sandbox::CommandDispatch(Unit& unit) {
             ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
             unit.IssueCommand(Command::Harvest(target_pos));
 
-            if(unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
         }
         else if(ObjectID::IsAttackable(target_id)) {
@@ -199,8 +199,8 @@ void Sandbox::CommandDispatch(Unit& unit) {
                 ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
             else
                 ENG_LOG_INFO("ATTACK {} at {} (map object)", target_id, target_pos);
-            if(unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
             unit.IssueCommand(Command::Attack(target_id, target_pos));
         }
@@ -208,8 +208,8 @@ void Sandbox::CommandDispatch(Unit& unit) {
             ENG_LOG_INFO("MOVE TO {}", target_pos);
             unit.IssueCommand(Command::Move(target_pos));
             //TODO: play units voices from wherever player commands are generated (not in the commands themselves)
-            if(unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
         }
         else {

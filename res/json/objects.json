@@ -128,7 +128,8 @@
         "armor": 20,
         "basic_damage": 0,
         "pierce_damage": 0,
-        "race": 0
+        "race": 0,
+        "sounds": { "yes": "bldg/hfarm" }
     },
     {
         "name": "human/tower_guard",

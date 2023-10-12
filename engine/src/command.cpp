@@ -325,8 +325,8 @@ namespace eng {
                     bool attack_happened = ApplyDamage(level, src, action.data.target, action.data.target_pos);
 
                     //play units attack sound if the attack happened
-                    if(attack_happened && src.UData()->AttackSound().valid) {
-                        Audio::Play(src.UData()->AttackSound().Random(), src.Position());
+                    if(attack_happened && src.Sound_Attack().valid) {
+                        Audio::Play(src.Sound_Attack().Random(), src.Position());
                     }
                 }
                     break;

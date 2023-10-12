@@ -262,7 +262,6 @@ namespace eng {
         auto& sounds = config.at("sounds");
         if(sounds.count("attack"))  data->sound_attack  = ParseSoundEffect(sounds.at("attack"));
         if(sounds.count("ready"))   data->sound_ready   = ParseSoundEffect(sounds.at("ready"));
-        if(sounds.count("yes"))     data->sound_yes     = ParseSoundEffect(sounds.at("yes"));
         if(sounds.count("what"))    data->sound_what    = ParseSoundEffect(sounds.at("what"));
         if(sounds.count("pissed"))  data->sound_pissed  = ParseSoundEffect(sounds.at("pissed"));
 
@@ -292,6 +291,11 @@ namespace eng {
         data.cooldown = config.count("cooldown") ? config.at("cooldown") : 0.f;
         data.race = config.count("race") ? config.at("race") : 0;
         data.icon = config.count("icon") ? json::parse_ivec2(config.at("icon")) : glm::ivec2(0);
+
+        if(config.count("sounds")) {
+            auto& sounds = config.at("sounds");
+            if(sounds.count("yes"))     data.sound_yes     = ParseSoundEffect(sounds.at("yes"));
+        }
 
         if(config.count("buttons")) {
             int page_idx = 0;

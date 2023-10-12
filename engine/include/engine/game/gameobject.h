@@ -171,6 +171,8 @@ namespace eng {
         void ReinsertObject(const glm::ivec2& position);
 
         GameObjectDataRef FetchRef(int idx) const { return data_f->refs[idx]; }
+
+        SoundEffect& Sound_Yes() const { return data_f->sound_yes; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -236,6 +238,8 @@ namespace eng {
         bool IsWorker() const { return data->worker; }
         int CarryStatus() const { return carry_state; }
         void ChangeCarryStatus(int carry_state);
+
+        SoundEffect& Sound_Attack() const { return data->sound_attack; }
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

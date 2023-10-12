@@ -247,7 +247,7 @@ namespace eng {
         PageData& p = pages[0];
         
         //no player owned selection -> no pages
-        if(selection.selection_type < SelectionType::PLAYER_BUILDING)
+        if(selection.selection_type < SelectionType::PLAYER_BUILDING || selection.selected_count < 1)
             return;
 
         if(selection.selection_type == SelectionType::PLAYER_UNIT) {
@@ -489,6 +489,11 @@ namespace eng {
             selection_type = selection_mode;
             update_flag = true;
             ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
+
+            FactionObject& object = level.objects.GetObject(selection[0]);
+            if(selection_type > SelectionType::ENEMY_UNIT && object.Sound_Yes().valid) {
+                Audio::Play(object.Sound_Yes().Random());
+            }
         }
         else {
             ENG_LOG_FINE("PlayerSelection::Select - no change");
@@ -633,8 +638,8 @@ namespace eng {
             ENG_LOG_FINE("Targeted command - pos: ({}, {}), ID: {} (cmd: {}, payload: {})", target_pos.x, target_pos.y, target_id, cmd_name, payload_id);
             unit.IssueCommand(cmd);
 
-            if(unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
         }
         else {
@@ -721,8 +726,8 @@ namespace eng {
                     unit.IssueCommand(Command::Move(target_pos));
                 }
 
-                if(i == 0 && unit.UData()->YesSound().valid) {
-                    Audio::Play(unit.UData()->YesSound().Random());
+                if(i == 0 && unit.Sound_Yes().valid) {
+                    Audio::Play(unit.Sound_Yes().Random());
                 }
             }
         }
@@ -769,8 +774,8 @@ namespace eng {
             }
 
             //play unit sound
-            if(i == 0 && unit.UData()->YesSound().valid) {
-                Audio::Play(unit.UData()->YesSound().Random());
+            if(i == 0 && unit.Sound_Yes().valid) {
+                Audio::Play(unit.Sound_Yes().Random());
             }
         }
     }
@@ -819,8 +824,8 @@ namespace eng {
                     unit.IssueCommand(cmd);
                     ENG_LOG_FINE("Targetless command - Unit[{}] - {}", i, cmd_name);
 
-                    if(i == 0 && unit.UData()->YesSound().valid) {
-                        Audio::Play(unit.UData()->YesSound().Random());
+                    if(i == 0 && unit.Sound_Yes().valid) {
+                        Audio::Play(unit.Sound_Yes().Random());
                     }
                 }
             }
@@ -887,6 +892,15 @@ namespace eng {
         }
 
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
+
+        //NEXT UP:
+        //return goods - why the fuck doesn't he go back to work?
+        //play yes sound on unit select - also add sounds for buildings (there's only the select sound)
+        //selection groups & their hotkeys control
+        //update button descriptions when loading resources
+        //map view, faction occlusion mask & fog of war
+        //render proper stat fields when selecting various building types
+        //add population tracking logic (as described below)
 
         /*population:
             - each building will have population_increment property
