@@ -10,10 +10,14 @@ namespace eng::GUI {
         namespace ActionButton_CommandType {
             enum { 
                 DISABLED = -2, PAGE_CHANGE = -1, 
-                MOVE, STOP, STAND_GROUND, PATROL, ATTACK, CAST, ATTACK_GROUND,
-                HARVEST, RETURN_GOODS, BUILD, REPAIR,
+                MOVE, STOP, STAND_GROUND, PATROL, ATTACK, ATTACK_GROUND, CAST,
+                HARVEST, RETURN_GOODS, REPAIR, BUILD,
                 TRAIN_OR_RESEARCH, UPGRADE
             };
+
+            bool IsTargetless(int cmd);
+            bool IsBuildingCommand(int cmd);
+            bool IsSingleUser(int cmd);
         }
 
         struct ActionButtonDescription {

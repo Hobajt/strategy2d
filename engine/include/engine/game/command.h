@@ -98,6 +98,10 @@ namespace eng {
         static Command Idle();
         static Command Move(const glm::ivec2& target_pos);
         static Command Attack(const ObjectID& target_id, const glm::ivec2& target_pos);
+        static Command AttackGround(const glm::ivec2& target_pos);
+        static Command StandGround();
+        static Command Patrol(const glm::ivec2& target_pos);
+        static Command Cast(int payload_id);
 
         //worker-only commands
         static Command Harvest(const glm::ivec2& target_pos);
@@ -105,6 +109,7 @@ namespace eng {
         static Command ReturnGoods();
         static Command ReturnGoods(const glm::ivec2& prev_target);
         static Command Build(int buildingID, const glm::ivec2& target_pos);
+        static Command Repair(const ObjectID& target_id);
 
         void Update(Unit& src, Level& level);
 
@@ -157,8 +162,8 @@ namespace eng {
         static BuildingAction IdleAttack();
         static BuildingAction Construction();
 
-        static BuildingAction TrainOrResearch();
-        static BuildingAction Upgrade();
+        static BuildingAction TrainOrResearch(int payload_id);
+        static BuildingAction Upgrade(int payload_id);
 
         void Update(Building& src, Level& level);
 

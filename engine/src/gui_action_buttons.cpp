@@ -3,6 +3,24 @@
 
 namespace eng::GUI {
 
+    bool ActionButton_CommandType::IsTargetless(int cmd) {
+        return 
+            cmd == ActionButton_CommandType::STOP ||
+            cmd == ActionButton_CommandType::STAND_GROUND ||
+            cmd == ActionButton_CommandType::RETURN_GOODS ||
+            cmd == ActionButton_CommandType::TRAIN_OR_RESEARCH ||
+            cmd == ActionButton_CommandType::UPGRADE
+        ;
+    }
+
+    bool ActionButton_CommandType::IsBuildingCommand(int cmd) {
+        return cmd >= ActionButton_CommandType::TRAIN_OR_RESEARCH;
+    }
+
+    bool ActionButton_CommandType::IsSingleUser(int cmd) {
+        return (cmd == ActionButton_CommandType::CAST || cmd == ActionButton_CommandType::BUILD || IsBuildingCommand(cmd));
+    }
+
     GUI::ActionButtonDescription::ActionButtonDescription() : name("INVALID"), price(glm::ivec4(0)), icon(glm::ivec2(0)) {}
 
     GUI::ActionButtonDescription::ActionButtonDescription(int cID, int pID, bool has_hk, char hk, int hk_idx, const std::string& name_, const glm::ivec2& icon_, const glm::ivec4& price_)

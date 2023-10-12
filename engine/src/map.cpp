@@ -772,7 +772,7 @@ namespace eng {
     }
 
     ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {
-        return tiles(coords).id;
+        return IsWithinBounds(coords) ? tiles(coords).id : ObjectID();
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {

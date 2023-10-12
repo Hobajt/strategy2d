@@ -399,6 +399,26 @@ namespace eng {
         return cmd;
     }
 
+    Command Command::AttackGround(const glm::ivec2& target_pos) {
+        //TODO: 
+        return Idle();
+    }
+
+    Command Command::StandGround() {
+        //TODO: differs from Stop command (which is just reset to Idle()) in that it doesn't allow any movement for the unit (chasing after enemies)
+        return Idle();
+    }
+
+    Command Command::Patrol(const glm::ivec2& target_pos) {
+        //TODO:
+        return Idle();
+    }
+
+    Command Command::Cast(int payload_id) {
+        //TODO:
+        return Idle();
+    }
+
     Command Command::Harvest(const glm::ivec2& target_pos) {
         Command cmd = {};
 
@@ -444,6 +464,11 @@ namespace eng {
         cmd.target_pos = target_pos;
 
         return cmd;
+    }
+
+    Command Command::Repair(const ObjectID& target_id) {
+        //TODO;
+        return Idle();
     }
 
     void Command::Update(Unit& src, Level& level) {
@@ -832,6 +857,16 @@ namespace eng {
         act.logic = BuildingAction::Logic(BuildingActionType::IDLE_ATTACK, BuildingAction_Attack);
         act.data = {};
         return act;
+    }
+
+    BuildingAction BuildingAction::TrainOrResearch(int payload_id) {
+        //TODO: implement
+        return Idle();
+    }
+
+    BuildingAction BuildingAction::Upgrade(int payload_id) {
+        //TODO: implement
+        return Idle();
     }
     
     void BuildingAction::Update(Building& source, Level& level) {

@@ -148,7 +148,9 @@ namespace eng {
         void AddHealth(int value);
 
         virtual bool IsUnit() const { return false; }
-        virtual bool IsGatherable(int unitNavType)  const { return false; }
+        virtual bool IsGatherable(int unitNavType) const { return false; }
+        virtual bool IsGatherable() const { return false; }
+        virtual bool IsRepairable() const { return true; }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
         const ButtonDescriptions& ButtonDescriptions() const { return data_f->gui_btns; }
@@ -226,6 +228,7 @@ namespace eng {
 
         UnitDataRef UData() const { return data; }
         virtual bool IsUnit() const override { return true; }
+        virtual bool IsRepairable() const { return false; }
         virtual int DeathAnimIdx() const override { return data->deathAnimIdx; }
 
         bool IsWorker() const { return data->worker; }
@@ -272,6 +275,7 @@ namespace eng {
 
         virtual int ActionIdx() const override;
         virtual bool IsGatherable(int unitNavType) const override;
+        virtual bool IsGatherable() const override { return data->gatherable; }
 
         virtual void WithdrawObject() override;
 

@@ -7,6 +7,7 @@
 #include "engine/game/camera.h"
 #include "engine/game/config.h"
 #include "engine/game/level.h"
+#include "engine/core/audio.h"
 
 namespace eng {
 
@@ -504,23 +505,266 @@ namespace eng {
         return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
-    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data) {
+    bool PlayerSelection::SetupCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, Command& out_command) {
+        int command_id = cmd_data.x;
+        int payload_id = cmd_data.y;
+
+        switch(command_id) {
+            case GUI::ActionButton_CommandType::MOVE:
+                if(level.map.IsWithinBounds(target_pos)) {
+                    out_command = Command::Move(target_pos);
+                    return true;
+                }
+                break;
+            case GUI::ActionButton_CommandType::STOP:
+                break;
+            case GUI::ActionButton_CommandType::STAND_GROUND:
+                break;
+            case GUI::ActionButton_CommandType::PATROL:
+                break;
+            case GUI::ActionButton_CommandType::ATTACK:
+                if(level.map.IsWithinBounds(target_pos)) {
+                    out_command = Command::Move(target_pos);
+                    return true;
+                }
+                break;
+            case GUI::ActionButton_CommandType::ATTACK_GROUND:
+                break;
+            case GUI::ActionButton_CommandType::CAST:
+                break;
+        }
+
+        return false;
+    }
+
+    void PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data) {
         //do various sanity checks
         //command requirements checks (resources for example)
         //play unit "command issued" sound from here
+        int command_id = cmd_data.x;
+        int payload_id = cmd_data.y;
 
-        ENG_LOG_INFO("COMMAND ISSUED ({}, {}) (TODO)", cmd_data.x, cmd_data.y);
+        //targeted commands can only be issued on player owned units (player buildings have no targeted commands)
+        if(selection_type != SelectionType::PLAYER_UNIT)
+            return;
+        ASSERT_MSG(!GUI::ActionButton_CommandType::IsTargetless(command_id), "Attempting to issue targetless command using a wrong function.");
+
+        static const char* cmd_names[10] = { "Cast", "Build", "Move", "Patrol", "Attack", "AttackGround", "Harvest", "Gather", "Repair", "???" };
+        const char* cmd_name = cmd_names[9];
+        Command cmd;
+
+        if(GUI::ActionButton_CommandType::IsSingleUser(command_id) && selected_count == 1) {
+            // do resource check here(), display message in GUI, if not enough resources
+            Unit& unit = level.objects.GetUnit(selection[0]);
+
+            switch(command_id) {
+                case GUI::ActionButton_CommandType::CAST:
+                    //TODO: resource check & maybe check some other conditions
+                    cmd = Command::Cast(payload_id);
+                    cmd_name = cmd_names[0];
+                    break;
+                case GUI::ActionButton_CommandType::BUILD:
+                    //TODO: resource check, build site check
+                    cmd = Command::Build(payload_id, target_pos);
+                    cmd_name = cmd_names[1];
+                    break;
+            }
+
+            ENG_LOG_FINE("Targeted command - pos: ({}, {}), ID: {} (cmd: {}, payload: {})", target_pos.x, target_pos.y, target_id, cmd_name, payload_id);
+            unit.IssueCommand(cmd);
+
+            if(unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
+        }
+        else {
+            FactionObject* target = nullptr;
+            bool target_friendly = false;
+            if(ObjectID::IsObject(target_id)) {
+                level.objects.GetObject(target_id, target);
+                target_friendly = !level.factions.Diplomacy().AreHostile(target->FactionIdx(), level.factions.Player()->ID());
+            }
+            
+            //resolve command type & check command preconditions
+            bool check_worker = false;
+            bool check_gatherability = false;
+            bool valid_target = true;
+            switch(command_id) {
+                case GUI::ActionButton_CommandType::MOVE:
+                    if(!level.map.IsWithinBounds(target_pos))
+                        valid_target = false;
+                    cmd = Command::Move(target_pos);
+                    cmd_name = cmd_names[2];
+                    break;
+                case GUI::ActionButton_CommandType::PATROL:
+                    if(!level.map.IsWithinBounds(target_pos))
+                        valid_target = false;
+                    cmd = Command::Patrol(target_pos);
+                    cmd_name = cmd_names[3];
+                    break;
+                case GUI::ActionButton_CommandType::ATTACK:
+                    if(!ObjectID::IsAttackable(target_id) || !level.map.IsWithinBounds(target_pos))
+                        valid_target = false;
+                    cmd = Command::Attack(target_id, target_pos);
+                    cmd_name = cmd_names[4];
+                    break;
+                case GUI::ActionButton_CommandType::ATTACK_GROUND:
+                    if(!level.map.IsWithinBounds(target_pos))
+                        valid_target = false;
+                    cmd = Command::AttackGround(target_pos);
+                    cmd_name = cmd_names[5];
+                    break;
+                case GUI::ActionButton_CommandType::HARVEST:
+                    check_worker = true;
+                    if(ObjectID::IsHarvestable(target_id) && level.map.IsWithinBounds(target_pos)) {
+                        cmd = Command::Harvest(target_pos);
+                        cmd_name = cmd_names[6];
+                    }
+                    else if(target != nullptr && target->IsGatherable()) {
+                        cmd = Command::Gather(target_id);
+                        check_gatherability = true;
+                        cmd_name = cmd_names[7];
+                    }
+                    else
+                        valid_target = false;
+                    break;
+                case GUI::ActionButton_CommandType::REPAIR:
+                    check_worker = true;
+                    if(target == nullptr || !target->IsRepairable() || !target_friendly)
+                        valid_target = false;
+                    cmd = Command::Repair(target_id);
+                    cmd_name = cmd_names[8];
+                    break;
+                default:
+                    ENG_LOG_WARN("IssueCommand - Unrecognized command_id ({})", command_id);
+                    return;
+            }
+
+            ENG_LOG_FINE("Targeted command - pos: ({}, {}), ID: {} (cmd: {}, payload: {})", target_pos.x, target_pos.y, target_id, cmd_name, payload_id);
+
+            for(size_t i = 0; i < selected_count; i++) {
+                Unit& unit = level.objects.GetUnit(selection[i]);
+
+                bool conditions_met = valid_target;
+
+                if(check_worker)
+                    conditions_met &= unit.IsWorker();
+                if(check_gatherability)
+                    conditions_met &= (target != nullptr) && target->IsGatherable(unit.NavigationType());
+                
+                if(conditions_met) {
+                    ENG_LOG_FINE("Targeted command - Unit[{}] - issued {}", i, cmd_name);
+                    unit.IssueCommand(cmd);
+                }
+                else {
+                    ENG_LOG_FINE("Targeted command - Unit[{}] - conditions failed", i);
+                    unit.IssueCommand(Command::Move(target_pos));
+                }
+
+                if(i == 0 && unit.UData()->YesSound().valid) {
+                    Audio::Play(unit.UData()->YesSound().Random());
+                }
+            }
+        }
     }
 
-    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id) {
-        //adaptive command -> decide on command type, then invoke IssueCommand with proper params
-        //TODO:
-        ENG_LOG_INFO("ADAPTIVE COMMAND ISSUED (TODO)");
+    void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id) {
+        //adaptive commands can only be issued on player owned units
+        if(selection_type != SelectionType::PLAYER_UNIT)
+            return;
+        ENG_LOG_FINE("Adaptive command - pos: ({}, {}), ID: {}", target_pos.x, target_pos.y, target_id);
+
+        FactionObject* target_object = nullptr;
+        if(ObjectID::IsObject(target_id))
+            level.objects.GetObject(target_id, target_object);
+        bool harvestable = ObjectID::IsHarvestable(target_id);
+        bool attackable = ObjectID::IsAttackable(target_id);
+        bool enemy = (target_object == nullptr || level.factions.Diplomacy().AreHostile(target_object->FactionIdx(), level.factions.Player()->ID()));
+        bool repairable = !enemy && target_object->IsRepairable();
+
+        for(size_t i = 0; i < selected_count; i++) {
+            Unit& unit = level.objects.GetUnit(selection[i]);
+            bool gatherable = (ObjectID::IsObject(target_id) && level.objects.GetObject(target_id).IsGatherable(unit.NavigationType()));
+
+            //command resolution based on unit type & target type
+            if(unit.IsWorker() && gatherable) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Gather", i);
+                unit.IssueCommand(Command::Gather(target_id));
+            }
+            else if(unit.IsWorker() && harvestable) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Harvest", i);
+                unit.IssueCommand(Command::Harvest(target_pos));
+            }
+            else if(unit.IsWorker() && repairable) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Repair", i);
+                unit.IssueCommand(Command::Repair(target_id));
+            }
+            else if(attackable && enemy) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Attack", i);
+                unit.IssueCommand(Command::Attack(target_id, target_pos));
+            }
+            else if(level.map.IsWithinBounds(target_pos)) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Move", i);
+                unit.IssueCommand(Command::Move(target_pos));
+            }
+
+            //play unit sound
+            if(i == 0 && unit.UData()->YesSound().valid) {
+                Audio::Play(unit.UData()->YesSound().Random());
+            }
+        }
     }
 
-    void PlayerSelection::IssueCommand(Level& level, const glm::ivec2& cmd_data) {
-        //targetless command -> same logic as targeted command
-        ENG_LOG_INFO("COMMAND ISSUED ({}, {}) (TODO)", cmd_data.x, cmd_data.y);
+    void PlayerSelection::IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data) {
+        int command_id = cmd_data.x;
+        int payload_id = cmd_data.y;
+        ASSERT_MSG(GUI::ActionButton_CommandType::IsTargetless(command_id), "Attempting to issue command that requires targets using a wrong function.");
+
+        bool building_command = GUI::ActionButton_CommandType::IsBuildingCommand(command_id);
+        ASSERT_MSG((building_command && selection_type == SelectionType::PLAYER_BUILDING) || (!building_command && selection_type == SelectionType::PLAYER_UNIT), "Invalid selection, cannot invoke targetless commands.");
+
+        if(building_command) {
+            Building& building = level.objects.GetBuilding(selection[0]);
+            if(command_id == GUI::ActionButton_CommandType::UPGRADE) {
+                ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
+                building.IssueAction(BuildingAction::Upgrade(payload_id));
+            }
+            else {
+                ENG_LOG_FINE("Targetless command - Train/Research (payload={})", payload_id);
+                building.IssueAction(BuildingAction::TrainOrResearch(payload_id));
+            }
+        }
+        else {
+            static const char* cmd_names[4] = { "Stop", "StandGround", "ReturnGoods", "???" };
+            const char* cmd_name = cmd_names[3];
+            Command cmd;
+            switch(command_id) {
+                case GUI::ActionButton_CommandType::STOP:
+                    cmd = Command::Idle();
+                    cmd_name = cmd_names[0];
+                    break;
+                case GUI::ActionButton_CommandType::STAND_GROUND:
+                    cmd = Command::StandGround();
+                    cmd_name = cmd_names[1];
+                    break;
+                case GUI::ActionButton_CommandType::RETURN_GOODS:
+                    cmd = Command::ReturnGoods();
+                    cmd_name = cmd_names[2];              
+                    break;
+            }
+            for(size_t i = 0; i < selected_count; i++) {
+                Unit& unit = level.objects.GetUnit(selection[i]);
+                bool return_goods_condition = unit.IsWorker() && (unit.CarryStatus() != WorkerCarryState::NONE);
+                if(command_id != GUI::ActionButton_CommandType::RETURN_GOODS || return_goods_condition) {
+                    unit.IssueCommand(cmd);
+                    ENG_LOG_FINE("Targetless command - Unit[{}] - {}", i, cmd_name);
+
+                    if(i == 0 && unit.UData()->YesSound().valid) {
+                        Audio::Play(unit.UData()->YesSound().Random());
+                    }
+                }
+            }
+        }
     }
 
     //===== PlayerFactionController =====
@@ -609,7 +853,7 @@ namespace eng {
                     ResolveActionButtonClick();
 
                     if(nontarget_cmd_issued) {
-                        selection.IssueCommand(level, command_data);
+                        selection.IssueTargetlessCommand(level, command_data);
                         command_data = glm::ivec2(-1);
                     }
                 }
@@ -624,7 +868,7 @@ namespace eng {
                         //issue adaptive command to current selection
                         glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                         ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                        selection.IssueCommand(level, target_pos, target_id);
+                        selection.IssueAdaptiveCommand(level, target_pos, target_id);
                     }
                 }
                 else if(CursorInMapView(pos)) {
@@ -677,7 +921,7 @@ namespace eng {
                             //issue the command & go back to idle state
                             glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                             ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                            selection.IssueCommand(level, target_pos, target_id, command_data);
+                            selection.IssueTargetedCommand(level, target_pos, target_id, command_data);
                             state = PlayerControllerState::IDLE;
                             command_data = glm::ivec2(-1);
                             actionButtons.ChangePage(0);
@@ -750,6 +994,7 @@ namespace eng {
             case GUI::ActionButton_CommandType::TRAIN_OR_RESEARCH:
             case GUI::ActionButton_CommandType::STOP:
             case GUI::ActionButton_CommandType::STAND_GROUND:
+            case GUI::ActionButton_CommandType::RETURN_GOODS:
                 //commands without target, issue immediately on current selection
                 command_data = glm::ivec2(btn.command_id, btn.payload_id);
                 nontarget_cmd_issued = true;

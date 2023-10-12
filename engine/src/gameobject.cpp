@@ -64,14 +64,14 @@ namespace eng {
 
     void GameObject::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
+        ImGui::PushID(this);
         if(ImGui::CollapsingHeader(data->name.c_str())) {
-            ImGui::PushID(this);
             ImGui::Indent();
             Inner_DBG_GUI();
             if(ImGui::Button("Kill")) Kill();
             ImGui::Unindent();
-            ImGui::PopID();
         }
+        ImGui::PopID();
 #endif
     }
 

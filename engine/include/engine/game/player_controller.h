@@ -6,6 +6,7 @@
 #include "engine/game/faction.h"
 #include "engine/core/gui.h"
 #include "engine/core/gui_action_buttons.h"
+#include "engine/game/command.h"
 
 namespace eng {
 
@@ -107,9 +108,11 @@ namespace eng {
 
         int ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID);
 
-        void IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data);
-        void IssueCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
-        void IssueCommand(Level& level, const glm::ivec2& cmd_data);
+        void IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data);
+        void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
+        void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
+    private:
+        bool SetupCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, Command& out_cmd);
     };
 
     //===== PlayerFactionController =====

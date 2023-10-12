@@ -60,6 +60,7 @@ void Sandbox::OnInit() {
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), f1, glm::vec2(5.f, 0.f));
         trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
+        trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(6.f, 5.f), false);
 
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), f1, glm::vec2(5.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), f1, glm::vec2(5.f, 3.f), false);
