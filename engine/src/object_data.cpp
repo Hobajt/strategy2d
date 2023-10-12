@@ -225,10 +225,10 @@ namespace eng {
         //parse general unit/building parameters
         ParseConfig_FactionObject(config, (FactionObjectData&)*data.get());
 
-        data->traversable = config.count("traversable") ? config.at("traversable") : false;
-        data->gatherable = config.count("gatherable") ? config.at("gatherable") : false;
-        data->dropoff_mask = config.count("dropoff_mask") ? config.at("dropoff_mask") : 0;
-        data->attack_speed = config.count("attack_speed") ? config.at("attack_speed") : 2.f;
+        data->traversable           = config.count("traversable") ? config.at("traversable") : false;
+        data->gatherable            = config.count("gatherable") ? config.at("gatherable") : false;
+        data->dropoff_mask          = config.count("dropoff_mask") ? config.at("dropoff_mask") : 0;
+        data->attack_speed          = config.count("attack_speed") ? config.at("attack_speed") : 2.f;
 
         return std::static_pointer_cast<GameObjectData>(data);
     }

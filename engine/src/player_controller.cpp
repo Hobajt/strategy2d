@@ -118,16 +118,6 @@ namespace eng {
                     - level could be stored in the table as well
             */
 
-            /*STATS:
-                - for units, always display armor, damage, range, sight, speed
-                    - if unit has magic, also display mana bar
-                - buildings:
-                    - if it's a gatherable resource, display only the amount left
-                    - if it's a dropoff point for a resource, display "Production" headline and the resource that you can dropoff
-                    - if it's a farm, display population stats
-                    - else display no stats at all
-            */
-
             /*HOW TO HANDLE KNIGHT-PALA and OGRE-MAGI TRANSITIONS:
                 - they could be two separate unit types or a single one
                     - having single unit would simplify the upgrade process
@@ -150,6 +140,7 @@ namespace eng {
             name->Setup(object->Name());
 
             if(object->IsUnit()) {
+                //display units stats (always the same, except the mana bar might be hidden)
                 Unit* unit = static_cast<Unit*>(object);
 
                 snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
@@ -175,6 +166,25 @@ namespace eng {
                     snprintf(buf, sizeof(buf), "%d", unit->Mana());
                     mana_bar->Setup(unit->Mana(), buf);
                 }
+            }
+            else {
+                //display stats for buildings
+                Building* building = static_cast<Building*>(object);
+
+                // building->IsGatherable();
+                // building->DropoffMask() != 0;
+                // building->Type() == BuildingType::FARM;
+
+
+
+                /*STATS:
+                    - buildings:
+                        - if it's a gatherable resource, display only the amount left
+                        - if it's a dropoff point for a resource, display "Production" headline and the resource that you can dropoff
+                        - if it's a farm, display population stats
+                        - else display no stats at all
+                */
+
             }
         }
         else if(selection.selected_count > 1) {
@@ -500,6 +510,13 @@ namespace eng {
         }
     }
 
+    void PlayerSelection::SelectionGroupsHotkey(int keycode, int modifiers) {
+        ASSERT_MSG(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9, "Invalid keycode, only number keys are supported");
+
+        group_update_flag = 1 + int(HAS_FLAG(modifiers, 2));
+        group_update_idx = keycode - GLFW_KEY_0;
+    }
+
     void PlayerSelection::SelectFromSelection(int id) {
         if(id < 0 || id >= selected_count) {
             ENG_LOG_WARN("PlayerSelection::SelectFromSelection - index out of bounds (idx={}, current selection={})", id, selected_count);
@@ -564,6 +581,47 @@ namespace eng {
         }
 
         update_flag = false;
+    }
+
+    void PlayerSelection::GroupsUpdate(Level& level) {
+        switch(group_update_flag) {
+            case 1:     //select group
+            {
+                int s_type;
+                int s_count;
+                SelectionData s_data;
+                std::tie(s_data, s_count, s_type) = groups[group_update_idx];
+                update_flag = true;
+
+                int new_count = 0;
+                for(size_t i = 0; i < s_count; i++) {
+                    FactionObject* object = nullptr;
+                    if(level.objects.GetObject(s_data[i], object)) {
+                        s_data[new_count] = s_data[i];
+
+                        if(new_count == 0 && s_type > SelectionType::ENEMY_UNIT && object->Sound_Yes().valid) {
+                            Audio::Play(object->Sound_Yes().Random());
+                        }
+
+                        new_count++;
+                    }
+
+                }
+                s_count = new_count;
+
+                if(s_count > 0) {
+                    selection = s_data;
+                    selection_type = s_type;
+                    selected_count = s_count;
+                    ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
+                }
+            }
+                break;
+            case 2:     //override group with current selection
+                groups[group_update_idx] = { selection, selected_count, selection_type };
+                break;
+        }
+        group_update_flag = 0;
     }
 
     int PlayerSelection::ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID) {
@@ -877,6 +935,8 @@ namespace eng {
         Camera& camera = Camera::Get();
         Input& input = Input::Get();
 
+        selection.GroupsUpdate(level);
+
         //update the GUI - selection & input processing
         gui_handler.Update(&game_panel);
 
@@ -894,20 +954,19 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
+        //render proper stat fields when selecting various building types
+        
         //return goods - why the fuck doesn't he go back to work?
-        //play yes sound on unit select - also add sounds for buildings (there's only the select sound)
-        //selection groups & their hotkeys control
         //update button descriptions when loading resources
         //map view, faction occlusion mask & fog of war
-        //render proper stat fields when selecting various building types
         //add population tracking logic (as described below)
 
         /*population:
-            - each building will have population_increment property
-            - when the building construction finishes, faction object is signaled to increment the population counter
-            - when the building is destroyed, faction object is again signaled
-            - population is incremented whenever train command finishes (at the same point when unit is added into the game)
-            - unit dying decrements the counter
+            - incrementing population counter on building construction/death seems kinda shitty and prone to errors
+            - faction controller will track count for each building type
+            - compute population from that (num_town_halls + 4*num_farms)
+            - update whenever new building is registered
+            - this way, the population will always match the buildings
         */
 
         /*map view impl:
@@ -1050,9 +1109,8 @@ namespace eng {
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
         // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
 
-        //TODO: implement selection groups
         if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
-            // selection.SelectionGroupsHotkey(keycode, modifiers);
+            selection.SelectionGroupsHotkey(keycode, modifiers);
         }
 
         if((keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z) || keycode == GLFW_KEY_ESCAPE) {

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <tuple>
 
 #include "engine/game/faction.h"
 #include "engine/core/gui.h"
@@ -111,21 +112,32 @@ namespace eng {
     namespace SelectionType { enum { ENEMY_BUILDING = 0, ENEMY_UNIT, PLAYER_BUILDING, PLAYER_UNIT }; }
 
     struct PlayerSelection {
-        std::array<ObjectID, 9> selection;
+        using SelectionData = std::array<ObjectID, 9>;
+        using SelectionGroup = std::tuple<SelectionData, int, int>;
+    public:
+        SelectionData selection;
         std::array<std::pair<glm::vec2, glm::vec2>, 9> location;
         int selected_count = 0;
         int selection_type = 0;
         int clr_idx = 0;
 
+        std::array<SelectionGroup, 9> groups;
+
         bool update_flag = false;
+
+        int group_update_flag = 0;
+        int group_update_idx = 0;
     public:
         //Picks new objects from selected area in the map.
         void Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID);
+
+        void SelectionGroupsHotkey(int keycode, int modifiers);
 
         void SelectFromSelection(int id);
 
         void Render();
         void Update(Level& level, GUI::SelectionTab* selectionTab, GUI::ActionButtons* actionButtons, int playerFactionID);
+        void GroupsUpdate(Level& level);
 
         int ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID);
 
