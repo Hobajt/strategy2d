@@ -73,6 +73,9 @@ namespace eng {
 
         virtual void Update(Level& level) {}
 
+        glm::ivec3 Resources() const { return resources; }
+        glm::ivec2 Population() const { return population; }
+
         void DBG_GUI();
     private:
         virtual void Inner_DBG_GUI() {}
@@ -85,6 +88,8 @@ namespace eng {
         std::string name = "unnamed_faction";
 
         int race = 0;
+        glm::vec3 resources = glm::vec3(0);
+        glm::vec2 population = glm::vec2(0);
 
         static int idCounter;
     };

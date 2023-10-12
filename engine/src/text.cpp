@@ -146,6 +146,19 @@ namespace eng {
         RenderText(text, center - offset, scale, color1, color2, letterIdx, zIndex, info);
     }
 
+    void Font::RenderTextAlignLeft(const char* text, const glm::ivec2& highlightRange, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, float zIndex, const glm::uvec4& info) {
+        int height = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+        }
+
+        glm::vec2 offset = glm::vec2(0.f, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, center - offset, scale, color1, color2, highlightRange, zIndex, info);
+    }
+
     void Font::RenderTextKeyValue(const char* text, size_t max_len, const glm::vec2 center, float scale, const glm::vec4& color, float zIndex, const glm::uvec4& info) {
         int height = 0;
         int width = 0;
@@ -181,6 +194,25 @@ namespace eng {
             const CharInfo& ch = GetChar(*c);
 
             Renderer::RenderQuad(Quad::Char(info, ch, pos, size_mult, atlasSize_inv, (i != letterIdx ? color1 : color2), texture, zIndex));
+
+            pos += glm::vec2(ch.advance) * size_mult;
+            i++;
+        }
+    }
+
+    void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, 
+            const glm::ivec2& highlightRange, float zIndex, const glm::uvec4& info) {
+        
+        glm::vec2 size_mult = scale / glm::vec2(Window::Get().Size());
+        glm::vec2 pos = topLeft;
+        int a = highlightRange.x;
+        int b = highlightRange.y;
+
+        int i = 0;
+        for(const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+
+            Renderer::RenderQuad(Quad::Char(info, ch, pos, size_mult, atlasSize_inv, ((i >= a && i < b) ? color2 : color1), texture, zIndex));
 
             pos += glm::vec2(ch.advance) * size_mult;
             i++;

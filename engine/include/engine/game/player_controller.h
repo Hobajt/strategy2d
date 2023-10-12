@@ -83,6 +83,27 @@ namespace eng {
 
             int clicked_btn_idx = -1;
         };
+
+        //===== GUI::ResourceBar =====
+
+        class ResourceBar : public Element {
+        public:
+            ResourceBar() = default;
+            ResourceBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, bool alt = false);
+
+            void Update(const glm::ivec3& resources, const glm::ivec2& population);
+            void UpdateAlt(const glm::ivec4& price);
+            void ClearAlt();
+
+            static glm::ivec2 IconIdx(int resource_idx);
+
+            virtual void OnHover() override {}
+            virtual void OnHold() override {}
+            virtual void OnHighlight() override {}
+        private:
+            std::array<ImageAndLabel*, 4> text;
+            bool alt;
+        };
     }
 
     //===== PlayerSelection =====
@@ -166,6 +187,8 @@ namespace eng {
 
         GUI::ActionButtons actionButtons;
         GUI::SelectionTab* selectionTab;
+        GUI::ResourceBar resources;
+        GUI::ResourceBar price;
 
         PlayerSelection selection;
 

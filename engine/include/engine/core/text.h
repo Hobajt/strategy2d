@@ -52,6 +52,7 @@ namespace eng {
         void RenderTextAlignRight(const char* text, size_t max_len, const glm::vec2 topRight, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         
         void RenderTextAlignLeft(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        void RenderTextAlignLeft(const char* text, const glm::ivec2& highlightRange, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
         void RenderTextKeyValue(const char* text, size_t sep_pos, const glm::vec2 center, float scale, const glm::vec4& color = glm::vec4(1.f), float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 
@@ -61,6 +62,7 @@ namespace eng {
 
         //renders one letter in different color
         void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
+        void RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, const glm::ivec2& highlightIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
         void RenderTextCentered(const char* text, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, int letterIdx, const glm::ivec2& pxOffset, float zIndex = -0.9f, const glm::uvec4& info = glm::uvec4(0));
 

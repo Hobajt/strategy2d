@@ -384,6 +384,66 @@ namespace eng {
         }
     }
 
+    //===== GUI::ResourceBar =====
+
+    GUI::ResourceBar::ResourceBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const Sprite& sprite_, bool alt_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), alt(alt_) {
+        
+        text[0] = static_cast<ImageAndLabel*>(AddChild(new ImageAndLabel(glm::vec2(alt ? -1.0f : -0.8f, 0.f), glm::vec2(1.f, 1.f), 1.f, style_, sprite_, IconIdx(0), "GOLD")));
+        text[1] = static_cast<ImageAndLabel*>(AddChild(new ImageAndLabel(glm::vec2(alt ? -0.3f : -0.4f, 0.f), glm::vec2(1.f, 1.f), 1.f, style_, sprite_, IconIdx(1), "WOOD")));
+        text[2] = static_cast<ImageAndLabel*>(AddChild(new ImageAndLabel(glm::vec2(alt ?  0.4f :  0.0f, 0.f), glm::vec2(1.f, 1.f), 1.f, style_, sprite_, IconIdx(2), "OIL ")));
+        text[3] = static_cast<ImageAndLabel*>(AddChild(new ImageAndLabel(glm::vec2(alt ?  1.5f :  0.4f, 0.f), glm::vec2(1.f, 1.f), 1.f, style_, sprite_, IconIdx(4), "POP")));
+    }
+
+    void GUI::ResourceBar::Update(const glm::ivec3& resources, const glm::ivec2& population) {
+        char buf[256];
+
+        for(size_t i = 0; i < 3; i++) {
+            snprintf(buf, sizeof(buf), "%d", resources[i]);
+            text[i]->Setup(IconIdx(i), std::string(buf));
+        }
+
+        snprintf(buf, sizeof(buf), "%d/%d", population[0], population[1]);
+        glm::ivec2 highlight = (population[0] > population[1]) ? glm::vec2(0, strchr(buf, '/') - buf) : glm::vec2(-1);
+        text[3]->Setup(IconIdx(4), std::string(buf), highlight);
+    }
+
+    void GUI::ResourceBar::UpdateAlt(const glm::ivec4& price) {
+        char buf[256];
+
+        bool values_displayed = false;
+        for(size_t i = 0; i < 3; i++) {
+            if(price[i] == 0)
+                continue;
+            values_displayed = true;
+            snprintf(buf, sizeof(buf), "%d", price[i]);
+            text[i]->Setup(IconIdx(i), std::string(buf));
+        }
+
+        if(!values_displayed && price[3] != 0) {
+            snprintf(buf, sizeof(buf), "%d", price[3]);
+            text[0]->Setup(IconIdx(3), std::string(buf));
+        }
+        text[3]->Enable(false);
+    }
+
+    void GUI::ResourceBar::ClearAlt() {
+        for(size_t i = 0; i < 4; i++) {
+            text[i]->Enable(false);
+        }
+    }
+
+    glm::ivec2 GUI::ResourceBar::IconIdx(int resource_idx) {
+        constexpr static std::array<glm::ivec2, 5> idx = {
+            glm::ivec2(0,18),    //gold
+            glm::ivec2(1,18),    //wood
+            glm::ivec2(2,18),    //oil
+            glm::ivec2(3,18),    //mana
+            glm::ivec2(4,18),    //population
+        };
+        return idx[resource_idx];
+    }
+
     //===== PlayerSelection =====
 
     void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
@@ -795,6 +855,8 @@ namespace eng {
         //render individual GUI elements
         game_panel.Render();
         text_prompt.Render();
+        resources.Render();
+        price.Render();
 
         switch(state) {
             case PlayerControllerState::OBJECT_SELECTION:
@@ -817,11 +879,22 @@ namespace eng {
         GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
         if(btn != nullptr) {
             text_prompt.Setup(btn->Name(), btn->HighlightIdx());
-            //TODO: render btn's price tag (if it has one)
+            price.UpdateAlt(btn->Price());
         }
         else {
             text_prompt.Setup("");
+            price.ClearAlt();
         }
+
+        resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
+
+        /*population:
+            - each building will have population_increment property
+            - when the building construction finishes, faction object is signaled to increment the population counter
+            - when the building is destroyed, faction object is again signaled
+            - population is incremented whenever train command finishes (at the same point when unit is added into the game)
+            - unit dying decrements the counter
+        */
 
         /*map view impl:
             - need to maintain a texture with miniaturized map
@@ -1083,11 +1156,20 @@ namespace eng {
         text_style_small->textScale = 0.5f;
         text_style_small->color = glm::vec4(0.f);
 
+        GUI::StyleRef text_style_small2 = std::make_shared<GUI::Style>();
+        text_style_small2->textColor = glm::vec4(1.f);
+        text_style_small2->font = font;
+        text_style_small2->textScale = 0.7f;
+        text_style_small2->color = glm::vec4(0.f);
+        text_style_small2->highlightColor = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
         //dbg only - to visualize the element size
         // text_style->color = glm::vec4(1.f);
-        // text_style_small->color = glm::vec4(1.f);
         // text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style_small->color = glm::vec4(1.f);
         // text_style_small->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style_small2->color = glm::vec4(1.f);
+        // text_style_small2->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
 
         buttonSize = glm::vec2(0.25f, 0.25f);
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -1167,8 +1249,13 @@ namespace eng {
             selectionTab,
         });
 
-        float b = BORDER_SIZE * Window::Get().Ratio();
+        float wr = Window::Get().Ratio();
+        float b = BORDER_SIZE * wr;
+        float w = 2.f * GUI_WIDTH;
         float xOff = 0.01f;
+        // resources = GUI::ResourceBar(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff, -1.f), glm::vec2(1.f - GUI_WIDTH - xOff, b), 10.f, text_style_small, icon);
+        resources = GUI::ResourceBar(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH),-1.f + b), glm::vec2(1.f - GUI_WIDTH - xOff, b), 1.f, text_style_small2, icon);
+        price     = GUI::ResourceBar(glm::vec2( 1.f - GUI_WIDTH * 1.5f, 1.f - b), glm::vec2(GUI_WIDTH * 1.5f, b), 1.f, text_style_small2, icon, true);
         text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style, "TEXT PROMPT", false);
 
         //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one

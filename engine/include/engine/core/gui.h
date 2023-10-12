@@ -390,6 +390,7 @@ namespace eng::GUI {
 
         std::string Name() const { return name; }
         int HighlightIdx() const { return highlightIdx; }
+        glm::ivec4 Price() const { return price; }
     protected:
         virtual void InnerRender() override;
     private:
@@ -481,6 +482,27 @@ namespace eng::GUI {
     private:
         std::string text;
         size_t sep_pos;
+    };
+
+
+    //===== ImageAndLabel =====
+
+    class ImageAndLabel : public Element {
+    public:
+        ImageAndLabel(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const Sprite& sprite, const glm::ivec2& icon, const std::string& text, const glm::ivec2& highlight_range = glm::ivec2(-1));
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void OnHighlight() override {}
+
+        void Setup(const glm::ivec2& icon, const std::string& text, const glm::ivec2& highlight_range = glm::ivec2(-1), bool enable = true);
+    protected:
+        virtual void InnerRender() override;
+    private:
+        glm::ivec2 icon;
+        std::string text;
+        glm::ivec2 highlight_range;
+        Sprite sprite;
     };
 
     //===== ImageButtonGrid =====

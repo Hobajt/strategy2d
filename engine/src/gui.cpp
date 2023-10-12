@@ -863,6 +863,32 @@ namespace eng::GUI {
         style->font->RenderTextKeyValue(text.c_str(), sep_pos, glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
     }
 
+    //===== ImageAndLabel =====
+
+    ImageAndLabel::ImageAndLabel(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const Sprite& sprite_, 
+        const glm::ivec2& icon_, const std::string& text_, const glm::ivec2& highlight_range_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_), highlight_range(highlight_range_), icon(icon_), sprite(sprite_) {}
+
+    void ImageAndLabel::Setup(const glm::ivec2& icon_, const std::string& text_, const glm::ivec2& highlight_range_, bool enabled) {
+        icon = icon_;
+        text = text_;
+        highlight_range = highlight_range_;
+
+        if(enabled)
+            Enable(true);
+    }
+
+    void ImageAndLabel::InnerRender() {
+        Element::InnerRender();
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+        float s = size.y;
+
+        //position is at the center of icon's right border, icon is set to be square size
+        sprite.Render(glm::vec3(position.x - 2*s, -position.y - s,  Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET), glm::vec2(2.f * s), icon.y, icon.x);
+
+        style->font->RenderTextAlignLeft(text.c_str(), highlight_range, glm::vec2(position.x + s*0.5f, -position.y), style->textScale, style->textColor, style->highlightColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+    }
+
     //===== ImageButtonGrid =====
 
     ImageButtonGrid::ImageButtonGrid(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
