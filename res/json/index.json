@@ -1,0 +1,36 @@
+{
+    "units": [
+        ["human/peasant", "orc/peon"],
+        ["human/footman", "orc/grunt"],
+        ["human/archer", "orc/troll"],
+        ["human/ballista", "orc/catapult"],
+        ["human/knight", "orc/ogre"],
+        ["human/paladin", "orc/ogre_magi"],
+        ["human/tanker", "orc/tanker"],
+        ["human/destroyer", "orc/destroyer"],
+        ["human/battleship", "orc/battleship"],
+        ["human/submarine", "orc/submarine"],
+        ["human/roflcopter", "orc/roflcopter"],
+        ["human/demosquad", "orc/demosquad"],
+        ["human/mage", "orc/death_knight"],
+        ["human/gryphon", "orc/dragon"]
+    ],
+    "buildings": [
+        ["human/town_hall", "orc/great_hall"],
+        ["human/barracks", "orc/barracks"],
+        ["human/farm", "orc/farm"],
+        ["human/lumber_mill", "orc/lumber_mill"],
+        ["human/blacksmith", "orc/blacksmith"],
+        ["human/tower", "orc/tower"],
+    
+        ["human/shipyard", "orc/shipyard"],
+        ["human/foundry", "orc/foundry"],
+        ["human/refinery", "orc/refinery"],
+        ["human/inventor", "orc/inventor"],
+        ["human/stables", "orc/mound"],
+        ["human/church", "orc/altar"],
+        ["human/wizard_tower", "orc/temple"],
+        ["human/aviary", "orc/dragon_roost"]
+    ],
+    "utility": []
+}

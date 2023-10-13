@@ -74,8 +74,14 @@ namespace eng {
         using referencesMapping = std::vector<std::pair<std::string, referencesRecord>>;
         using objectReferences = std::array<GameObjectDataRef, MAX_OBJECT_REFS>;
     public:
-        std::string name;
+        std::string str_id;
+        glm::ivec3  num_id;
         int objectType;
+        bool initialized = false;
+
+        std::string name;
+        glm::ivec4 cost;
+        glm::ivec2 icon;
 
         glm::vec2 size;
         int navigationType;
@@ -85,8 +91,7 @@ namespace eng {
         virtual ~GameObjectData() = default;
         virtual int MaxHealth() const { return 0; }
 
-        //Used during resources initialization.
-        virtual void SetupObjectReferences(const referencesRecord& refs) {}
+        void SetupID(const std::string& str_id_, const glm::ivec3& num_id_) { str_id = str_id_; num_id = num_id_; }
     };
 
     struct ButtonDescriptions {
@@ -102,7 +107,6 @@ namespace eng {
 
         int build_time;
         int upgrade_time;
-        glm::ivec3 cost;
 
         int basic_damage;
         int pierce_damage;
@@ -114,7 +118,6 @@ namespace eng {
 
         int deathSoundIdx;      //identifies what sound to play on death (from 4 preset sounds)
         int race;
-        glm::ivec2 icon;
 
         objectReferences refs;
         ButtonDescriptions gui_btns;
@@ -125,8 +128,6 @@ namespace eng {
         virtual bool IntegrateInMap() const { return true; }
 
         bool CanAttack() const { return basic_damage + pierce_damage > 0; }
-
-        virtual void SetupObjectReferences(const referencesRecord& refs) override;
     };
     using FactionObjectDataRef = std::shared_ptr<FactionObjectData>;
 

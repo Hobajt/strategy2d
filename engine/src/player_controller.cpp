@@ -955,9 +955,9 @@ namespace eng {
 
         //NEXT UP:
         //render proper stat fields when selecting various building types
+        //render building preview when in the build command
         
         //return goods - why the fuck doesn't he go back to work?
-        //update button descriptions when loading resources
         //map view, faction occlusion mask & fog of war
         //add population tracking logic (as described below)
 
@@ -1136,7 +1136,8 @@ namespace eng {
                 actionButtons.ChangePage(btn.payload_id);
                 break;
             case GUI::ActionButton_CommandType::UPGRADE:
-            case GUI::ActionButton_CommandType::TRAIN_OR_RESEARCH:
+            case GUI::ActionButton_CommandType::TRAIN:
+            case GUI::ActionButton_CommandType::RESEARCH:
             case GUI::ActionButton_CommandType::STOP:
             case GUI::ActionButton_CommandType::STAND_GROUND:
             case GUI::ActionButton_CommandType::RETURN_GOODS:

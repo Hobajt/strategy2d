@@ -8,13 +8,14 @@ namespace eng::GUI {
             cmd == ActionButton_CommandType::STOP ||
             cmd == ActionButton_CommandType::STAND_GROUND ||
             cmd == ActionButton_CommandType::RETURN_GOODS ||
-            cmd == ActionButton_CommandType::TRAIN_OR_RESEARCH ||
+            cmd == ActionButton_CommandType::TRAIN ||
+            cmd == ActionButton_CommandType::RESEARCH ||
             cmd == ActionButton_CommandType::UPGRADE
         ;
     }
 
     bool ActionButton_CommandType::IsBuildingCommand(int cmd) {
-        return cmd >= ActionButton_CommandType::TRAIN_OR_RESEARCH;
+        return cmd >= ActionButton_CommandType::TRAIN;
     }
 
     bool ActionButton_CommandType::IsSingleUser(int cmd) {

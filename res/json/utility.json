@@ -1,5 +1,6 @@
 [
     {
+        "str_id": "arrow",
         "name": "arrow",
         "type": 4,
         "nav_type": 1,
@@ -12,6 +13,7 @@
         }
     },
     {
+        "str_id": "corpse",
         "name": "corpse",
         "type": 4,
         "nav_type": 1,

@@ -12,7 +12,7 @@ namespace eng::GUI {
                 DISABLED = -2, PAGE_CHANGE = -1, 
                 MOVE, STOP, STAND_GROUND, PATROL, ATTACK, ATTACK_GROUND, CAST,
                 HARVEST, RETURN_GOODS, REPAIR, BUILD,
-                TRAIN_OR_RESEARCH, UPGRADE
+                TRAIN, RESEARCH, UPGRADE
             };
 
             bool IsTargetless(int cmd);
@@ -22,7 +22,7 @@ namespace eng::GUI {
 
         struct ActionButtonDescription {
             int command_id = ActionButton_CommandType::DISABLED;
-            int payload_id = -1;     //relevant only when command_id \in { PAGE_CHANGE, CAST, BUILD, TRAIN_OR_RESEARCH }
+            int payload_id = -1;     //relevant only when command_id \in { PAGE_CHANGE, CAST, BUILD, TRAIN, RESEARCH }
 
             bool has_hotkey = false;
             char hotkey;

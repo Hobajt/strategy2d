@@ -21,6 +21,17 @@ namespace eng {
         };
     }
 
+    namespace UnitType {
+        enum {
+            PEASANT, FOOTMAN, ARCHER, BALLISTA, KNIGHT, PALADIN,
+            TANKER, DESTROYER, BATTLESHIP, SUBMARINE,
+            ROFLCOPTER, DEMOSQUAD,
+            MAGE,
+            GRYPHON,
+            COUNT
+        };
+    }
+
     //===== GameObject =====
     
     class GameObject {
@@ -72,6 +83,8 @@ namespace eng {
 
         int ID() const { return id; }
         ObjectID OID() const { return oid; }
+        glm::ivec3 NumID() const { return data->num_id; }
+        std::string StrID() const { return data->str_id; }
         std::string Name() const { return data->name; }
 
         GameObjectDataRef Data() const { return data; }

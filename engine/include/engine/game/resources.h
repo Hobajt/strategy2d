@@ -53,12 +53,16 @@ namespace eng::Resources {
 
     //===== Object Prefabs =====
 
-    GameObjectDataRef LoadObject(const std::string& name);
-    GameObjectDataRef LoadObjectReference(const std::string& name);
+    //lookup in the map
+    GameObjectDataRef LoadObject(const std::string& str_id);
+    UtilityObjectDataRef LoadUtilityObj(const std::string& str_id);
+    BuildingDataRef LoadBuilding(const std::string& str_id);
+    UnitDataRef LoadUnit(const std::string& str_id);
 
-    UtilityObjectDataRef LoadUtilityObj(const std::string& name);
-    BuildingDataRef LoadBuilding(const std::string& name);
-    BuildingDataRef LoadBuilding(int buildingID, bool isOrc);
-    UnitDataRef LoadUnit(const std::string& name);
+    //lookup in the index
+    GameObjectDataRef LoadObject(const glm::ivec3& num_id);
+    UtilityObjectDataRef LoadUtilityObj(int num_id);
+    BuildingDataRef LoadBuilding(int num_id, bool isOrc);
+    UnitDataRef LoadUnit(int num_id, bool isOrc);
 
 }//namespace eng::Resources

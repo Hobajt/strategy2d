@@ -8,15 +8,13 @@
 #include "engine/utils/timer.h"
 
 #include "engine/game/gameobject.h"
+#include "engine/game/object_parsing.h"
 
 constexpr float DEFAULT_FONT_SCALE = 0.055f;
 
 namespace eng {
     //defined in sprite.cpp:280 (+-)
     SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags);
-
-    //defined in object_data.cpp:64 (+-)
-    GameObjectDataRef ParseConfig_Object(const nlohmann::json& config, GameObjectData::referencesMapping& refMapping);
 }
 
 namespace eng::Resources {
@@ -33,6 +31,9 @@ namespace eng::Resources {
 
         std::unordered_map<std::string, GameObjectDataRef> objects;
         std::array<std::array<BuildingDataRef, 2>, BuildingType::COUNT> buildings;
+        std::array<std::array<UnitDataRef, 2>, UnitType::COUNT> units;
+        std::vector<UtilityObjectDataRef> utilities;
+
         bool linkable = false;
         bool preloaded = false;
     };
@@ -45,8 +46,15 @@ namespace eng::Resources {
     void PreloadSpritesheets();
     void PreloadObjects();
 
+    void ProcessIndexFile();
+    void LoadObjectDefinitions();
+
+    void ValidateIndexEntries();
     UtilityObjectDataRef SetupCorpseData();
-    void SetupBuildingsIndex();
+    void FinalizeButtonDescriptions();
+
+    GameObjectDataRef LinkObject(const std::string& name);
+    GameObjectDataRef LinkObject(const glm::ivec3& num_id, bool initialized_only);
 
     //============
 
@@ -209,9 +217,9 @@ namespace eng::Resources {
 
     //===== Object Prefabs =====
 
-    GameObjectDataRef LoadObject(const std::string& name) {
-        if(!data.preloaded) {
-            ENG_LOG_ERROR("Resources::LoadObject - objects need to be preloaded!");
+    GameObjectDataRef LinkObject(const std::string& name) {
+        if(!data.linkable) {
+            ENG_LOG_ERROR("Resources::LinkObject - index needs to be processed before linking is allowed!");
             throw std::runtime_error("");
         }
 
@@ -223,8 +231,8 @@ namespace eng::Resources {
         return data.objects.at(name);
     }
 
-    GameObjectDataRef LoadObjectReference(const std::string& name) {
-        if(!data.linkable) {
+    GameObjectDataRef LoadObject(const std::string& name) {
+        if(!data.preloaded) {
             ENG_LOG_ERROR("Resources::LoadObject - objects need to be preloaded!");
             throw std::runtime_error("");
         }
@@ -257,14 +265,6 @@ namespace eng::Resources {
         return res;
     }
 
-    BuildingDataRef LoadBuilding(int buildingID, bool isOrc) {
-        if(!data.preloaded) {
-            ENG_LOG_ERROR("Resources::LoadBuilding - objects need to be preloaded!");
-            throw std::runtime_error("");
-        }
-        return data.buildings[buildingID][(int)(isOrc)];
-    }
-
     UnitDataRef LoadUnit(const std::string& name) {
         GameObjectDataRef data = LoadObject(name);
         UnitDataRef res = std::dynamic_pointer_cast<UnitData>(data);
@@ -273,6 +273,98 @@ namespace eng::Resources {
             throw std::runtime_error("");
         }
         return res;
+    }
+
+    GameObjectDataRef LinkObject(const glm::ivec3& num_id, bool initialized_only) {
+        if(!data.linkable) {
+            ENG_LOG_ERROR("Resources::LinkObject - index needs to be processed before linking is allowed!");
+            throw std::runtime_error("");
+        }
+
+        GameObjectDataRef obj = nullptr;
+        switch(num_id[0]) {
+            case ObjectType::BUILDING:
+                if((unsigned int)(num_id[1]) >= data.buildings.size()) {
+                    ENG_LOG_ERROR("Resources::LinkObject - building - invalid ID (id = {}, max legit value = {})!", num_id[1], data.buildings.size());
+                    throw std::runtime_error("");
+                }
+                obj = data.buildings[num_id[1]][int(bool(num_id[2]))];
+                break;
+            case ObjectType::UNIT:
+                if((unsigned int)(num_id[1]) >= data.units.size()) {
+                    ENG_LOG_ERROR("Resources::LinkObject - unit - invalid ID (id = {}, max legit value = {})!", num_id[1], data.units.size());
+                    throw std::runtime_error("");
+                }
+                obj = data.units[num_id[1]][int(bool(num_id[2]))];
+                break;
+            case ObjectType::UTILITY:
+                if((unsigned int)(num_id[1]) >= data.utilities.size()) {
+                    ENG_LOG_ERROR("Resources::LinkObject - utility - invalid ID (id = {}, max legit value = {})!", num_id[1], data.utilities.size());
+                    throw std::runtime_error("");
+                }
+                obj = data.utilities[num_id[1]];
+                break;
+            default:
+                ENG_LOG_ERROR("Resources::LinkObject - invalid id, failed to resolve object type (id={})", num_id[0]);
+                throw std::runtime_error("");
+        }
+
+        if(obj == nullptr || (initialized_only && !obj->initialized)) {
+            ENG_LOG_ERROR("Resources::LinkObject - attempting to link object that is not yet initialized (num_id=({},{},{}))", num_id[0], num_id[1], num_id[2]);
+            throw std::runtime_error("");
+        }
+
+        return obj;
+    }
+
+    GameObjectDataRef LoadObject(const glm::ivec3& num_id) {
+        switch(num_id[0]) {
+            case ObjectType::BUILDING:
+                return LoadBuilding(num_id[1], (bool)num_id[2]);
+            case ObjectType::UNIT:
+                return LoadUnit(num_id[1], (bool)num_id[2]);
+            case ObjectType::UTILITY:
+                return LoadUtilityObj(num_id[1]);
+            default:
+                ENG_LOG_ERROR("Resources::LoadObject - invalid id, failed to resolve object type (id={})", num_id[0]);
+                throw std::runtime_error("");
+        }
+    }
+
+    UtilityObjectDataRef LoadUtilityObj(int num_id) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadUtilityObj - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if((unsigned int)(num_id) >= data.utilities.size()) {
+            ENG_LOG_ERROR("Resources::LoadUtilityObj - invalid ID (id = {}, max legit value = {})!", num_id, data.utilities.size());
+            throw std::runtime_error("");
+        }
+        return data.utilities[num_id];
+    }
+
+    BuildingDataRef LoadBuilding(int num_id, bool isOrc) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadBuilding - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if((unsigned int)(num_id) >= data.buildings.size()) {
+            ENG_LOG_ERROR("Resources::LoadBuilding - invalid ID (id = {}, max legit value = {})!", num_id, data.buildings.size());
+            throw std::runtime_error("");
+        }
+        return data.buildings[num_id][(int)(isOrc)];
+    }
+
+    UnitDataRef LoadUnit(int num_id, bool isOrc) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadUnit - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if((unsigned int)(num_id) >= data.units.size()) {
+            ENG_LOG_ERROR("Resources::LoadUnit - invalid ID (id = {}, max legit value = {})!", num_id, data.units.size());
+            throw std::runtime_error("");
+        }
+        return data.units[num_id][(int)(isOrc)];
     }
 
     //============
@@ -314,35 +406,120 @@ namespace eng::Resources {
 
         t.Reset();
 
-        //load utility object definitions
-        json config = json::parse(ReadFile("res/json/utility.json"));
-        for(auto& entry : config) {
-            GameObjectDataRef objData = ParseConfig_Object(entry, referenceMapping);
-            data.objects.insert({ objData->name, objData });
-        }
+        //load & process index file
+        ProcessIndexFile();
+        
+        //fully load & prepare object prefab definitions
+        LoadObjectDefinitions();
 
-        //load regular object definitions
-        config = json::parse(ReadFile("res/json/objects.json"));
-        for(auto& entry : config) {
-            GameObjectDataRef objData = ParseConfig_Object(entry, referenceMapping);
-            data.objects.insert({ objData->name, objData });
-        }
-
-        //references setup
-        data.linkable = true;
-        for(auto& [name, refs] : referenceMapping) {
-            data.objects.at(name)->SetupObjectReferences(refs);
-        }
-
+        // ValidateIndexEntries();
         SetupCorpseData();
-        SetupBuildingsIndex();
+        FinalizeButtonDescriptions();
 
         float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
         ENG_LOG_TRACE("Resources::PreloadObjects - parsed {} object prefab descriptions ({:.2f}s)", data.objects.size(), time_elapsed);
     }
 
+    void ProcessIndexFile() {
+        using json = nlohmann::json;
+
+        json config = json::parse(ReadFile("res/json/index.json"));
+        int i = 0;
+        
+        i = 0;
+        for(auto& entry : config.at("units")) {
+            if(i >= data.units.size()) {
+                ENG_LOG_ERROR("Resources::ProcessIndexFile - invalid unit count.");
+                throw std::runtime_error("");
+            }
+            data.units[i] = { std::make_shared<UnitData>(), std::make_shared<UnitData>() };
+            data.units[i][0]->SetupID(entry.at(0), glm::ivec3(ObjectType::UNIT, i, 0));
+            data.units[i][1]->SetupID(entry.at(1), glm::ivec3(ObjectType::UNIT, i, 1));
+            data.objects.insert({ entry.at(0), data.units[i][0] });
+            data.objects.insert({ entry.at(1), data.units[i][1] });
+            i++;
+        }
+
+        i = 0;
+        for(auto& entry : config.at("buildings")) {
+            if(i >= data.buildings.size()) {
+                ENG_LOG_ERROR("Resources::ProcessIndexFile - invalid building count.");
+                throw std::runtime_error("");
+            }
+            BuildingDataRef hu = std::make_shared<BuildingData>();
+            BuildingDataRef oc = std::make_shared<BuildingData>();
+            hu->SetupID(entry.at(0), glm::ivec3(ObjectType::BUILDING, i, 0));
+            oc->SetupID(entry.at(1), glm::ivec3(ObjectType::BUILDING, i, 1));
+            data.buildings[i] = { hu, oc };
+            data.objects.insert({ entry.at(0), hu });
+            data.objects.insert({ entry.at(1), oc });
+            i++;
+        }
+
+        i = 0;
+        for(auto& entry : config.at("utility")) {
+
+            data.utilities.push_back(std::make_shared<UtilityObjectData>());
+            data.utilities.back()->SetupID(entry, glm::ivec3(ObjectType::UTILITY, i, 0));
+            data.objects.insert({ entry, data.utilities.back() });
+            i++;
+        }
+
+        data.linkable = true;
+    }
+
+    void LoadObjectDefinitions() {
+        using json = nlohmann::json;
+
+        json config = json::parse(ReadFile("res/json/utility.json"));
+        for(auto& entry : config) {
+            std::string str_id = entry.at("str_id");
+            if(!data.objects.count(str_id))
+                data.objects.insert({ str_id, GameObjectData_ParseNew(entry) });
+            else
+                GameObjectData_ParseExisting(entry, data.objects.at(str_id));
+        }
+
+        //load regular object definitions
+        config = json::parse(ReadFile("res/json/objects.json"));
+        for(auto& entry : config) {
+            std::string str_id = entry.at("str_id");
+            if(!data.objects.count(str_id))
+                data.objects.insert({ str_id, GameObjectData_ParseNew(entry) });
+            else
+                GameObjectData_ParseExisting(entry, data.objects.at(str_id));
+        }
+    }
+
+    void ValidateIndexEntries() {
+        for(auto& entry : data.buildings) {
+            for(auto& val : entry) {
+                if(!val->initialized) {
+                    ENG_LOG_ERROR("Resources::ValidateIndexEntries - index entry for building '{}' has no definition.", val->str_id);
+                    throw std::runtime_error("");
+                }
+            }
+        }
+
+        for(auto& entry : data.units) {
+            for(auto& val : entry) {
+                if(!val->initialized) {
+                    ENG_LOG_ERROR("Resources::ValidateIndexEntries - index entry for unit '{}' has no definition.", val->str_id);
+                    throw std::runtime_error("");
+                }
+            }
+        }
+
+        for(auto& val : data.utilities) {
+            if(!val->initialized) {
+                ENG_LOG_ERROR("Resources::ValidateIndexEntries - index entry for utility object '{}' has no definition.", val->str_id);
+                throw std::runtime_error("");
+            }
+        }
+    }
+
     UtilityObjectDataRef SetupCorpseData() {
-        UtilityObjectDataRef corpse = std::dynamic_pointer_cast<UtilityObjectData>(Resources::LoadObjectReference("corpse"));
+        UtilityObjectDataRef corpse = std::dynamic_pointer_cast<UtilityObjectData>(Resources::LinkObject("corpse"));
         if(corpse == nullptr) {
             ENG_LOG_ERROR("Resources::SetupCorpseData - 'corpse' prefab not found");
             throw std::runtime_error("");
@@ -354,7 +531,7 @@ namespace eng::Resources {
         //scan through all the units & retrieve their death animations
         for(auto& [key, value] : data.objects) {
             UnitDataRef ptr = std::dynamic_pointer_cast<UnitData>(value);
-            if(ptr != nullptr && ptr->animData->HasGraphics(3)) {
+            if(ptr != nullptr && ptr->initialized && ptr->animData->HasGraphics(3)) {
                 anim->AddAction(idx, ptr->animData->GetGraphics(3));
 
                 //mark unit's animation index in the corpse object, for easier access
@@ -365,26 +542,9 @@ namespace eng::Resources {
         return corpse;
     }
 
-    void SetupBuildingsIndex() {
-        using json = nlohmann::json;
-        auto config = json::parse(ReadFile("res/json/buildings_index.json"));
-
-        ASSERT_MSG(config.size() == BuildingType::COUNT, "Resources::SetupBuildingsIndex - JSON file is invalid.");
-
-        for(int i = 0; i < BuildingType::COUNT; i++) {
-            auto& entry = config.at(i);
-            if(entry.is_array()) {
-                BuildingDataRef hu = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry[0]));
-                BuildingDataRef oc = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry[1]));
-                data.buildings[i] = { hu, oc };
-            }
-            else {
-                BuildingDataRef hu = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry));
-                BuildingDataRef oc = std::dynamic_pointer_cast<BuildingData>(data.objects.at(entry));
-                data.buildings[i] = { hu, oc };
-            }
-
-            ASSERT_MSG(data.buildings[i][0] != nullptr && data.buildings[i][1] != nullptr, "Resources::SetupBuildingsIndex - Missing building data for ID:{}", i);
+    void FinalizeButtonDescriptions() {
+        for(auto& [name, entry] : data.objects) {
+            GameObjectData_FinalizeButtonDescriptions(entry);
         }
     }
 
