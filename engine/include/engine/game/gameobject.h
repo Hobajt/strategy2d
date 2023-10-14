@@ -297,7 +297,8 @@ namespace eng {
         virtual int ActionIdx() const override;
         virtual bool IsGatherable(int unitNavType) const override;
         virtual bool IsGatherable() const override { return data->gatherable; }
-        int AmountLeft() const { return data->gatherable ? amount_left : 0; }
+        bool IsResource() const { return data->resource || data->gatherable; }
+        int AmountLeft() const { return IsResource() ? amount_left : 0; }
         void SetAmountLeft(int value) { amount_left = value; }
 
         virtual void WithdrawObject() override;

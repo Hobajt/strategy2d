@@ -236,6 +236,9 @@ namespace eng {
                     //remove from pathfinding (if it's a part of it to begin with)
                     lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
                 }
+                else {
+                    lvl()->map.RemoveTraversableObject(OID());
+                }
             }
             active = false;
         }
@@ -447,6 +450,9 @@ namespace eng {
     void Building::InnerIntegrate() {
         if(data->IntegrateInMap())
             FactionObject::InnerIntegrate();
+        else {
+            lvl()->map.AddTraversableObject(OID());
+        }
         
         if(constructed) {
             if(data->dropoff_mask != 0) {

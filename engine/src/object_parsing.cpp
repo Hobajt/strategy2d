@@ -174,6 +174,7 @@ namespace eng {
 
         data->traversable           = config.count("traversable") ? config.at("traversable") : false;
         data->gatherable            = config.count("gatherable") ? config.at("gatherable") : false;
+        data->resource              = (config.count("resource") ? config.at("resource") : false) || data->gatherable;
         data->dropoff_mask          = config.count("dropoff_mask") ? config.at("dropoff_mask") : 0;
         data->attack_speed          = config.count("attack_speed") ? config.at("attack_speed") : 2.f;
     }

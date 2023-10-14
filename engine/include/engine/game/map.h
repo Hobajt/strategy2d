@@ -357,6 +357,11 @@ namespace eng {
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 
+        void AddTraversableObject(const ObjectID& id);
+        void RemoveTraversableObject(const ObjectID& id);
+
+        const std::vector<ObjectID>& TraversableObjects() const { return traversableObjects; }
+
         ObjectID ObjectIDAt(const glm::ivec2& coords) const;
 
         //==== Methods for editor ====
@@ -406,6 +411,7 @@ namespace eng {
         MapTiles tiles;
 
         pathfindingContainer nav_list;
+        std::vector<ObjectID> traversableObjects;
     };
 
 }//namespace eng

@@ -223,6 +223,7 @@
         "unattackable": true,
         "traversable": true,
         "custom_sprites": true,
+        "resource": true,
         "sprites_prefix": "misc/buildings",
         "animations": {
             "oil": { "id": "idle", "both_weathers": true }

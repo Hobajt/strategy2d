@@ -771,6 +771,23 @@ namespace eng {
         tiles(pos_prev).factionId = -1;
     }
 
+    void Map::AddTraversableObject(const ObjectID& id) {
+        ENG_LOG_FINE("Map::AddTraversableObject - adding {}", id);
+        traversableObjects.push_back(id);
+    }
+
+    void Map::RemoveTraversableObject(const ObjectID& id) {
+        auto pos = std::find(traversableObjects.begin(), traversableObjects.end(), id);
+        if(pos != traversableObjects.end()) {
+            ENG_LOG_FINE("Map::RemoveTraversableObject - removing {}", id);
+            traversableObjects.erase(pos);
+        }
+        else {
+            ENG_LOG_WARN("Map::RemoveTraversableObject - {} not found", id);
+        }
+    }
+
+
     ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {
         return IsWithinBounds(coords) ? tiles(coords).id : ObjectID();
     }

@@ -132,11 +132,15 @@ namespace eng {
             //      - gonna need it anyway for the resource indexes
             //      - after that's done, might want to altogether remove the generic object_data loading
 
-            //icon & health bar setup
+            //icon & name setup
             btns->GetButton(0)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
-            snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
-            health->Setup(std::string(buf));
             name->Setup(object->Name());
+
+            //health bar (show only for player owned objects)
+            if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
+                snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
+                health->Setup(std::string(buf));
+            }
 
             if(object->IsUnit() && selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                 //display units stats (always the same, except the mana bar might be hidden)
@@ -169,7 +173,7 @@ namespace eng {
             else {
                 Building* building = static_cast<Building*>(object);
                 int not_gnd = int(building->NavigationType() != NavigationBit::GROUND);
-                if(building->IsGatherable()) {
+                if(building->IsResource()) {
                     //resource -> amount of resource left
                     snprintf(buf, sizeof(buf), "%s left: %d", GameResourceName(2*not_gnd), building->AmountLeft());
                     stats[1]->Setup(buf);
@@ -226,8 +230,11 @@ namespace eng {
             FactionObject* object = &level.objects.GetObject(selection.selection[0]);
 
             btns->GetButton(0)->SetValue(object->HealthPercentage());
-            snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
-            health->Setup(std::string(buf));
+
+            if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
+                snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
+                health->Setup(std::string(buf));
+            }
         }
         else if(selection.selected_count > 1) {
             FactionObject* object;
@@ -492,6 +499,7 @@ namespace eng {
 
         ENG_LOG_FINE("PlayerSelection::Select - range: ({}, {}) - ({}, {})", im.x, im.y, iM.x, iM.y);
 
+        //selection based on map tiles readthrough
         int object_count = 0;
         int selection_mode = 0;
         for(int y = im.y; y <= iM.y; y++) {
@@ -512,6 +520,34 @@ namespace eng {
                     if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
                         selection[object_count++] = td.id;
                     }
+                }
+            }
+        }
+
+        //selection among traversable objects (which are not part of regular map tiles data)
+        iM += 1;
+        for(const ObjectID& id : level.map.TraversableObjects()) {
+            if(!ObjectID::IsObject(id) || !ObjectID::IsValid(id))
+                    continue;
+            
+            FactionObject* obj;
+            if(!level.objects.GetObject(id, obj))
+                continue;
+
+            glm::ivec2 pm = glm::ivec2(obj->MinPos());
+            glm::ivec2 pM = glm::ivec2(obj->MaxPos()) + 1;
+            if(!((pm.x <= M.x && pM.x >= m.x) && (pm.y <= M.y && pM.y >= m.y)))
+                continue;
+            
+            int object_mode = ObjectSelectionType(id, obj->FactionIdx(), playerFactionID);
+            if(selection_mode < object_mode) {
+                selection_mode = object_mode;
+                object_count = 0;
+            }
+
+            if(object_mode == selection_mode) {
+                if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
+                    selection[object_count++] = id;
                 }
             }
         }
