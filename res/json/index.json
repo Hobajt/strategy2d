@@ -26,11 +26,16 @@
         ["human/shipyard", "orc/shipyard"],
         ["human/foundry", "orc/foundry"],
         ["human/refinery", "orc/refinery"],
+        ["human/platform", "orc/platform"],
+
         ["human/inventor", "orc/inventor"],
         ["human/stables", "orc/mound"],
         ["human/church", "orc/altar"],
         ["human/wizard_tower", "orc/temple"],
-        ["human/aviary", "orc/dragon_roost"]
+        ["human/aviary", "orc/dragon_roost"],
+
+        ["human/tower_guard", "orc/tower_guard"],
+        ["human/tower_cannon", "orc/tower_cannon"]
     ],
     "utility": []
 }

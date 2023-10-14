@@ -16,7 +16,9 @@ namespace eng {
     namespace BuildingType {
         enum { 
             TOWN_HALL, BARRACKS, FARM, LUMBER_MILL, BLACKSMITH, TOWER, 
-            SHIPYARD, FOUNDRY, OIL_REFINERY, INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
+            SHIPYARD, FOUNDRY, OIL_REFINERY, OIL_PLATFORM,
+            INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
+            GUARD_TOWER, CANNON_TOWER,
             COUNT
         };
     }
@@ -295,6 +297,8 @@ namespace eng {
         virtual int ActionIdx() const override;
         virtual bool IsGatherable(int unitNavType) const override;
         virtual bool IsGatherable() const override { return data->gatherable; }
+        int AmountLeft() const { return data->gatherable ? amount_left : 0; }
+        void SetAmountLeft(int value) { amount_left = value; }
 
         virtual void WithdrawObject() override;
 
@@ -326,6 +330,7 @@ namespace eng {
         BuildingAction action = BuildingAction();
 
         bool constructed = false;
+        int amount_left = 0;
     };
 
     //===== UtilityObject =====

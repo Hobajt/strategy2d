@@ -94,8 +94,8 @@ namespace eng {
     void GUI::SelectionTab::Update(Level& level, const PlayerSelection& selection) {
         //reset all the GUI elements into its default state
         Reset();
-        char buf[1024];
 
+        char buf[1024];
         if(selection.selected_count == 1) {
             FactionObject* object = &level.objects.GetObject(selection.selection[0]);
             borders->Enable(true);
@@ -136,10 +136,9 @@ namespace eng {
             btns->GetButton(0)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
             snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
             health->Setup(std::string(buf));
-            
             name->Setup(object->Name());
 
-            if(object->IsUnit()) {
+            if(object->IsUnit() && selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                 //display units stats (always the same, except the mana bar might be hidden)
                 Unit* unit = static_cast<Unit*>(object);
 
@@ -168,23 +167,47 @@ namespace eng {
                 }
             }
             else {
-                //display stats for buildings
                 Building* building = static_cast<Building*>(object);
-
-                // building->IsGatherable();
-                // building->DropoffMask() != 0;
-                // building->Type() == BuildingType::FARM;
-
-
-
-                /*STATS:
-                    - buildings:
-                        - if it's a gatherable resource, display only the amount left
-                        - if it's a dropoff point for a resource, display "Production" headline and the resource that you can dropoff
-                        - if it's a farm, display population stats
-                        - else display no stats at all
-                */
-
+                int not_gnd = int(building->NavigationType() != NavigationBit::GROUND);
+                if(building->IsGatherable()) {
+                    //resource -> amount of resource left
+                    snprintf(buf, sizeof(buf), "%s left: %d", GameResourceName(2*not_gnd), building->AmountLeft());
+                    stats[1]->Setup(buf);
+                }
+                else if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
+                    int production_boost;
+                    switch(building->NumID()[1]) {
+                        case BuildingType::TOWN_HALL:
+                            stats[0]->Setup("Production ");
+                            for(int i = 0; i < 3; i++) {
+                                production_boost = building->Faction()->ProductionBoost(i);
+                                if(production_boost != 0)
+                                    snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(i), production_boost);
+                                else
+                                    snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(i));
+                                stats[1+i]->Setup(buf);
+                            }
+                            break;
+                        case BuildingType::OIL_REFINERY:
+                        case BuildingType::LUMBER_MILL:
+                            stats[1]->Setup("Production ");
+                            production_boost = building->Faction()->ProductionBoost(1+not_gnd);
+                            if(production_boost != 0)
+                                snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(1+not_gnd), production_boost);
+                            else
+                                snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(1+not_gnd));
+                            stats[2]->Setup(buf);
+                            break;
+                        case BuildingType::FARM:        //display population statistics
+                            glm::ivec2 pop = building->Faction()->Population();
+                            stats[0]->Setup("Food Usage ");
+                            snprintf(buf, sizeof(buf), "Grown: %d", pop[1]);
+                            stats[1]->Setup(buf);
+                            snprintf(buf, sizeof(buf), "Used: %d", pop[0]);
+                            stats[2]->Setup(buf);
+                            break;
+                    }
+                }
             }
         }
         else if(selection.selected_count > 1) {
@@ -501,7 +524,7 @@ namespace eng {
             ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
 
             FactionObject& object = level.objects.GetObject(selection[0]);
-            if(selection_type > SelectionType::ENEMY_UNIT && object.Sound_Yes().valid) {
+            if(object.Sound_Yes().valid && ((selection_type > SelectionType::ENEMY_UNIT) || (selection_type == SelectionType::ENEMY_BUILDING && ((Building&)object).IsGatherable()))) {
                 Audio::Play(object.Sound_Yes().Random());
             }
         }

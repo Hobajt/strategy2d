@@ -17,6 +17,11 @@ namespace eng {
 #endif
     }
 
+    const char* GameResourceName(int res_idx) {
+        constexpr static std::array<const char*, 3> names = { "Gold", "Lumber", "Oil" };
+        return names[res_idx];
+    }
+
     FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_)
         : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}) {}
 
@@ -78,6 +83,12 @@ namespace eng {
     int FactionController::UnitUpgradeTier(bool attack_upgrade, int upgrade_type) {
         //TODO: lookup in the research values, translate input arguments to proper research index
         return 2;
+    }
+
+    int FactionController::ProductionBoost(int res_idx) {
+        //TODO: decide, based on building existence (lumber mill? -> lumber boost)
+        //gold boost is computed based on town hall tier (0, 10, 25)
+        return 10;
     }
 
     void FactionController::DBG_GUI() {

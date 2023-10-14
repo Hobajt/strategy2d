@@ -20,6 +20,9 @@ namespace eng {
 
     };
 
+    namespace ResourceBit { enum { GOLD = 1, WOOD = 2, OIL = 4 }; }
+    const char* GameResourceName(int res_idx);
+
     //===== FactionsFile =====
 
     //Struct for serialization.
@@ -75,6 +78,8 @@ namespace eng {
 
         glm::ivec3 Resources() const { return resources; }
         glm::ivec2 Population() const { return population; }
+
+        int ProductionBoost(int res_idx);
 
         void DBG_GUI();
     private:

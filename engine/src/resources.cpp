@@ -432,11 +432,15 @@ namespace eng::Resources {
                 ENG_LOG_ERROR("Resources::ProcessIndexFile - invalid unit count.");
                 throw std::runtime_error("");
             }
-            data.units[i] = { std::make_shared<UnitData>(), std::make_shared<UnitData>() };
-            data.units[i][0]->SetupID(entry.at(0), glm::ivec3(ObjectType::UNIT, i, 0));
-            data.units[i][1]->SetupID(entry.at(1), glm::ivec3(ObjectType::UNIT, i, 1));
-            data.objects.insert({ entry.at(0), data.units[i][0] });
-            data.objects.insert({ entry.at(1), data.units[i][1] });
+            for(int j = 0; j < 2; j++) {
+                if(data.objects.count(entry.at(j))) {
+                    ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry.at(j));
+                    throw std::runtime_error("");
+                }
+                data.units[i][j] = std::make_shared<UnitData>();
+                data.units[i][j]->SetupID(entry.at(j), glm::ivec3(ObjectType::UNIT, i, j));
+                data.objects.insert({ entry.at(j), data.units[i][j] });
+            }
             i++;
         }
 
@@ -446,19 +450,24 @@ namespace eng::Resources {
                 ENG_LOG_ERROR("Resources::ProcessIndexFile - invalid building count.");
                 throw std::runtime_error("");
             }
-            BuildingDataRef hu = std::make_shared<BuildingData>();
-            BuildingDataRef oc = std::make_shared<BuildingData>();
-            hu->SetupID(entry.at(0), glm::ivec3(ObjectType::BUILDING, i, 0));
-            oc->SetupID(entry.at(1), glm::ivec3(ObjectType::BUILDING, i, 1));
-            data.buildings[i] = { hu, oc };
-            data.objects.insert({ entry.at(0), hu });
-            data.objects.insert({ entry.at(1), oc });
+            for(int j = 0; j < 2; j++) {
+                if(data.objects.count(entry.at(j))) {
+                    ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry.at(j));
+                    throw std::runtime_error("");
+                }
+                data.buildings[i][j] = std::make_shared<BuildingData>();
+                data.buildings[i][j]->SetupID(entry.at(j), glm::ivec3(ObjectType::BUILDING, i, j));
+                data.objects.insert({ entry.at(j), data.buildings[i][j] });
+            }
             i++;
         }
 
         i = 0;
         for(auto& entry : config.at("utility")) {
-
+            if(data.objects.count(entry)) {
+                ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry);
+                throw std::runtime_error("");
+            }
             data.utilities.push_back(std::make_shared<UtilityObjectData>());
             data.utilities.back()->SetupID(entry, glm::ivec3(ObjectType::UTILITY, i, 0));
             data.objects.insert({ entry, data.utilities.back() });

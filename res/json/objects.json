@@ -200,11 +200,12 @@
             "gm_full_summer": { "id": "idle2" },
             "gm_empty_winter": { "id": "idle", "summer": false },
             "gm_full_winter": { "id": "idle2", "summer": false }
-        }
+        },
+        "sounds": { "yes": "bldg/mine" }
     },
     {
         "str_id": "misc/oil",
-        "name": "oil spill",
+        "name": "oil patch",
         "type": 3,
         "nav_type": 2,
         "size": [2, 2],
