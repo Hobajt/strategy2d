@@ -65,4 +65,14 @@ namespace eng::Resources {
     BuildingDataRef LoadBuilding(int num_id, bool isOrc);
     UnitDataRef LoadUnit(int num_id, bool isOrc);
 
+    //===== Cursor icons =====
+
+
+    namespace CursorIcons {
+        void Update();
+        void SetIcon(int idx);
+    }
+
 }//namespace eng::Resources
+
+namespace eng::CursorIconName { enum { HAND_HU, HAND_OC, EAGLE_YELLOW, EAGLE_GREEN, MAGNIFYING_GLASS, CROSSHAIR }; }

@@ -69,9 +69,6 @@ namespace eng {
         idx = -1;
     }
 
-static Texture tex;
-    Texture& DBG_TEX() { return tex; }
-
     void CursorIconManager::LoadFromConfig(const std::string& config_filepath) {
         using json = nlohmann::json;
 
@@ -105,10 +102,6 @@ static Texture tex;
                 }
 
                 icons.push_back(cursor);
-
-                if((i++) == 1) {
-                    tex = Texture(TextureParams::CustomData(size.x, size.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), subimg.ptr());
-                }
             }
         }
     }

@@ -2,6 +2,7 @@
 
 #include "engine/core/window.h"
 #include "engine/core/renderer.h"
+#include "engine/core/cursor.h"
 
 #include "engine/utils/json.h"
 #include "engine/utils/utils.h"
@@ -34,6 +35,8 @@ namespace eng::Resources {
         std::array<std::array<UnitDataRef, 2>, UnitType::COUNT> units;
         std::vector<UtilityObjectDataRef> utilities;
 
+        CursorIconManager cursorIcons;
+
         bool linkable = false;
         bool preloaded = false;
     };
@@ -64,6 +67,8 @@ namespace eng::Resources {
         PreloadSpritesheets();
 
         PreloadObjects();
+
+        data.cursorIcons = CursorIconManager("res/json/cursors.json");
 
         ENG_LOG_INFO("[R] Resources::Preload");
         data.preloaded = true;
@@ -366,6 +371,18 @@ namespace eng::Resources {
         }
         return data.units[num_id][(int)(isOrc)];
     }
+
+    namespace CursorIcons {
+
+        void Update() {
+            data.cursorIcons.UpdateIcon();
+        }
+
+        void SetIcon(int idx) {
+            data.cursorIcons.SetIcon(idx);
+        }
+
+    }//namespace CursorIcons
 
     //============
 

@@ -42,6 +42,7 @@ namespace eng {
             DBG_GUI::Begin();
 
             OnUpdate();
+            Resources::CursorIcons::Update();
 
 #ifdef ENGINE_ENABLE_GUI
             OnGUI();

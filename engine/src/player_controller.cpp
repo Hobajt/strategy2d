@@ -937,16 +937,6 @@ namespace eng {
         //game pausing logic - properly check the single player condition; properly freeze everything that needs to be freezed
         //ingame menu GUI & control logic
 
-
-        /* cursor visuals:
-            - switching conditions - what is being hovered over, is command selected
-            - command selected
-                - render eagle
-                - green if hovering over object, yellow otherwise
-            - no command:   
-                - render magnifying glass if hovering over object, or hand otherwise
-        */
-
         /*population:
             - incrementing population counter on building construction/death seems kinda shitty and prone to errors
             - faction controller will track count for each building type
@@ -978,7 +968,14 @@ namespace eng {
                 - level could be stored in the table as well
         */
 
+        glm::vec2 hover_coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        ObjectID hover_id = level.map.ObjectIDAt(hover_coords);
+        bool hovering_over_object = ObjectID::IsValid(hover_id);
+
         glm::vec2 pos = input.mousePos_n;
+        bool cursor_in_game_view = CursorInGameView(pos);
+        bool cursor_in_map_view = CursorInMapView(pos);
+        int cursor_idx = CursorIconName::HAND_HU + int(bool(Race()));
         switch(state) {
             case PlayerControllerState::IDLE:       //default state
                 //lmb.down in game view -> start selection
@@ -986,6 +983,9 @@ namespace eng {
                 //lmb.down in map view  -> center camera
                 //rmb.down in map view  -> adaptive command for current selection
                 //cursor at borders     -> move camera
+                if(hovering_over_object) {
+                    cursor_idx = CursorIconName::MAGNIFYING_GLASS;
+                }
 
                 if(actionButtons.ClickIdx() != -1) {
                     ResolveActionButtonClick();
@@ -995,7 +995,7 @@ namespace eng {
                         command_data = glm::ivec2(-1);
                     }
                 }
-                else if(CursorInGameView(pos)) {
+                else if(cursor_in_game_view) {
                     glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
                     if(input.lmb.down()) {
                         //transition to object selection state
@@ -1009,7 +1009,7 @@ namespace eng {
                         selection.IssueAdaptiveCommand(level, target_pos, target_id);
                     }
                 }
-                else if(CursorInMapView(pos)) {
+                else if(cursor_in_map_view) {
                     // glm::vec2 coords = ... coords from map image position ...
                     if(input.lmb.down()) {
                         //transition to camera movement state
@@ -1030,6 +1030,7 @@ namespace eng {
                 break;
             case PlayerControllerState::OBJECT_SELECTION:          //selection in progress (lmb click or drag)
                 input.ClampCursorPos(glm::vec2(GUI_WIDTH, BORDER_SIZE), glm::vec2(1.f-BORDER_SIZE, 1.f-BORDER_SIZE));
+                cursor_idx = CursorIconName::CROSSHAIR;
                 pos = input.mousePos_n;
 
                 coords_end = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
@@ -1042,6 +1043,10 @@ namespace eng {
                 //TODO:
                 break;
             case PlayerControllerState::COMMAND_TARGET_SELECTION:
+                if(cursor_in_game_view || cursor_in_map_view) {
+                    cursor_idx = CursorIconName::EAGLE_YELLOW + int(hovering_over_object);
+                }
+
                 //selection canceled by the cancel button
                 if(!actionButtons.IsAtCancelPage()) {
                     state = PlayerControllerState::IDLE;
@@ -1054,7 +1059,7 @@ namespace eng {
                         command_data = glm::ivec2(-1);
                         actionButtons.ChangePage(0);
                     }
-                    else if(CursorInGameView(pos)) {
+                    else if(cursor_in_game_view) {
                         if(input.lmb.down()) {
                             //issue the command & go back to idle state
                             glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
@@ -1070,7 +1075,7 @@ namespace eng {
                             actionButtons.ChangePage(0);
                         }
                     }
-                    else if(CursorInMapView(pos)) {
+                    else if(cursor_in_map_view) {
                         if(input.lmb.down()) {
                             //issue the command
                         }
@@ -1088,8 +1093,9 @@ namespace eng {
         //unset any previous btn clicks (to detect the new one)
         actionButtons.ClearClick();
         nontarget_cmd_issued = false;
-
-        //TODO: setup current cursor from here as well (based on current state'n'stuff)
+        
+        //update cursor icon
+        Resources::CursorIcons::SetIcon(cursor_idx);
     }
 
     void PlayerFactionController::SwitchMenu(bool active) {

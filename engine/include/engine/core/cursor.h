@@ -3,8 +3,6 @@
 #include <vector>
 #include <string>
 
-#include "engine/core/texture.h"
-
 struct GLFWcursor;
 
 namespace eng {
@@ -38,7 +36,5 @@ namespace eng {
         std::vector<GLFWcursor*> icons;
         int idx = -1;
     };
-
-    Texture& DBG_TEX();
 
 }//namespace eng

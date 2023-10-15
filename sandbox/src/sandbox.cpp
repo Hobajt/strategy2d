@@ -25,8 +25,6 @@ void MockIngameStageController::RegisterKeyCallback() {
     }, true, this);
 }
 
-static CursorIconManager cursorIcon;
-
 void Sandbox::OnInit() {
     Config::Reload();
 
@@ -85,8 +83,6 @@ void Sandbox::OnInit() {
         Unit& troll = level.objects.GetUnit(trollID);
         troll.ChangeCarryStatus(WorkerCarryState::WOOD);
 
-        cursorIcon = CursorIconManager("res/json/cursors.json");
-
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
@@ -135,8 +131,6 @@ void Sandbox::OnUpdate() {
         LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
         window.SetFullscreen(fullscreen);
     }
-
-    cursorIcon.UpdateIcon();
 
     Renderer::Begin(shader, true);
 
@@ -318,11 +312,6 @@ void Sandbox::OnGUI() {
         level.map.DBG_GUI();
 
         level.factions.DBG_GUI();
-
-        cursorIcon.DBG_GUI();
-        ImGui::Begin("Texture");
-        DBG_TEX().DBG_GUI();
-        ImGui::End();
     }
 #endif
 }
