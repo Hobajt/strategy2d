@@ -20,7 +20,7 @@
 #include "core/renderer.h"
 #include "core/framebuffer.h"
 #include "core/sprite.h"
-
+#include "core/cursor.h"
 
 #include "game/app.h"
 #include "game/resources.h"

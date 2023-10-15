@@ -74,7 +74,7 @@ bool eng::Image::LoadFromFile(const std::string& filepath, int flags) {
         return false;
     }
 
-    buf = new uint8_t[width * height * channels];
+    data = new uint8_t[width * height * channels];
     memcpy(data, buf, sizeof(uint8_t) * width * height * channels);
 
     stbi_image_free(buf);

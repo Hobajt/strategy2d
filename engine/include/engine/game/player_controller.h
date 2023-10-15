@@ -144,8 +144,6 @@ namespace eng {
         void IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
         void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
-    private:
-        bool SetupCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, Command& out_cmd);
     };
 
     //===== PlayerFactionController =====

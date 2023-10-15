@@ -4,6 +4,8 @@
 
 using namespace eng;
 
+#include <GLFW/glfw3.h>
+
 Sandbox::Sandbox(int argc, char** argv) : App(1200, 900, "sandbox") {}
 
 constexpr float fontScale = 0.055f;
@@ -22,6 +24,8 @@ void MockIngameStageController::RegisterKeyCallback() {
         static_cast<MockIngameStageController*>(handler)->SignalKeyPress(keycode, modifiers);
     }, true, this);
 }
+
+static CursorIconManager cursorIcon;
 
 void Sandbox::OnInit() {
     Config::Reload();
@@ -81,6 +85,8 @@ void Sandbox::OnInit() {
         Unit& troll = level.objects.GetUnit(trollID);
         troll.ChangeCarryStatus(WorkerCarryState::WOOD);
 
+        cursorIcon = CursorIconManager("res/json/cursors.json");
+
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
@@ -129,6 +135,8 @@ void Sandbox::OnUpdate() {
         LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
         window.SetFullscreen(fullscreen);
     }
+
+    cursorIcon.UpdateIcon();
 
     Renderer::Begin(shader, true);
 
@@ -310,6 +318,11 @@ void Sandbox::OnGUI() {
         level.map.DBG_GUI();
 
         level.factions.DBG_GUI();
+
+        cursorIcon.DBG_GUI();
+        ImGui::Begin("Texture");
+        DBG_TEX().DBG_GUI();
+        ImGui::End();
     }
 #endif
 }

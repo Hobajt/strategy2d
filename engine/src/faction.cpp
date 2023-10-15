@@ -91,6 +91,13 @@ namespace eng {
         return 10;
     }
 
+    bool FactionController::ButtonConditionCheck(const FactionObject& src, const GUI::ActionButtonDescription& btn) const {
+        //TODO: 
+        //decode the action, that's supposed to be triggered by given button
+        //evaluate conditions for said action (for example action is build -> check whether given building (payload_id) can be built)
+        return true;
+    }
+
     void FactionController::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d | Name: %s", id, name.c_str());

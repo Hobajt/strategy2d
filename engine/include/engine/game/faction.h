@@ -81,6 +81,8 @@ namespace eng {
 
         int ProductionBoost(int res_idx);
 
+        bool ButtonConditionCheck(const FactionObject& src, const GUI::ActionButtonDescription& btn) const;
+
         void DBG_GUI();
     private:
         virtual void Inner_DBG_GUI() {}

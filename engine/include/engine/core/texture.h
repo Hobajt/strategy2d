@@ -142,7 +142,13 @@ namespace eng {
         //move enabled
         Image(Image&&) noexcept;
         Image& operator=(Image&&) noexcept;
+
+        Image operator()(int y, int x, int h, int w);
+
+        uint8_t* ptr() { return data; }
     private:
+        Image(const Image& img, int y, int x, int h, int w);
+
         void Release() noexcept;
         void Move(Image&&) noexcept;
 

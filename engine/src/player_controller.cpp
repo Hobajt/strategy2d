@@ -23,32 +23,6 @@ namespace eng {
 
     void RenderGUIBorders(bool isOrc, float z);
 
-    /*how to manage button callbacks:
-        - first of all, don't have to make this class as callback handler - can use faction controller directly
-        - action buttons:
-            - they just invoke commands (IssueCommand()) on current selection
-            - only need to track button state (when selecting command target)
-        - selection icons:
-            - only change selection (select 1 unit from selected group)
-        - menu buttons:
-            - one pauses the game, the other also invokes game menu
-            - haven't really thought through how to handle game pauses, nor ingame menu for that manner
-
-        - game menu could just be located within the player controller & completely managed by it
-        - there's still the need to propagate the choices from it to the game stage controller (ingame stage)
-        - also need to communicate the request for game pause to the controller
-    */
-
-    //cancel ongoing command target selection when selection updates (unit dies for example)
-    /* cursor visuals:
-        - switching conditions - what is being hovered over, is command selected
-        - command selected
-            - render eagle
-            - green if hovering over object, yellow otherwise
-        - no command:   
-            - render magnifying glass if hovering over object, or hand otherwise
-    */
-
     //===== GUI::SelectionTab =====
 
     GUI::SelectionTab::SelectionTab(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, 
@@ -99,38 +73,6 @@ namespace eng {
         if(selection.selected_count == 1) {
             FactionObject* object = &level.objects.GetObject(selection.selection[0]);
             borders->Enable(true);
-
-            //TODO: need to add separate ingame-name field to the object data (what's now treated as name essentially serves as an identifier)
-            //TODO: need to think through where to take the icon idx (probably just another field in object data)
-            //TODO: how to compute the unit Level
-            //TODO: how to display various stats for various objects (it's not unified, not even among buildings - farms have stats, but barracks dont for example)
-
-            /*UNIT LEVEL:
-                - is computed from upgrades that affect the unit
-                - not sure how exactly is it computed, but can probably treat it as a sum of all the upgrades
-                - how are upgrades going to work:
-                    - they'll be stored in faction data
-                    - unit will have getters for various data properties
-                    - the getters will query faction data and do conditional additions to the property
-                - how will the value increments be handled internally in the faction data:
-                    - could maybe create a table with increment values for each unit
-                    - the unit can then just lookup a row based on unit type & column based on value type
-                    - level could be stored in the table as well
-            */
-
-            /*HOW TO HANDLE KNIGHT-PALA and OGRE-MAGI TRANSITIONS:
-                - they could be two separate unit types or a single one
-                    - having single unit would simplify the upgrade process
-                    - but also causes troubles in object_data - need to track multiple icons & separate properties bcs of a singel unit type
-                    - GOING TO BE 2 SEPARATE UNIT TYPES (think the game does this too, based on values in the game editor)
-            */
-
-            //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
-            //TODO: maybe redo the object sizes (there's map size and graphics size)
-
-            //TODO: transition from string resource identifiers to numbers & enums
-            //      - gonna need it anyway for the resource indexes
-            //      - after that's done, might want to altogether remove the generic object_data loading
 
             //icon & name setup
             btns->GetButton(0)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
@@ -278,10 +220,6 @@ namespace eng {
     }
 
     void GUI::ActionButtons::Update(Level& level, const PlayerSelection& selection) {
-        //TODO: pick what unit's buttons to display (from the current selection)
-        //can use generic button descriptions if there're multiple unit types selected
-        //can also hide the action buttons altogether (when selecting non-owned object)
-
         //buildup pages for the currently selected objects
         ResetPage(0);
         PageData& p = pages[0];
@@ -370,24 +308,25 @@ namespace eng {
                     current_page[pos_idx] = btn_data;
                 }
             }
-
-            /*NEXT UP:
-                - loading button configs from the object_data
-                - button action invokation (PlayerFactionController::ResolveActionButtonClick())
-                - add a pass to resources generation that fills out button descriptions (visuals, using referenced payloads)
-            */
         }
         
         ChangePage(0);
     }
 
     void GUI::ActionButtons::ValuesUpdate(Level& level, const PlayerSelection& selection) {
-        //TODO: do button precondition checks here
-
-        //based on the payload ID, lookup condition in the faction data
-        //then disable the button if condition isn't met
-
-        //only have to do this for currently active page
+        if(selection.selected_count < 1)
+            return;
+        
+        PageData& pg = pages[page];
+        FactionObject& obj = level.objects.GetObject(selection.selection[0]);
+        FactionControllerRef player = level.factions.Player();
+        
+        //iterate through all the buttons (in active page) & enable/disable them based on whether the button action conditions are met
+        for(size_t i = 0; i < pg.size(); i++) {
+            ActionButtonDescription btn = pg[i];
+            bool conditions_met = (btn.command_id != ActionButton_CommandType::DISABLED) && player->ButtonConditionCheck(obj, btn);
+            btns->GetButton(i)->Enable(conditions_met);
+        }
     }
 
     void GUI::ActionButtons::DispatchHotkey(char hotkey) {
@@ -687,38 +626,6 @@ namespace eng {
         return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
-    bool PlayerSelection::SetupCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, Command& out_command) {
-        int command_id = cmd_data.x;
-        int payload_id = cmd_data.y;
-
-        switch(command_id) {
-            case GUI::ActionButton_CommandType::MOVE:
-                if(level.map.IsWithinBounds(target_pos)) {
-                    out_command = Command::Move(target_pos);
-                    return true;
-                }
-                break;
-            case GUI::ActionButton_CommandType::STOP:
-                break;
-            case GUI::ActionButton_CommandType::STAND_GROUND:
-                break;
-            case GUI::ActionButton_CommandType::PATROL:
-                break;
-            case GUI::ActionButton_CommandType::ATTACK:
-                if(level.map.IsWithinBounds(target_pos)) {
-                    out_command = Command::Move(target_pos);
-                    return true;
-                }
-                break;
-            case GUI::ActionButton_CommandType::ATTACK_GROUND:
-                break;
-            case GUI::ActionButton_CommandType::CAST:
-                break;
-        }
-
-        return false;
-    }
-
     void PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data) {
         //do various sanity checks
         //command requirements checks (resources for example)
@@ -741,12 +648,12 @@ namespace eng {
 
             switch(command_id) {
                 case GUI::ActionButton_CommandType::CAST:
-                    //TODO: resource check & maybe check some other conditions
+                    //TODO: resource check (mana on unit), target check, techtree check (is the spell available)
                     cmd = Command::Cast(payload_id);
                     cmd_name = cmd_names[0];
                     break;
                 case GUI::ActionButton_CommandType::BUILD:
-                    //TODO: resource check, build site check
+                    //TODO: resource check, build site check, techtree check
                     cmd = Command::Build(payload_id, target_pos);
                     cmd_name = cmd_names[1];
                     break;
@@ -1013,12 +920,32 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //render proper stat fields when selecting various building types
-        //render building preview when in the build command
+        //render building preview when in the build command - should probably also solve the shipyard issue (part on land, part on water)
+        //cancel ongoing command target selection when selection updates (unit dies for example)
+
+        //cursor changes
+        //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
         //return goods - why the fuck doesn't he go back to work?
         //map view, faction occlusion mask & fog of war
         //add population tracking logic (as described below)
+
+        //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
+        //TODO: maybe redo the object sizes (there's map size and graphics size)
+
+        //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
+        //game pausing logic - properly check the single player condition; properly freeze everything that needs to be freezed
+        //ingame menu GUI & control logic
+
+
+        /* cursor visuals:
+            - switching conditions - what is being hovered over, is command selected
+            - command selected
+                - render eagle
+                - green if hovering over object, yellow otherwise
+            - no command:   
+                - render magnifying glass if hovering over object, or hand otherwise
+        */
 
         /*population:
             - incrementing population counter on building construction/death seems kinda shitty and prone to errors
@@ -1038,12 +965,18 @@ namespace eng {
             - player interaction'll be handled same way as clicks into the game view (detect clicked region, then transition states)
         */
 
-        //TODO: add resource values rendering
-
-        //TODO: add research/training price rendering - this one needs to be displayed on button hovers
-        //          - price can be stored within the button (the same way button name is stored)
-        //          - might want to add letter highlight functionality to the text_prompt tho (to highlight hotkeys for given buttons)
-
+        /*UNIT LEVEL:
+            - is computed from upgrades that affect the unit
+            - not sure how exactly is it computed, but can probably treat it as a sum of all the upgrades
+            - how are upgrades going to work:
+                - they'll be stored in faction data
+                - unit will have getters for various data properties
+                - the getters will query faction data and do conditional additions to the property
+            - how will the value increments be handled internally in the faction data:
+                - could maybe create a table with increment values for each unit
+                - the unit can then just lookup a row based on unit type & column based on value type
+                - level could be stored in the table as well
+        */
 
         glm::vec2 pos = input.mousePos_n;
         switch(state) {
@@ -1385,12 +1318,10 @@ namespace eng {
         float b = BORDER_SIZE * wr;
         float w = 2.f * GUI_WIDTH;
         float xOff = 0.01f;
-        // resources = GUI::ResourceBar(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff, -1.f), glm::vec2(1.f - GUI_WIDTH - xOff, b), 10.f, text_style_small, icon);
         resources = GUI::ResourceBar(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH),-1.f + b), glm::vec2(1.f - GUI_WIDTH - xOff, b), 1.f, text_style_small2, icon);
         price     = GUI::ResourceBar(glm::vec2( 1.f - GUI_WIDTH * 1.5f, 1.f - b), glm::vec2(GUI_WIDTH * 1.5f, b), 1.f, text_style_small2, icon, true);
         text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style, "TEXT PROMPT", false);
 
-        //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
         menu_panel = GUI::Menu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, menu_style, std::vector<GUI::Element*>{
             //"Game Menu" label
             //Save & Load buttons (on the same line)
@@ -1400,41 +1331,6 @@ namespace eng {
             //end scenario
             //return to game
         });
-
-
-        /*TODO next time:
-            - work on game pause logic
-            - maybe move camera controls in here - needs to get frozen along with the game
-            - work out the gui dispatch logic
-                - have a gui_state variable - will cover various actions & whether the menu is opened or not
-                - have a switch for it
-                    - if menu opened -> only dispatch within the menu
-                    - if 
-
-            - work out the object selection handling
-        */
-
-
-        /* element impl:
-            - action buttons:
-                - will probably be custom GUI element
-                - ideally, there'd be only one GUI style for all the buttons - will probably have to write a modified Button class for that tho (IconButton?)
-                - the single style would only define button borders & on hover/click visuals
-                - buttons will have to be updated whenever selection changes
-                    - could copy the button descriptions over for selected object (they should be lightweight)
-                    - can retrieve a pointer to the ActionButtons wrapper class
-            - selection tab:
-                - there'll be 9 icons in it as well as multitude of text fields
-                - there'd have to be an update logic, that will hide either text or 8 of the icons
-                - the update is triggered when selection changes
-                - again, probably retrieve a pointer to the wrapper class
-            - map:
-                - 
-           
-           hotkeys dispatch:
-            - have a function on the IngameStageController that registers custom key callback
-            - will use that to redirect inputs into this class (have handler function directly in here)
-        */
     }
 
     //==============================================================

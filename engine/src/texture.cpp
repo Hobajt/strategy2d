@@ -177,6 +177,24 @@ namespace eng {
         return *this;
     }
 
+    Image Image::operator()(int y, int x, int h, int w) {
+        return Image(*this, y, x, h, w);
+    }
+
+    Image::Image(const Image& img, int iy, int ix, int h, int w) : height(h), width(w), channels(img.channels), name(img.name) {
+        data = new uint8_t[w * h * channels];
+        int c = channels;
+
+        if(((unsigned int)iy) >= img.height || ((unsigned int)ix) >= img.width || ((unsigned int)iy+h) > img.height || ((unsigned int)ix+w) > img.width) {
+            ENG_LOG_ERROR("Image - invalid ROI coordinates (({}, {}, {}, {}) when original has size ({}, {}))", iy, ix, h, w, img.height, img.width);
+            throw std::runtime_error("");
+        }
+
+        for(int y = 0; y < h; y++) {
+            memcpy(&data[y*w*c], &img.data[(iy+y)*img.width*c + ix*c], sizeof(uint8_t) * w * c);
+        }
+    }
+
     void Image::Release() noexcept {
         if(data != nullptr) {
             ENG_LOG_TRACE("[D] Image '{}'", name.c_str());
