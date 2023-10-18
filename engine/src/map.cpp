@@ -662,7 +662,7 @@ namespace eng {
         return -1;
     }
 
-    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos) {
+    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos) const {
         for(int y = position.y; y < position.y + building_size.y; y++) {
             for(int x = position.x; x < position.x + building_size.x; x++) {
                 if(glm::ivec2(x,y) != worker_pos && (!tiles.IsWithinBounds(y,x) || !tiles(y,x).Traversable(nav_type))) {
@@ -671,6 +671,10 @@ namespace eng {
             }
         }
         return true;
+    }
+
+    bool Map::IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const {
+        return (tiles.IsWithinBounds(position) && tiles(position).Traversable(nav_type)) || (position == worker_pos); 
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {

@@ -104,6 +104,7 @@ namespace eng {
         if(ImGui::CollapsingHeader("Techtree")) {
             techtree.DBG_GUI();
         }
+        ImGui::Separator();
 
         Inner_DBG_GUI();
 #endif

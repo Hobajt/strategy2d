@@ -140,17 +140,6 @@ void Sandbox::OnUpdate() {
     //======================
 
     colorPalette.Bind(shader);
-
-    // Unit* troll = nullptr;
-    // if(level.objects.GetUnit(trollID, troll)) {
-    //     CommandDispatch(*troll);
-    // }
-
-    // if(input.lmb.down()) {
-    //     glm::ivec2 coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-    //     ObjectID id = level.objects.GetObjectAt(coords);
-    //     ENG_LOG_INFO("CLICK at {} - ID = {}", coords, id);
-    // }
     
     level.Update();
 
@@ -160,112 +149,6 @@ void Sandbox::OnUpdate() {
     //======================
     
     Renderer::End();
-}
-
-void Sandbox::CommandDispatch(Unit& unit) {
-    Camera& camera = Camera::Get();
-    Input& input = Input::Get();
-
-    //only fire commands on RMB clicks
-    if(!input.rmb.down())
-        return;
-    
-    //click info
-    glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-    ObjectID target_id = level.map.ObjectIDAt(target_pos);
-    TileData tile_info = level.map(target_pos);
-
-    if(adaptiveCommand) {
-        bool harvestable = ObjectID::IsHarvestable(target_id);
-        bool gatherable = (ObjectID::IsObject(target_id) && level.objects.GetObject(target_id).IsGatherable(unit.NavigationType()));
-
-        //resolve what type of command to issue based on unit & click info
-        if(unit.IsWorker() && gatherable) {
-            //issue gather command
-            ENG_LOG_INFO("GATHER FROM {} ({})", target_id, level.objects.GetObject(target_id));
-            unit.IssueCommand(Command::Gather(target_id));
-
-            if(unit.Sound_Yes().valid) {
-                Audio::Play(unit.Sound_Yes().Random());
-            }
-        }
-        else if(unit.IsWorker() && harvestable) {
-            //issue harvest command
-            ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
-            unit.IssueCommand(Command::Harvest(target_pos));
-
-            if(unit.Sound_Yes().valid) {
-                Audio::Play(unit.Sound_Yes().Random());
-            }
-        }
-        else if(ObjectID::IsAttackable(target_id)) {
-            if(ObjectID::IsObject(target_id))
-                ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-            else
-                ENG_LOG_INFO("ATTACK {} at {} (map object)", target_id, target_pos);
-            if(unit.Sound_Yes().valid) {
-                Audio::Play(unit.Sound_Yes().Random());
-            }
-            unit.IssueCommand(Command::Attack(target_id, target_pos));
-        }
-        else if(level.map.IsWithinBounds(target_pos)) {
-            ENG_LOG_INFO("MOVE TO {}", target_pos);
-            unit.IssueCommand(Command::Move(target_pos));
-            //TODO: play units voices from wherever player commands are generated (not in the commands themselves)
-            if(unit.Sound_Yes().valid) {
-                Audio::Play(unit.Sound_Yes().Random());
-            }
-        }
-        else {
-            ENG_LOG_WARN("COULDN'T RESOLVE COMMAND");
-        }
-    }
-    else {
-        //force issue specific command
-        switch(commandID) {
-            case CommandType::MOVE:
-                ENG_LOG_INFO("MOVE TO {}", target_pos);
-                if(level.map.IsWithinBounds(target_pos)) {
-                    unit.IssueCommand(Command::Move(target_pos));
-                }
-                break;
-            case CommandType::ATTACK:
-                if(ObjectID::IsAttackable(target_id)) {
-                    ENG_LOG_INFO("ATTACK {} at {} ({})", target_id, target_pos, level.objects.GetObject(target_id));
-                    unit.IssueCommand(Command::Attack(target_id, target_pos));
-                }
-                else {
-                    ENG_LOG_INFO("ATTACK {} at {} (invalid target)", target_id, target_pos);
-                }
-                break;
-            case CommandType::HARVEST_WOOD:
-                ENG_LOG_INFO("HARVEST WOOD AT {}", target_pos);
-                if(level.map.IsWithinBounds(target_pos)) {
-                    unit.IssueCommand(Command::Harvest(target_pos));
-                }
-                break;
-            case CommandType::GATHER_RESOURCES:
-                ENG_LOG_INFO("GATHER FROM {}", target_id);
-                if(ObjectID::IsValid(target_id)) {
-                    unit.IssueCommand(Command::Gather(target_id));
-                }
-                break;
-            case CommandType::RETURN_GOODS:
-                ENG_LOG_INFO("RETURN GOODS ISSUED");
-                unit.IssueCommand(Command::ReturnGoods());
-                break;
-            case CommandType::BUILD:
-                ENG_LOG_INFO("BUILD ISSUED (ID={}, pos= ({}, {}))", buildingID, target_pos.x, target_pos.y);
-                if(level.map.IsWithinBounds(target_pos)) {
-                    //should probably do other sanity checks here - placement check, conditions check, worker check, etc. etc.
-                    unit.IssueCommand(Command::Build(buildingID, target_pos));
-                }
-                break;
-            default:
-                ENG_LOG_INFO("BEHAVIOUR FOR COMMAND {} NOT IMPLEMENTED.", commandID);
-                break;
-        }
-    }
 }
 
 void Sandbox::OnGUI() {
@@ -299,15 +182,6 @@ void Sandbox::OnGUI() {
         ImGui::End();
         
         level.objects.DBG_GUI();
-
-        ImGui::Begin("Command");
-        ImGui::Checkbox("Adaptive command", &adaptiveCommand);
-        if(!adaptiveCommand)
-            ImGui::Combo("type", &commandID, "Idle\0Move\0Attack\0Harvest\0Gather\0ReturnGoods\0Build");
-        if(commandID == CommandType::BUILD) {
-            ImGui::SliderInt("building ID", &buildingID, 0, BuildingType::COUNT);
-        }
-        ImGui::End();
 
         level.map.DBG_GUI();
 

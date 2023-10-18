@@ -9,6 +9,8 @@
 #include "engine/game/level.h"
 #include "engine/core/audio.h"
 
+#include "engine/utils/dbg_gui.h"
+
 namespace eng {
 
     constexpr float GUI_WIDTH = 0.25f;
@@ -923,7 +925,6 @@ namespace eng {
         //render building preview when in the build command - should probably also solve the shipyard issue (part on land, part on water)
         //cancel ongoing command target selection when selection updates (unit dies for example)
 
-        //cursor changes
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
         //return goods - why the fuck doesn't he go back to work?
@@ -1074,6 +1075,20 @@ namespace eng {
                             command_data = glm::ivec2(-1);
                             actionButtons.ChangePage(0);
                         }
+                        
+                        //render building visualization
+                        if(command_data.x == GUI::ActionButton_CommandType::BUILD) {
+                            Unit* worker;
+                            if(level.objects.GetUnit(selection.selection[0], worker)) {
+                                RenderBuildingViz(level.map, worker->Position());
+                            }
+                            else {
+                                ENG_LOG_WARN("Invalid selection for build command!");
+                                state = PlayerControllerState::IDLE;
+                                command_data = glm::ivec2(-1);
+                                actionButtons.ChangePage(0);
+                            }
+                        }
                     }
                     else if(cursor_in_map_view) {
                         if(input.lmb.down()) {
@@ -1082,6 +1097,12 @@ namespace eng {
                         else if (input.rmb.down()) {
                             //center the camera at the click pos
                         }
+                    }
+
+                    //camera panning
+                    glm::ivec2 vec = glm::ivec2(int(pos.x > 0.95f) - int(pos.x < 0.05f), -int(pos.y > 0.95f) + int(pos.y < 0.05f));
+                    if(vec.x != 0 || vec.y != 0) {
+                        camera.Move(vec);
                     }
                 }
                 break;
@@ -1182,6 +1203,30 @@ namespace eng {
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y + SELECTION_HIGHLIGHT_WIDTH*mult.y), highlight_clr));
     }
 
+    void PlayerFactionController::RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos) {
+        BuildingDataRef building = Resources::LoadBuilding(command_data.y, bool(Race()));
+        SpriteGroup& sg = building->animData->GetGraphics(BuildingAnimationType::IDLE);
+        glm::ivec2 sz = glm::ivec2(building->size);
+
+        Camera& cam = Camera::Get();
+        Input& input = Input::Get();
+        glm::ivec2 corner = glm::ivec2(cam.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        float zIdx = -0.5f;
+        int nav_type = building->navigationType;
+
+        //building sprite
+        sg.Render(glm::vec3(cam.map2screen(corner), zIdx), building->size * cam.Mult(), glm::ivec4(0), 0, 0);
+        
+        //colored overlay, signaling buildability
+        for(int y = 0; y < sz.y; y++) {
+            for(int x = 0; x < sz.x; x++) {
+                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
+                glm::vec4 clr = map.IsBuildable(pos, nav_type, worker_pos) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
+                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
+            }
+        }
+    }
+
     void PlayerFactionController::InitializeGUI() {
         gui_handler = GUI::SelectionHandler();
 
@@ -1193,6 +1238,8 @@ namespace eng {
         float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
         glm::ivec2 textureSize = ts * upscaleFactor;
         int borderWidth = 2 * upscaleFactor;
+
+        shadows = TextureGenerator::ShadowsTexture(256,256,8);
 
         //general style for menu buttons
         GUI::StyleRef menu_btn_style = std::make_shared<GUI::Style>();
@@ -1337,6 +1384,14 @@ namespace eng {
             //end scenario
             //return to game
         });
+    }
+
+
+
+    void PlayerFactionController::Inner_DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        // ImGui::ColorEdit4("shadows", (float*)&clr);
+#endif
     }
 
     //==============================================================

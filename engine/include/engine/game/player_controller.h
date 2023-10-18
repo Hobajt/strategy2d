@@ -185,8 +185,11 @@ namespace eng {
         bool CursorInMapView(const glm::vec2& pos) const;
 
         void RenderSelectionRectangle();
+        void RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos);
 
         void InitializeGUI();
+        
+        virtual void Inner_DBG_GUI() override;
     private:
         GUIRequestHandler* handler = nullptr;
 
@@ -201,6 +204,7 @@ namespace eng {
         GUI::ResourceBar price;
 
         PlayerSelection selection;
+        TextureRef shadows;
 
         bool is_menu_active = false;
         int state = PlayerControllerState::IDLE;

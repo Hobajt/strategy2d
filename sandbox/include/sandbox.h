@@ -18,8 +18,6 @@ private:
     virtual void OnGUI() override;
 
     void ReloadShaders();
-
-    void CommandDispatch(eng::Unit& unit);
 private:
     eng::ShaderRef shader;
     eng::FontRef font;
@@ -32,8 +30,6 @@ private:
     bool whiteBackground = false;
     int paletteIndex = 0;
 
-    bool adaptiveCommand = true;
-    int commandID = eng::CommandType::MOVE;
     int buildingID = 0;
 
     eng::ObjectID trollID;

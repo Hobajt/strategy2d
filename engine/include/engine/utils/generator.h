@@ -21,6 +21,8 @@ namespace eng {
         TextureRef ButtonHighlightTexture(int width, int height, int borderWidth);
         TextureRef ButtonHighlightTexture(int width, int height, int borderWidth, const glm::u8vec4& clr);
 
+        TextureRef ShadowsTexture(int width, int height, int size);
+
 
     }//namespace TextureGenerator
 

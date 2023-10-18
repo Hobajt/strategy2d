@@ -208,6 +208,39 @@ namespace eng {
             return texture;
         }
 
+        TextureRef ShadowsTexture(int width, int height, int size) {
+            rgba* data = new rgba[width * height];
+            
+            rgba clrs[2] = {
+                rgba(255,255,255,255),
+                rgba(0,0,0,0)
+            };
+
+            //--------------------------
+            for(int y = 0; y < height; y++) {
+                int py = y / size;
+                for(int x = 0; x < width; x++) {
+                    int px = x / size;
+                    data[y * width + x] = clrs[int((px+py) % 2 == 0)];
+                }
+            }
+
+
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "shadowsTex_%dx%d", width, height);
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+
+            delete[] data;
+            return texture;
+        }
+
         //===============================
 
         template<typename T> inline void fillColor(T* data, int width, int height, const T& color) {
