@@ -415,4 +415,19 @@ namespace eng {
         std::vector<ObjectID> traversableObjects;
     };
 
+    //===== MapView =====
+
+    //Manages a texture with map view.
+    class MapView {
+    public:
+        MapView() = default;
+        MapView(const glm::ivec2& size);
+
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size);
+        void Update(const Map& map);
+    private:
+        int redraw_interval = 5;
+        TextureRef tex = nullptr;
+    };
+
 }//namespace eng

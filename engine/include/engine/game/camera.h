@@ -21,6 +21,7 @@ namespace eng {
         void Update();
 
         void Move(const glm::vec2& step);
+        void Center(const glm::vec2& pos);
 
         //Update zoom based on scroll input.
         void ZoomUpdate(bool forced = false);

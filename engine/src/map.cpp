@@ -1377,6 +1377,20 @@ namespace eng {
         printf("-------\n\n");
     }
 
+    //===== MapView =====
+
+    MapView::MapView(const glm::ivec2& size) {
+
+    }
+
+    void MapView::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size) {
+        
+    }
+
+    void MapView::Update(const Map& map) {
+
+    }
+
     //===================================================================================
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags) {

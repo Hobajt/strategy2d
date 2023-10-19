@@ -23,6 +23,9 @@ namespace eng {
 
     static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
+    constexpr glm::vec2 MAP_A = glm::vec2(0.025f,                0.05f);
+    constexpr glm::vec2 MAP_B = glm::vec2(0.025f+GUI_WIDTH*0.8f, 0.3f);
+
     void RenderGUIBorders(bool isOrc, float z);
 
     //===== GUI::SelectionTab =====
@@ -952,12 +955,22 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        
+        //map view visuals (MapView class in map.h), faction occlusion mask & fog of war
+
+        /* map view impl:
+            - there'll be a MapView class that will handle everything regarding the image
+            - it'll manage a texture internally that will get redrawn periodically
+            - interface:
+                - Render() - to render the image onto the screen
+                - Update() - redraw (+ frame tracking, so that it's not done every frame)
+            - class will need to know map size & will need to reallocate texture whenever map size changes - might want to make it part of the map data then
+            - update method will require occlusion masks (which will be stored in faction controllers)
+        */
+
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
         //return goods - why the fuck doesn't he go back to work?
-        //map view, faction occlusion mask & fog of war
         //add population tracking logic (as described below)
 
         //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
@@ -1000,7 +1013,7 @@ namespace eng {
 
         glm::vec2 hover_coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
         ObjectID hover_id = level.map.ObjectIDAt(hover_coords);
-        bool hovering_over_object = ObjectID::IsValid(hover_id);
+        bool hovering_over_object = ObjectID::IsValid(hover_id) && !ObjectID::IsHarvestable(hover_id);
 
         glm::vec2 pos = input.mousePos_n;
         bool cursor_in_game_view = CursorInGameView(pos);
@@ -1033,21 +1046,22 @@ namespace eng {
                         state = PlayerControllerState::OBJECT_SELECTION;
                     }
                     else if (input.rmb.down()) {
-                        //issue adaptive command to current selection
+                        //issue adaptive command to current selection (target coords from game view click)
                         glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                         ObjectID target_id = level.map.ObjectIDAt(target_pos);
                         selection.IssueAdaptiveCommand(level, target_pos, target_id);
                     }
                 }
                 else if(cursor_in_map_view) {
-                    // glm::vec2 coords = ... coords from map image position ...
                     if(input.lmb.down()) {
-                        //transition to camera movement state
-                        //maybe update the camera from here as well
+                        camera.Center(MapView2MapCoords(input.mousePos_n, level.map.Size()));
                         state = PlayerControllerState::CAMERA_CENTERING;
                     }
                     else if (input.rmb.down()) {
-                        //TODO: issue adaptive command to current selection
+                        //issue adaptive command to current selection (target coords from map click)
+                        glm::ivec2 target_pos = MapView2MapCoords(input.mousePos_n, level.map.Size());
+                        ObjectID target_id = level.map.ObjectIDAt(target_pos);
+                        selection.IssueAdaptiveCommand(level, target_pos, target_id);
                     }
                 }
                 else {
@@ -1070,7 +1084,11 @@ namespace eng {
                 }
                 break;
             case PlayerControllerState::CAMERA_CENTERING:   //camera centering (lmb drag in the map view)
-                //TODO:
+                camera.Center(MapView2MapCoords(input.mousePos_n, level.map.Size()));
+                input.ClampCursorPos(MAP_A, MAP_B);
+                if(input.lmb.up()) {
+                    state = PlayerControllerState::IDLE;
+                }
                 break;
             case PlayerControllerState::COMMAND_TARGET_SELECTION:
                 if(cursor_in_game_view || cursor_in_map_view) {
@@ -1114,9 +1132,15 @@ namespace eng {
                     else if(cursor_in_map_view) {
                         if(input.lmb.down()) {
                             //issue the command
+                            glm::ivec2 target_pos = MapView2MapCoords(input.mousePos_n, level.map.Size());
+                            ObjectID target_id = level.map.ObjectIDAt(target_pos);
+                            if(selection.IssueTargetedCommand(level, target_pos, target_id, command_data, msg_bar)) {
+                                BackToIdle();
+                            }
                         }
                         else if (input.rmb.down()) {
                             //center the camera at the click pos
+                            camera.Center(MapView2MapCoords(input.mousePos_n, level.map.Size()));
                         }
                     }
 
@@ -1203,13 +1227,18 @@ namespace eng {
     }
 
     bool PlayerFactionController::CursorInMapView(const glm::vec2& pos) const {
-        return false;
+        return pos.x > MAP_A.x && pos.x < MAP_B.x && pos.y > MAP_A.y && pos.y < MAP_B.y;
     }
 
     void PlayerFactionController::BackToIdle() {
         state = PlayerControllerState::IDLE;
         command_data = glm::ivec2(-1);
         actionButtons.ChangePage(0);
+    }
+
+    glm::ivec2 PlayerFactionController::MapView2MapCoords(const glm::vec2& pos, const glm::ivec2& mapSize) {
+        glm::vec2 r = glm::clamp((pos - MAP_A) / (MAP_B - MAP_A), 0.f, 1.f);
+        return glm::vec2(r.x * mapSize.x, (1.f-r.y) * mapSize.y);
     }
 
     void PlayerFactionController::RenderSelectionRectangle() {
@@ -1289,6 +1318,12 @@ namespace eng {
         menu_style->textColor = textClr;
         menu_style->font = font;
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
+
+        //TODO: only temporary
+        GUI::StyleRef mapview_style = std::make_shared<GUI::Style>();
+        mapview_style->texture = Resources::LoadTexture("test2.png");
+        mapview_style->hoverTexture = menu_style->texture;
+        mapview_style->holdTexture = menu_style->texture;
 
         //style for the menu background
         GUI::StyleRef text_style = std::make_shared<GUI::Style>();
@@ -1382,9 +1417,8 @@ namespace eng {
             static_cast<PlayerFactionController*>(handler)->selection.SelectFromSelection(id);
         });
 
-
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
-            // new GUI::Map(),             //map view
+            new GUI::Button(glm::vec2(0.5f, -0.65f), glm::vec2(0.4f, 0.25f), 1.f, mapview_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}), //TODO: only temporary
             new GUI::TextButton(glm::vec2(0.25f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
                 static_cast<PlayerFactionController*>(handler)->SwitchMenu(true);
             }),

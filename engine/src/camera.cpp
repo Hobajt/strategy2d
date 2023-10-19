@@ -65,6 +65,13 @@ namespace eng {
             BoundariesCheck();
     }
 
+    void Camera::Center(const glm::vec2& pos) {
+        position = pos;
+        
+        if(checkForBounds)
+            BoundariesCheck();
+    }
+
     void Camera::ZoomUpdate(bool forced) {
         Input& input = Input::Get();
 
