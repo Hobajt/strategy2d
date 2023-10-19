@@ -105,6 +105,7 @@ namespace eng::GUI {
 
         void Interactable(bool state) { interactable = state; }
         void Enable(bool enabled_) { enabled = enabled_; }
+        bool IsEnabled() const { return enabled; }
 
         void UpdateOffset(const glm::vec2& offset, bool recalculate = true);
 

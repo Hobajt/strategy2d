@@ -425,6 +425,22 @@ namespace eng {
         return idx[resource_idx];
     }
 
+    //===== GUI::PopupMessage =====
+
+    GUI::PopupMessage::PopupMessage(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_)
+        : TextLabel(offset_, size_, zOffset_, style_, "", false) {}
+
+    void GUI::PopupMessage::DisplayMessage(const std::string& msg, float duration) {
+        Setup(msg);
+        time_limit = float(Input::Get().CurrentTime()) + duration;
+    }
+
+    void GUI::PopupMessage::Update() {
+        if(time_limit <= (float)Input::Get().CurrentTime()) {
+            Enable(false);
+        }
+    }
+
     //===== PlayerSelection =====
 
     void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
@@ -628,21 +644,20 @@ namespace eng {
         return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
-    void PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data) {
-        //do various sanity checks
-        //command requirements checks (resources for example)
-        //play unit "command issued" sound from here
+    bool PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar) {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
 
         //targeted commands can only be issued on player owned units (player buildings have no targeted commands)
         if(selection_type != SelectionType::PLAYER_UNIT)
-            return;
+            return false;
+        
         ASSERT_MSG(!GUI::ActionButton_CommandType::IsTargetless(command_id), "Attempting to issue targetless command using a wrong function.");
 
         static const char* cmd_names[10] = { "Cast", "Build", "Move", "Patrol", "Attack", "AttackGround", "Harvest", "Gather", "Repair", "???" };
         const char* cmd_name = cmd_names[9];
         Command cmd;
+        bool conditions_met = true;
 
         if(GUI::ActionButton_CommandType::IsSingleUser(command_id) && selected_count == 1) {
             // do resource check here(), display message in GUI, if not enough resources
@@ -655,13 +670,25 @@ namespace eng {
                     cmd_name = cmd_names[0];
                     break;
                 case GUI::ActionButton_CommandType::BUILD:
-                    //TODO: resource check, build site check, techtree check
+                {
+                    //build site check
+                    BuildingDataRef bd = Resources::LoadBuilding(payload_id, bool(unit.Race()));
+                    if(!level.map.IsAreaBuildable(target_pos, glm::ivec2(bd->size), bd->navigationType, unit.Position())) {
+                        ENG_LOG_FINE("Targeted command - '{}' - invalid position - (pos: ({}, {}), payload: {})", cmd_name, target_pos.x, target_pos.y, payload_id);
+                        msg_bar.DisplayMessage("You cannot build there");
+                        Audio::Play(SoundEffect::Error().Random());
+                        return false;
+                    }
+
+                    //TODO: resource check, techtree check
+
                     cmd = Command::Build(payload_id, target_pos);
                     cmd_name = cmd_names[1];
                     break;
+                }
             }
-
-            ENG_LOG_FINE("Targeted command - pos: ({}, {}), ID: {} (cmd: {}, payload: {})", target_pos.x, target_pos.y, target_id, cmd_name, payload_id);
+            
+            ENG_LOG_FINE("Targeted command - '{}' - pos: ({}, {}), ID: {}, payload: {}", cmd_name, target_pos.x, target_pos.y, target_id, payload_id);
             unit.IssueCommand(cmd);
 
             if(unit.Sound_Yes().valid) {
@@ -728,7 +755,7 @@ namespace eng {
                     break;
                 default:
                     ENG_LOG_WARN("IssueCommand - Unrecognized command_id ({})", command_id);
-                    return;
+                    return false;
             }
 
             ENG_LOG_FINE("Targeted command - pos: ({}, {}), ID: {} (cmd: {}, payload: {})", target_pos.x, target_pos.y, target_id, cmd_name, payload_id);
@@ -757,6 +784,8 @@ namespace eng {
                 }
             }
         }
+
+        return true;
     }
 
     void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id) {
@@ -886,6 +915,7 @@ namespace eng {
         //render individual GUI elements
         game_panel.Render();
         text_prompt.Render();
+        msg_bar.Render();
         resources.Render();
         price.Render();
 
@@ -922,9 +952,7 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //cancel ongoing command target selection when selection updates (unit dies for example)
-        //error message line & signaling (ie. when building cannot be built or not enough resources, etc.)
-
+        
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
@@ -1063,8 +1091,9 @@ namespace eng {
                             //issue the command & go back to idle state
                             glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                             ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                            selection.IssueTargetedCommand(level, target_pos, target_id, command_data);
-                            BackToIdle();
+                            if(selection.IssueTargetedCommand(level, target_pos, target_id, command_data, msg_bar)) {
+                                BackToIdle();
+                            }
                         }
                         else if (input.rmb.down()) {
                             BackToIdle();
@@ -1109,6 +1138,8 @@ namespace eng {
         
         //update cursor icon
         Resources::CursorIcons::SetIcon(cursor_idx);
+
+        msg_bar.Update();
     }
 
     void PlayerFactionController::SwitchMenu(bool active) {
@@ -1351,6 +1382,7 @@ namespace eng {
             static_cast<PlayerFactionController*>(handler)->selection.SelectFromSelection(id);
         });
 
+
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
             // new GUI::Map(),             //map view
             new GUI::TextButton(glm::vec2(0.25f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
@@ -1372,6 +1404,7 @@ namespace eng {
         resources = GUI::ResourceBar(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH),-1.f + b), glm::vec2(1.f - GUI_WIDTH - xOff, b), 1.f, text_style_small2, icon);
         price     = GUI::ResourceBar(glm::vec2( 1.f - GUI_WIDTH * 1.5f, 1.f - b), glm::vec2(GUI_WIDTH * 1.5f, b), 1.f, text_style_small2, icon, true);
         text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style, "TEXT PROMPT", false);
+        msg_bar     = GUI::PopupMessage(glm::vec2(-1.f + GUI_WIDTH*2.f + 2.f*xOff + (1.f - GUI_WIDTH), 1.f - b*5.f), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style);
 
         menu_panel = GUI::Menu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, menu_style, std::vector<GUI::Element*>{
             //"Game Menu" label

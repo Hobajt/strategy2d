@@ -58,4 +58,9 @@ namespace eng {
         return sound;
     }
 
+    SoundEffect& SoundEffect::Error() {
+        static SoundEffect sound = SoundEffect("misc/error");
+        return sound;
+    }
+
 }//namespace eng

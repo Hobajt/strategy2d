@@ -16,6 +16,8 @@ namespace eng {
     namespace FactionControllerID {
         enum { INVALID = 0, LOCAL_PLAYER, };
     }
+    
+#define STD_MSG_TIME 5.f
 
     struct PlayerSelection;
 
@@ -105,6 +107,23 @@ namespace eng {
             std::array<ImageAndLabel*, 4> text;
             bool alt;
         };
+
+        //===== GUI::PopupMessage =====
+
+        class PopupMessage : public TextLabel {
+        public:
+            PopupMessage() = default;
+            PopupMessage(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style);
+
+            virtual void OnHover() override {}
+            virtual void OnHold() override {}
+            virtual void OnHighlight() override {}
+
+            void DisplayMessage(const std::string& msg, float duration = STD_MSG_TIME);
+            void Update();
+        private:
+            float time_limit = 0.f;
+        };
     }
 
     //===== PlayerSelection =====
@@ -141,7 +160,7 @@ namespace eng {
 
         int ObjectSelectionType(const ObjectID& id, int factionID, int playerFactionID);
 
-        void IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data);
+        bool IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
         void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
     };
@@ -198,6 +217,7 @@ namespace eng {
         GUI::Menu menu_panel;
         GUI::SelectionHandler gui_handler;
         GUI::TextLabel text_prompt;
+        GUI::PopupMessage msg_bar;
 
         GUI::ActionButtons actionButtons;
         GUI::SelectionTab* selectionTab;
