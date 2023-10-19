@@ -922,9 +922,10 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //render building preview when in the build command - should probably also solve the shipyard issue (part on land, part on water)
         //cancel ongoing command target selection when selection updates (unit dies for example)
+        //error message line & signaling (ie. when building cannot be built or not enough resources, etc.)
 
+        //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
         //return goods - why the fuck doesn't he go back to work?
@@ -1048,17 +1049,14 @@ namespace eng {
                     cursor_idx = CursorIconName::EAGLE_YELLOW + int(hovering_over_object);
                 }
 
-                //selection canceled by the cancel button
-                if(!actionButtons.IsAtCancelPage()) {
-                    state = PlayerControllerState::IDLE;
-                    command_data = glm::ivec2(-1);
+                //selection canceled by the cancel button (or selected unit died)
+                if(!actionButtons.IsAtCancelPage() || selection.selected_count < 1) {
+                    BackToIdle();
                 }
                 else {
                     if(actionButtons.ClickIdx() == 8) {
                         //cancel button clicked
-                        state = PlayerControllerState::IDLE;
-                        command_data = glm::ivec2(-1);
-                        actionButtons.ChangePage(0);
+                        BackToIdle();
                     }
                     else if(cursor_in_game_view) {
                         if(input.lmb.down()) {
@@ -1066,14 +1064,10 @@ namespace eng {
                             glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                             ObjectID target_id = level.map.ObjectIDAt(target_pos);
                             selection.IssueTargetedCommand(level, target_pos, target_id, command_data);
-                            state = PlayerControllerState::IDLE;
-                            command_data = glm::ivec2(-1);
-                            actionButtons.ChangePage(0);
+                            BackToIdle();
                         }
                         else if (input.rmb.down()) {
-                            state = PlayerControllerState::IDLE;
-                            command_data = glm::ivec2(-1);
-                            actionButtons.ChangePage(0);
+                            BackToIdle();
                         }
                         
                         //render building visualization
@@ -1084,9 +1078,7 @@ namespace eng {
                             }
                             else {
                                 ENG_LOG_WARN("Invalid selection for build command!");
-                                state = PlayerControllerState::IDLE;
-                                command_data = glm::ivec2(-1);
-                                actionButtons.ChangePage(0);
+                                BackToIdle();
                             }
                         }
                     }
@@ -1181,6 +1173,12 @@ namespace eng {
 
     bool PlayerFactionController::CursorInMapView(const glm::vec2& pos) const {
         return false;
+    }
+
+    void PlayerFactionController::BackToIdle() {
+        state = PlayerControllerState::IDLE;
+        command_data = glm::ivec2(-1);
+        actionButtons.ChangePage(0);
     }
 
     void PlayerFactionController::RenderSelectionRectangle() {

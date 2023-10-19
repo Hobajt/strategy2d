@@ -183,6 +183,7 @@ namespace eng {
 
         bool CursorInGameView(const glm::vec2& pos) const;
         bool CursorInMapView(const glm::vec2& pos) const;
+        void BackToIdle();
 
         void RenderSelectionRectangle();
         void RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos);
