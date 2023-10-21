@@ -376,7 +376,7 @@ namespace eng {
 
     //===== MapView =====
 
-    MapView::MapView(const glm::ivec2& size) : tex(std::make_shared<Texture>(TextureParams::CustomData(size.x, size.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), nullptr, "mapview")) {
+    MapView::MapView(const glm::ivec2& size, int scale_) : scale(scale_), tex(std::make_shared<Texture>(TextureParams::CustomData(size.x*scale_, size.y*scale_, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), nullptr, "mapview")) {
         ENG_LOG_INFO("MAP VIEW - SIZE = ({}, {}), HANDLE: {}", size.x, size.y, tex->Handle());
     }
 
@@ -423,14 +423,15 @@ namespace eng {
         };
 
         glm::ivec2 size = map.Size();
-        rgba* data = new rgba[size.x * size.y];
+        glm::ivec2 sz = size * scale;
+        rgba* data = new rgba[sz.x * sz.y];
 
-        for(int y = 0; y < size.y; y++) {
-            int Y = size.y-1-y;
-            for(int x = 0; x < size.x; x++) {
-                const TileData& td = map(y, x);
+        for(int y = 0; y < sz.y; y++) {
+            int Y = sz.y-1-y;
+            for(int x = 0; x < sz.x; x++) {
+                const TileData& td = map(y/scale, x/scale);
                 rgba color = ObjectID::IsObject(td.id) ? (objectColors[td.colorIdx % colorCount]) : tileColors[td.tileType];
-                data[Y*size.x + x] = color;
+                data[Y*sz.x + x] = color;
             }
         }
         return data;

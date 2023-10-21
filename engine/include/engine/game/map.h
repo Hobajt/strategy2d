@@ -294,7 +294,7 @@ namespace eng {
     class MapView {
     public:
         MapView() = default;
-        MapView(const glm::ivec2& size);
+        MapView(const glm::ivec2& size, int scale = 4);
         
         void Update(const Map& map, bool forceRedraw = false);
 
@@ -305,6 +305,7 @@ namespace eng {
         int redraw_interval = 30;
         TextureRef tex = nullptr;
         int counter = 0;
+        int scale = 1;
     };
 
     //===== Mapfile =====

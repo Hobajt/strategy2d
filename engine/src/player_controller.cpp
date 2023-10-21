@@ -958,7 +958,6 @@ namespace eng {
         //NEXT UP:
         //map view - include fog of war & occlusion mask overlay in the render
         //map view - use higher resolution for the texture (or get somehow rid of the "blurriness")
-        //map view - proper handling for object's color change; neutral buildings proper colors (gold mine should be yellow)
         //already got the rendering setup, only need to implement mapview.Update() and properly initialize mapview whenever map changes
 
         /* map view impl:
