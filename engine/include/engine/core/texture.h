@@ -85,6 +85,8 @@ namespace eng {
         void Bind(int slot) const;
 	    static void Unbind(int slot);
 
+        void UpdateData(void* data);
+
         int Width() const { return params.width; }
         int Height() const { return params.height; }
         glm::ivec2 Size() const { return glm::ivec2(params.width, params.height); }

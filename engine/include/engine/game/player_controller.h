@@ -207,6 +207,7 @@ namespace eng {
 
         void RenderSelectionRectangle();
         void RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos);
+        void RenderMapView();
 
         void InitializeGUI();
         
@@ -227,6 +228,7 @@ namespace eng {
 
         PlayerSelection selection;
         TextureRef shadows;
+        TextureRef mapview;
 
         bool is_menu_active = false;
         int state = PlayerControllerState::IDLE;

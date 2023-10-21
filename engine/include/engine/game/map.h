@@ -15,6 +15,7 @@ namespace eng {
     class FactionObject;
     class Unit;
     class DiplomacyMatrix;
+    class Map;
 
     using buildingMapCoords = std::tuple<glm::ivec2, glm::ivec2, ObjectID, int>;
 
@@ -98,17 +99,18 @@ namespace eng {
 
     //Live representation of a tile.
     struct TileData {
-        int tileType = 0;           //tile type identifier (enum value)
-        int variation = 0;          //for visual modifications (if given tile type has any)
-        int cornerType = 0;         //type identification for top-left corner of the tile
+        int tileType = 0;                   //tile type identifier (enum value)
+        int variation = 0;                  //for visual modifications (if given tile type has any)
+        int cornerType = 0;                 //type identification for top-left corner of the tile
 
         glm::ivec2 idx = glm::ivec2(0);     //index, pointing to location of specific tile visuals in tilemap sprite
 
-        int health = 100;           //for trees/walls health tracking; useless in other tile types
-        NavData nav;                //navigation variables
+        int health = 100;                   //for trees/walls health tracking; useless in other tile types
+        NavData nav;                        //navigation variables
 
-        ObjectID id = {};           //id of an object located on this tile (invalid means empty)
+        ObjectID id = {};                   //id of an object located on this tile (invalid means empty)
         int factionId = -1;
+        int colorIdx = -1;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -286,6 +288,25 @@ namespace eng {
         glm::ivec2 size = glm::ivec2(0,0);
     };
 
+    //===== MapView =====
+
+    //Manages a texture with map view.
+    class MapView {
+    public:
+        MapView() = default;
+        MapView(const glm::ivec2& size);
+        
+        void Update(const Map& map, bool forceRedraw = false);
+
+        TextureRef GetTexture() const { return tex; }
+    private:
+        glm::u8vec4* Redraw(const Map& map) const;
+    private:
+        int redraw_interval = 30;
+        TextureRef tex = nullptr;
+        int counter = 0;
+    };
+
     //===== Mapfile =====
 
     struct Mapfile {
@@ -354,7 +375,7 @@ namespace eng {
         //Searches tiles around provided object for gameobjects that belong to enemy factions.
         bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, bool is_building);
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
 
@@ -374,6 +395,8 @@ namespace eng {
         void UndoChanges(std::vector<TileRecord>& history, bool rewrite_history = true);
 
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
+
+        MapView& View() { return mapView; }
 
         void DBG_GUI();
     private:
@@ -413,21 +436,8 @@ namespace eng {
 
         pathfindingContainer nav_list;
         std::vector<ObjectID> traversableObjects;
-    };
 
-    //===== MapView =====
-
-    //Manages a texture with map view.
-    class MapView {
-    public:
-        MapView() = default;
-        MapView(const glm::ivec2& size);
-
-        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size);
-        void Update(const Map& map);
-    private:
-        int redraw_interval = 5;
-        TextureRef tex = nullptr;
+        MapView mapView;
     };
 
 }//namespace eng

@@ -186,6 +186,10 @@ void Sandbox::OnGUI() {
         level.map.DBG_GUI();
 
         level.factions.DBG_GUI();
+
+        ImGui::Begin("MapView Texture");
+        level.map.View().GetTexture()->DBG_GUI();
+        ImGui::End();
     }
 #endif
 }

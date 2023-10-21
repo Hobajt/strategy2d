@@ -921,6 +921,7 @@ namespace eng {
         msg_bar.Render();
         resources.Render();
         price.Render();
+        RenderMapView();
 
         switch(state) {
             case PlayerControllerState::OBJECT_SELECTION:
@@ -955,7 +956,8 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //map view visuals (MapView class in map.h), faction occlusion mask & fog of war
+        //map view visuals (MapView class in map.h), faction occlusion mask & fog of war 
+        //already got the rendering setup, only need to implement mapview.Update() and properly initialize mapview whenever map changes
 
         /* map view impl:
             - there'll be a MapView class that will handle everything regarding the image
@@ -986,16 +988,6 @@ namespace eng {
             - compute population from that (num_town_halls + 4*num_farms)
             - update whenever new building is registered
             - this way, the population will always match the buildings
-        */
-
-        /*map view impl:
-            - need to maintain a texture with miniaturized map
-            - texture needs to be uploaded to the GPU - this is going to be painful
-            - what do I need in order to render it:
-                - map data
-                - fog of war & visibility mask (will be stored in faction_data)
-            - map view can then just be rendered as a texture (not even a part of GUI)
-            - player interaction'll be handled same way as clicks into the game view (detect clicked region, then transition states)
         */
 
         /*UNIT LEVEL:
@@ -1163,6 +1155,11 @@ namespace eng {
         //update cursor icon
         Resources::CursorIcons::SetIcon(cursor_idx);
 
+        //update mapview texture reference (needed later in Render())
+        level.map.View().Update(level.map);
+        mapview = level.map.View().GetTexture();
+
+        //update timing on the message bar
         msg_bar.Update();
     }
 
@@ -1285,6 +1282,15 @@ namespace eng {
         }
     }
 
+    void PlayerFactionController::RenderMapView() {
+        ASSERT_MSG(mapview != nullptr, "MapView texture reference cannot be nullptr!");
+
+        float zIdx = GUI_BORDERS_ZIDX - 2e-2f;
+        glm::vec2 pos = MAP_A * 2.f - 1.f;
+        glm::vec2 size = (MAP_B - MAP_A) * 2.f;
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(pos.x, -pos.y-size.y, zIdx), size, glm::vec4(1.f), mapview));
+    }
+
     void PlayerFactionController::InitializeGUI() {
         gui_handler = GUI::SelectionHandler();
 
@@ -1318,12 +1324,6 @@ namespace eng {
         menu_style->textColor = textClr;
         menu_style->font = font;
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
-
-        //TODO: only temporary
-        GUI::StyleRef mapview_style = std::make_shared<GUI::Style>();
-        mapview_style->texture = Resources::LoadTexture("test2.png");
-        mapview_style->hoverTexture = menu_style->texture;
-        mapview_style->holdTexture = menu_style->texture;
 
         //style for the menu background
         GUI::StyleRef text_style = std::make_shared<GUI::Style>();
@@ -1418,7 +1418,6 @@ namespace eng {
         });
 
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{
-            new GUI::Button(glm::vec2(0.5f, -0.65f), glm::vec2(0.4f, 0.25f), 1.f, mapview_style, this, [](GUI::ButtonCallbackHandler* handler, int id){}), //TODO: only temporary
             new GUI::TextButton(glm::vec2(0.25f, -0.95f), glm::vec2(0.2f, 0.03f), 1.f, menu_btn_style, "Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
                 static_cast<PlayerFactionController*>(handler)->SwitchMenu(true);
             }),

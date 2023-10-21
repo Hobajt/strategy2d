@@ -17,6 +17,8 @@
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
 static constexpr int HARVEST_WOOD_HEALTH_TICK = 10;
 
+using rgba = glm::u8vec4;
+
 namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
@@ -372,27 +374,94 @@ namespace eng {
             paint[i] = value;
     }
 
+    //===== MapView =====
+
+    MapView::MapView(const glm::ivec2& size) : tex(std::make_shared<Texture>(TextureParams::CustomData(size.x, size.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), nullptr, "mapview")) {
+        ENG_LOG_INFO("MAP VIEW - SIZE = ({}, {}), HANDLE: {}", size.x, size.y, tex->Handle());
+    }
+
+    void MapView::Update(const Map& map, bool forceRedraw) {
+        ASSERT_MSG(tex != nullptr, "MapView is not properly initialized!");
+        if((++counter) >= redraw_interval || forceRedraw) {
+            counter = 0;
+            
+            rgba* data = Redraw(map);
+            tex->UpdateData((void*)data);
+            delete[] data;
+        }
+    }
+
+    rgba* MapView::Redraw(const Map& map) const {
+        constexpr static std::array<rgba, TileType::COUNT> tileColors = {
+            rgba(50,102,15,255),        //GROUND1
+            rgba(50,102,15,255),        //GROUND2
+            rgba(118,69,4,255),         //MUD1
+            rgba(118,69,4,255),         //MUD2
+            rgba(34,70,11,255),         //WALL_BROKEN
+            rgba(86,51,3,255),          //ROCK_BROKEN
+            rgba(50,102,15,255),        //TREES_FELLED
+            rgba(4,56,116,255),         //WATER
+            rgba(78,65,60,255),         //ROCK
+            rgba(117,106,104,255),      //WALL_HU
+            rgba(117,106,104,255),      //WALL_HU_DAMAGED
+            rgba(117,106,104,255),      //WALL_OC
+            rgba(117,106,104,255),      //WALL_OC_DAMAGED
+            rgba(14,45,0,255),          //TREES
+        };
+
+        constexpr int colorCount = 9;
+        constexpr static std::array<rgba, colorCount> objectColors = {
+            rgba(164,0,0,255),
+            rgba(0,60,192,255),
+            rgba(44,180,148,255),
+            rgba(152,72,176,255),
+            rgba(240,132,20,255),
+            rgba(40,40,60,255),
+            rgba(224,224,224,255),
+            rgba(252,252,72,255),
+            rgba(255,0,255,255),
+        };
+
+        glm::ivec2 size = map.Size();
+        rgba* data = new rgba[size.x * size.y];
+
+        for(int y = 0; y < size.y; y++) {
+            int Y = size.y-1-y;
+            for(int x = 0; x < size.x; x++) {
+                const TileData& td = map(y, x);
+                rgba color = ObjectID::IsObject(td.id) ? (objectColors[td.colorIdx % colorCount]) : tileColors[td.tileType];
+                data[Y*size.x + x] = color;
+            }
+        }
+        return data;
+    }
+
     //===== Map =====
 
-    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)) {
+    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)), mapView(MapView(size_)) {
         ChangeTileset(tileset_);
     }
 
     Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)) {
         ASSERT_MSG(tiles.Valid(), "Mapfile doesn't contain any tile descriptions!");
         ChangeTileset(Resources::LoadTileset(mapfile.tileset));
+        mapView = MapView(tiles.Size());
     }
 
     Map::Map(Map&& m) noexcept {
         tileset = m.tileset;
+        mapView = m.mapView;
         tiles = std::move(m.tiles);
         m.tileset = nullptr;
+        m.mapView = MapView();
     }
 
     Map& Map::operator=(Map&& m) noexcept {
         tileset = m.tileset;
+        mapView = m.mapView;
         tiles = std::move(m.tiles);
         m.tileset = nullptr;
+        m.mapView = MapView();
         return *this;
     }
 
@@ -728,7 +797,7 @@ namespace eng {
         return false;
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, bool is_building) {
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building) {
         ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -742,6 +811,7 @@ namespace eng {
                 tiles(idx).nav.Claim(navType, true, is_building);
                 tiles(idx).id = id;
                 tiles(idx).factionId = factionId;
+                tiles(idx).colorIdx = colorIdx;
             }
         }
     }
@@ -760,6 +830,7 @@ namespace eng {
                 tiles(idx).nav.Unclaim(navType, is_building);
                 tiles(idx).id = ObjectID();
                 tiles(idx).factionId = -1;
+                tiles(idx).colorIdx = -1;
             }
         }
     }
@@ -773,6 +844,9 @@ namespace eng {
 
         tiles(pos_next).factionId = tiles(pos_prev).factionId;
         tiles(pos_prev).factionId = -1;
+
+        tiles(pos_next).colorIdx = tiles(pos_prev).colorIdx;
+        tiles(pos_prev).colorIdx = -1;
     }
 
     void Map::AddTraversableObject(const ObjectID& id) {
@@ -1375,20 +1449,6 @@ namespace eng {
             printf("\n");
         }
         printf("-------\n\n");
-    }
-
-    //===== MapView =====
-
-    MapView::MapView(const glm::ivec2& size) {
-
-    }
-
-    void MapView::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size) {
-        
-    }
-
-    void MapView::Update(const Map& map) {
-
     }
 
     //===================================================================================
