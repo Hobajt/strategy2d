@@ -42,7 +42,7 @@ void Sandbox::OnInit() {
         
         //temporary faction initialization - will be done on level loads or during custom game initialization
         FactionsFile tst = {};
-        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "neutral", 5));
+        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "neutral", 5));
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  0, "faction_1", 0));
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "faction_2", 1));
         tst.diplomacy.push_back({1, 2, 1});
@@ -79,6 +79,9 @@ void Sandbox::OnInit() {
         ObjectID gm = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), f_n, glm::vec2(7.f, 7.f), true);
         level.objects.GetBuilding(ol).SetAmountLeft(123456);
         level.objects.GetBuilding(gm).SetAmountLeft(654321);
+
+        glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
+        ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);
 
         Unit& troll = level.objects.GetUnit(trollID);
         troll.ChangeCarryStatus(WorkerCarryState::WOOD);

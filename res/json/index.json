@@ -37,5 +37,9 @@
         ["human/tower_guard", "orc/tower_guard"],
         ["human/tower_cannon", "orc/tower_cannon"]
     ],
-    "utility": []
+    "utility": [],
+    "other": [
+        { "name": "misc/gold_mine", "id": [1, 0]},
+        { "name": "misc/oil", "id": [2, 0]}
+    ]
 }

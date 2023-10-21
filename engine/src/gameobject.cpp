@@ -118,7 +118,7 @@ namespace eng {
     }
 
     void FactionObject::ChangeColor(int newColorIdx) {
-        colorIdx = ValidColor(newColorIdx) ? newColorIdx : faction->GetColorIdx();
+        colorIdx = ValidColor(newColorIdx) ? newColorIdx : faction->GetColorIdx(Data()->num_id);
         animator.SetPaletteIdx((float)colorIdx);
     }
 

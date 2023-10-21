@@ -59,7 +59,7 @@ namespace eng {
         int ID() const { return id; }
         int Race() const { return race; }
 
-        int GetColorIdx() const { return colorIdx; }
+        virtual int GetColorIdx(const glm::ivec3& num_id) const { return colorIdx; }
 
         void AddDropoffPoint(const Building& building);
         void RemoveDropoffPoint(const Building& building);

@@ -51,6 +51,7 @@ namespace eng::Resources {
 
     void ProcessIndexFile();
     void LoadObjectDefinitions();
+    void FinalizeOthers();
 
     void ValidateIndexEntries();
     UtilityObjectDataRef SetupCorpseData();
@@ -429,6 +430,8 @@ namespace eng::Resources {
         //fully load & prepare object prefab definitions
         LoadObjectDefinitions();
 
+        FinalizeOthers();
+
         // ValidateIndexEntries();
         SetupCorpseData();
         FinalizeButtonDescriptions();
@@ -514,6 +517,25 @@ namespace eng::Resources {
                 data.objects.insert({ str_id, GameObjectData_ParseNew(entry) });
             else
                 GameObjectData_ParseExisting(entry, data.objects.at(str_id));
+        }
+    }
+
+    void FinalizeOthers() {
+        using json = nlohmann::json;
+        json config = json::parse(ReadFile("res/json/index.json"));
+
+        int i = 0;
+        for(auto& entry : config.at("other")) {
+            std::string name        = entry.at("name");
+            glm::ivec2 id           = eng::json::parse_ivec2(entry.at("id"));
+
+            if(!data.objects.count(name)) {
+                ENG_LOG_ERROR("Resources::FinalizeOthers - object definition mentioned in index wasn't loaded during the regular object loading phase ('{}').", name);
+                throw std::runtime_error("");
+            }
+
+            GameObjectDataRef obj = data.objects.at(name);
+            obj->SetupID(name, glm::ivec3(obj->objectType, id.x, id.y));
         }
     }
 

@@ -14,7 +14,7 @@ namespace eng {
     //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
 
     namespace FactionControllerID {
-        enum { INVALID = 0, LOCAL_PLAYER, };
+        enum { INVALID = 0, LOCAL_PLAYER, NATURE };
     }
     
 #define STD_MSG_TIME 5.f

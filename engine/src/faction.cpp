@@ -33,6 +33,8 @@ namespace eng {
         switch(entry.controllerID) {
             case FactionControllerID::LOCAL_PLAYER:
                 return std::make_shared<PlayerFactionController>(std::move(entry));
+            case FactionControllerID::NATURE:
+                return std::make_shared<NatureFactionController>(std::move(entry));
             default:
                 return std::make_shared<FactionController>(std::move(entry));
             // default:
