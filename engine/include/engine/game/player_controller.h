@@ -165,6 +165,52 @@ namespace eng {
         void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
     };
 
+    //===== OcclusionMask =====
+
+    class OcclusionMask {
+    public:
+        OcclusionMask() = default;
+        OcclusionMask(const std::vector<uint32_t>& occlusionData, const glm::ivec2& size);
+        ~OcclusionMask();
+
+        OcclusionMask(const OcclusionMask&) = delete;
+        OcclusionMask& operator=(const OcclusionMask&) = delete;
+
+        OcclusionMask(OcclusionMask&&) noexcept;
+        OcclusionMask& operator=(OcclusionMask&&) noexcept;
+
+        int& operator()(const glm::ivec2& coords);
+        const int& operator()(const glm::ivec2& coords) const;
+        int& operator()(int y, int x);
+        const int& operator()(int y, int x) const;
+
+        glm::ivec2 Size() const { return size; }
+    private:
+        glm::ivec2 size;
+        int* data = nullptr;
+    };
+
+    //===== MapView =====
+
+    //Manages a texture with map view.
+    class MapView {
+        using rgba = glm::u8vec4;
+    public:
+        MapView() = default;
+        MapView(const glm::ivec2& size, int scale = 4);
+        
+        void Update(const Map& map,  bool forceRedraw = false);
+
+        TextureRef GetTexture() const { return tex; }
+    private:
+        rgba* Redraw(const Map& map) const;
+    private:
+        int redraw_interval = 30;
+        TextureRef tex = nullptr;
+        int counter = 0;
+        int scale = 1;
+    };
+
     //===== PlayerFactionController =====
 
     class PlayerFactionController;
@@ -187,7 +233,9 @@ namespace eng {
             PlayerFactionControllerRef playerController = nullptr;
         };
     public:
-        PlayerFactionController(FactionsFile::FactionEntry&& entry);
+        PlayerFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
+
+        const OcclusionMask& Occlusion() const { return occlusion; }
 
         //Render player's GUI.
         void Render();
@@ -228,7 +276,6 @@ namespace eng {
 
         PlayerSelection selection;
         TextureRef shadows;
-        TextureRef mapview;
 
         bool is_menu_active = false;
         int state = PlayerControllerState::IDLE;
@@ -237,6 +284,9 @@ namespace eng {
         glm::vec2 coords_end;
         glm::ivec2 command_data;
         bool nontarget_cmd_issued = false;
+
+        OcclusionMask occlusion;
+        MapView mapview;
     };
 
 }//namespace eng

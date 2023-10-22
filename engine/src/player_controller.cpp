@@ -890,6 +890,140 @@ namespace eng {
         }
     }
 
+    //===== OcclusionMask =====
+
+    OcclusionMask::OcclusionMask(const std::vector<uint32_t>& occlusionData, const glm::ivec2& size_) : size(size_) {
+        int area = size.x * size.y;
+        data = new int[area];
+        for(int i = 0; i < area; i++)
+            data[i] = 0;
+
+        if(occlusionData.size() > 0) {
+            if((occlusionData.size() * 32) < area) {
+                ENG_LOG_WARN("OcclusionMask - loaded data don't cover the entire map (filling with unexplored).");
+            }
+        }
+    }
+
+    OcclusionMask::~OcclusionMask() {
+        delete[] data;
+    }
+
+    OcclusionMask::OcclusionMask(OcclusionMask&& o) noexcept {
+        data = o.data;
+        size = o.size;
+        o.data = nullptr;
+        o.size = glm::ivec2(0);
+    }
+
+    OcclusionMask& OcclusionMask::operator=(OcclusionMask&& o) noexcept {
+        data = o.data;
+        size = o.size;
+        o.data = nullptr;
+        o.size = glm::ivec2(0);
+        return *this;
+    }
+
+    int& OcclusionMask::operator()(const glm::ivec2& coords) {
+        return operator()(coords.y, coords.x);
+    }
+
+    const int& OcclusionMask::operator()(const glm::ivec2& coords) const {
+        return operator()(coords.y, coords.x);
+    }
+
+    int& OcclusionMask::operator()(int y, int x) {
+        ASSERT_MSG((unsigned int)(y) < (unsigned int)(size.x) && (unsigned int)(x) < (unsigned int)(size.x), "Array index ({}, {}) is out of bounds.", y, x);
+        return data[y * size.x + x];
+    }
+
+    const int& OcclusionMask::operator()(int y, int x) const {
+        ASSERT_MSG((unsigned int)(y) < (unsigned int)(size.x) && (unsigned int)(x) < (unsigned int)(size.x), "Array index ({}, {}) is out of bounds.", y, x);
+        return data[y * size.x + x];
+    }
+
+    //===== MapView =====
+
+    MapView::MapView(const glm::ivec2& size, int scale_) : scale(scale_), tex(std::make_shared<Texture>(TextureParams::CustomData(size.x*scale_, size.y*scale_, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), nullptr, "mapview")) {
+        ENG_LOG_INFO("MAP VIEW - SIZE = ({}, {}), HANDLE: {}", size.x, size.y, tex->Handle());
+    }
+
+    void MapView::Update(const Map& map, bool forceRedraw) {
+        ASSERT_MSG(tex != nullptr, "MapView is not properly initialized!");
+        if((++counter) >= redraw_interval || forceRedraw) {
+            counter = 0;
+            
+            rgba* data = Redraw(map);
+            tex->UpdateData((void*)data);
+            delete[] data;
+        }
+    }
+
+    MapView::rgba* MapView::Redraw(const Map& map) const {
+        constexpr static std::array<rgba, TileType::COUNT> tileColors = {
+            rgba(50,102,15,255),        //GROUND1
+            rgba(50,102,15,255),        //GROUND2
+            rgba(118,69,4,255),         //MUD1
+            rgba(118,69,4,255),         //MUD2
+            rgba(34,70,11,255),         //WALL_BROKEN
+            rgba(86,51,3,255),          //ROCK_BROKEN
+            rgba(50,102,15,255),        //TREES_FELLED
+            rgba(4,56,116,255),         //WATER
+            rgba(78,65,60,255),         //ROCK
+            rgba(117,106,104,255),      //WALL_HU
+            rgba(117,106,104,255),      //WALL_HU_DAMAGED
+            rgba(117,106,104,255),      //WALL_OC
+            rgba(117,106,104,255),      //WALL_OC_DAMAGED
+            rgba(14,45,0,255),          //TREES
+        };
+
+        constexpr int colorCount = 9;
+        constexpr static std::array<rgba, colorCount> factionColors = {
+            rgba(164,0,0,255),
+            rgba(0,60,192,255),
+            rgba(44,180,148,255),
+            rgba(152,72,176,255),
+            rgba(240,132,20,255),
+            rgba(40,40,60,255),
+            rgba(224,224,224,255),
+            rgba(252,252,72,255),
+            rgba(255,0,255,255),
+        };
+
+        glm::ivec2 size = map.Size();
+        glm::ivec2 sz = size * scale;
+        rgba* data = new rgba[sz.x * sz.y];
+
+        for(int y = 0; y < sz.y; y++) {
+            int Y = sz.y-1-y;
+            for(int x = 0; x < sz.x; x++) {
+                glm::ivec2 coords = glm::ivec2(x/scale, y/scale);
+                const TileData& td = map(coords);
+
+                rgba color;
+                switch(td.occlusion) {
+                    default:
+                    case 0:     //unexplored bit
+                    case 2:
+                        color = rgba(0,0,0,255);
+                        break;
+                    case 3:     //explored & no fog
+                        color = ObjectID::IsObject(td.id) ? (factionColors[td.colorIdx % colorCount]) : tileColors[td.tileType];
+                        break;
+                    case 1:     //explored, but with fog
+                    {
+                        rgba tmp[2] = { tileColors[td.tileType], rgba(0,0,0,255) };
+                        color = ObjectID::IsObject(td.id) ? (factionColors[td.colorIdx % colorCount]) : tmp[int((x+y) % 2 == 0)];
+                        break;
+                    }
+                }
+                
+                data[Y*sz.x + x] = color;
+            }
+        }
+        return data;
+    }
+
     //===== PlayerFactionController =====
 
     void PlayerFactionController::GUIRequestHandler::LinkController(const PlayerFactionControllerRef& ctrl) {
@@ -902,7 +1036,8 @@ namespace eng {
         playerController->OnKeyPressed(keycode, modifiers);
     }
 
-    PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry) : FactionController(std::move(entry)) {
+    PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize)
+        : FactionController(std::move(entry), mapSize), mapview(MapView(mapSize)), occlusion(OcclusionMask(entry.occlusionData, mapSize)) {
         InitializeGUI();
     }
 
@@ -956,19 +1091,7 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //map view - include fog of war & occlusion mask overlay in the render
-        //map view - use higher resolution for the texture (or get somehow rid of the "blurriness")
-        //already got the rendering setup, only need to implement mapview.Update() and properly initialize mapview whenever map changes
-
-        /* map view impl:
-            - there'll be a MapView class that will handle everything regarding the image
-            - it'll manage a texture internally that will get redrawn periodically
-            - interface:
-                - Render() - to render the image onto the screen
-                - Update() - redraw (+ frame tracking, so that it's not done every frame)
-            - class will need to know map size & will need to reallocate texture whenever map size changes - might want to make it part of the map data then
-            - update method will require occlusion masks (which will be stored in faction controllers)
-        */
+        //occlusion mask - need to download the occlusion from the map data & store it in the faction data
 
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
@@ -1157,8 +1280,7 @@ namespace eng {
         Resources::CursorIcons::SetIcon(cursor_idx);
 
         //update mapview texture reference (needed later in Render())
-        level.map.View().Update(level.map);
-        mapview = level.map.View().GetTexture();
+        mapview.Update(level.map);
 
         //update timing on the message bar
         msg_bar.Update();
@@ -1284,12 +1406,10 @@ namespace eng {
     }
 
     void PlayerFactionController::RenderMapView() {
-        ASSERT_MSG(mapview != nullptr, "MapView texture reference cannot be nullptr!");
-
         float zIdx = GUI_BORDERS_ZIDX - 2e-2f;
         glm::vec2 pos = MAP_A * 2.f - 1.f;
         glm::vec2 size = (MAP_B - MAP_A) * 2.f;
-        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(pos.x, -pos.y-size.y, zIdx), size, glm::vec4(1.f), mapview));
+        Renderer::RenderQuad(Quad::FromCorner(glm::vec3(pos.x, -pos.y-size.y, zIdx), size, glm::vec4(1.f), mapview.GetTexture()));
     }
 
     void PlayerFactionController::InitializeGUI() {

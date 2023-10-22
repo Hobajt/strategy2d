@@ -2,6 +2,7 @@
 
 #include "engine/game/resources.h"
 #include "engine/game/camera.h"
+#include "engine/game/player_controller.h"
 
 #include "engine/core/renderer.h"
 
@@ -47,7 +48,10 @@ namespace eng {
 
     Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions(Factions()) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions)) {}
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions), map.Size()) {
+        if(factions.IsInitialized())
+            map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
+    }
 
     void Level::Update() {
         factions.Update(*this);

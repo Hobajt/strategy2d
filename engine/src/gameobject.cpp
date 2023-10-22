@@ -226,7 +226,7 @@ namespace eng {
 
     void FactionObject::InnerIntegrate() {
         //register the object with the map
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), FactionIdx(), colorIdx, Data()->objectType == ObjectType::BUILDING);
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), FactionIdx(), colorIdx, Data()->objectType == ObjectType::BUILDING, VisionRange());
     }
 
     void FactionObject::RemoveFromMap() {

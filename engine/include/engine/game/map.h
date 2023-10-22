@@ -16,6 +16,7 @@ namespace eng {
     class Unit;
     class DiplomacyMatrix;
     class Map;
+    class OcclusionMask;
 
     using buildingMapCoords = std::tuple<glm::ivec2, glm::ivec2, ObjectID, int>;
 
@@ -111,6 +112,9 @@ namespace eng {
         ObjectID id = {};                   //id of an object located on this tile (invalid means empty)
         int factionId = -1;
         int colorIdx = -1;
+
+        int occlusion = 0;
+        int visionCounter = 0;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -124,6 +128,9 @@ namespace eng {
         bool PermanentlyTaken(int unitNavType) const;
 
         void UpdateID();
+
+        void VisionIncrement();
+        void VisionDecrement();
 
         bool IsTreeTile() const { return tileType == TileType::TREES; }
     private:
@@ -288,26 +295,6 @@ namespace eng {
         glm::ivec2 size = glm::ivec2(0,0);
     };
 
-    //===== MapView =====
-
-    //Manages a texture with map view.
-    class MapView {
-    public:
-        MapView() = default;
-        MapView(const glm::ivec2& size, int scale = 4);
-        
-        void Update(const Map& map, bool forceRedraw = false);
-
-        TextureRef GetTexture() const { return tex; }
-    private:
-        glm::u8vec4* Redraw(const Map& map) const;
-    private:
-        int redraw_interval = 30;
-        TextureRef tex = nullptr;
-        int counter = 0;
-        int scale = 1;
-    };
-
     //===== Mapfile =====
 
     struct Mapfile {
@@ -376,9 +363,13 @@ namespace eng {
         //Searches tiles around provided object for gameobjects that belong to enemy factions.
         bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building);
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building, int sight);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building);
-        void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently);
+        void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight);
+
+        void UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId);
+        void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range);
+        void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
 
         void AddTraversableObject(const ObjectID& id);
         void RemoveTraversableObject(const ObjectID& id);
@@ -396,8 +387,6 @@ namespace eng {
         void UndoChanges(std::vector<TileRecord>& history, bool rewrite_history = true);
 
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
-
-        MapView& View() { return mapView; }
 
         void DBG_GUI();
     private:
@@ -437,8 +426,7 @@ namespace eng {
 
         pathfindingContainer nav_list;
         std::vector<ObjectID> traversableObjects;
-
-        MapView mapView;
+        int playerFactionId = -1;
     };
 
 }//namespace eng

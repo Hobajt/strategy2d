@@ -29,21 +29,21 @@ namespace eng {
 
     int FactionController::idCounter = 0;
 
-    FactionControllerRef FactionController::CreateController(FactionsFile::FactionEntry&& entry) {
+    FactionControllerRef FactionController::CreateController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize) {
         switch(entry.controllerID) {
             case FactionControllerID::LOCAL_PLAYER:
-                return std::make_shared<PlayerFactionController>(std::move(entry));
+                return std::make_shared<PlayerFactionController>(std::move(entry), mapSize);
             case FactionControllerID::NATURE:
-                return std::make_shared<NatureFactionController>(std::move(entry));
+                return std::make_shared<NatureFactionController>(std::move(entry), mapSize);
             default:
-                return std::make_shared<FactionController>(std::move(entry));
+                return std::make_shared<FactionController>(std::move(entry), mapSize);
             // default:
             //     ENG_LOG_ERROR("Invalid FactionControllerID encountered.");
             //     throw std::runtime_error("");
         }
     }
 
-    FactionController::FactionController(FactionsFile::FactionEntry&& entry)
+    FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize)
         : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race) {}
 
     void FactionController::AddDropoffPoint(const Building& building) {
@@ -221,9 +221,9 @@ namespace eng {
 
     //===== Factions =====
 
-    Factions::Factions(FactionsFile&& data) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+    Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
         for(FactionsFile::FactionEntry& entry : data.factions) {
-            factions.push_back(FactionController::CreateController(std::move(entry)));
+            factions.push_back(FactionController::CreateController(std::move(entry), mapSize));
 
             //setup reference to player faction controller
             if(entry.controllerID == FactionControllerID::LOCAL_PLAYER) {

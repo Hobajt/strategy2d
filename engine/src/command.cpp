@@ -269,7 +269,7 @@ namespace eng {
                     //next tile is traversable
 
                     //map update - claim the next tile as taken by this unit & free the previous one
-                    level.map.MoveUnit(navType, pos, next_pos, next_pos == action.data.target_pos);
+                    level.map.MoveUnit(navType, pos, next_pos, next_pos == action.data.target_pos, src.VisionRange());
 
                     //update position & animation offset & keep moving
                     pos = next_pos;

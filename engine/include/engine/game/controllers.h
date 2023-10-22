@@ -8,7 +8,7 @@ namespace eng {
 
     class NatureFactionController : public FactionController {
     public:
-        NatureFactionController(FactionsFile::FactionEntry&& entry);
+        NatureFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
 
         virtual int GetColorIdx(const glm::ivec3& num_id) const override;
     private:

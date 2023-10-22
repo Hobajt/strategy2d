@@ -33,6 +33,7 @@ namespace eng {
             int race;
             std::string name;
             Techtree techtree;
+            std::vector<uint32_t> occlusionData;
         public:
             FactionEntry() = default;
             FactionEntry(int controllerID, int race, const std::string& name, int colorIdx);
@@ -51,10 +52,10 @@ namespace eng {
     class FactionController {
     public:
         //Factory method, creates proper controller type (based on controllerID).
-        static FactionControllerRef CreateController(FactionsFile::FactionEntry&& entry);
+        static FactionControllerRef CreateController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
     public:
         FactionController() = default;
-        FactionController(FactionsFile::FactionEntry&& entry);
+        FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
 
         int ID() const { return id; }
         int Race() const { return race; }
@@ -142,7 +143,7 @@ namespace eng {
     class Factions {
     public:
         Factions() = default;
-        Factions(FactionsFile&& data);
+        Factions(FactionsFile&& data, const glm::ivec2& mapSize);
 
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
 
@@ -152,6 +153,8 @@ namespace eng {
         const FactionControllerRef operator[](int i) const;
 
         void Update(Level& level);
+
+        bool IsInitialized() const { return initialized; }
 
         void DBG_GUI();
     private:

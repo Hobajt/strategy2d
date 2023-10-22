@@ -9,6 +9,7 @@
 #include "engine/utils/randomness.h"
 
 #include "engine/game/gameobject.h"
+#include "engine/game/player_controller.h"
 
 #include <random>
 #include <limits>
@@ -16,8 +17,6 @@
 
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
 static constexpr int HARVEST_WOOD_HEALTH_TICK = 10;
-
-using rgba = glm::u8vec4;
 
 namespace eng {
 
@@ -81,6 +80,20 @@ namespace eng {
 
     void TileData::UpdateID() {
         id = IsMapObject(tileType) ? ObjectID(ObjectType::MAP_OBJECT, 0, tileType) : ObjectID();
+    }
+
+    void TileData::VisionIncrement() {
+        //increment vision counter & disable both unexplored and fog of war bits
+        visionCounter++;
+        occlusion |= 3;
+        ASSERT_MSG(visionCounter > 0, "TileData::VisionIncrement - vision counter was/is at a negative value.")
+    }
+
+    void TileData::VisionDecrement() {
+        //decrement vision counter, enable fog of war if there's no vision
+        if((--visionCounter) <= 0)
+            occlusion &= ~2;
+        ASSERT_MSG(visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
     }
 
     int TileData::TileTraversability() const {
@@ -374,95 +387,27 @@ namespace eng {
             paint[i] = value;
     }
 
-    //===== MapView =====
-
-    MapView::MapView(const glm::ivec2& size, int scale_) : scale(scale_), tex(std::make_shared<Texture>(TextureParams::CustomData(size.x*scale_, size.y*scale_, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), nullptr, "mapview")) {
-        ENG_LOG_INFO("MAP VIEW - SIZE = ({}, {}), HANDLE: {}", size.x, size.y, tex->Handle());
-    }
-
-    void MapView::Update(const Map& map, bool forceRedraw) {
-        ASSERT_MSG(tex != nullptr, "MapView is not properly initialized!");
-        if((++counter) >= redraw_interval || forceRedraw) {
-            counter = 0;
-            
-            rgba* data = Redraw(map);
-            tex->UpdateData((void*)data);
-            delete[] data;
-        }
-    }
-
-    rgba* MapView::Redraw(const Map& map) const {
-        constexpr static std::array<rgba, TileType::COUNT> tileColors = {
-            rgba(50,102,15,255),        //GROUND1
-            rgba(50,102,15,255),        //GROUND2
-            rgba(118,69,4,255),         //MUD1
-            rgba(118,69,4,255),         //MUD2
-            rgba(34,70,11,255),         //WALL_BROKEN
-            rgba(86,51,3,255),          //ROCK_BROKEN
-            rgba(50,102,15,255),        //TREES_FELLED
-            rgba(4,56,116,255),         //WATER
-            rgba(78,65,60,255),         //ROCK
-            rgba(117,106,104,255),      //WALL_HU
-            rgba(117,106,104,255),      //WALL_HU_DAMAGED
-            rgba(117,106,104,255),      //WALL_OC
-            rgba(117,106,104,255),      //WALL_OC_DAMAGED
-            rgba(14,45,0,255),          //TREES
-        };
-
-        constexpr int colorCount = 9;
-        constexpr static std::array<rgba, colorCount> objectColors = {
-            rgba(164,0,0,255),
-            rgba(0,60,192,255),
-            rgba(44,180,148,255),
-            rgba(152,72,176,255),
-            rgba(240,132,20,255),
-            rgba(40,40,60,255),
-            rgba(224,224,224,255),
-            rgba(252,252,72,255),
-            rgba(255,0,255,255),
-        };
-
-        glm::ivec2 size = map.Size();
-        glm::ivec2 sz = size * scale;
-        rgba* data = new rgba[sz.x * sz.y];
-
-        for(int y = 0; y < sz.y; y++) {
-            int Y = sz.y-1-y;
-            for(int x = 0; x < sz.x; x++) {
-                const TileData& td = map(y/scale, x/scale);
-                rgba color = ObjectID::IsObject(td.id) ? (objectColors[td.colorIdx % colorCount]) : tileColors[td.tileType];
-                data[Y*sz.x + x] = color;
-            }
-        }
-        return data;
-    }
-
     //===== Map =====
 
-    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)), mapView(MapView(size_)) {
+    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)) {
         ChangeTileset(tileset_);
     }
 
     Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)) {
         ASSERT_MSG(tiles.Valid(), "Mapfile doesn't contain any tile descriptions!");
         ChangeTileset(Resources::LoadTileset(mapfile.tileset));
-        mapView = MapView(tiles.Size());
     }
 
     Map::Map(Map&& m) noexcept {
         tileset = m.tileset;
-        mapView = m.mapView;
         tiles = std::move(m.tiles);
         m.tileset = nullptr;
-        m.mapView = MapView();
     }
 
     Map& Map::operator=(Map&& m) noexcept {
         tileset = m.tileset;
-        mapView = m.mapView;
         tiles = std::move(m.tiles);
         m.tileset = nullptr;
-        m.mapView = MapView();
         return *this;
     }
 
@@ -798,7 +743,7 @@ namespace eng {
         return false;
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building) {
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building, int sight) {
         ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -814,6 +759,10 @@ namespace eng {
                 tiles(idx).factionId = factionId;
                 tiles(idx).colorIdx = colorIdx;
             }
+        }
+
+        if(factionId == playerFactionId) {
+            VisibilityIncrement(pos, size, sight);
         }
     }
 
@@ -836,7 +785,7 @@ namespace eng {
         }
     }
 
-    void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently) {
+    void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight) {
         tiles(pos_prev).nav.Unclaim(unit_navType, false);
         tiles(pos_next).nav.Claim(unit_navType, permanently, false);
 
@@ -845,9 +794,58 @@ namespace eng {
 
         tiles(pos_next).factionId = tiles(pos_prev).factionId;
         tiles(pos_prev).factionId = -1;
+        int factionId = tiles(pos_next).factionId;
 
         tiles(pos_next).colorIdx = tiles(pos_prev).colorIdx;
         tiles(pos_prev).colorIdx = -1;
+
+        if(factionId == playerFactionId) {
+            VisibilityUpdate(pos_prev, pos_next, sight);
+        }
+    }
+
+    void Map::UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId_) {
+        ASSERT_MSG(Size() == occlusion.Size(), "Map size and occlusion mask size do not match.");
+
+        playerFactionId = playerFactionId_;
+
+        //copy the explored bit from occlusion mask, set fog of war everywhere
+        for(int y = 0; y < Size().y; y++) {
+            for(int x = 0; x < Size().x; x++) {
+                tiles(y,x).occlusion = occlusion(y,x) & (~2);
+            }
+        }
+    }
+
+    void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
+        glm::ivec2 m = glm::ivec2(std::max(pos.x-range, 0), std::max(pos.y-range, 0));
+        glm::ivec2 M = glm::ivec2(std::min(pos.x+size.x-1+range, Size().x), std::min(pos.y+size.y-1+range, Size().y));
+
+        //iterate the revealed map patch, increment vision counter & mark all as unoccluded
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                TileData& td = tiles(y, x);
+                tiles(y, x).VisionIncrement();
+            }
+        }
+    }
+    
+    void Map::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
+        glm::ivec2 m = glm::ivec2(std::max(pos_prev.x-range, 0), std::max(pos_prev.y-range, 0));
+        glm::ivec2 M = glm::ivec2(std::min(pos_prev.x+range, Size().x), std::min(pos_prev.y+range, Size().y));
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                tiles(y, x).VisionDecrement();
+            }
+        }
+
+        m = glm::ivec2(std::max(pos_next.x-range, 0), std::max(pos_next.y-range, 0));
+        M = glm::ivec2(std::min(pos_next.x+range, Size().x), std::min(pos_next.y+range, Size().y));
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                tiles(y, x).VisionIncrement();
+            }
+        }
     }
 
     void Map::AddTraversableObject(const ObjectID& id) {

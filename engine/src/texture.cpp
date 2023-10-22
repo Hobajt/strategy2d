@@ -101,7 +101,7 @@ namespace eng {
     void Texture::UpdateData(void* data) {
         Bind(0);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, params.width, params.height, params.format, params.dtype, data);
-        ENG_LOG_TRACE("[R] Texture data update '{}' ({}x{}).", name.c_str(), params.width, params.height);
+        // ENG_LOG_TRACE("[R] Texture data update '{}' ({}x{}).", name.c_str(), params.width, params.height);
         Unbind(0);
     }
 

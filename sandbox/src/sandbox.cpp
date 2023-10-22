@@ -46,7 +46,8 @@ void Sandbox::OnInit() {
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  0, "faction_1", 0));
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "faction_2", 1));
         tst.diplomacy.push_back({1, 2, 1});
-        level.factions = Factions(std::move(tst));
+        level.factions = Factions(std::move(tst), level.map.Size());
+        level.map.UploadOcclusionMask(level.factions.Player()->Occlusion(), level.factions.Player()->ID());
 
         FactionControllerRef f_n = level.factions[0];
         FactionControllerRef f1 = level.factions[1];
@@ -189,10 +190,6 @@ void Sandbox::OnGUI() {
         level.map.DBG_GUI();
 
         level.factions.DBG_GUI();
-
-        ImGui::Begin("MapView Texture");
-        level.map.View().GetTexture()->DBG_GUI();
-        ImGui::End();
     }
 #endif
 }
