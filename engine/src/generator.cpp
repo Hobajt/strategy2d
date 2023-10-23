@@ -2,6 +2,9 @@
 
 #include "engine/core/window.h"
 
+#include <utility>
+#include <array>
+
 namespace eng {
 
     namespace TextureGenerator {
@@ -18,6 +21,9 @@ namespace eng {
         template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio);
 
         template<typename T> void fillColor(T* data, int width, int height, const T& color);
+
+        float ellipseEQ(float x, float y, float a, float b);
+        bool withinCircle(float x, float y, float r_sq);
 
         //========================================
 
@@ -233,6 +239,94 @@ namespace eng {
 
             TextureRef texture = std::make_shared<Texture>(
                 TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string(buf)
+            );
+
+            delete[] data;
+            return texture;
+        }
+
+        struct OcclusionVisuals {
+            struct Circle {
+                bool enabled;
+                glm::vec2 c;
+                float r_sq;
+            public:
+                Circle() : enabled(false), c(glm::vec2(0.f)), r_sq(0.f) {}
+                Circle(const glm::vec2& c_, float r) : c(c_), r_sq(r * r), enabled(true) {}
+            };
+        public:
+            bool invert;
+            std::array<Circle, 2> circles;
+        };
+
+        TextureRef OcclusionTileset(int tile_size, int block_size) {
+            //16 = possible tile corner combinations; 2 = occlusion & fog of war textures
+            int rows = 2;
+            int cols = 16;
+            int total_width = tile_size * cols;
+            int total_height = tile_size * rows;
+
+            int ts = tile_size;
+
+            rgba* data = new rgba[total_width * total_height];
+
+            rgba clrs[2][2] = {
+                { rgba(0,0,0,0), rgba(255,255,255,255), },
+                { rgba(255,255,255,128), rgba(255,255,255,255), },
+            };
+
+            float r = ts*2.f;
+            float f = 0.5f;
+            float v = std::sqrt(r*r - (ts*f*0.5f)*(ts*f*0.5f));
+            std::array<OcclusionVisuals, 16> descriptions = {
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(), OcclusionVisuals::Circle() } },  //full
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(0.f, ts), ts*f), OcclusionVisuals::Circle() } },    //~a
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(ts, ts), ts*f), OcclusionVisuals::Circle() } },    //~b
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(ts*0.5f, v+ts*f), r), OcclusionVisuals::Circle() } },    //c-d
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(0.f, 0.f), ts*f), OcclusionVisuals::Circle() } },    //~c
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(-v+ts*f, ts*0.5f), r), OcclusionVisuals::Circle() } },    //b-d
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(ts,  0.f), ts*f), OcclusionVisuals::Circle(glm::vec2(0.f, ts), ts*f) } },    //a-d
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(ts,  0.f), ts*f), OcclusionVisuals::Circle() } },    //d
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(ts,  0.f), ts*f), OcclusionVisuals::Circle() } },    //~d
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(0.f, 0.f), ts*f), OcclusionVisuals::Circle(glm::vec2(ts, ts), ts*f) } },    //b-c
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(v+ts*f, ts*0.5f), r), OcclusionVisuals::Circle() } },    //a-c
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(0.f, 0.f), ts*f), OcclusionVisuals::Circle() } },    //c
+                OcclusionVisuals{ true,     { OcclusionVisuals::Circle(glm::vec2(ts*0.5f,-v+ts*f), r), OcclusionVisuals::Circle() } },    //a-b
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(ts, ts), ts*f), OcclusionVisuals::Circle() } },    //b
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(glm::vec2(0.f, ts), ts*f), OcclusionVisuals::Circle() } },    //a
+                OcclusionVisuals{ false,    { OcclusionVisuals::Circle(), OcclusionVisuals::Circle() } },  //empty
+            };
+
+            //--------------------------
+            for(int r = 0; r < rows; r++) {
+                for(int y = 0; y < tile_size; y++) {
+                    int py = y / block_size;
+
+                    for(int c = 0; c < cols; c++) {
+                        for(int x = 0; x < tile_size; x++) {
+                            int px = x / block_size;
+
+                            OcclusionVisuals::Circle& c1 = descriptions[c].circles[0];
+                            OcclusionVisuals::Circle& c2 = descriptions[c].circles[1];
+                            bool invert = descriptions[c].invert;
+
+                            bool occluded = (c1.enabled && withinCircle(c1.c.x-x, c1.c.y-y, c1.r_sq)) || (c2.enabled && withinCircle(c2.c.x-x, c2.c.y-y, c2.r_sq));
+                            occluded = occluded ^ invert;
+
+                            int n = (c == 15) ? 0 : r;
+                            data[(r*tile_size+y)*total_width + c*tile_size+x] = clrs[n][int(occluded && (r == 0 || (py+px) % 2 == 0))];
+                        }
+                    }
+                }
+            }
+            //--------------------------
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), "occlusionsTex_%dx%d", tile_size * 16, tile_size * 2);
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(total_width, total_height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -607,10 +701,6 @@ namespace eng {
             }
         }
 
-        float ellipseEQ(float x, float y, float a, float b) {
-            return (x*x)/(a*a) + (y*y)/(b*b);
-        }
-
         template<typename T> 
         inline void gem(T* data, int width, int height, int offset, int bw, int gw, float ratio) {
             //best variable initialization ever
@@ -649,6 +739,14 @@ namespace eng {
             }
 
             //shading
+        }
+
+        float ellipseEQ(float x, float y, float a, float b) {
+            return (x*x)/(a*a) + (y*y)/(b*b);
+        }
+
+        bool withinCircle(float x, float y, float r_sq) {
+            return x*x + y*y < r_sq;
         }
 
     }//namespace TextureGenerator

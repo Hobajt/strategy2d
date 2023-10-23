@@ -30,5 +30,6 @@ namespace eng::Config {
 
     float Map_MouseSpeed();
     float Map_KeySpeed();
+    bool FogOfWar();
 
 }//namespace eng

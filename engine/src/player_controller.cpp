@@ -1091,7 +1091,7 @@ namespace eng {
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
         //NEXT UP:
-        //occlusion mask - need to download the occlusion from the map data & store it in the faction data
+        //occlusion mask - need to download the occlusion from the map data & store it in the faction data (when saving the level)
 
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)

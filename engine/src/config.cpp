@@ -16,6 +16,8 @@ namespace eng::Config {
 
         float map_mouse_speed = 1.f;
         float map_key_speed = 1.f;
+
+        bool fog_of_war = true;
     };
     static ConfigData data = {};
 
@@ -81,6 +83,11 @@ namespace eng::Config {
         }
 
         ImGui::Separator();
+        ImGui::Text("Preferences");
+
+        ImGui::Checkbox("Fog of War", &data.fog_of_war);
+
+        ImGui::Separator();
         if(ImGui::Button("Reload config")) {
             Reload();
         }
@@ -109,6 +116,10 @@ namespace eng::Config {
         return data.map_key_speed;
     }
 
+    bool FogOfWar() {
+        return data.fog_of_war;
+    }
+
     //============================
 
     ConfigData Load(const char* filepath) {
@@ -127,6 +138,8 @@ namespace eng::Config {
         if(config.count("map_mouse_speed"))     data.map_mouse_speed = config.at("map_mouse_speed");
         if(config.count("map_key_speed"))       data.map_key_speed = config.at("map_key_speed");
 
+        if(config.count("fog_of_war"))      data.fog_of_war = config.at("fog_of_war");
+
         return data;
     }
 
@@ -143,6 +156,8 @@ namespace eng::Config {
         out["game_speed"] = data.game_speed;
         out["map_mouse_speed"] = data.map_mouse_speed;
         out["map_key_speed"] = data.map_key_speed;
+
+        out["fog_of_war"] = data.fog_of_war;
 
         return TryWriteFile(filepath, out.dump());
     }

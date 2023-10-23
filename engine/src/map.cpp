@@ -7,9 +7,11 @@
 #include "engine/utils/json.h"
 #include "engine/utils/dbg_gui.h"
 #include "engine/utils/randomness.h"
+#include "engine/game/config.h"
 
 #include "engine/game/gameobject.h"
 #include "engine/game/player_controller.h"
+#include "engine/utils/generator.h"
 
 #include <random>
 #include <limits>
@@ -85,8 +87,8 @@ namespace eng {
     void TileData::VisionIncrement() {
         //increment vision counter & disable both unexplored and fog of war bits
         visionCounter++;
-        occlusion |= 3;
-        ASSERT_MSG(visionCounter > 0, "TileData::VisionIncrement - vision counter was/is at a negative value.")
+        occlusion |= 3 & (3*int(visionCounter > 0));
+        ASSERT_MSG(visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
     }
 
     void TileData::VisionDecrement() {
@@ -94,6 +96,12 @@ namespace eng {
         if((--visionCounter) <= 0)
             occlusion &= ~2;
         ASSERT_MSG(visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
+    }
+
+    void TileData::UpdateOcclusionIndices(int a, int b, int c, int d) {
+        //inner parentheses = get bit corresponding to fog/occlusion; outer parentheses = move it to proper position
+        occ_idx = ((a & 1) << 0) | ((b & 1) << 1) | ((c & 1) << 2) | ((d & 1) << 3);
+        fog_idx = ((a & 2) >> 1) | ((b & 2) << 0) | ((c & 2) << 1) | ((d & 2) << 2);
     }
 
     int TileData::TileTraversability() const {
@@ -216,6 +224,94 @@ namespace eng {
 
     bool MapTiles::IsWithinBounds(int y, int x) const {
         return ((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x)));
+    }
+
+    void MapTiles::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& obj_size, int range) {
+        glm::ivec2 m = glm::ivec2(std::max(pos.x-range+1, 0), std::max(pos.y-range+1, 0));
+        glm::ivec2 M = glm::ivec2(std::min(pos.x+obj_size.x+range, size.x+1), std::min(pos.y+obj_size.y+range, size.y+1));
+
+        RoundCorners_Decrement(m, M, range);
+
+        //iterate the revealed map patch, increment vision counter & mark all as unoccluded
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                operator()(y, x).VisionIncrement();
+            }
+        }
+    }
+    
+    void MapTiles::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
+        //TODO: could detect motion to neighboring tile & only update the borders instead of the entire vision range
+
+        glm::ivec2 m = glm::ivec2(std::max(pos_prev.x-range+1, 0), std::max(pos_prev.y-range+1, 0));
+        glm::ivec2 M = glm::ivec2(std::min(pos_prev.x+1+range, size.x+1), std::min(pos_prev.y+1+range, size.y+1));
+        RoundCorners_Increment(m, M, range);
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                operator()(y, x).VisionDecrement();
+            }
+        }
+
+        m = glm::ivec2(std::max(pos_next.x-range+1, 0), std::max(pos_next.y-range+1, 0));
+        M = glm::ivec2(std::min(pos_next.x+1+range, size.x+1), std::min(pos_next.y+1+range, size.y+1));
+        RoundCorners_Decrement(m, M, range);
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                operator()(y, x).VisionIncrement();
+            }
+        }
+    }
+
+    void MapTiles::UpdateOcclusionIndices() {
+        for(int y = 0; y < size.y; y++) {
+            TileData *a, *b, *c, *d;
+            a = &operator()(y+0, 0);
+            c = &operator()(y+1, 0);
+
+            for(int x = 0; x < size.x; x++) {
+                b = &operator()(y+0, x+1);
+                d = &operator()(y+1, x+1);
+
+                a->UpdateOcclusionIndices(a->occlusion, b->occlusion, c->occlusion, d->occlusion);
+                
+                a = b;
+                c = d;
+            }
+        }
+    }
+
+    void MapTiles::RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range) {
+        operator()(m.y  , m.x  ).visionCounter++;
+        operator()(m.y  , M.x-1).visionCounter++;
+        operator()(M.y-1, m.x  ).visionCounter++;
+        operator()(M.y-1, M.x-1).visionCounter++;
+        if(range > 4) {
+            operator()(m.y  , m.x+1).visionCounter++;
+            operator()(m.y  , M.x-2).visionCounter++;
+            operator()(m.y+1, m.x  ).visionCounter++;
+            operator()(m.y+1, M.x-1).visionCounter++;
+            operator()(M.y-2, m.x  ).visionCounter++;
+            operator()(M.y-2, M.x-1).visionCounter++;
+            operator()(M.y-1, m.x+1).visionCounter++;
+            operator()(M.y-1, M.x-2).visionCounter++;
+        }
+    }
+
+    void MapTiles::RoundCorners_Decrement(const glm::ivec2& m, const glm::ivec2& M, int range) {
+        operator()(m.y  , m.x  ).visionCounter--;
+        operator()(m.y  , M.x-1).visionCounter--;
+        operator()(M.y-1, m.x  ).visionCounter--;
+        operator()(M.y-1, M.x-1).visionCounter--;
+        if(range > 4) {
+            operator()(m.y  , m.x+1).visionCounter--;
+            operator()(m.y  , M.x-2).visionCounter--;
+            operator()(m.y+1, m.x  ).visionCounter--;
+            operator()(m.y+1, M.x-1).visionCounter--;
+            operator()(M.y-2, m.x  ).visionCounter--;
+            operator()(M.y-2, M.x-1).visionCounter--;
+            operator()(M.y-1, m.x+1).visionCounter--;
+            operator()(M.y-1, M.x-2).visionCounter--;
+        }
     }
 
     void MapTiles::NavDataCleanup() {
@@ -389,11 +485,11 @@ namespace eng {
 
     //===== Map =====
 
-    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)) {
+    Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)), occlusion(GenOcclusionSprite()) {
         ChangeTileset(tileset_);
     }
 
-    Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)) {
+    Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)), occlusion(GenOcclusionSprite()) {
         ASSERT_MSG(tiles.Valid(), "Mapfile doesn't contain any tile descriptions!");
         ChangeTileset(Resources::LoadTileset(mapfile.tileset));
     }
@@ -481,11 +577,32 @@ namespace eng {
     void Map::Render() {
         Camera& cam = Camera::Get();
 
+        if(enable_occlusion) {
+            tiles.UpdateOcclusionIndices();
+        }
+
+        float zIdx_map = 0.f;
+        float zIdx_occ = -0.7f;
+
         for(int y = 0; y < tiles.Size().y; y++) {
             for(int x = 0; x < tiles.Size().x; x++) {
                 int i = c2i(y, x);
-                glm::vec3 pos = glm::vec3(cam.map2screen(glm::vec2(x, y)), 0.f);
-                tileset->Tilemap().Render(glm::uvec4(0), pos, cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
+                glm::vec2 pos = cam.map2screen(glm::vec2(x, y));
+                tileset->Tilemap().Render(glm::uvec4(0), glm::vec3(pos, zIdx_map), cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
+                
+                //use textures based on occlusion indices
+                //also need to generate the texture in the first place (for all the possible corners and both for fog and occlusion)
+                if(enable_occlusion) {
+                    occlusion.Render(glm::vec3(pos, zIdx_occ), cam.Mult(), 0, tiles[i].occ_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
+                    // if(y == 18 && x == 16) {
+                    //     int n = tiles[i].occ_idx;
+                    //     printf("ALSKJD\n");
+                    // }
+
+                    if(Config::FogOfWar()) {
+                        occlusion.Render(glm::vec3(pos, zIdx_occ+1e-3f), cam.Mult(), 1, tiles[i].fog_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
+                    }
+                }
             }
         }
     }
@@ -818,34 +935,11 @@ namespace eng {
     }
 
     void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
-        glm::ivec2 m = glm::ivec2(std::max(pos.x-range, 0), std::max(pos.y-range, 0));
-        glm::ivec2 M = glm::ivec2(std::min(pos.x+size.x-1+range, Size().x), std::min(pos.y+size.y-1+range, Size().y));
-
-        //iterate the revealed map patch, increment vision counter & mark all as unoccluded
-        for(int y = m.y; y < M.y; y++) {
-            for(int x = m.x; x < M.x; x++) {
-                TileData& td = tiles(y, x);
-                tiles(y, x).VisionIncrement();
-            }
-        }
+        tiles.VisibilityIncrement(pos, size, range);
     }
     
     void Map::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
-        glm::ivec2 m = glm::ivec2(std::max(pos_prev.x-range, 0), std::max(pos_prev.y-range, 0));
-        glm::ivec2 M = glm::ivec2(std::min(pos_prev.x+range, Size().x), std::min(pos_prev.y+range, Size().y));
-        for(int y = m.y; y < M.y; y++) {
-            for(int x = m.x; x < M.x; x++) {
-                tiles(y, x).VisionDecrement();
-            }
-        }
-
-        m = glm::ivec2(std::max(pos_next.x-range, 0), std::max(pos_next.y-range, 0));
-        M = glm::ivec2(std::min(pos_next.x+range, Size().x), std::min(pos_next.y+range, Size().y));
-        for(int y = m.y; y < M.y; y++) {
-            for(int x = m.x; x < M.x; x++) {
-                tiles(y, x).VisionIncrement();
-            }
-        }
+        tiles.VisibilityUpdate(pos_prev, pos_next, range);
     }
 
     void Map::AddTraversableObject(const ObjectID& id) {
@@ -1002,8 +1096,16 @@ namespace eng {
         ImGui::SameLine();
         if(ImGui::Button("Distances", btn_size)) mode = 5;
         ImGui::Separator();
+
         if(ImGui::Button("Part-of-forrest", btn_size)) mode = 8;
+        ImGui::SameLine();
+        if(ImGui::Button("Visibility Count", btn_size)) mode = 10;
+        ImGui::SameLine();
+        if(ImGui::Button("FogOfVar corners", btn_size)) mode = 11;
         ImGui::Separator();
+        
+
+        ImGui::Checkbox("render_occlusion", &enable_occlusion);
         
 
         glm::ivec2 size = (mode != 1) ? tiles.Size() : (tiles.Size()+1);
@@ -1136,6 +1238,13 @@ namespace eng {
                             else
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr3);
                             break;
+                        case 10:
+                            ImGui::Text("%d", tiles(y,x).visionCounter);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, (tiles(y,x).visionCounter != 0) ? clr2 : clr1);
+                            break;
+                        case 11:
+                            ImGui::Text("%d", tiles(y,x).fog_idx);
+                            break;
                         default:
                             ImGui::Text("---");
                             break;
@@ -1147,6 +1256,10 @@ namespace eng {
             ImGui::EndTable();
         }
 
+        ImGui::End();
+
+        ImGui::Begin("TEXTURE");
+        occlusion.GetTexture()->DBG_GUI();
         ImGui::End();
 #endif
     }
@@ -1448,6 +1561,20 @@ namespace eng {
             printf("\n");
         }
         printf("-------\n\n");
+    }
+
+    Sprite Map::GenOcclusionSprite() {
+        //TODO: remove this method once there's better handling for the generated textures
+        int px = 64;
+        TextureRef tex = TextureGenerator::OcclusionTileset(px, 2);
+
+        SpriteData data = SpriteData();
+        data.size                   = glm::ivec2(px);
+        data.offset                 = glm::ivec2(0);
+        data.frames.line_count      = 2;
+        data.frames.line_length     = 16;
+
+        return Sprite(tex, data);
     }
 
     //===================================================================================

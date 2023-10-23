@@ -115,6 +115,8 @@ namespace eng {
 
         int occlusion = 0;
         int visionCounter = 0;
+        int fog_idx = 0;
+        int occ_idx = 0;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -131,6 +133,7 @@ namespace eng {
 
         void VisionIncrement();
         void VisionDecrement();
+        void UpdateOcclusionIndices(int a, int b, int c, int d);
 
         bool IsTreeTile() const { return tileType == TileType::TREES; }
     private:
@@ -218,6 +221,13 @@ namespace eng {
         //Returns true if provided coordinates are within valid map bounds.
         bool IsWithinBounds(const glm::ivec2& coords) const;
         bool IsWithinBounds(int y, int x) const;
+
+        void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range);
+        void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
+        void UpdateOcclusionIndices();
+
+        void RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range);
+        void RoundCorners_Decrement(const glm::ivec2& m, const glm::ivec2& M, int range);
 
         void NavDataCleanup();
         int NavData_Forrest_FloodFill(const glm::ivec2& pos);
@@ -420,6 +430,8 @@ namespace eng {
 
         void DBG_PrintTiles() const;
         void DBG_PrintDistances() const;
+
+        Sprite GenOcclusionSprite();
     private:
         TilesetRef tileset;
         MapTiles tiles;
@@ -427,6 +439,9 @@ namespace eng {
         pathfindingContainer nav_list;
         std::vector<ObjectID> traversableObjects;
         int playerFactionId = -1;
+
+        bool enable_occlusion = true;
+        Sprite occlusion;
     };
 
 }//namespace eng

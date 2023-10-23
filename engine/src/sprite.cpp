@@ -27,8 +27,12 @@ namespace eng {
     }
 
     void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX, float paletteIdx) const {
+        Render(screen_pos, screen_size, idxY, idxX, glm::vec4(1.f), paletteIdx);
+    }
+
+    void Sprite::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX, const glm::vec4& color, float paletteIdx) const {
         glm::vec2 texOffset = glm::vec2((data.size.x + data.frames.offset.x) * (idxX % data.frames.line_length), (data.size.y + data.frames.offset.y) * (idxY % data.frames.line_count));
-        Quad quad = Quad::FromCorner(screen_pos, screen_size, glm::vec4(1.f), texture, TexOffset(texOffset)).SetPaletteIdx(paletteIdx);
+        Quad quad = Quad::FromCorner(screen_pos, screen_size, color, texture, TexOffset(texOffset)).SetPaletteIdx(paletteIdx);
         Renderer::RenderQuad(quad);
     }
 

@@ -44,6 +44,7 @@ namespace eng {
         //Render sprite at given screen coords. frameIdx and orientation are horizontal and vertical indices into the sprite's frames.
         void Render(const glm::uvec4& info, const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY = 0, int idxX = 0) const;
         void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY = 0, int idxX = 0, float paletteIdx = -1.f) const;
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int idxY, int idxX, const glm::vec4& color, float paletteIdx = -1.f) const;
 
         void RenderAnim(const glm::vec3& screen_pos, const glm::vec2& screen_size, int frameIdx = 0, int spriteIdx = 0, float paletteIdx = -1.f) const;
         void RenderAnimAlt( const glm::vec4& color, bool noTexture, const glm::vec3& screen_pos, const glm::vec2& screen_size, int frameIdx = 0, int spriteIdx = 0, float paletteIdx = -1.f) const;
@@ -68,6 +69,7 @@ namespace eng {
         int LineCount() const { return data.frames.line_count; }
 
         void DBG_GUI();
+        TextureRef GetTexture() const { return texture; }
     private:
         //To compute texture coordinates of selected frame of the sprite.
         TexCoords TexOffset(const glm::ivec2& offset) const;

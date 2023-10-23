@@ -23,6 +23,8 @@ namespace eng {
 
         TextureRef ShadowsTexture(int width, int height, int size);
 
+        TextureRef OcclusionTileset(int tile_size, int block_size);
+
 
     }//namespace TextureGenerator
 
