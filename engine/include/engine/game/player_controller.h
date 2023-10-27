@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 #include "engine/game/faction.h"
 #include "engine/core/gui.h"
@@ -20,6 +21,7 @@ namespace eng {
 #define STD_MSG_TIME 5.f
 
     struct PlayerSelection;
+    class PlayerFactionController;
 
     namespace GUI {
 
@@ -123,6 +125,23 @@ namespace eng {
             void Update();
         private:
             float time_limit = 0.f;
+        };
+
+        //===== GUI::IngameMenu =====
+
+        namespace IngameMenuTab { enum { MAIN, }; }
+
+        class IngameMenu : public ButtonCallbackHandler {
+        public:
+            IngameMenu() = default;
+            IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl, 
+                const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style);
+
+            void Render();
+            void Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler);
+        private:
+            std::unordered_map<int, GUI::Menu> menu;
+            int active_menu = IngameMenuTab::MAIN;
         };
     }
 
@@ -246,8 +265,11 @@ namespace eng {
     private:
         void OnKeyPressed(int keycode, int modifiers);
 
+        void UpdateState(Level& level, int& cursor_idx);
+
         void ResolveActionButtonClick();
 
+        void CameraPanning(const glm::vec2& pos);
         bool CursorInGameView(const glm::vec2& pos) const;
         bool CursorInMapView(const glm::vec2& pos) const;
         void BackToIdle();
@@ -264,10 +286,10 @@ namespace eng {
         GUIRequestHandler* handler = nullptr;
 
         GUI::Menu game_panel;
-        GUI::Menu menu_panel;
         GUI::SelectionHandler gui_handler;
         GUI::TextLabel text_prompt;
         GUI::PopupMessage msg_bar;
+        GUI::IngameMenu menu;
 
         GUI::ActionButtons actionButtons;
         GUI::SelectionTab* selectionTab;

@@ -444,6 +444,41 @@ namespace eng {
         }
     }
 
+    //===== GUI::IngameMenu =====
+
+    GUI::IngameMenu::IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl, 
+        const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style) {
+
+        float bw = 0.9f;
+        float bh = 0.08f;
+        
+        menu.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.9f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
+                new GUI::TextButton(glm::vec2(-0.5f, -0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Save (F11)", this, [](GUI::ButtonCallbackHandler* handler, int id){}),
+                new GUI::TextButton(glm::vec2( 0.5f, -0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Load (F12)", this, [](GUI::ButtonCallbackHandler* handler, int id){}),
+            
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Return to Game (Esc)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<PlayerFactionController*>(handler)->SwitchMenu(false);
+                }),
+            })
+        });
+        //     //options
+        //     //help
+        //     //scenario objectives
+        //     //end scenario
+        //     //return to game
+        // });
+    }
+
+    void GUI::IngameMenu::Render() {
+        menu.at(active_menu).Render();
+    }
+
+    void GUI::IngameMenu::Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler) {
+        gui_handler.Update(&menu.at(active_menu));
+        //TODO:
+    }
+
     //===== PlayerSelection =====
 
     void PlayerSelection::Select(Level& level, const glm::vec2& start, const glm::vec2& end, int playerFactionID) {
@@ -1047,7 +1082,7 @@ namespace eng {
 
         //render the game menu if activated
         if(is_menu_active) {
-            menu_panel.Render();
+            menu.Render();
         }
 
         //render individual GUI elements
@@ -1069,35 +1104,21 @@ namespace eng {
     }
 
     void PlayerFactionController::Update(Level& level) {
-        Camera& camera = Camera::Get();
-        Input& input = Input::Get();
-
-        selection.GroupsUpdate(level);
-
-        //update the GUI - selection & input processing
-        gui_handler.Update(&game_panel);
-
-        //update text prompt - content of the button that is being hovered over
-        GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
-        if(btn != nullptr) {
-            text_prompt.Setup(btn->Name(), btn->HighlightIdx());
-            price.UpdateAlt(btn->Price());
-        }
-        else {
-            text_prompt.Setup("");
-            price.ClearAlt();
-        }
-
-        resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
-
         //NEXT UP:
-        //occlusion mask - need to download the occlusion from the map data & store it in the faction data (when saving the level)
+        //ingame menu:
+        //  - keyboard shortcuts (both when the menu is opened & shortcuts to open specific menu tabs - Fn buttons)
+        //  - implement all the visuals (all submenus)
+        //  - maybe rework TextButtons so that the highlight can be given by range
+
+
 
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
         
         //return goods - why the fuck doesn't he go back to work?
         //add population tracking logic (as described below)
+
+        //occlusion mask - download occlusion mask from map data when Save is issued
 
         //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
         //TODO: maybe redo the object sizes (there's map size and graphics size)
@@ -1127,6 +1148,75 @@ namespace eng {
                 - level could be stored in the table as well
         */
 
+        selection.GroupsUpdate(level);
+        resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
+
+        int cursor_idx = CursorIconName::HAND_HU + int(bool(Race()));
+        if(!is_menu_active) {
+            //update text prompt - content of the button that is being hovered over
+            GUI::ImageButton* btn = dynamic_cast<GUI::ImageButton*>(gui_handler.HoveringElement());
+            if(btn != nullptr) {
+                text_prompt.Setup(btn->Name(), btn->HighlightIdx());
+                price.UpdateAlt(btn->Price());
+            }
+            else {
+                text_prompt.Setup("");
+                price.ClearAlt();
+            }
+
+            //update the GUI - selection & input processing
+            gui_handler.Update(&game_panel);
+
+            UpdateState(level, cursor_idx);
+        }
+        else {
+            text_prompt.Setup("");
+            price.ClearAlt();
+            menu.Update(level, *this, gui_handler);
+        }
+
+        //selection data update (& gui updates that display selection)
+        selection.Update(level, selectionTab, &actionButtons, ID());
+
+        //unset any previous btn clicks (to detect the new one)
+        actionButtons.ClearClick();
+        nontarget_cmd_issued = false;
+        
+        //update cursor icon
+        Resources::CursorIcons::SetIcon(cursor_idx);
+
+        //update mapview texture
+        mapview.Update(level.map);
+
+        //update timing on the message bar
+        msg_bar.Update();
+    }
+
+    void PlayerFactionController::SwitchMenu(bool active) {
+        ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
+        is_menu_active = active;
+        handler->PauseRequest(active);
+    }
+
+    void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
+        // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
+
+        if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
+            selection.SelectionGroupsHotkey(keycode, modifiers);
+        }
+
+        if((keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z) || keycode == GLFW_KEY_ESCAPE) {
+            char c = (keycode != GLFW_KEY_ESCAPE) ? char(keycode - GLFW_KEY_A + 'a') : char(255);
+            actionButtons.DispatchHotkey(c);
+        }
+        
+        //TODO: add hotkeys for game speed control (can only work in single player games tho)
+    }
+
+    void PlayerFactionController::UpdateState(Level& level, int& cursor_idx) {
+        Camera& camera = Camera::Get();
+        Input& input = Input::Get();
+
         glm::vec2 hover_coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
         ObjectID hover_id = level.map.ObjectIDAt(hover_coords);
         bool hovering_over_object = ObjectID::IsValid(hover_id) && !ObjectID::IsHarvestable(hover_id);
@@ -1134,7 +1224,6 @@ namespace eng {
         glm::vec2 pos = input.mousePos_n;
         bool cursor_in_game_view = CursorInGameView(pos);
         bool cursor_in_map_view = CursorInMapView(pos);
-        int cursor_idx = CursorIconName::HAND_HU + int(bool(Race()));
         switch(state) {
             case PlayerControllerState::IDLE:       //default state
                 //lmb.down in game view -> start selection
@@ -1181,11 +1270,7 @@ namespace eng {
                     }
                 }
                 else {
-                    //camera panning
-                    glm::ivec2 vec = glm::ivec2(int(pos.x > 0.95f) - int(pos.x < 0.05f), -int(pos.y > 0.95f) + int(pos.y < 0.05f));
-                    if(vec.x != 0 || vec.y != 0) {
-                        camera.Move(vec);
-                    }
+                    CameraPanning(pos);
                 }
                 break;
             case PlayerControllerState::OBJECT_SELECTION:          //selection in progress (lmb click or drag)
@@ -1260,51 +1345,10 @@ namespace eng {
                         }
                     }
 
-                    //camera panning
-                    glm::ivec2 vec = glm::ivec2(int(pos.x > 0.95f) - int(pos.x < 0.05f), -int(pos.y > 0.95f) + int(pos.y < 0.05f));
-                    if(vec.x != 0 || vec.y != 0) {
-                        camera.Move(vec);
-                    }
+                    CameraPanning(pos);
                 }
                 break;
         }
-
-        //selection data update (& gui updates that display selection)
-        selection.Update(level, selectionTab, &actionButtons, ID());
-
-        //unset any previous btn clicks (to detect the new one)
-        actionButtons.ClearClick();
-        nontarget_cmd_issued = false;
-        
-        //update cursor icon
-        Resources::CursorIcons::SetIcon(cursor_idx);
-
-        //update mapview texture reference (needed later in Render())
-        mapview.Update(level.map);
-
-        //update timing on the message bar
-        msg_bar.Update();
-    }
-
-    void PlayerFactionController::SwitchMenu(bool active) {
-        ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
-        is_menu_active = active;
-        handler->PauseRequest(active);
-    }
-
-    void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
-        // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
-
-        if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
-            selection.SelectionGroupsHotkey(keycode, modifiers);
-        }
-
-        if((keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z) || keycode == GLFW_KEY_ESCAPE) {
-            char c = (keycode != GLFW_KEY_ESCAPE) ? char(keycode - GLFW_KEY_A + 'a') : char(255);
-            actionButtons.DispatchHotkey(c);
-        }
-        
-        //TODO: add hotkeys for game speed control (can only work in single player games tho)
     }
 
     void PlayerFactionController::ResolveActionButtonClick() {
@@ -1339,6 +1383,15 @@ namespace eng {
                 actionButtons.ShowCancelPage();
                 command_data = glm::ivec2(btn.command_id, btn.payload_id);
                 break;
+        }
+    }
+
+    void PlayerFactionController::CameraPanning(const glm::vec2& pos) {
+        float m = 0.01f;
+        float M = 0.99f;
+        glm::ivec2 vec = glm::ivec2(int(pos.x > M) - int(pos.x < m), -int(pos.y > M) + int(pos.y < m));
+        if(vec.x != 0 || vec.y != 0) {
+            Camera::Get().Move(vec);
         }
     }
 
@@ -1466,6 +1519,12 @@ namespace eng {
         text_style_small2->color = glm::vec4(0.f);
         text_style_small2->highlightColor = glm::vec4(1.f, 0.f, 0.f, 1.f);
 
+        GUI::StyleRef text_style_big = std::make_shared<GUI::Style>();
+        text_style_big->textColor = textClr;
+        text_style_big->font = font;
+        text_style_big->color = glm::vec4(0.f);
+        text_style_big->textScale = 1.f;
+
         //dbg only - to visualize the element size
         // text_style->color = glm::vec4(1.f);
         // text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
@@ -1560,15 +1619,7 @@ namespace eng {
         text_prompt = GUI::TextLabel(glm::vec2(-1.f + GUI_WIDTH*2.f + xOff + (1.f - GUI_WIDTH), 1.f - b), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style, "TEXT PROMPT", false);
         msg_bar     = GUI::PopupMessage(glm::vec2(-1.f + GUI_WIDTH*2.f + 2.f*xOff + (1.f - GUI_WIDTH), 1.f - b*5.f), glm::vec2(1.f - GUI_WIDTH - xOff, b*0.9f), 1.f, text_style);
 
-        menu_panel = GUI::Menu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, menu_style, std::vector<GUI::Element*>{
-            //"Game Menu" label
-            //Save & Load buttons (on the same line)
-            //options
-            //help
-            //scenario objectives
-            //end scenario
-            //return to game
-        });
+        menu = GUI::IngameMenu(glm::vec2(GUI_WIDTH, 0.f), glm::vec2(1.5f * GUI_WIDTH, 0.666f), 0.f, this, menu_style, menu_style, text_style_big);
     }
 
 
