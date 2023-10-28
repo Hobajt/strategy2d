@@ -229,13 +229,16 @@ namespace eng::GUI {
         TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
             ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx, int buttonID, int firingType
         );
+        TextButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, const glm::ivec2& highlightRange, int buttonID = -1, int firingType = 0
+        );
 
-        void Text(const std::string& newText);
+        void Text(const std::string& newText, const glm::ivec2& highlightRange = glm::ivec2(-1));
     protected:
         virtual void InnerRender() override;
     private:
         std::string text;
-        int highlightIdx = -1;
+        glm::ivec2 highlight_range;
     };
 
     //===== Menu =====

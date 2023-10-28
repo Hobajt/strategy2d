@@ -453,21 +453,18 @@ namespace eng {
         float bh = 0.08f;
         
         menu.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
-                new GUI::TextLabel(glm::vec2(0.f, -0.9f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
-                new GUI::TextButton(glm::vec2(-0.5f, -0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Save (F11)", this, [](GUI::ButtonCallbackHandler* handler, int id){}),
-                new GUI::TextButton(glm::vec2( 0.5f, -0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Load (F12)", this, [](GUI::ButtonCallbackHandler* handler, int id){}),
-            
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
+                new GUI::TextButton(glm::vec2(-0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Save (F11)", this, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,9)),
+                new GUI::TextButton(glm::vec2( 0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Load (F12)", this, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,9)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.45f), glm::vec2(bw, bh), 1.f, btn_style, "Options (F5)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(9,11)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.25f), glm::vec2(bw, bh), 1.f, btn_style, "Help (F1)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,8)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.05f), glm::vec2(bw, bh), 1.f, btn_style, "Scenario Objectives", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(9,10)),
+                new GUI::TextButton(glm::vec2( 0.f, 0.15f), glm::vec2(bw, bh), 1.f, btn_style, "End Scenario", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Return to Game (Esc)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<PlayerFactionController*>(handler)->SwitchMenu(false);
-                }),
+                }, glm::ivec2(16,19)),
             })
         });
-        //     //options
-        //     //help
-        //     //scenario objectives
-        //     //end scenario
-        //     //return to game
-        // });
     }
 
     void GUI::IngameMenu::Render() {
@@ -1106,10 +1103,11 @@ namespace eng {
     void PlayerFactionController::Update(Level& level) {
         //NEXT UP:
         //ingame menu:
-        //  - keyboard shortcuts (both when the menu is opened & shortcuts to open specific menu tabs - Fn buttons)
+        //  - finish the main menu visuals
         //  - implement all the visuals (all submenus)
+        //  - keyboard shortcuts (both when the menu is opened & shortcuts to open specific menu tabs - Fn buttons)
+        //  - implement the logic behind buttons
         //  - maybe rework TextButtons so that the highlight can be given by range
-
 
 
         //should probably also solve the shipyard issue (part on land, part on water)

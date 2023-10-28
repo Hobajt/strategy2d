@@ -270,14 +270,19 @@ namespace eng::GUI {
 
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
             const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
-        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), text(text_), highlightIdx(highlightIdx_) {}
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_), text(text_), highlight_range(glm::ivec2(highlightIdx_,highlightIdx_+1)) {}
     
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
             const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_, int firingType)
-        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, firingType), text(text_), highlightIdx(highlightIdx_) {}
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, firingType), text(text_), highlight_range(glm::ivec2(highlightIdx_,highlightIdx_+1)) {}
+    
+    TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,
+            const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, const glm::ivec2& highlightRange_, int buttonID_, int firingType)
+        : Button(offset_, size_, zOffset_, style_, handler_, callback_, buttonID_, firingType), text(text_), highlight_range(highlightRange_) {}
 
-    void TextButton::Text(const std::string& newText) {
+    void TextButton::Text(const std::string& newText, const glm::ivec2& highlightRange) {
         text = newText;
+        highlight_range = highlightRange;
     }
 
     void TextButton::InnerRender() {
@@ -289,7 +294,7 @@ namespace eng::GUI {
         Button::InnerRender();
 
         style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, 
-            clr, style->hoverColor, highlightIdx, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
+            clr, style->hoverColor, highlight_range, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
         );
     }
 
