@@ -446,8 +446,8 @@ namespace eng {
 
     //===== GUI::IngameMenu =====
 
-    GUI::IngameMenu::IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl, 
-        const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style) {
+    GUI::IngameMenu::IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl_, 
+        const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style) : ctrl(ctrl_) {
 
         float bw = 0.9f;
         float bh = 0.08f;
@@ -473,6 +473,41 @@ namespace eng {
 
     void GUI::IngameMenu::Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler) {
         gui_handler.Update(&menu.at(active_menu));
+        //TODO:
+    }
+
+    void GUI::IngameMenu::OnKeyPressed(int keycode, int modifiers) {
+        switch(active_menu) {
+            case IngameMenuTab::MAIN:
+                switch(keycode) {
+                case GLFW_KEY_F1:       //help
+                    OpenTab(IngameMenuTab::HELP);
+                    break;
+                case GLFW_KEY_F5:       //options
+                    OpenTab(IngameMenuTab::OPTIONS);
+                    break;
+                case GLFW_KEY_F11:      //save
+                    OpenTab(IngameMenuTab::SAVE);
+                    break;
+                case GLFW_KEY_F12:      //load
+                    OpenTab(IngameMenuTab::LOAD);
+                    break;
+                case GLFW_KEY_O:        //objectives
+                    OpenTab(IngameMenuTab::OBJECTIVES);
+                    break;
+                case GLFW_KEY_E:        //end scenario
+                    OpenTab(IngameMenuTab::END_SCENARIO);
+                    break;
+                case GLFW_KEY_ESCAPE:   //return to game
+                    ctrl->SwitchMenu(false);
+                    break;
+                }
+                break;
+        }
+    }
+
+    void GUI::IngameMenu::OpenTab(int tabID) {
+        ENG_LOG_INFO("OPENING TAB {}", tabID);
         //TODO:
     }
 
@@ -1103,11 +1138,9 @@ namespace eng {
     void PlayerFactionController::Update(Level& level) {
         //NEXT UP:
         //ingame menu:
-        //  - finish the main menu visuals
-        //  - implement all the visuals (all submenus)
         //  - keyboard shortcuts (both when the menu is opened & shortcuts to open specific menu tabs - Fn buttons)
+        //  - implement all the visuals (all submenus)
         //  - implement the logic behind buttons
-        //  - maybe rework TextButtons so that the highlight can be given by range
 
 
         //should probably also solve the shipyard issue (part on land, part on water)
@@ -1193,22 +1226,69 @@ namespace eng {
     void PlayerFactionController::SwitchMenu(bool active) {
         ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
         is_menu_active = active;
+        menu.OpenTab(GUI::IngameMenuTab::MAIN);
         handler->PauseRequest(active);
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
         // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
+        if(is_menu_active) {
+            menu.OnKeyPressed(keycode, modifiers);
+            return;
+        }
 
+        //group management hotkeys dispatch
         if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
             selection.SelectionGroupsHotkey(keycode, modifiers);
         }
 
+        //action buttons dispatch
         if((keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z) || keycode == GLFW_KEY_ESCAPE) {
             char c = (keycode != GLFW_KEY_ESCAPE) ? char(keycode - GLFW_KEY_A + 'a') : char(255);
             actionButtons.DispatchHotkey(c);
         }
-        
-        //TODO: add hotkeys for game speed control (can only work in single player games tho)
+
+        switch(keycode) {
+            case GLFW_KEY_MINUS:
+            case GLFW_KEY_KP_SUBTRACT:
+                //update game speed config value (should be singlepalyer only)
+                break;
+            case GLFW_KEY_EQUAL:
+            case GLFW_KEY_KP_ADD:
+                //update game speed config value (should be singlepalyer only)
+                break;
+            case GLFW_KEY_F1:
+                menu.OpenTab(GUI::IngameMenuTab::HELP);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F5:
+                menu.OpenTab(GUI::IngameMenuTab::OPTIONS);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F7:
+                menu.OpenTab(GUI::IngameMenuTab::OPTIONS_SOUND);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F8:
+                menu.OpenTab(GUI::IngameMenuTab::OPTIONS_SPEED);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F9:
+                menu.OpenTab(GUI::IngameMenuTab::OPTIONS_PREFERENCES);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F10:
+                SwitchMenu(true);
+                break;
+            case GLFW_KEY_F11:
+                menu.OpenTab(GUI::IngameMenuTab::SAVE);
+                is_menu_active = true;
+                break;
+            case GLFW_KEY_F12:
+                menu.OpenTab(GUI::IngameMenuTab::LOAD);
+                is_menu_active = true;
+                break;
+        }
     }
 
     void PlayerFactionController::UpdateState(Level& level, int& cursor_idx) {

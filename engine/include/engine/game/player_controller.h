@@ -129,7 +129,7 @@ namespace eng {
 
         //===== GUI::IngameMenu =====
 
-        namespace IngameMenuTab { enum { MAIN, }; }
+        namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO }; }
 
         class IngameMenu : public ButtonCallbackHandler {
         public:
@@ -139,9 +139,14 @@ namespace eng {
 
             void Render();
             void Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler);
+
+            void OnKeyPressed(int keycode, int modifiers);
+
+            void OpenTab(int tabID);
         private:
             std::unordered_map<int, GUI::Menu> menu;
             int active_menu = IngameMenuTab::MAIN;
+            PlayerFactionController* ctrl = nullptr;
         };
     }
 
