@@ -137,6 +137,15 @@ namespace eng {
             IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl, 
                 const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style);
 
+            //copy disabled
+            IngameMenu(const IngameMenu&) = delete;
+            IngameMenu& operator=(const IngameMenu&) = delete;
+
+            //move enabled
+            IngameMenu(IngameMenu&&) noexcept;
+            IngameMenu& operator=(IngameMenu&&) noexcept;
+                
+
             void Render();
             void Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler);
 
@@ -144,7 +153,9 @@ namespace eng {
 
             void OpenTab(int tabID);
         private:
-            std::unordered_map<int, GUI::Menu> menu;
+            void Move(IngameMenu&&) noexcept;
+        private:
+            std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
             PlayerFactionController* ctrl = nullptr;
         };

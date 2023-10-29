@@ -452,27 +452,66 @@ namespace eng {
         float bw = 0.9f;
         float bh = 0.08f;
         
-        menu.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+        menus.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
-                new GUI::TextButton(glm::vec2(-0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Save (F11)", this, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,9)),
-                new GUI::TextButton(glm::vec2( 0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Load (F12)", this, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,9)),
-                new GUI::TextButton(glm::vec2( 0.f, -0.45f), glm::vec2(bw, bh), 1.f, btn_style, "Options (F5)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(9,11)),
-                new GUI::TextButton(glm::vec2( 0.f, -0.25f), glm::vec2(bw, bh), 1.f, btn_style, "Help (F1)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(6,8)),
-                new GUI::TextButton(glm::vec2( 0.f, -0.05f), glm::vec2(bw, bh), 1.f, btn_style, "Scenario Objectives", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(9,10)),
-                new GUI::TextButton(glm::vec2( 0.f, 0.15f), glm::vec2(bw, bh), 1.f, btn_style, "End Scenario", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){}, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2(-0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Save (F11)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::SAVE);
+                }, glm::ivec2(6,9)),
+                new GUI::TextButton(glm::vec2( 0.5f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Load (F12)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::LOAD);
+                }, glm::ivec2(6,9)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.45f), glm::vec2(bw, bh), 1.f, btn_style, "Options (F5)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::OPTIONS);
+                }, glm::ivec2(9,11)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.25f), glm::vec2(bw, bh), 1.f, btn_style, "Help (F1)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::HELP);
+                }, glm::ivec2(6,8)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.05f), glm::vec2(bw, bh), 1.f, btn_style, "Scenario Objectives", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::OBJECTIVES);
+                }, glm::ivec2(9,10)),
+                new GUI::TextButton(glm::vec2( 0.f, 0.15f), glm::vec2(bw, bh), 1.f, btn_style, "End Scenario", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::END_SCENARIO);
+                }, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Return to Game (Esc)", ctrl, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<PlayerFactionController*>(handler)->SwitchMenu(false);
                 }, glm::ivec2(16,19)),
             })
         });
+
+        menus.insert({ IngameMenuTab::OBJECTIVES, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "SCENARIO OBJECTIVES"),
+                new GUI::ScrollText(glm::vec2(0.f, -0.075f), glm::vec2(bw, 0.7f), 1.f, bg_style, ""),
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Previous (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(16,19)),
+            })
+        });
+
+        menus.insert({ IngameMenuTab::HELP, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Help"),
+                new GUI::TextLabel(glm::vec2(0.0f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, text_style, "No help here, use google."),
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Previous (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(16,19)),
+            })
+        });
+    }
+
+    GUI::IngameMenu::IngameMenu(IngameMenu&& m) noexcept {
+        Move(std::move(m));
+    }
+
+    GUI::IngameMenu& GUI::IngameMenu::operator=(IngameMenu&& m) noexcept {
+        Move(std::move(m));
+        return *this;
     }
 
     void GUI::IngameMenu::Render() {
-        menu.at(active_menu).Render();
+        menus.at(active_menu).Render();
     }
 
     void GUI::IngameMenu::Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler) {
-        gui_handler.Update(&menu.at(active_menu));
+        gui_handler.Update(&menus.at(active_menu));
         //TODO:
     }
 
@@ -507,8 +546,25 @@ namespace eng {
     }
 
     void GUI::IngameMenu::OpenTab(int tabID) {
-        ENG_LOG_INFO("OPENING TAB {}", tabID);
-        //TODO:
+        if(menus.count(tabID)) {
+            active_menu = tabID;
+            ENG_LOG_TRACE("IngameMenu - opening tab {}", tabID);
+        }
+        else {
+            ENG_LOG_WARN("IngameMenu - attempting to open a tab with invalid ID ({})", tabID);
+        }
+    }
+
+    void GUI::IngameMenu::Move(IngameMenu&& m) noexcept {
+        menus = std::move(m.menus);
+        active_menu = m.active_menu;
+        ctrl = m.ctrl;
+
+        for(auto& [id, menu] : menus) {
+            for(auto& child : menu) {
+                child->HandlerPtrMove(&m, this);
+            }
+        }
     }
 
     //===== PlayerSelection =====
@@ -1138,9 +1194,12 @@ namespace eng {
     void PlayerFactionController::Update(Level& level) {
         //NEXT UP:
         //ingame menu:
-        //  - keyboard shortcuts (both when the menu is opened & shortcuts to open specific menu tabs - Fn buttons)
-        //  - implement all the visuals (all submenus)
-        //  - implement the logic behind buttons
+        //  - add the GUI for all the submenus & switching between them
+        //  - hookup the logic to the buttons
+        //  - finish the keyboard shortcuts for all the menus
+        //  - implement game pause
+        //  - custom menu visuals (maybe race specific as well)
+        //  - retrieve scenario objectives (to show in the menu)
 
 
         //should probably also solve the shipyard issue (part on land, part on water)

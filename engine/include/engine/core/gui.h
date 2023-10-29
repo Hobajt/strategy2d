@@ -64,6 +64,8 @@ namespace eng::GUI {
 
     //===== Element =====
 
+    class ButtonCallbackHandler;
+
     //Base class for any kind of GUI object.
     //Assigning a child shifts its ownership onto the parent element.
     class Element : public ScreenObject {
@@ -87,6 +89,13 @@ namespace eng::GUI {
         Element* GetChild(int idx);
 
         virtual AABB GetAABB() override;
+
+        std::vector<Element*>::iterator begin() { return children.begin(); }
+        std::vector<Element*>::iterator end() { return children.end(); }
+        std::vector<Element*>::const_iterator cbegin() { return children.cbegin(); }
+        std::vector<Element*>::const_iterator cend() { return children.cend(); }
+
+        virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) {}
 
         //Renders the element along with all of its children.
         void Render();
@@ -210,6 +219,8 @@ namespace eng::GUI {
         virtual void OnDown() override;
         virtual void OnHold() override;
         virtual void OnUp() override;
+
+        virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) override { handler = (handler == oldPtr) ? newPtr : handler; }
     private:
         int id = -1;
         ButtonCallbackType callback = nullptr;
@@ -527,6 +538,8 @@ namespace eng::GUI {
         virtual void OnHover() override {}
         virtual void OnHold() override {}
         virtual void OnHighlight() override {}
+
+        virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) override { handler = (handler == oldPtr) ? newPtr : handler; }
 
         ImageButton* GetButton(int idx) { return btns.at(idx); }
     private:
