@@ -1257,10 +1257,6 @@ namespace eng {
         }
 
         ImGui::End();
-
-        ImGui::Begin("TEXTURE");
-        occlusion.GetTexture()->DBG_GUI();
-        ImGui::End();
 #endif
     }
 

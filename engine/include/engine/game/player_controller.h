@@ -158,6 +158,10 @@ namespace eng {
             std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
             PlayerFactionController* ctrl = nullptr;
+
+            ScrollText* list_objectives = nullptr;
+            ScrollMenu* list_load = nullptr;
+            ScrollMenu* list_save = nullptr;
         };
     }
 

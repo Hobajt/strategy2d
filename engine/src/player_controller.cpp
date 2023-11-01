@@ -27,6 +27,7 @@ namespace eng {
     constexpr glm::vec2 MAP_B = glm::vec2(0.025f+GUI_WIDTH*0.8f, 0.3f);
 
     void RenderGUIBorders(bool isOrc, float z);
+    std::vector<GUI::StyleRef> SetupScrollMenuStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
 
     //===== GUI::SelectionTab =====
 
@@ -449,8 +450,14 @@ namespace eng {
     GUI::IngameMenu::IngameMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, PlayerFactionController* ctrl_, 
         const StyleRef& bg_style, const StyleRef& btn_style, const StyleRef& text_style) : ctrl(ctrl_) {
 
-        float bw = 0.9f;
-        float bh = 0.08f;
+        constexpr float bw = 0.9f;
+        constexpr float bh = 0.08f;
+
+        int scrollMenuItems = 8;
+        float scrollBtnSize = 1.f/16.f;
+        glm::vec2 smallBtnSize = glm::vec2(0.1666f, 0.06f);
+        glm::vec2 scrollMenuSize = glm::vec2(0.85f, 0.6f);
+        std::vector<GUI::StyleRef> scrollMenu_styles = SetupScrollMenuStyles(text_style->font, scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
         
         menus.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
@@ -486,6 +493,79 @@ namespace eng {
                 }, glm::ivec2(16,19)),
             })
         });
+        list_objectives = dynamic_cast<ScrollText*>(menus.at(IngameMenuTab::OBJECTIVES).GetChild(1));
+
+        menus.insert({ IngameMenuTab::OPTIONS, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Options"),
+                new GUI::TextButton(glm::vec2( 0.f, -0.65f), glm::vec2(bw, bh), 1.f, btn_style, "Sound (F7)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::OPTIONS_SOUND);
+                }, glm::ivec2(7,9)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.45f), glm::vec2(bw, bh), 1.f, btn_style, "Speeds (F8)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::OPTIONS_SPEED);
+                }, glm::ivec2(8,10)),
+                new GUI::TextButton(glm::vec2( 0.f, -0.25f), glm::vec2(bw, bh), 1.f, btn_style, "Preferences (F9)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::OPTIONS_PREFERENCES);
+                }, glm::ivec2(13,15)),
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Previous (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(16,19)),
+            })
+        });
+
+        menus.insert({ IngameMenuTab::OPTIONS_SOUND, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Sound Options"),
+
+                new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Mater Volume", false),
+                new GUI::TextLabel(glm::vec2(0.f, -0.4f), glm::vec2(bw, bh), 1.f, text_style, "Music Volume", false),
+                new GUI::TextLabel(glm::vec2(0.f, -0.5f), glm::vec2(bw, bh), 1.f, text_style, "Digital Volume", false),
+                new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+            })
+        });
+
+        menus.insert({ IngameMenuTab::LOAD, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Load Game"),
+                new GUI::ScrollMenu(glm::vec2(-0.075f,-0.1f), scrollMenuSize, 1.f, scrollMenuItems, scrollBtnSize, scrollMenu_styles),
+                new GUI::TextButton(glm::vec2(-0.3f, 0.7f), glm::vec2(0.6f, bh), 1.f, btn_style, "Load", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2( 0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+            })
+        });
+        list_load = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::LOAD).GetChild(1));
+
+        glm::vec2 scrollMenuSize_save = glm::vec2(scrollMenuSize.x, scrollMenuSize.y * ((scrollMenuItems-1)/float(scrollMenuItems)));
+        menus.insert({ IngameMenuTab::SAVE, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Save Game"),
+                new GUI::ScrollMenu(glm::vec2(-0.075f,0.f), scrollMenuSize_save, 1.f, scrollMenuItems-1, scrollBtnSize, scrollMenu_styles),
+                // new GUI::TextInput(glm::vec2(), glm::vec2(), 1.f, ....),
+                new GUI::TextButton(glm::vec2(-0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Save", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2(0.f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Delete", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2( 0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+            })
+        });
+        list_save = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::SAVE).GetChild(1));
+
+        /*TODO:
+            - add the text input to Save submenu
+            - implement horizontal slider GUI elements & add them to options submenus
+            - implement the callback for level loading
+                - need to call methods on StageController objects in order to change level
+                - saving can be done just directly from here (invoke on Level object)
+            - also maybe create separate class/namespace for listing the Saves directory
+        */
 
         menus.insert({ IngameMenuTab::HELP, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Help"),
@@ -519,27 +599,43 @@ namespace eng {
         switch(active_menu) {
             case IngameMenuTab::MAIN:
                 switch(keycode) {
-                case GLFW_KEY_F1:       //help
-                    OpenTab(IngameMenuTab::HELP);
-                    break;
-                case GLFW_KEY_F5:       //options
-                    OpenTab(IngameMenuTab::OPTIONS);
-                    break;
-                case GLFW_KEY_F11:      //save
-                    OpenTab(IngameMenuTab::SAVE);
-                    break;
-                case GLFW_KEY_F12:      //load
-                    OpenTab(IngameMenuTab::LOAD);
-                    break;
-                case GLFW_KEY_O:        //objectives
-                    OpenTab(IngameMenuTab::OBJECTIVES);
-                    break;
-                case GLFW_KEY_E:        //end scenario
-                    OpenTab(IngameMenuTab::END_SCENARIO);
-                    break;
-                case GLFW_KEY_ESCAPE:   //return to game
-                    ctrl->SwitchMenu(false);
-                    break;
+                    case GLFW_KEY_F1:       //help
+                        OpenTab(IngameMenuTab::HELP);
+                        break;
+                    case GLFW_KEY_F5:       //options
+                        OpenTab(IngameMenuTab::OPTIONS);
+                        break;
+                    case GLFW_KEY_F11:      //save
+                        OpenTab(IngameMenuTab::SAVE);
+                        break;
+                    case GLFW_KEY_F12:      //load
+                        OpenTab(IngameMenuTab::LOAD);
+                        break;
+                    case GLFW_KEY_O:        //objectives
+                        OpenTab(IngameMenuTab::OBJECTIVES);
+                        break;
+                    case GLFW_KEY_E:        //end scenario
+                        OpenTab(IngameMenuTab::END_SCENARIO);
+                        break;
+                    case GLFW_KEY_ESCAPE:   //return to game
+                        ctrl->SwitchMenu(false);
+                        break;
+                }
+                break;
+            case IngameMenuTab::OPTIONS:
+                switch(keycode) {
+                    case GLFW_KEY_F7:
+                        OpenTab(IngameMenuTab::OPTIONS_SOUND);
+                        break;
+                    case GLFW_KEY_F8:
+                        OpenTab(IngameMenuTab::OPTIONS_SPEED);
+                        break;
+                    case GLFW_KEY_F9:
+                        OpenTab(IngameMenuTab::OPTIONS_PREFERENCES);
+                        break;
+                    case GLFW_KEY_ESCAPE:
+                        OpenTab(IngameMenuTab::MAIN);
+                        break;
                 }
                 break;
         }
@@ -559,6 +655,10 @@ namespace eng {
         menus = std::move(m.menus);
         active_menu = m.active_menu;
         ctrl = m.ctrl;
+
+        list_objectives = m.list_objectives;
+        list_load = m.list_load;
+        list_save = m.list_save;
 
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
@@ -1201,6 +1301,13 @@ namespace eng {
         //  - custom menu visuals (maybe race specific as well)
         //  - retrieve scenario objectives (to show in the menu)
 
+        /*ingame menu data transfers:
+            - data to transfer to menu object:
+                - scenario objective (currently stored in RecapController, could move it tho), savefile names, config values (sound,preferences,...)
+            - transfer from the menu object:
+                - config values updates, signal to save/load a game, exit signal
+        */
+
 
         //should probably also solve the shipyard issue (part on land, part on water)
         //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
@@ -1786,6 +1893,83 @@ namespace eng {
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(1.f - b, -1.f, z-2e-3f), glm::vec2(b, 2.f), clr));
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f + w, -1.f, z-1e-3f), glm::vec2(2.f - w, b*window.Ratio()), clr));
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(-1.f + w,  1.f-b*window.Ratio(), z-1e-3f), glm::vec2(2.f - w, b*window.Ratio()), clr));
+    }
+
+    std::vector<GUI::StyleRef> SetupScrollMenuStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
+        GUI::StyleRef s = nullptr;
+        std::vector<GUI::StyleRef> res;
+
+        //menu item style
+        glm::vec2 buttonSize = glm::vec2(scrollMenuSize.x, scrollMenuSize.y / scrollMenuItems);
+        glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        glm::ivec2 textureSize = ts * upscaleFactor;
+        int shadingWidth = 2 * upscaleFactor;
+
+        s = std::make_shared<GUI::Style>();
+        s->font = font;
+        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::TEXT;
+        s->textColor = textClr;
+        s->textAlignment = GUI::TextAlignment::LEFT;
+        s->textScale = 0.8f;
+        s->hoverColor = textClr;
+        // s->color = glm::vec4(0.f);
+        res.push_back(s);
+
+        //small button style
+        buttonSize = smallBtnSize;
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+
+        //scroll up button style
+        buttonSize = glm::vec2(scrollButtonSize, scrollButtonSize);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
+        s->hoverTexture = s->texture;
+        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+
+        s = std::make_shared<GUI::Style>();
+        GUI::StyleRef z = s;
+        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::NONE;
+
+
+        //scroll slider style
+        buttonSize = glm::vec2(scrollButtonSize, scrollMenuSize.y);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+        res.push_back(z);
+
+        return res;
     }
 
 }//namespace eng
