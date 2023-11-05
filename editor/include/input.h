@@ -9,7 +9,7 @@ public:
     EditorInputHandler(EditorContext& context);
     EditorInputHandler(EditorContext&&) = delete;
 
-    void InputCallback(int keycode, int modifiers);
+    void InputCallback(int keycode, int modifiers, bool single_press);
 
     void Update();
 private:

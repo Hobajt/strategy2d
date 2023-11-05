@@ -6,15 +6,15 @@ using namespace eng;
 EditorInputHandler::EditorInputHandler(EditorContext& context_) : context(context_) {
     
     //setup input callback
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* userData) {
-        static_cast<EditorInputHandler*>(userData)->InputCallback(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, bool single_press, void* userData) {
+        static_cast<EditorInputHandler*>(userData)->InputCallback(keycode, modifiers, single_press);
     }, true, this);
 
     Camera::Get().EnableBoundaries(false);
 }
 
-void EditorInputHandler::InputCallback(int keycode, int modifiers) {
-    if(suppressed)
+void EditorInputHandler::InputCallback(int keycode, int modifiers, bool single_press) {
+    if(suppressed || !single_press)
         return;
 
     //hotkeys dispatch

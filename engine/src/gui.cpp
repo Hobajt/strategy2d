@@ -233,6 +233,52 @@ namespace eng::GUI {
             Enable(true);
     }
 
+    //===== TextInput =====
+
+    TextInput::~TextInput() {
+        delete[] data;
+    }
+
+    TextInput::TextInput(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, int max_length_)
+        : Element(offset_, size_, zOffset_, style_, nullptr), max_length(max_length_), pos(0) {
+        data = new char[max_length+2];
+        Reset();
+    }
+
+    void TextInput::Reset() {
+        data[1] = data[max_length+1] = '\0';
+        data[0] = '_';
+    }
+
+    void TextInput::Backspace() {
+        pos = (pos > 0) ? (pos-1) : 0;
+        data[pos+1] = '\0';
+        data[pos] = '_';
+    }
+
+    void TextInput::AddChar(char c) {
+        if(pos < max_length) {
+            data[pos] = c;
+            data[pos+1] = '_';
+            data[pos+2] = '\0';
+            pos++;
+        }
+        // ENG_LOG_TRACE("TEXT: {}", data);
+    }
+
+    std::string TextInput::Text() {
+        data[pos+1] = '\0';
+        std::string res = std::string(data);
+        data[pos+1] = '_';
+        return res;
+    }
+
+    void TextInput::InnerRender() {
+        Element::InnerRender();
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+        style->font->RenderTextAlignLeft(data, glm::vec2(position.x - size.x*0.975f, -position.y), style->textScale, style->textColor, style->hoverColor, pos, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+    }
+
     //===== Button =====
 
     Button::Button(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,

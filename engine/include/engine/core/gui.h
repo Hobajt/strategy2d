@@ -192,6 +192,35 @@ namespace eng::GUI {
         int highlightIdx = -1;
     };
 
+    //===== TextInput =====
+
+    class TextInput : public Element {
+    public:
+        TextInput() = default;
+        ~TextInput();
+
+        TextInput(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, int max_length);
+
+        TextInput(const TextInput&) = delete;
+        TextInput& operator=(const TextInput&) = delete;
+
+        virtual void OnHover() override {}
+        virtual void OnHold() override {}
+        virtual void OnHighlight() override {}
+
+        void Reset();
+        void Backspace();
+        void AddChar(char c);
+
+        std::string Text();
+    protected:
+        virtual void InnerRender() override;
+    private:
+        char* data = nullptr;
+        size_t max_length = 0;
+        size_t pos = 0;
+    };
+
     //===== Button =====
 
     //Base class for objects that can be acted upon by button callbacks.

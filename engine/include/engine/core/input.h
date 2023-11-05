@@ -6,7 +6,7 @@
 namespace eng {
 
     //void KeyPressCallback(int keycode, int modifiers, void* data);
-    typedef void(*KeyPressCallbackFn)(int keycode, int modifiers, void* userData);
+    typedef void(*KeyPressCallbackFn)(int keycode, int modifiers, bool single_press, void* userData);
 
     //====== InputButton ======
 

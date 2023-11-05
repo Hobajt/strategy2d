@@ -20,7 +20,7 @@ public:
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 private:
-    void KeyPressCallback(int keycode, int modifiers);
+    void KeyPressCallback(int keycode, int modifiers, bool single_press);
 private:
     int state = IntroState::INVALID;
 

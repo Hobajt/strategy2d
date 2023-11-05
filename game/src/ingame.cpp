@@ -34,8 +34,8 @@ void IngameController::OnPreStart(int prevStageID, int info, void* data) {
 void IngameController::OnStart(int prevStageID, int info, void* data) {
     LOG_INFO("GameStage = InGame (init = {})", stage_names[info]);
 
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
-        static_cast<IngameController*>(handler)->SignalKeyPress(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, bool single_press, void* handler){
+        static_cast<IngameController*>(handler)->SignalKeyPress(keycode, modifiers, single_press);
     }, true, this);
 }
 

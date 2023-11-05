@@ -20,8 +20,8 @@ static std::string text = "";
 static char* buf = new char[BUF_LEN];
 
 void MockIngameStageController::RegisterKeyCallback() {
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
-        static_cast<MockIngameStageController*>(handler)->SignalKeyPress(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, bool single_press, void* handler){
+        static_cast<MockIngameStageController*>(handler)->SignalKeyPress(keycode, modifiers, single_press);
     }, true, this);
 }
 

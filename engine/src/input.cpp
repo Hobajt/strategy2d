@@ -207,11 +207,12 @@ namespace eng {
 
     void KeyInputCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
         //only trigger for press signals
-        if (action == GLFW_PRESS) {
+        if (action != GLFW_RELEASE) {
+            bool single_press = (action == GLFW_PRESS);
             for (auto& [keycode, cbd] : data.keyCallbacks) {
                 auto& [callback, userData] = cbd;
                 if (keycode == key || keycode == -1) {
-                    callback(key, mods, userData);
+                    callback(key, mods, single_press, userData);
                     break;
                 }
             }

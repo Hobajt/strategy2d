@@ -543,8 +543,8 @@ namespace eng {
         glm::vec2 scrollMenuSize_save = glm::vec2(scrollMenuSize.x, scrollMenuSize.y * ((scrollMenuItems-1)/float(scrollMenuItems)));
         menus.insert({ IngameMenuTab::SAVE, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Save Game"),
+                new GUI::TextInput(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, scrollMenu_styles[0], 27),
                 new GUI::ScrollMenu(glm::vec2(-0.075f,0.f), scrollMenuSize_save, 1.f, scrollMenuItems-1, scrollBtnSize, scrollMenu_styles),
-                // new GUI::TextInput(glm::vec2(), glm::vec2(), 1.f, ....),
                 new GUI::TextButton(glm::vec2(-0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Save", this, [](GUI::ButtonCallbackHandler* handler, int id){
                     // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
                 }, glm::ivec2(0,1)),
@@ -556,10 +556,10 @@ namespace eng {
                 }, glm::ivec2(0,1)),
             })
         });
-        list_save = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::SAVE).GetChild(1));
+        textInput = dynamic_cast<TextInput*>(menus.at(IngameMenuTab::SAVE).GetChild(1));
+        list_save = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::SAVE).GetChild(2));
 
         /*TODO:
-            - add the text input to Save submenu
             - implement horizontal slider GUI elements & add them to options submenus
             - implement the callback for level loading
                 - need to call methods on StageController objects in order to change level
@@ -595,7 +595,7 @@ namespace eng {
         //TODO:
     }
 
-    void GUI::IngameMenu::OnKeyPressed(int keycode, int modifiers) {
+    void GUI::IngameMenu::OnKeyPressed(int keycode, int modifiers, bool single_press) {
         switch(active_menu) {
             case IngameMenuTab::MAIN:
                 switch(keycode) {
@@ -638,6 +638,29 @@ namespace eng {
                         break;
                 }
                 break;
+            case IngameMenuTab::SAVE:
+                ASSERT_MSG(textInput != nullptr, "TextInput GUI element not set.");
+                switch(keycode) {
+                    case GLFW_KEY_ESCAPE:
+                        OpenTab(IngameMenuTab::MAIN);
+                        break;
+                    case GLFW_KEY_BACKSPACE:
+                        textInput->Backspace();
+                        break;
+                    default:
+                        if(keycode >= 32 && keycode <= 96) {
+                            textInput->AddChar(char(keycode) + ('a'-'A') * int((modifiers & 1 == 0) && keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z));
+                        }
+                        break;
+                }
+                break;
+            case IngameMenuTab::LOAD:
+                switch(keycode) {
+                    case GLFW_KEY_ESCAPE:
+                        OpenTab(IngameMenuTab::MAIN);
+                        break;
+                }
+                break;
         }
     }
 
@@ -659,6 +682,7 @@ namespace eng {
         list_objectives = m.list_objectives;
         list_load = m.list_load;
         list_save = m.list_save;
+        textInput = m.textInput;
 
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
@@ -1254,9 +1278,9 @@ namespace eng {
         playerController->handler = this;
     }
 
-    void PlayerFactionController::GUIRequestHandler::SignalKeyPress(int keycode, int modifiers) {
+    void PlayerFactionController::GUIRequestHandler::SignalKeyPress(int keycode, int modifiers, bool single_press) {
         ASSERT_MSG(playerController != nullptr, "PlayerController was not linked! Call LinkController()...");
-        playerController->OnKeyPressed(keycode, modifiers);
+        playerController->OnKeyPressed(keycode, modifiers, single_press);
     }
 
     PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize)
@@ -1300,6 +1324,8 @@ namespace eng {
         //  - implement game pause
         //  - custom menu visuals (maybe race specific as well)
         //  - retrieve scenario objectives (to show in the menu)
+
+        //TODO: maybe add support for 
 
         /*ingame menu data transfers:
             - data to transfer to menu object:
@@ -1396,12 +1422,15 @@ namespace eng {
         handler->PauseRequest(active);
     }
 
-    void PlayerFactionController::OnKeyPressed(int keycode, int modifiers) {
+    void PlayerFactionController::OnKeyPressed(int keycode, int modifiers, bool single_press) {
         // ENG_LOG_TRACE("KEY PRESSED: {}", keycode);
         if(is_menu_active) {
-            menu.OnKeyPressed(keycode, modifiers);
+            menu.OnKeyPressed(keycode, modifiers, single_press);
             return;
         }
+
+        if(!single_press)
+            return;
 
         //group management hotkeys dispatch
         if(keycode >= GLFW_KEY_0 && keycode <= GLFW_KEY_9) {
@@ -1916,7 +1945,8 @@ namespace eng {
         s->textColor = textClr;
         s->textAlignment = GUI::TextAlignment::LEFT;
         s->textScale = 0.8f;
-        s->hoverColor = textClr;
+        // s->hoverColor = textClr;
+        s->hoverColor = glm::vec4(1.f);
         // s->color = glm::vec4(0.f);
         res.push_back(s);
 

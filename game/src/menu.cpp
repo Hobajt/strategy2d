@@ -87,8 +87,10 @@ void MainMenuController::OnPreStart(int prevStageID, int info, void* data) {
 }
 
 void MainMenuController::OnStart(int prevStageID, int info, void* data) {
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
-        static_cast<MainMenuController*>(handler)->KeyPressCallback(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, bool single_press, void* handler){
+        if(single_press) {
+            static_cast<MainMenuController*>(handler)->KeyPressCallback(keycode, modifiers);
+        }
     }, true, this);
 }
 

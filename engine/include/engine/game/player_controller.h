@@ -149,7 +149,7 @@ namespace eng {
             void Render();
             void Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler);
 
-            void OnKeyPressed(int keycode, int modifiers);
+            void OnKeyPressed(int keycode, int modifiers, bool single_press);
 
             void OpenTab(int tabID);
         private:
@@ -162,6 +162,7 @@ namespace eng {
             ScrollText* list_objectives = nullptr;
             ScrollMenu* list_load = nullptr;
             ScrollMenu* list_save = nullptr;
+            TextInput* textInput = nullptr;
         };
     }
 
@@ -267,7 +268,7 @@ namespace eng {
 
             void LinkController(const PlayerFactionControllerRef& ctrl);
         protected:
-            void SignalKeyPress(int keycode, int modifiers);
+            void SignalKeyPress(int keycode, int modifiers, bool single_press);
         private:
             PlayerFactionControllerRef playerController = nullptr;
         };
@@ -283,7 +284,7 @@ namespace eng {
 
         void SwitchMenu(bool active);
     private:
-        void OnKeyPressed(int keycode, int modifiers);
+        void OnKeyPressed(int keycode, int modifiers, bool single_press);
 
         void UpdateState(Level& level, int& cursor_idx);
 

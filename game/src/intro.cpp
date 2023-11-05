@@ -91,8 +91,8 @@ void IntroController::OnPreStart(int prevStageID, int info, void* data) {
             break;
     }
 
-    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, void* handler){
-        static_cast<IntroController*>(handler)->KeyPressCallback(keycode, modifiers);
+    Input::Get().AddKeyCallback(-1, [](int keycode, int modifiers, bool single_press, void* handler){
+        static_cast<IntroController*>(handler)->KeyPressCallback(keycode, modifiers, single_press);
     }, true, this);
 
     LOG_INFO("GameStage = Intro (substage: {})", stage_names[state]);
@@ -104,6 +104,6 @@ void IntroController::OnStart(int prevStageID, int info, void* data) {
 
 void IntroController::OnStop() {}
 
-void IntroController::KeyPressCallback(int keycode, int modifiers) {
+void IntroController::KeyPressCallback(int keycode, int modifiers, bool single_press) {
     interrupted = true;
 }
