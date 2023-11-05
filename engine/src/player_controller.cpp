@@ -458,6 +458,7 @@ namespace eng {
         glm::vec2 smallBtnSize = glm::vec2(0.1666f, 0.06f);
         glm::vec2 scrollMenuSize = glm::vec2(0.85f, 0.6f);
         std::vector<GUI::StyleRef> scrollMenu_styles = SetupScrollMenuStyles(text_style->font, scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
+        btn_styles = { btn_style, scrollMenu_styles.back() };
         
         menus.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Menu"),
@@ -531,7 +532,7 @@ namespace eng {
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Load Game"),
                 new GUI::ScrollMenu(glm::vec2(-0.075f,-0.1f), scrollMenuSize, 1.f, scrollMenuItems, scrollBtnSize, scrollMenu_styles),
                 new GUI::TextButton(glm::vec2(-0.3f, 0.7f), glm::vec2(0.6f, bh), 1.f, btn_style, "Load", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                    static_cast<IngameMenu*>(handler)->action = MenuAction::LOAD;
                 }, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2( 0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
@@ -544,12 +545,16 @@ namespace eng {
         menus.insert({ IngameMenuTab::SAVE, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Save Game"),
                 new GUI::TextInput(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, scrollMenu_styles[0], 27),
-                new GUI::ScrollMenu(glm::vec2(-0.075f,0.f), scrollMenuSize_save, 1.f, scrollMenuItems-1, scrollBtnSize, scrollMenu_styles),
+                new GUI::ScrollMenu(glm::vec2(-0.075f,0.f), scrollMenuSize_save, 1.f, scrollMenuItems-1, scrollBtnSize, scrollMenu_styles, this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    IngameMenu* h = static_cast<IngameMenu*>(handler);
+                    h->textInput->SetText(h->list_save->CurrentSelection());
+                    h->EnableDeleteButton(true);
+                }),
                 new GUI::TextButton(glm::vec2(-0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Save", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                    static_cast<IngameMenu*>(handler)->action = MenuAction::SAVE;
                 }, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2(0.f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Delete", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                    static_cast<IngameMenu*>(handler)->action = MenuAction::DELETE;
                 }, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2( 0.65f, 0.7f), glm::vec2(0.25f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
@@ -558,13 +563,18 @@ namespace eng {
         });
         textInput = dynamic_cast<TextInput*>(menus.at(IngameMenuTab::SAVE).GetChild(1));
         list_save = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::SAVE).GetChild(2));
+        delet_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::SAVE).GetChild(4));
 
         /*TODO:
             - implement horizontal slider GUI elements & add them to options submenus
-            - implement the callback for level loading
-                - need to call methods on StageController objects in order to change level
-                - saving can be done just directly from here (invoke on Level object)
+            - implement save logic      - saving can be done just directly from here (invoke on Level object)
+            - implement load logic      - need to call methods on StageController objects in order to change level
+            - implement delete logic    - can probably do also from here
             - also maybe create separate class/namespace for listing the Saves directory
+
+            - Config::Saves - directory path (maybe from config?) & directory scan
+            - visuals - separate visuals for horde/aliance
+            - visuals - disabled button visuals (delete button)
         */
 
         menus.insert({ IngameMenuTab::HELP, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
@@ -592,6 +602,26 @@ namespace eng {
 
     void GUI::IngameMenu::Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler) {
         gui_handler.Update(&menus.at(active_menu));
+
+        switch(action) {
+            case MenuAction::SAVE:
+                ASSERT_MSG(textInput != nullptr, "TextInput GUI element not set.");
+                // level.Save(Config::Saves::FullPath(textInput->Text()));
+                ENG_LOG_INFO("SAVING GAME STATE TO '{}'", Config::Saves::FullPath(textInput->Text()));
+                break;
+            case MenuAction::LOAD:
+                ASSERT_MSG(list_load != nullptr, "Scroll menu GUI element not set.");
+                ctrl.ChangeLevel(Config::Saves::FullPath(list_load->CurrentSelection()));
+                ENG_LOG_INFO("LOADING GAME STATE FROM '{}'", Config::Saves::FullPath(list_load->CurrentSelection()));
+                break;
+            case MenuAction::DELETE:
+                ASSERT_MSG(list_save != nullptr, "Scroll menu GUI element not set.");
+                //TODO:
+                ENG_LOG_INFO("DELETING SAVEFILE '{}'", Config::Saves::FullPath(textInput->Text()));
+                break;
+        }
+        action = MenuAction::NONE;
+
         //TODO:
     }
 
@@ -646,10 +676,12 @@ namespace eng {
                         break;
                     case GLFW_KEY_BACKSPACE:
                         textInput->Backspace();
+                        EnableDeleteButton(false);
                         break;
                     default:
                         if(keycode >= 32 && keycode <= 96) {
                             textInput->AddChar(char(keycode) + ('a'-'A') * int((modifiers & 1 == 0) && keycode >= GLFW_KEY_A && keycode <= GLFW_KEY_Z));
+                            EnableDeleteButton(false);
                         }
                         break;
                 }
@@ -668,6 +700,17 @@ namespace eng {
         if(menus.count(tabID)) {
             active_menu = tabID;
             ENG_LOG_TRACE("IngameMenu - opening tab {}", tabID);
+
+            switch(tabID) {
+                case IngameMenuTab::SAVE:
+                    list_save->UpdateContent(Config::Saves::Scan(), true);
+                    textInput->SetText(list_save->CurrentSelection());
+                    EnableDeleteButton(true);
+                    break;
+                case IngameMenuTab::LOAD:
+                    list_load->UpdateContent(Config::Saves::Scan(), true);
+                    break;
+            }
         }
         else {
             ENG_LOG_WARN("IngameMenu - attempting to open a tab with invalid ID ({})", tabID);
@@ -683,12 +726,20 @@ namespace eng {
         list_load = m.list_load;
         list_save = m.list_save;
         textInput = m.textInput;
+        delet_btn = m.delet_btn;
+        btn_styles = std::move(m.btn_styles);
 
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
                 child->HandlerPtrMove(&m, this);
             }
         }
+    }
+
+    void GUI::IngameMenu::EnableDeleteButton(bool enabled) {
+        ASSERT_MSG(delet_btn != nullptr, "Delete button reference is not set.");
+        delet_btn->Interactable(enabled);
+        delet_btn->ChangeStyle(btn_styles[int(!enabled)]);
     }
 
     //===== PlayerSelection =====
@@ -1325,8 +1376,6 @@ namespace eng {
         //  - custom menu visuals (maybe race specific as well)
         //  - retrieve scenario objectives (to show in the menu)
 
-        //TODO: maybe add support for 
-
         /*ingame menu data transfers:
             - data to transfer to menu object:
                 - scenario objective (currently stored in RecapController, could move it tho), savefile names, config values (sound,preferences,...)
@@ -1420,6 +1469,14 @@ namespace eng {
         is_menu_active = active;
         menu.OpenTab(GUI::IngameMenuTab::MAIN);
         handler->PauseRequest(active);
+    }
+
+    void PlayerFactionController::ChangeLevel(const std::string& filepath) {
+        //TODO:
+
+        //invoke level change on the stage controller (handler pointer)
+        //there's probably going to some stage switching involved (trigger internally from the stage controller)
+        //also switch to main menu if the file is missing or is invalid
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers, bool single_press) {
@@ -1950,6 +2007,21 @@ namespace eng {
         // s->color = glm::vec4(0.f);
         res.push_back(s);
 
+        s = std::make_shared<GUI::Style>();
+        s->font = font;
+        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 1, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::TEXT;
+        s->textColor = textClr;
+        s->textAlignment = GUI::TextAlignment::LEFT;
+        s->textScale = 0.8f;
+        // s->hoverColor = textClr;
+        s->hoverColor = glm::vec4(1.f);
+        // s->color = glm::vec4(0.f);
+        GUI::StyleRef disabled_btn = s;
+
         //small button style
         buttonSize = smallBtnSize;
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -1998,6 +2070,7 @@ namespace eng {
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
         res.push_back(z);
+        res.push_back(disabled_btn);
 
         return res;
     }

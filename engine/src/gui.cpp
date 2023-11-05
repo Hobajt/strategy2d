@@ -246,14 +246,14 @@ namespace eng::GUI {
     }
 
     void TextInput::Reset() {
-        data[1] = data[max_length+1] = '\0';
         data[0] = '_';
+        data[1] = data[max_length+1] = '\0';
     }
 
     void TextInput::Backspace() {
         pos = (pos > 0) ? (pos-1) : 0;
-        data[pos+1] = '\0';
         data[pos] = '_';
+        data[pos+1] = '\0';
     }
 
     void TextInput::AddChar(char c) {
@@ -267,10 +267,18 @@ namespace eng::GUI {
     }
 
     std::string TextInput::Text() {
-        data[pos+1] = '\0';
+        data[pos] = '\0';
         std::string res = std::string(data);
-        data[pos+1] = '_';
+        data[pos] = '_';
         return res;
+    }
+
+    void TextInput::SetText(const std::string& text) {
+        pos = std::min(text.size(), max_length);
+        for(size_t i = 0; i < pos; i++)
+            data[i] = text[i];
+        data[pos] = '_';
+        data[pos+1] = '\0';
     }
 
     void TextInput::InnerRender() {
@@ -407,8 +415,8 @@ namespace eng::GUI {
     
     //===== ScrollMenu =====
 
-    ScrollMenu::ScrollMenu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, int rowCount_, float barWidth, const std::vector<StyleRef>& styles)
-        : Menu(offset_, size_, zOffset_, Style::Default(), {}), rowCount(rowCount_) {
+    ScrollMenu::ScrollMenu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, int rowCount_, float barWidth, const std::vector<StyleRef>& styles, ButtonCallbackHandler* handler_, ButtonCallbackType callback_)
+        : Menu(offset_, size_, zOffset_, Style::Default(), {}), rowCount(rowCount_), menu_callback(callback_), menu_handler(handler_) {
         ASSERT_MSG(styles.size() >= 5, "Scroll menu requires 5 gui styles (item, up button, down button, slider button & slider grip button)")
 
         //generate children based on item count & add them to the hierarchy
@@ -422,7 +430,11 @@ namespace eng::GUI {
             snprintf(buf, sizeof(buf), "item_%d", i);
             btn = (TextButton*)AddChild(new TextButton(glm::vec2(0.f, off+step*i), glm::vec2(1.f, bh), 0.1f, styles[0], std::string(buf), 
                 this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                    static_cast<ScrollMenu*>(handler)->UpdateSelection(id);
+                    ScrollMenu* menu = static_cast<ScrollMenu*>(handler);
+                    menu->UpdateSelection(id);
+                    if(menu->menu_callback != nullptr && menu->selectedItem < menu->items.size()) {
+                        menu->menu_callback(menu->menu_handler, menu->selectedItem);
+                    }
                 }, -1, i, ButtonFlags::FIRE_ON_DOWN), true
             );
             menuBtns.push_back(btn);
@@ -445,7 +457,7 @@ namespace eng::GUI {
     }
 
     void ScrollMenu::SignalDown() {
-        if((pos++) >= items.size() - rowCount)
+        if((pos++) >= int(items.size()) - rowCount)
             pos = std::max(int(items.size() - rowCount), 0);
         MenuUpdate();
     }

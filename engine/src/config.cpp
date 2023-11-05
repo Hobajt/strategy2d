@@ -120,6 +120,23 @@ namespace eng::Config {
         return data.fog_of_war;
     }
 
+    namespace Saves {
+
+        std::string DirPath() {
+            return "NO_PATH_JUST_YET/";
+        }
+
+        std::vector<std::string> Scan() {
+            return { "File1", "File2", "File3" };
+            // return { "File1", "File2", "File3", "File1", "File2", "File3", "File1", "File2", "File3", "File1", "File2", "File3" };
+        }
+
+        std::string FullPath(const std::string& name) {
+            return DirPath() + name;
+        }
+
+    }//namespace Saves
+
     //============================
 
     ConfigData Load(const char* filepath) {

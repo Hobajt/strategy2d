@@ -130,6 +130,7 @@ namespace eng {
         //===== GUI::IngameMenu =====
 
         namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO }; }
+        namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE }; }
 
         class IngameMenu : public ButtonCallbackHandler {
         public:
@@ -154,15 +155,20 @@ namespace eng {
             void OpenTab(int tabID);
         private:
             void Move(IngameMenu&&) noexcept;
+
+            void EnableDeleteButton(bool enabled);
         private:
             std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
+            int action = MenuAction::NONE;
             PlayerFactionController* ctrl = nullptr;
 
             ScrollText* list_objectives = nullptr;
             ScrollMenu* list_load = nullptr;
             ScrollMenu* list_save = nullptr;
             TextInput* textInput = nullptr;
+            TextButton* delet_btn = nullptr;
+            std::array<StyleRef, 2> btn_styles;
         };
     }
 
@@ -283,6 +289,7 @@ namespace eng {
         virtual void Update(Level& level) override;
 
         void SwitchMenu(bool active);
+        void ChangeLevel(const std::string& filepath);
     private:
         void OnKeyPressed(int keycode, int modifiers, bool single_press);
 

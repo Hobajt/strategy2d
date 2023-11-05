@@ -119,6 +119,8 @@ namespace eng::GUI {
         void UpdateOffset(const glm::vec2& offset, bool recalculate = true);
 
         void SetHighlight(bool active) { highlight = active; }
+
+        void ChangeStyle(const StyleRef& style_) { style = style_; }
     protected:
         virtual void InnerRender();
 
@@ -213,6 +215,7 @@ namespace eng::GUI {
         void AddChar(char c);
 
         std::string Text();
+        void SetText(const std::string& text);
     protected:
         virtual void InnerRender() override;
     private:
@@ -326,7 +329,7 @@ namespace eng::GUI {
 
     class ScrollMenu : public Menu, public ScrollBarHandler {
     public:
-        ScrollMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, int rowCount, float barWidth, const std::vector<StyleRef>& styles);
+        ScrollMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, int rowCount, float barWidth, const std::vector<StyleRef>& styles, ButtonCallbackHandler* handler = nullptr, ButtonCallbackType callback = nullptr);
 
         virtual void SignalUp() override;
         virtual void SignalDown() override;
@@ -336,6 +339,11 @@ namespace eng::GUI {
         void ResetPosition();
 
         void UpdateSelection(int btnIdx);
+
+        std::string CurrentSelection() const { return items[selectedItem]; }
+        int CurrentSelectionIdx() const { return selectedItem; }
+
+        virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) override { menu_handler = (menu_handler == oldPtr) ? newPtr : menu_handler; }
     protected:
         virtual void InnerRender() override;
     private:
@@ -349,6 +357,9 @@ namespace eng::GUI {
 
         ScrollBar* scrollBar;
         std::vector<TextButton*> menuBtns;
+
+        ButtonCallbackType menu_callback = nullptr;
+        ButtonCallbackHandler* menu_handler = nullptr;
     };
 
     //===== ScrollText =====
