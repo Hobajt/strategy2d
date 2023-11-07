@@ -169,6 +169,10 @@ namespace eng {
             TextInput* textInput = nullptr;
             TextButton* delet_btn = nullptr;
             std::array<StyleRef, 2> btn_styles;
+
+            ValueSlider* sound_master = nullptr;
+            ValueSlider* sound_digital = nullptr;
+            ValueSlider* sound_music = nullptr;
         };
     }
 

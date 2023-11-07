@@ -309,7 +309,9 @@ namespace eng::GUI {
     class ScrollBar : public Element {
     public:
         ScrollBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, float btnHeight, 
-            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle);
+            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle,
+            bool horizontal = false
+        );
 
         virtual void OnHover() override {}
         virtual void OnHold() override {}
@@ -323,6 +325,7 @@ namespace eng::GUI {
         Element* rails = nullptr;
         Element* slider = nullptr;
         float sMin, sRange;
+        bool horizontal = false;
     };
 
     //===== ScrollMenu =====
@@ -588,6 +591,26 @@ namespace eng::GUI {
 
         ButtonCallbackType callback = nullptr;
         ButtonCallbackHandler* handler = nullptr;
+    };
+
+    //===== ValueSlider =====
+
+    class ValueSlider : public ScrollBar, ScrollBarHandler {
+    public:
+        ValueSlider(const glm::vec2& offset, const glm::vec2& size, float zOffset, float btnHeight, const std::vector<StyleRef>& styles, const glm::vec2& val_range, int step_count, bool horizontal = true);
+
+        virtual void SignalUp() override;
+        virtual void SignalDown() override;
+        virtual void SignalSlider() override;
+
+        void SetValue(float value);
+        float Value() const;
+    private:
+        int pos = 0;
+
+        glm::vec2 range;        
+        float step;
+        int step_count;
     };
 
 }//namespace eng::GUI

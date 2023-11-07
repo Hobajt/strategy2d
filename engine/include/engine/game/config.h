@@ -18,6 +18,8 @@ namespace eng::Config {
         //TODO: maybe move these back to audio.cpp - probably shouldn't be modifiable
 
         float outOfScreenRolloff = 0.85f;
+    public:
+        void UpdateSounds(float master, float digital, float music, bool save_changes = true);
     };
 
     //==========

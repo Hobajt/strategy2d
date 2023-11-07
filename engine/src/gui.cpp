@@ -367,50 +367,62 @@ namespace eng::GUI {
     //===== ScrollBar =====
 
     ScrollBar::ScrollBar(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, float btnHeight,
-            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle) 
-        : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
+            ScrollBarHandler* handler, const StyleRef& upStyle, const StyleRef& downStyle, const StyleRef& sliderStyle, const StyleRef& sliderGripStyle,
+            bool horizontal_)
+        : Element(offset_, size_, zOffset_, Style::Default(), nullptr), horizontal(horizontal_) {
 
         float bh = btnHeight / size_.y;
+        float bw = btnHeight / size_.x;
         
+        glm::vec2 pos, siz;
+
         //scroll up button
-        AddChild(new Button(glm::vec2(0.f, -1.f + bh), glm::vec2(1.f, bh), 0.0f, upStyle, 
+        pos = horizontal ? glm::vec2(-1.f+bw, 0.f) : glm::vec2(0.f, -1.f+bh);
+        siz = horizontal ? glm::vec2(bw, 1.f) : glm::vec2(1.f, bh);
+        AddChild(new Button(pos, siz, 0.0f, upStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalUp();
             }, 69, ButtonFlags::FIRE_ON_DOWN), true
         );
 
         //scroll down button
-        AddChild(new Button(glm::vec2(0.f, 1.f - bh), glm::vec2(1.f, bh), 0.0f, downStyle, 
+        pos = horizontal ? glm::vec2(1.f-bw, 0.f) : glm::vec2(0.f, 1.f-bh);
+        siz = horizontal ? glm::vec2(bw, 1.f) : glm::vec2(1.f, bh);
+        AddChild(new Button(pos, siz, 0.0f, downStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalDown();
             }, -1, ButtonFlags::FIRE_ON_DOWN), true
         );
         
         //slider rails
-        rails = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f - 2.f*bh), 0.0f, sliderStyle, 
+        pos = glm::vec2(0.f, 0.f);
+        siz = horizontal ? glm::vec2(1.f-2.f*bw, 1.f) : glm::vec2(1.f, 1.f-2.f*bh);
+        rails = AddChild(new Button(pos, siz, 0.0f, sliderStyle, 
             handler, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<ScrollBarHandler*>(handler)->SignalSlider();
             }, -1, ButtonFlags::FIRE_ON_HOLD), true
         );
 
         //slider grip
-        slider = AddChild(new Button(glm::vec2(0.f, 0.f), glm::vec2(1.f, bh), 0.1f, sliderGripStyle, nullptr, nullptr, true), true);
+        pos = glm::vec2(0.f, 0.f);
+        siz = horizontal ? glm::vec2(bw, 1.f) : glm::vec2(1.f, bh);
+        slider = AddChild(new Button(pos, siz, 0.1f, sliderGripStyle, nullptr, nullptr, true), true);
         slider->Interactable(false);     //disable interactions so that it doesn't interfere with slider handler
 
         //values for easier grip positioning
-        sMin = -1.f + 3.f * bh;
-        float sMax = 1.f - 3.f * bh;
+        float f = horizontal ? bw : bh;
+        sMin = -1.f + 3.f * f;
+        float sMax = 1.f - 3.f * f;
         sRange = sMax - sMin;
     }
 
     float ScrollBar::GetClickPos() {
         AABB bb = rails->GetAABB();
-        float y = (Input::Get().mousePos_n.y - bb.min.y) / (bb.max.y - bb.min.y);
-        return y;
+        return horizontal ? (Input::Get().mousePos_n.x - bb.min.x) / (bb.max.x - bb.min.x) : (Input::Get().mousePos_n.y - bb.min.y) / (bb.max.y - bb.min.y);
     }
 
     void ScrollBar::UpdateSliderPos(float pos) {
-        slider->UpdateOffset(glm::vec2(0.f, sMin + pos * sRange));
+        slider->UpdateOffset(horizontal ? glm::vec2(sMin + pos * sRange, 0.f) : glm::vec2(0.f, sMin + pos * sRange));
     }
     
     //===== ScrollMenu =====
@@ -990,4 +1002,35 @@ namespace eng::GUI {
         }
     }
 
+    //===== ValueSlider =====
+
+    ValueSlider::ValueSlider(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, float btnHeight_, const std::vector<StyleRef>& styles_, const glm::vec2& val_range, int step_count_, bool horizontal)
+        : ScrollBar(offset_, size_, zOffset_, btnHeight_, this, styles_[0], styles_[1], styles_[2], styles_[3], horizontal), range(val_range), step_count(step_count_), step((val_range[1]-val_range[0]) / step_count_) {}
+
+    void ValueSlider::SignalUp() {
+        if((--pos) < 0)
+            pos = 0;
+        UpdateSliderPos(float(pos) / step_count);
+    }
+
+    void ValueSlider::SignalDown() {
+        if((++pos) >= step_count)
+            pos = step_count-1;
+        UpdateSliderPos(float(pos) / step_count);
+    }
+
+    void ValueSlider::SignalSlider() {
+        float slider_pos = GetClickPos();
+        pos = std::max(std::min(int(slider_pos * step_count), step_count), 0);
+        UpdateSliderPos(float(pos) / step_count);
+    }
+
+    void ValueSlider::SetValue(float val) {
+        pos = int(std::min(std::max((val - range[0]) / (range[1] - range[0]), 0.f), 1.f) * step_count);
+        UpdateSliderPos(float(pos) / step_count);
+    }
+
+    float ValueSlider::Value() const {
+        return range[0] + (range[1]-range[0]) * (float(pos)/step_count);
+    }
 }//namespace eng::GUI

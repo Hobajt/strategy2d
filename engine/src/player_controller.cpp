@@ -28,6 +28,7 @@ namespace eng {
 
     void RenderGUIBorders(bool isOrc, float z);
     std::vector<GUI::StyleRef> SetupScrollMenuStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
+    std::vector<GUI::StyleRef> SetupSliderStyles(const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
 
     //===== GUI::SelectionTab =====
 
@@ -458,6 +459,7 @@ namespace eng {
         glm::vec2 smallBtnSize = glm::vec2(0.1666f, 0.06f);
         glm::vec2 scrollMenuSize = glm::vec2(0.85f, 0.6f);
         std::vector<GUI::StyleRef> scrollMenu_styles = SetupScrollMenuStyles(text_style->font, scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
+        std::vector<GUI::StyleRef> slider_styles = SetupSliderStyles(scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
         btn_styles = { btn_style, scrollMenu_styles.back() };
         
         menus.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
@@ -516,17 +518,25 @@ namespace eng {
         menus.insert({ IngameMenuTab::OPTIONS_SOUND, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Sound Options"),
 
-                new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Mater Volume", false),
-                new GUI::TextLabel(glm::vec2(0.f, -0.4f), glm::vec2(bw, bh), 1.f, text_style, "Music Volume", false),
+                new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Master Volume", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.6f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.f, 100.f), 100),
                 new GUI::TextLabel(glm::vec2(0.f, -0.5f), glm::vec2(bw, bh), 1.f, text_style, "Digital Volume", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.4f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.f, 100.f), 100),
+                new GUI::TextLabel(glm::vec2(0.f, -0.3f), glm::vec2(bw, bh), 1.f, text_style, "Music Volume", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.2f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.f, 100.f), 100),
                 new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
                 }, glm::ivec2(0,1)),
                 new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                    IngameMenu* menu = static_cast<IngameMenu*>(handler);
+                    Config::Audio().UpdateSounds(menu->sound_master->Value(), menu->sound_digital->Value(), menu->sound_music->Value(), true);
+                    menu->OpenTab(IngameMenuTab::MAIN);
                 }, glm::ivec2(0,1)),
             })
         });
+        sound_digital = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SOUND).GetChild(4);
+        sound_master = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SOUND).GetChild(2);
+        sound_music = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SOUND).GetChild(6);
 
         menus.insert({ IngameMenuTab::LOAD, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Load Game"),
@@ -566,11 +576,10 @@ namespace eng {
         delet_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::SAVE).GetChild(4));
 
         /*TODO:
-            - implement horizontal slider GUI elements & add them to options submenus
+            - implement horizontal slider GUI elements & add them to options submenus 
             - implement save logic      - saving can be done just directly from here (invoke on Level object)
             - implement load logic      - need to call methods on StageController objects in order to change level
             - implement delete logic    - can probably do also from here
-            - also maybe create separate class/namespace for listing the Saves directory
 
             - Config::Saves - directory path (maybe from config?) & directory scan
             - visuals - separate visuals for horde/aliance
@@ -710,6 +719,11 @@ namespace eng {
                 case IngameMenuTab::LOAD:
                     list_load->UpdateContent(Config::Saves::Scan(), true);
                     break;
+                case IngameMenuTab::OPTIONS_SOUND:
+                    sound_digital->SetValue(Config::Audio().volume_digital);
+                    sound_master->SetValue(Config::Audio().volume_master);
+                    sound_music->SetValue(Config::Audio().volume_music);
+                    break;
             }
         }
         else {
@@ -728,6 +742,10 @@ namespace eng {
         textInput = m.textInput;
         delet_btn = m.delet_btn;
         btn_styles = std::move(m.btn_styles);
+
+        sound_digital = m.sound_digital;
+        sound_master = m.sound_master;
+        sound_music = m.sound_music;
 
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
@@ -2071,6 +2089,68 @@ namespace eng {
         res.push_back(s);
         res.push_back(z);
         res.push_back(disabled_btn);
+
+        return res;
+    }
+
+    std::vector<GUI::StyleRef> SetupSliderStyles(const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
+        GUI::StyleRef s = nullptr;
+        std::vector<GUI::StyleRef> res;
+
+        //menu item style
+        glm::vec2 buttonSize = glm::vec2(scrollMenuSize.x, scrollMenuSize.y / scrollMenuItems);
+        glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        glm::ivec2 textureSize = ts * upscaleFactor;
+        int shadingWidth = 2 * upscaleFactor;
+
+        //small button style
+        buttonSize = smallBtnSize;
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+
+        //scroll up button style
+        buttonSize = glm::vec2(scrollButtonSize, scrollButtonSize);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
+        s->hoverTexture = s->texture;
+        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+
+        s = std::make_shared<GUI::Style>();
+        GUI::StyleRef z = s;
+        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::NONE;
+
+        //scroll slider style
+        buttonSize = glm::vec2(scrollButtonSize, scrollMenuSize.y);
+        ts = glm::vec2(Window::Get().Size()) * buttonSize;
+        upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+        textureSize = ts * upscaleFactor;
+        shadingWidth = 2 * upscaleFactor;
+        s = std::make_shared<GUI::Style>();
+        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::NONE;
+        res.push_back(s);
+        res.push_back(z);
 
         return res;
     }

@@ -104,6 +104,14 @@ namespace eng::Config {
         return data.audio;
     }
 
+    void AudioConfig::UpdateSounds(float master, float digital, float music, bool save_changes) {
+        volume_digital = digital;
+        volume_master = master;
+        volume_music = music;
+        if(save_changes)
+            SaveChanges();
+    }
+
     float GameSpeed() {
         return data.game_speed;
     }
