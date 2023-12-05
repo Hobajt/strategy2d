@@ -17,8 +17,10 @@ void IngameController::Render() {
 void IngameController::OnPreLoad(int prevStageID, int info, void* data) {
     //start loading game assets - probably just map data, since opengl can't handle async loading
 
-    // GameInitParams* params = dynamic_cast<GameInitParams*>(data);
-    // ASSERT_MSG(params != nullptr, "IngameController - missing game parameters.");
+    GameInitParams* params = static_cast<GameInitParams*>(data);
+    ENG_LOG_INFO("filepath: {}", params->filepath);
+
+    //TODO: do in async
     // Level::Load(params->filepath, level);
 
     /* ways to reach ingame stage:

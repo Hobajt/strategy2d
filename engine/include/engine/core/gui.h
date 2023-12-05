@@ -621,8 +621,8 @@ namespace eng::GUI {
 
         void UpdateSelection(int idx);
         void Unroll(bool unrolled);
-    private:
-        // virtual void InnerRender() override;
+
+        int CurrentSelection() const { return selection; }
     private:
         std::vector<TextButton*> menuBtns;
         std::vector<std::string> items;

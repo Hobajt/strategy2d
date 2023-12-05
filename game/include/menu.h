@@ -28,7 +28,7 @@ private:
     void SwitchState(int newState);
 
     void StartCampaign(bool asOrc);
-    void StartCustomGame();
+    void StartCustomGame(bool asOrc, const std::string& mapfile);
 
     void KeyPressCallback(int keycode, int modifiers);
 
@@ -45,6 +45,7 @@ private:
     int activeState = MainMenuState::INVALID;
 
     eng::TextureRef backgroundTexture = nullptr;
+    eng::GUI::ScrollMenu* mapSelection = nullptr;
     
     eng::GUI::SelectionHandler selection = {};
 

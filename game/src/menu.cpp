@@ -4,6 +4,8 @@
 #include "ingame.h"
 #include "recap.h"
 
+#include "engine/game/config.h"
+
 using namespace eng;
 
 void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2& buttonSize);
@@ -64,6 +66,11 @@ void MainMenuController::SwitchState(int newState) {
 
     activeMenu = &menu[newState];
     activeState = newState;
+
+    if(newState == MainMenuState::SINGLE_CUSTOM) {
+        //TODO: extract mapnames from filepaths
+        mapSelection->UpdateContent(Config::Saves::Scan(), true);
+    }
 }
 
 void MainMenuController::StartCampaign(bool asOrc) {
@@ -76,7 +83,11 @@ void MainMenuController::StartCampaign(bool asOrc) {
     );
 }
 
-void MainMenuController::StartCustomGame() {
+void MainMenuController::StartCustomGame(bool asOrc, const std::string& mapfile) {
+    gameInitParams = {};
+    gameInitParams.race = GameParams::Race::HUMAN + int(asOrc);
+    gameInitParams.filepath = mapfile;
+
     GetTransitionHandler()->InitTransition(
         TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::CUSTOM, (void*)&gameInitParams, true)
     );
@@ -268,26 +279,24 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
     float step = (2.f*buttonSize.y + gap) / menuSize.y;     //vertical step to move each button
     glm::vec2 bSize = buttonSize / menuSize;                //final button size - converted from size relative to parent
 
-    //TODO: add scenario options - race, resources, tileset, opponents, units
-    //TODO: add map selection option
-
-
-
     menu[MainMenuState::SINGLE_CUSTOM] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
+        new GUI::ScrollMenu(glm::vec2(0.7f, -0.3f), glm::vec2(0.7f, 0.6f), 2.f, 8, 1.f / 8.f, { styles["scroll_items"], styles["scroll_up"], styles["scroll_down"], styles["scroll_slider"], styles["scroll_grip"] }),
+
         new GUI::TextLabel(glm::vec2(0.f, off-step*1.f), bSize, 1.f, styles["label"], "Custom game setup"),
 
         new GUI::TextLabel(glm::vec2(-0.8f, off+step*0.f), bSize, 1.f, styles["label"], "Your Race:"),
         new GUI::SelectMenu(glm::vec2(-0.8f, off+step*0.5f), bSize, 1.f, styles["scroll_items"], std::vector<std::string>{ "Human", "Orc", "Random" }, 2),
 
-        new GUI::TextButton(glm::vec2(1.f, 0.8f-step*2.f), bSize, 1.f, styles["main"], "Select Scenario",
-            this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                //TODO: map selection
-            }, 0
-        ),
         new GUI::TextButton(glm::vec2(1.f, 0.8f-step*1.f), bSize, 1.f, styles["main"], "Start Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                static_cast<MainMenuController*>(handler)->StartCustomGame();
+                MainMenuController* menu = static_cast<MainMenuController*>(handler);
 
+                int race = ((GUI::SelectMenu*)menu->menu.at(MainMenuState::SINGLE_CUSTOM).GetChild(3))->CurrentSelection();
+                if(race > 1) race = Random::UniformInt(1);
+
+                std::string mapname = menu->mapSelection->CurrentSelection();
+
+                menu->StartCustomGame(race, mapname);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(1.f, 0.8f), bSize, 1.f, styles["main"], "Previous Menu",
@@ -296,6 +305,8 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
             }, 0
         ),
     });
+
+    mapSelection = (GUI::ScrollMenu*)menu.at(MainMenuState::SINGLE_CUSTOM).GetChild(0);
 }
 
 //================================ Style init functions ================================
