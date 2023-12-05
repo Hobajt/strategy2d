@@ -11,10 +11,18 @@
 
 namespace eng {
 
+    //===== LevelInfo =====
+
+    //Container for various level metadata.
+    struct LevelInfo {
+        int maxPlayers;
+    };
+
     //===== Savefile =====
 
     struct Savefile {
         Mapfile map;
+        LevelInfo info;
         FactionsFile factions;
     public:
         Savefile() = default;
@@ -38,12 +46,17 @@ namespace eng {
         static int Load(const std::string& filepath, Level& out_level);
 
         glm::ivec2 MapSize() const { return map.Size(); }
+
+        void CustomGame_InitFactions(int playerRace, int opponentCount);
     private:
         Savefile Export();
     public:
         Map map;
         ObjectPool objects;
         Factions factions;
+        LevelInfo info;
+
+        bool initialized = false;
     };
 
     // class Savefile {

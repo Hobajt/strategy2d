@@ -69,7 +69,7 @@ void MainMenuController::SwitchState(int newState) {
 
     if(newState == MainMenuState::SINGLE_CUSTOM) {
         //TODO: extract mapnames from filepaths
-        mapSelection->UpdateContent(Config::Saves::Scan(), true);
+        mapSelection->UpdateContent(Config::Saves::ScanCustomGames(), true);
     }
 }
 
@@ -83,10 +83,11 @@ void MainMenuController::StartCampaign(bool asOrc) {
     );
 }
 
-void MainMenuController::StartCustomGame(bool asOrc, const std::string& mapfile) {
+void MainMenuController::StartCustomGame(bool asOrc, int opponents, const std::string& mapfile) {
     gameInitParams = {};
     gameInitParams.race = GameParams::Race::HUMAN + int(asOrc);
     gameInitParams.filepath = mapfile;
+    gameInitParams.opponents = opponents;
 
     GetTransitionHandler()->InitTransition(
         TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::CUSTOM, (void*)&gameInitParams, true)
@@ -109,7 +110,7 @@ void MainMenuController::OnStop() {
 
 }
 
-void MainMenuController::DBG_GUI() {
+void MainMenuController::DBG_GUI(bool active) {
 #ifdef ENGINE_ENABLE_GUI
     if(dbg_texture != nullptr) {
         ImGui::Begin("DBG_TEX");
@@ -281,22 +282,27 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
 
     menu[MainMenuState::SINGLE_CUSTOM] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
         new GUI::ScrollMenu(glm::vec2(0.7f, -0.3f), glm::vec2(0.7f, 0.6f), 2.f, 8, 1.f / 8.f, { styles["scroll_items"], styles["scroll_up"], styles["scroll_down"], styles["scroll_slider"], styles["scroll_grip"] }),
+        new GUI::SelectMenu(glm::vec2(-0.8f, off+step*0.5f), bSize, 1.f, styles["scroll_items"], std::vector<std::string>{ "Human", "Orc", "Random" }, 2),
+        new GUI::SelectMenu(glm::vec2(-0.8f, off+step*2.0f), bSize, 1.f, styles["scroll_items"], std::vector<std::string>{
+            "Map Default", "1 Opponent", "2 Opponents", "3 Opponents", "4 Opponents", "5 Opponents", "6 Opponents", "7 Opponents"
+        }, 0),
 
         new GUI::TextLabel(glm::vec2(0.f, off-step*1.f), bSize, 1.f, styles["label"], "Custom game setup"),
-
         new GUI::TextLabel(glm::vec2(-0.8f, off+step*0.f), bSize, 1.f, styles["label"], "Your Race:"),
-        new GUI::SelectMenu(glm::vec2(-0.8f, off+step*0.5f), bSize, 1.f, styles["scroll_items"], std::vector<std::string>{ "Human", "Orc", "Random" }, 2),
+        new GUI::TextLabel(glm::vec2(-0.8f, off+step*1.5f), bSize, 1.f, styles["label"], "Opponents:"),
 
         new GUI::TextButton(glm::vec2(1.f, 0.8f-step*1.f), bSize, 1.f, styles["main"], "Start Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
                 MainMenuController* menu = static_cast<MainMenuController*>(handler);
 
-                int race = ((GUI::SelectMenu*)menu->menu.at(MainMenuState::SINGLE_CUSTOM).GetChild(3))->CurrentSelection();
+                int race = ((GUI::SelectMenu*)menu->menu.at(MainMenuState::SINGLE_CUSTOM).GetChild(1))->CurrentSelection();
                 if(race > 1) race = Random::UniformInt(1);
+
+                int opponents = ((GUI::SelectMenu*)menu->menu.at(MainMenuState::SINGLE_CUSTOM).GetChild(2))->CurrentSelection();
 
                 std::string mapname = menu->mapSelection->CurrentSelection();
 
-                menu->StartCustomGame(race, mapname);
+                menu->StartCustomGame(race, opponents, Config::Saves::CustomGames_DirPath() + mapname);
             }, 0
         ),
         new GUI::TextButton(glm::vec2(1.f, 0.8f), bSize, 1.f, styles["main"], "Previous Menu",

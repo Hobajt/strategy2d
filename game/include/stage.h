@@ -110,7 +110,7 @@ public:
     //Triggered when switching from this state.
     virtual void OnStop() {}
 
-    virtual void DBG_GUI() {}
+    virtual void DBG_GUI(bool active) {}
     
     DBGONLY(virtual void DBG_StageSwitch(int stateIdx) {})
 

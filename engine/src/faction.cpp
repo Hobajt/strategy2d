@@ -253,6 +253,11 @@ namespace eng {
         }
     }
 
+    FactionsFile Factions::Export() {
+        //TODO:
+        return {};
+    }
+
     void Factions::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("Factions");

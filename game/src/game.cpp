@@ -74,6 +74,10 @@ void Game::OnInit() {
         //don't call it initialize, to distinct it from init methods in Renderer, Audio, etc.
 
         ReloadShaders();
+        Resources::Preload();
+
+        colorPalette = ColorPalette(true);
+        colorPalette.UpdateShaderValues(shader);
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
@@ -134,13 +138,17 @@ void Game::OnUpdate() {
     stageController.Update();
 
     Renderer::Begin(shader, true);
+
+    colorPalette.Bind(shader);
     stageController.Render();
+
     Renderer::End();
 }
 
 void Game::OnGUI() {
 #ifdef ENGINE_ENABLE_GUI
     if(gui_enabled) {
+        Config::DBG_GUI();
         Audio::DBG_GUI();
         Camera::Get().DBG_GUI();
         stageController.DBG_GUI();
@@ -148,6 +156,7 @@ void Game::OnGUI() {
         ImGui::Begin("General");
         ImGui::Text("FPS: %.1f", Input::Get().fps);
         ImGui::Text("Draw calls: %d | Total quads: %d (%d wasted)", Renderer::Stats().drawCalls, Renderer::Stats().totalQuads, Renderer::Stats().wastedQuads);
+        ImGui::Text("Textures: %d", Renderer::Stats().numTextures);
         if(ImGui::Button("Reload shaders")) {
             try {
                 ReloadShaders();
@@ -169,4 +178,6 @@ void Game::OnGUI() {
 
 void Game::ReloadShaders() {
     shader = Resources::LoadShader("test_shader", true);
+    shader->InitTextureSlots(Renderer::TextureSlotsCount());
+    colorPalette.UpdateShaderValues(shader);
 }

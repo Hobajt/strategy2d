@@ -19,6 +19,7 @@ private:
     GameStage stageController;
 
     eng::ShaderRef shader;
+    eng::ColorPalette colorPalette;
 
     DBGONLY(int dbg_stageIdx = -1);
     DBGONLY(int dbg_stageStateIdx = -1);

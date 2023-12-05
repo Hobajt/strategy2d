@@ -39,9 +39,13 @@ namespace eng::Config {
 
     namespace Saves {
 
-        std::string DirPath();
-        std::vector<std::string> Scan();
         std::string FullPath(const std::string& name);
+
+        std::string DirPath();
+        std::string CustomGames_DirPath();
+
+        std::vector<std::string> Scan();
+        std::vector<std::string> ScanCustomGames();
 
     }//namespace Saves
 

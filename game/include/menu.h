@@ -21,14 +21,14 @@ public:
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
 
-    virtual void DBG_GUI() override;
+    virtual void DBG_GUI(bool active) override;
 
     DBGONLY(virtual void DBG_StageSwitch(int stateIdx) override);
 private:
     void SwitchState(int newState);
 
     void StartCampaign(bool asOrc);
-    void StartCustomGame(bool asOrc, const std::string& mapfile);
+    void StartCustomGame(bool asOrc, int opponents, const std::string& mapfile);
 
     void KeyPressCallback(int keycode, int modifiers);
 

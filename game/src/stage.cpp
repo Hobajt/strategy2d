@@ -116,7 +116,7 @@ void GameStage::Render() {
 void GameStage::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
     for(auto& [id, ctrl] : stages) {
-        ctrl->DBG_GUI();
+        ctrl->DBG_GUI(currentStage == ctrl);
     }
 #endif
 }

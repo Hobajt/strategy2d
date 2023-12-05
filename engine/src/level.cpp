@@ -9,10 +9,17 @@
 #include "engine/utils/json.h"
 #include "engine/utils/utils.h"
 
+#include "engine/utils/randomness.h"
+
 namespace eng {
 
     bool Parse_Mapfile(Mapfile& map, const nlohmann::json& config);
+    bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
+    bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config);
+
     nlohmann::json Export_Mapfile(const Mapfile& map);
+    nlohmann::json Export_Info(const LevelInfo& info);
+    nlohmann::json Export_FactionsFile(const FactionsFile& factions);
 
     //===== Savefile =====
 
@@ -28,6 +35,18 @@ namespace eng {
             throw std::exception("Savefile - invalid map data.");
         }
 
+        //parse factions data
+        if(config.count("factions") && !Parse_FactionsFile(factions, config.at("factions"))) {
+            ENG_LOG_WARN("Savefile - invalid factions data.");
+            throw std::exception("Savefile - invalid factions data.");
+        }
+        
+        
+        if(!config.count("info") || !Parse_Info(info, config.at("info"))) {
+            ENG_LOG_WARN("Savefile - invalid info data.");
+            throw std::exception("Savefile - invalid info data.");
+        }
+
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
     }
 
@@ -36,6 +55,7 @@ namespace eng {
 
         json data = {};
         data["map"] = Export_Mapfile(map);
+        data["factions"] = Export_FactionsFile(factions);
 
         WriteFile(filepath.c_str(), data.dump());
         
@@ -46,9 +66,9 @@ namespace eng {
 
     Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects({}) {}
 
-    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions(Factions()) {}
+    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions(Factions()), initialized(true) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions), map.Size()) {
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions), map.Size()), info(savefile.info), initialized(true) {
         if(factions.IsInitialized())
             map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
     }
@@ -87,9 +107,32 @@ namespace eng {
         return 0;
     }
 
+    void Level::CustomGame_InitFactions(int playerRace, int opponents) {
+        FactionsFile ff = {};
+        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "Neutral", 5));
+        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  playerRace, "Player", 0));
+
+        int factionCount = std::min(info.maxPlayers, opponents);
+        char name_buf[256];
+        for(int i = 1; i < factionCount; i++) {
+            snprintf(name_buf, sizeof(name_buf), "Faction %d", i);
+            int race = Random::UniformInt(1);
+            ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::RandomAIMindset(), race, std::string(name_buf), i));
+
+            for(int j = 1; j < i; j++) {
+                ff.diplomacy.push_back({i, j, 1});
+            }
+        }
+        factions = Factions(std::move(ff), map.Size());
+        map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
+        ENG_LOG_INFO("CustomGame - factions initialized.");
+    }
+
     Savefile Level::Export() {
         Savefile savefile;
         savefile.map = map.Export();
+        savefile.factions = factions.Export();
+        savefile.info = info;
         return savefile;
     }
 
@@ -123,6 +166,17 @@ namespace eng {
         return true;
     }
 
+    bool Parse_Info(LevelInfo& info, const nlohmann::json& config) {
+        //TODO:
+        info.maxPlayers = config.count("player_count") ? config.at("player_count") : 2;
+        return true;
+    }
+
+    bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config) {
+        //TODO:
+        return true;
+    }
+
     nlohmann::json Export_Mapfile(const Mapfile& map) {
         using json = nlohmann::json;
 
@@ -139,6 +193,16 @@ namespace eng {
         }
 
         return out;
+    }
+    
+    nlohmann::json Export_Info(const LevelInfo& info) {
+        //TODO:
+        return {};
+    }
+
+    nlohmann::json Export_FactionsFile(const FactionsFile& factions) {
+        //TODO:
+        return {};
     }
 
 }//namespace eng

@@ -130,17 +130,40 @@ namespace eng::Config {
 
     namespace Saves {
 
+        std::string FullPath(const std::string& name) {
+            return DirPath() + name;
+        }
+
         std::string DirPath() {
             return "NO_PATH_JUST_YET/";
         }
 
-        std::vector<std::string> Scan() {
-            return { "File1", "File2", "File3" };
-            // return { "File1", "File2", "File3", "File1", "File2", "File3", "File1", "File2", "File3", "File1", "File2", "File3" };
+        std::string CustomGames_DirPath() {
+            return "res/ignored/";
         }
 
-        std::string FullPath(const std::string& name) {
-            return DirPath() + name;
+        std::vector<std::string> DirectoryScan(const std::string& dir) {
+            std::vector<std::string> files;
+            try {
+                for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+                    if (entry.is_regular_file() && entry.path().extension() == ".json") {
+                        files.push_back(entry.path().filename().string());
+                    }
+                }
+                } catch (const std::filesystem::filesystem_error& e) {
+                    ENG_LOG_ERROR("Failed to scan directory '{}' for files.", dir);
+                    return {};
+                }
+                
+            return files;
+        }
+
+        std::vector<std::string> Scan() {
+            return DirectoryScan(DirPath());
+        }
+
+        std::vector<std::string> ScanCustomGames() {
+            return DirectoryScan(CustomGames_DirPath());
         }
 
     }//namespace Saves

@@ -13,6 +13,14 @@
 
 namespace eng {
 
+    namespace FactionControllerID {
+        int RandomAIMindset() {
+            //TODO:
+            return INVALID;
+            // return Random::UniformInt() ...;
+        }
+    }
+
     constexpr float GUI_WIDTH = 0.25f;
     constexpr float BORDER_SIZE = 0.025f;
 

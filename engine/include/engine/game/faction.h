@@ -156,6 +156,8 @@ namespace eng {
 
         bool IsInitialized() const { return initialized; }
 
+        FactionsFile Export();
+
         void DBG_GUI();
     private:
         std::vector<FactionControllerRef> factions;

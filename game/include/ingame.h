@@ -23,6 +23,8 @@ public:
     //TODO: implement these - do some checks if game can be paused (single player only)
     // virtual void PauseRequest(bool pause) override;
     // virtual void PauseToggleRequest() override;
+
+    virtual void DBG_GUI(bool active) override;
 private:
     void KeyPressCallback(int keycode, int modifiers);
 private:

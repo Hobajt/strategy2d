@@ -16,6 +16,8 @@ namespace eng {
 
     namespace FactionControllerID {
         enum { INVALID = 0, LOCAL_PLAYER, NATURE };
+
+        int RandomAIMindset();
     }
     
 #define STD_MSG_TIME 5.f
