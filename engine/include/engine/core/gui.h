@@ -252,6 +252,8 @@ namespace eng::GUI {
         virtual void OnHold() override;
         virtual void OnUp() override;
 
+        void Invoke();
+
         virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) override { handler = (handler == oldPtr) ? newPtr : handler; }
     private:
         int id = -1;

@@ -129,7 +129,7 @@ namespace eng {
 
         //===== GUI::IngameMenu =====
 
-        namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO }; }
+        namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO, CONFIRM_SCREEN }; }
         namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE }; }
 
         class IngameMenu : public ButtonCallbackHandler {
@@ -157,6 +157,7 @@ namespace eng {
             void Move(IngameMenu&&) noexcept;
 
             void EnableDeleteButton(bool enabled);
+            void SetupConfirmScreen(const std::string& label, const std::string& btn, const glm::ivec2& highlightIdx, int keycode);
         private:
             std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
@@ -173,6 +174,10 @@ namespace eng {
             ValueSlider* sound_master = nullptr;
             ValueSlider* sound_digital = nullptr;
             ValueSlider* sound_music = nullptr;
+
+            ScrollText* confirm_label = nullptr;
+            TextButton* confirm_btn = nullptr;
+            int confirm_keycode = 0;
         };
     }
 

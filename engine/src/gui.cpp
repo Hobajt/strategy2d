@@ -320,6 +320,12 @@ namespace eng::GUI {
         }
     }
 
+    void Button::Invoke() {
+        if(callback && handler) {
+            callback(handler, id);
+        }
+    }
+
     //===== TextButton =====
 
     TextButton::TextButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_,

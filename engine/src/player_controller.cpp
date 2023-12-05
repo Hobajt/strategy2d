@@ -498,6 +498,40 @@ namespace eng {
         });
         list_objectives = dynamic_cast<ScrollText*>(menus.at(IngameMenuTab::OBJECTIVES).GetChild(1));
 
+        menus.insert({ IngameMenuTab::END_SCENARIO, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "End Scenario"),
+                new GUI::TextButton(glm::vec2(0.f, -0.65f), glm::vec2(bw, bh), 1.f, btn_style, "Load Custom", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to load a\ncustom scenario?", "Load Custom", glm::ivec2(0, 1), GLFW_KEY_L);
+                }, glm::vec2(0, 1)),
+                new GUI::TextButton(glm::vec2(0.f, -0.45f), glm::vec2(bw, bh), 1.f, btn_style, "Surrender", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to surrender\nto your enemies?", "Surrender", glm::ivec2(0, 1), GLFW_KEY_S);
+                }, glm::vec2(0, 1)),
+                new GUI::TextButton(glm::vec2(0.f, -0.25f), glm::vec2(bw, bh), 1.f, btn_style, "Quit to Menu", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to quit to\nthe main menu?", "Quit to Menu", glm::ivec2(0, 1), GLFW_KEY_Q);
+                }, glm::vec2(0, 1)),
+                new GUI::TextButton(glm::vec2(0.f, -0.05f), glm::vec2(bw, bh), 1.f, btn_style, "Exit Program", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to exit\nthe game?", "Exit Program", glm::ivec2(0, 1), GLFW_KEY_X);
+                }, glm::vec2(1, 2)),
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Previous (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(16,19)),
+            })
+        });
+
+        menus.insert({ IngameMenuTab::CONFIRM_SCREEN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::ScrollText(glm::vec2(0.f, -0.7f), glm::vec2(bw, 0.25f), 1.f, text_style, ""),
+                new GUI::TextButton(glm::vec2(0.f, -0.35f), glm::vec2(bw, bh), 1.f, btn_style, "Confirm", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    // static_cast<IngameMenu*>(handler)->SetupConfirmationScreen();
+                    ENG_LOG_WARN("NOT IMPLEMENTED YET");
+                }, glm::vec2(0, 1)),
+                new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Cancel (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(8,11)),
+            })
+        });
+        confirm_label = dynamic_cast<ScrollText*>(menus.at(IngameMenuTab::CONFIRM_SCREEN).GetChild(0));
+        confirm_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::CONFIRM_SCREEN).GetChild(1));
+
         menus.insert({ IngameMenuTab::OPTIONS, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Options"),
                 new GUI::TextButton(glm::vec2( 0.f, -0.65f), glm::vec2(bw, bh), 1.f, btn_style, "Sound (F7)", this, [](GUI::ButtonCallbackHandler* handler, int id){
@@ -576,14 +610,12 @@ namespace eng {
         delet_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::SAVE).GetChild(4));
 
         /*TODO:
-            - implement horizontal slider GUI elements & add them to options submenus 
             - implement save logic      - saving can be done just directly from here (invoke on Level object)
             - implement load logic      - need to call methods on StageController objects in order to change level
             - implement delete logic    - can probably do also from here
 
             - Config::Saves - directory path (maybe from config?) & directory scan
-            - visuals - separate visuals for horde/aliance
-            - visuals - disabled button visuals (delete button)
+            - update ingame menu visuals (different color for each race)
         */
 
         menus.insert({ IngameMenuTab::HELP, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
@@ -659,6 +691,33 @@ namespace eng {
                     case GLFW_KEY_ESCAPE:   //return to game
                         ctrl->SwitchMenu(false);
                         break;
+                }
+                break;
+            case IngameMenuTab::END_SCENARIO:
+                switch(keycode) {
+                    case GLFW_KEY_L:
+                        SetupConfirmScreen("Are you sure you\nwant to load a\ncustom scenario?", "Load Custom", glm::ivec2(0, 1), GLFW_KEY_L);
+                        break;
+                    case GLFW_KEY_S:
+                        SetupConfirmScreen("Are you sure you\nwant to surrender\nto your enemies?", "Surrender", glm::ivec2(0, 1), GLFW_KEY_S);
+                        break;
+                    case GLFW_KEY_Q:
+                        SetupConfirmScreen("Are you sure you\nwant to quit to\nthe main menu?", "Quit to Menu", glm::ivec2(0, 1), GLFW_KEY_Q);
+                        break;
+                    case GLFW_KEY_X:
+                        SetupConfirmScreen("Are you sure you\nwant to exit\nthe game?", "Exit Program", glm::ivec2(0, 1), GLFW_KEY_X);
+                        break;
+                    case GLFW_KEY_ESCAPE:
+                        OpenTab(IngameMenuTab::MAIN);
+                        break;
+                }
+                break;
+            case IngameMenuTab::CONFIRM_SCREEN:
+                if(keycode == confirm_keycode) {
+                    confirm_btn->Invoke();
+                }
+                else if (keycode == GLFW_KEY_ESCAPE) {
+                    OpenTab(IngameMenuTab::END_SCENARIO);
                 }
                 break;
             case IngameMenuTab::OPTIONS:
@@ -747,6 +806,10 @@ namespace eng {
         sound_master = m.sound_master;
         sound_music = m.sound_music;
 
+        confirm_label = m.confirm_label;
+        confirm_btn = m.confirm_btn;
+        confirm_keycode = m.confirm_keycode;
+
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
                 child->HandlerPtrMove(&m, this);
@@ -758,6 +821,13 @@ namespace eng {
         ASSERT_MSG(delet_btn != nullptr, "Delete button reference is not set.");
         delet_btn->Interactable(enabled);
         delet_btn->ChangeStyle(btn_styles[int(!enabled)]);
+    }
+
+    void GUI::IngameMenu::SetupConfirmScreen(const std::string& label, const std::string& btn, const glm::ivec2& highlightIdx, int keycode) {
+        confirm_label->UpdateText(label);
+        confirm_btn->Text(btn, highlightIdx);
+        confirm_keycode = keycode;
+        OpenTab(IngameMenuTab::CONFIRM_SCREEN);
     }
 
     //===== PlayerSelection =====
@@ -1385,59 +1455,6 @@ namespace eng {
     }
 
     void PlayerFactionController::Update(Level& level) {
-        //NEXT UP:
-        //ingame menu:
-        //  - add the GUI for all the submenus & switching between them
-        //  - hookup the logic to the buttons
-        //  - finish the keyboard shortcuts for all the menus
-        //  - implement game pause
-        //  - custom menu visuals (maybe race specific as well)
-        //  - retrieve scenario objectives (to show in the menu)
-
-        /*ingame menu data transfers:
-            - data to transfer to menu object:
-                - scenario objective (currently stored in RecapController, could move it tho), savefile names, config values (sound,preferences,...)
-            - transfer from the menu object:
-                - config values updates, signal to save/load a game, exit signal
-        */
-
-
-        //should probably also solve the shipyard issue (part on land, part on water)
-        //research buttons - mostly figure out their data sources (will probably need to implement train & research command first)
-        
-        //return goods - why the fuck doesn't he go back to work?
-        //add population tracking logic (as described below)
-
-        //occlusion mask - download occlusion mask from map data when Save is issued
-
-        //TODO: implement proper unit speed handling (including the values, so that it matches move speed  from the game)
-        //TODO: maybe redo the object sizes (there's map size and graphics size)
-
-        //TODO: might want to wrap menu into a custom class, since there're going to be more panels than one
-        //game pausing logic - properly check the single player condition; properly freeze everything that needs to be freezed
-        //ingame menu GUI & control logic
-
-        /*population:
-            - incrementing population counter on building construction/death seems kinda shitty and prone to errors
-            - faction controller will track count for each building type
-            - compute population from that (num_town_halls + 4*num_farms)
-            - update whenever new building is registered
-            - this way, the population will always match the buildings
-        */
-
-        /*UNIT LEVEL:
-            - is computed from upgrades that affect the unit
-            - not sure how exactly is it computed, but can probably treat it as a sum of all the upgrades
-            - how are upgrades going to work:
-                - they'll be stored in faction data
-                - unit will have getters for various data properties
-                - the getters will query faction data and do conditional additions to the property
-            - how will the value increments be handled internally in the faction data:
-                - could maybe create a table with increment values for each unit
-                - the unit can then just lookup a row based on unit type & column based on value type
-                - level could be stored in the table as well
-        */
-
         selection.GroupsUpdate(level);
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
@@ -2027,7 +2044,7 @@ namespace eng {
 
         s = std::make_shared<GUI::Style>();
         s->font = font;
-        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 1, false);
+        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, glm::u8vec3(140), glm::u8vec3(30), glm::u8vec3(200), glm::u8vec3(100));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightTexture = s->texture;
