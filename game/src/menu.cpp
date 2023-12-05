@@ -108,6 +108,12 @@ void MainMenuController::DBG_GUI() {
 #endif
 }
 
+#ifdef ENGINE_DEBUG
+void MainMenuController::DBG_StageSwitch(int stateIdx) {
+    SwitchState(stateIdx);
+}
+#endif
+
 void MainMenuController::KeyPressCallback(int keycode, int modifiers) {
     switch(activeState) {
         case MainMenuState::MAIN:
@@ -265,15 +271,26 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
     //TODO: add scenario options - race, resources, tileset, opponents, units
     //TODO: add map selection option
 
+
+
     menu[MainMenuState::SINGLE_CUSTOM] = GUI::Menu(glm::vec2(0.f, 0.5f), menuSize, 0.f, std::vector<GUI::Element*>{
-        new GUI::TextLabel(glm::vec2(0.f, off+step*-1), bSize, 1.f, styles["label"], "Custom game setup"),
-        new GUI::TextButton(glm::vec2(0.f, off+step*1), bSize, 1.f, styles["main"], "START",
+        new GUI::TextLabel(glm::vec2(0.f, off-step*1.f), bSize, 1.f, styles["label"], "Custom game setup"),
+
+        new GUI::TextLabel(glm::vec2(-0.8f, off+step*0.f), bSize, 1.f, styles["label"], "Your Race:"),
+        new GUI::SelectMenu(glm::vec2(-0.8f, off+step*0.5f), bSize, 1.f, styles["scroll_items"], std::vector<std::string>{ "Human", "Orc", "Random" }, 2),
+
+        new GUI::TextButton(glm::vec2(1.f, 0.8f-step*2.f), bSize, 1.f, styles["main"], "Select Scenario",
+            this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                //TODO: map selection
+            }, 0
+        ),
+        new GUI::TextButton(glm::vec2(1.f, 0.8f-step*1.f), bSize, 1.f, styles["main"], "Start Game",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<MainMenuController*>(handler)->StartCustomGame();
 
             }, 0
         ),
-        new GUI::TextButton(glm::vec2(0.f, off+step*2.5f), bSize, 1.f, styles["main"], "Previous Menu",
+        new GUI::TextButton(glm::vec2(1.f, 0.8f), bSize, 1.f, styles["main"], "Previous Menu",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
                 static_cast<MainMenuController*>(handler)->SwitchState(MainMenuState::SINGLE);
             }, 0

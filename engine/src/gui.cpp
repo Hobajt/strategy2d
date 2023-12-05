@@ -1039,4 +1039,46 @@ namespace eng::GUI {
     float ValueSlider::Value() const {
         return range[0] + (range[1]-range[0]) * (float(pos)/step_count);
     }
+
+    //===== SelectMenu =====
+
+    SelectMenu::SelectMenu(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& btn_style_, const std::vector<std::string>& items_, int defaultItem)
+        : TextButton(offset_, size_, zOffset_, btn_style_, items_[defaultItem], this, [](GUI::ButtonCallbackHandler* handler, int id) {
+            static_cast<SelectMenu*>(handler)->Unroll(true);
+        }), selection(defaultItem), items(items_) {
+        
+        float step = 1.f;
+
+        int i = 0;
+        for(const std::string& item : items) {
+            menuBtns.push_back(
+                (TextButton*)AddChild(
+                    new TextButton(glm::vec2(0.f, step*i), glm::vec2(1.f, 0.5f), 1.f, btn_style_, item,
+                        this, [](GUI::ButtonCallbackHandler* handler, int id) {
+                            static_cast<SelectMenu*>(handler)->UpdateSelection(id);
+                            static_cast<SelectMenu*>(handler)->Unroll(false);
+                            ENG_LOG_INFO("SCROLL MENU [{}] FIRED", id);
+                        }, -1, i, 0),
+                    true
+                )
+            );
+            menuBtns.back()->Enable(false);
+            menuBtns.back()->Interactable(false);
+            i++;
+        }
+    }
+
+    void SelectMenu::UpdateSelection(int idx) {
+        selection = idx;
+        Text(items[idx]);
+    }
+
+    void SelectMenu::Unroll(bool unrolled) {
+        opened = unrolled;
+        for(TextButton* btn : menuBtns) {
+            btn->Enable(unrolled);
+            btn->Interactable(unrolled);
+        }
+    }
+
 }//namespace eng::GUI

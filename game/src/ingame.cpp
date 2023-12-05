@@ -17,6 +17,10 @@ void IngameController::Render() {
 void IngameController::OnPreLoad(int prevStageID, int info, void* data) {
     //start loading game assets - probably just map data, since opengl can't handle async loading
 
+    // GameInitParams* params = dynamic_cast<GameInitParams*>(data);
+    // ASSERT_MSG(params != nullptr, "IngameController - missing game parameters.");
+    // Level::Load(params->filepath, level);
+
     /* ways to reach ingame stage:
         - mainMenu - start campaign (goes through recap stage tho)
         - mainMenu - start custom

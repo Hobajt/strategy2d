@@ -22,6 +22,8 @@ public:
     virtual void OnStop() override;
 
     virtual void DBG_GUI() override;
+
+    DBGONLY(virtual void DBG_StageSwitch(int stateIdx) override);
 private:
     void SwitchState(int newState);
 

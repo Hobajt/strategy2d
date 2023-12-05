@@ -615,4 +615,20 @@ namespace eng::GUI {
         int step_count;
     };
 
+    class SelectMenu : public TextButton, ButtonCallbackHandler {
+    public:
+        SelectMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const std::vector<std::string>& items, int defaultItem = 0);
+
+        void UpdateSelection(int idx);
+        void Unroll(bool unrolled);
+    private:
+        // virtual void InnerRender() override;
+    private:
+        std::vector<TextButton*> menuBtns;
+        std::vector<std::string> items;
+
+        bool opened = false;
+        int selection = 0;
+    };
+
 }//namespace eng::GUI
