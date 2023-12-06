@@ -46,6 +46,22 @@ namespace eng {
         animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
     }
 
+    void GameObject::RenderAt(const glm::vec2& base_pos, const glm::vec2& base_size, float scaling, bool centered, float zOffset) {
+        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
+
+        glm::vec2 size = base_size * scaling;
+        glm::vec2 pos = base_pos;
+        if(centered) {
+            pos = (pos + 0.5f) - size * 0.5f;
+        }
+
+        //TODO: figure out zIdx from the y-coord
+        float zIdx = -0.5f;
+
+        Camera& cam = Camera::Get();
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
+    }
+
     bool GameObject::Update() {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(ActionIdx());
@@ -265,7 +281,7 @@ namespace eng {
     void Unit::Render() {
         if(!IsActive())
             return;
-        RenderAt(glm::vec2(Position()) + move_offset);
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, NavigationType() != NavigationBit::AIR);
     }
 
     bool Unit::Update() {
@@ -292,6 +308,18 @@ namespace eng {
         if(idx < ActionType::ACTION && VariationIdx() != 0)
             idx = idx + (UnitAnimationType::DEATH + VariationIdx());
         return idx;
+    }
+
+    glm::vec2 Unit::RenderPosition() const {
+        glm::vec2 pos = glm::vec2(Position()) + move_offset;
+        if(NavigationType() != NavigationBit::AIR) {
+            pos = (pos + 0.5f) - RenderSize() * 0.5f;
+        }
+        return pos;
+    }
+
+    glm::vec2 Unit::RenderSize() const {
+        return glm::vec2(data->size) * data->scale;
     }
 
     void Unit::ChangeCarryStatus(int new_state) {

@@ -53,6 +53,7 @@ namespace eng {
         virtual void Render();
         void RenderAt(const glm::vec2& map_pos);
         void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, float zOffset = 0.f);
+        void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, float scaling, bool centered, float zOffset = 0.f);
 
         //Return true when requesting object removal.
         virtual bool Update();
@@ -71,6 +72,7 @@ namespace eng {
         glm::ivec2 Position() const { return position; }
         glm::vec2 Positionf() const { return glm::vec2(position); }
         virtual glm::vec2 RenderPosition() const { return glm::vec2(position); }
+        virtual glm::vec2 RenderSize() const { return glm::vec2(data->size); }
 
         glm::vec2 MinPos() const { return glm::vec2(position); }
         glm::vec2 MaxPos() const { return glm::vec2(position) + data->size - 1.f; }
@@ -236,14 +238,15 @@ namespace eng {
         int UnitLevel() const { return 0; } //TODO:
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
-        
+
         float MoveSpeed_Real() const { return data->speed * 0.1f; }
 
         int AttackUpgradeSource() const { return data->upgrade_src[0]; }
         int DefenseUpgradeSource() const { return data->upgrade_src[1]; }
 
         glm::vec2& m_offset() { return move_offset; }
-        virtual glm::vec2 RenderPosition() const override { return glm::vec2(Position()) + move_offset; }
+        virtual glm::vec2 RenderPosition() const override;
+        virtual glm::vec2 RenderSize() const override;
 
         bool AnimationFinished() const { return animation_ended; }
 

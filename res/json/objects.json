@@ -404,6 +404,7 @@
         "cooldown": 2.0,
         "race": 1,
         "death_sound": 5,
+        "scale": 2.5,
         "icon": [1,3],
         "sounds": {
             "yes": ["dragon/dryessr", 2],
