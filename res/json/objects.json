@@ -371,11 +371,44 @@
         "cooldown": 3.0,
         "race": 1,
         "death_sound": 4,
+        "scale": 2,
         "icon": [7,1],
         "sounds": {
             "yes": "misc/catyessr",
             "ready": "orc/oready",
             "attack": "misc/catapult"
+        },
+        "refs": ["arrow"]
+    },
+    {
+        "str_id": "orc/dragon",
+        "name": "dragon",
+        "type": 2,
+        "nav_type": 4,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 6,
+        "speed": 14,
+        "health": 100,
+        "mana": 0,
+        "build_time": 250,
+        "cost": [2500,0,0],
+        "attack_range": 4,
+        "armor": 5,
+        "basic_damage": 0,
+        "pierce_damage": 16,
+        "cooldown": 2.0,
+        "race": 1,
+        "death_sound": 5,
+        "icon": [1,3],
+        "sounds": {
+            "yes": ["dragon/dryessr", 2],
+            "ready": "dragon/drready",
+            "what": "dragon/drwhat"
         },
         "refs": ["arrow"]
     }

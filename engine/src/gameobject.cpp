@@ -22,6 +22,9 @@ namespace eng {
         ASSERT_MSG(data != nullptr, "Cannot create GameObject without any data!");
         ASSERT_MSG(level != nullptr, "GameObject needs a reference to the Level it's contained in!");
 
+        if(data_->navigationType == NavigationBit::AIR)
+            position = make_even(position);
+
         animator = Animator(data->animData);
     }
 
@@ -133,7 +136,7 @@ namespace eng {
             lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
             
             //play the dying sound effect
-            static constexpr std::array<const char*, 5> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode" };
+            static constexpr std::array<const char*, 6> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode", "misc/firehit" };
             Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
         }
     }

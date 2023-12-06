@@ -98,6 +98,12 @@ namespace eng {
 
     using pathfindingContainer = std::priority_queue<NavEntry, std::vector<NavEntry>, std::greater<NavEntry>>;
 
+    struct ObjectInfo {
+        ObjectID id = {};                   //id of an object located on this tile (invalid means empty)
+        int factionId = -1;
+        int colorIdx = -1;
+    };
+
     //Live representation of a tile.
     struct TileData {
         int tileType = 0;                   //tile type identifier (enum value)
@@ -109,9 +115,7 @@ namespace eng {
         int health = 100;                   //for trees/walls health tracking; useless in other tile types
         NavData nav;                        //navigation variables
 
-        ObjectID id = {};                   //id of an object located on this tile (invalid means empty)
-        int factionId = -1;
-        int colorIdx = -1;
+        ObjectInfo info[2];                 //info for ground & airborne units
 
         int occlusion = 0;
         int visionCounter = 0;
@@ -419,7 +423,7 @@ namespace eng {
         //Defines what corner type to write when painting given tileType.
         int ResolveCornerType(int paintedTileType) const;
 
-        glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center);
+        glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int step = 1);
         //Retrieves next position for movement. Call after pathfinding is done (uses filled out distance values in the map data).
         glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType);
 

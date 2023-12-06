@@ -148,6 +148,7 @@ namespace eng {
         int deathAnimIdx = -1;
 
         float speed;
+        float scale = 1.f;
 
         glm::ivec2 upgrade_src;
     };

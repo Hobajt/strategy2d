@@ -204,6 +204,7 @@ namespace eng {
         if(config.count("caster")) data->caster = config.at("caster");
 
         data->speed = config.count("speed") ? config.at("speed") : 10;
+        data->scale = config.count("scale") ? config.at("scale") : 1.f;
 
         data->upgrade_src = config.count("upgrade_src") ? json::parse_ivec2(config.at("upgrade_src")) : glm::ivec2(UnitUpgradeSource::NONE);
     }

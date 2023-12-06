@@ -904,20 +904,23 @@ namespace eng {
         for(int y = im.y; y <= iM.y; y++) {
             for(int x = im.x; x <= iM.x; x++) {
                 const TileData& td = level.map(y, x);
-
-                if(!ObjectID::IsObject(td.id) || !ObjectID::IsValid(td.id))
-                    continue;
                 
-                //under which category does current object belong; reset object counting when more important category is picked
-                int object_mode = ObjectSelectionType(td.id, td.factionId, playerFactionID);
-                if(selection_mode < object_mode) {
-                    selection_mode = object_mode;
-                    object_count = 0;
-                }
+                for(int i = 0; i < 2; i++) {
 
-                if(object_mode == selection_mode) {
-                    if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
-                        selection[object_count++] = td.id;
+                    if(!ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id))
+                        continue;
+                    
+                    //under which category does current object belong; reset object counting when more important category is picked
+                    int object_mode = ObjectSelectionType(td.info[i].id, td.info[i].factionId, playerFactionID);
+                    if(selection_mode < object_mode) {
+                        selection_mode = object_mode;
+                        object_count = 0;
+                    }
+
+                    if(object_mode == selection_mode) {
+                        if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
+                            selection[object_count++] = td.info[i].id;
+                        }
                     }
                 }
             }
@@ -1447,12 +1450,22 @@ namespace eng {
                         color = rgba(0,0,0,255);
                         break;
                     case 3:     //explored & no fog
-                        color = ObjectID::IsObject(td.id) ? (factionColors[td.colorIdx % colorCount]) : tileColors[td.tileType];
+                        if(ObjectID::IsObject(td.info[1].id))
+                            color = factionColors[td.info[1].colorIdx % colorCount];
+                        else if(ObjectID::IsObject(td.info[0].id))
+                            color = factionColors[td.info[0].colorIdx % colorCount];
+                        else
+                            color = tileColors[td.tileType];
                         break;
                     case 1:     //explored, but with fog
                     {
                         rgba tmp[2] = { tileColors[td.tileType], rgba(0,0,0,255) };
-                        color = ObjectID::IsObject(td.id) ? (factionColors[td.colorIdx % colorCount]) : tmp[int((x+y) % 2 == 0)];
+                        if(ObjectID::IsObject(td.info[1].id))
+                            color = factionColors[td.info[1].colorIdx % colorCount];
+                        else if(ObjectID::IsObject(td.info[0].id))
+                            color = factionColors[td.info[0].colorIdx % colorCount];
+                        else
+                            color = tmp[int((x+y) % 2 == 0)];
                         break;
                     }
                 }

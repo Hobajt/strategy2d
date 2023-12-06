@@ -64,12 +64,12 @@ namespace eng {
     }
 
     TileData::TileData(int tileType_, int variation_, int cornerType_, int health_)
-        : tileType(tileType_), cornerType(cornerType_), variation(variation_), health(health_), factionId(-1) {
+        : tileType(tileType_), cornerType(cornerType_), variation(variation_), health(health_) {
         UpdateID();
     }
 
     bool TileData::Traversable(int unitNavType) const {
-        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken)) && !nav.building;
+        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR) & (~nav.taken)) && (!nav.building || unitNavType == NavigationBit::AIR);
     }
 
     bool TileData::TraversableOrForrest(int unitNavType) const {
@@ -81,7 +81,7 @@ namespace eng {
     }
 
     void TileData::UpdateID() {
-        id = IsMapObject(tileType) ? ObjectID(ObjectType::MAP_OBJECT, 0, tileType) : ObjectID();
+        info[0].id = IsMapObject(tileType) ? ObjectID(ObjectType::MAP_OBJECT, 0, tileType) : ObjectID();
     }
 
     void TileData::VisionIncrement() {
@@ -634,21 +634,27 @@ namespace eng {
     glm::ivec2 Map::Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos) {
         ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to ({},{}) (unit {})", unit.Position().x, unit.Position().y, target_pos.x, target_pos.y, unit.ID());
 
-        if(unit.Position() == target_pos)
-            return target_pos;
-
         //identify unit's movement type (gnd/water/air)
         int navType = unit.NavigationType();
 
-        //target fix for airborne units
-        glm::ivec2 dst_pos = (navType != NavigationBit::AIR) ? target_pos : make_even(target_pos);
+        glm::ivec2 unit_pos = unit.Position();
+        glm::ivec2 dst_pos = target_pos;
+
+        //coordinates fix for airborne units
+        if(navType == NavigationBit::AIR) {
+            unit_pos = make_even(unit_pos);
+            dst_pos = make_even(dst_pos);
+        }
+
+        if(unit_pos == target_pos)
+            return target_pos;
 
         //fills distance values in the tile data
-        Pathfinding_AStar(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
+        Pathfinding_AStar(tiles, nav_list, unit_pos, dst_pos, navType, &heuristic_euclidean);
         // DBG_PrintDistances();
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
-        return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
+        return Pathfinding_RetrieveNextPos(unit_pos, dst_pos, navType);
     }
 
     glm::ivec2 Map::Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& m, const glm::ivec2& M, int distance) {
@@ -850,9 +856,15 @@ namespace eng {
                     continue;
 
                 glm::ivec2 pos = glm::ivec2(src_pos.x + x, src_pos.y + y);
-                if(tiles.IsWithinBounds(pos) && diplomacy.AreHostile(src_factionId, tiles(pos).factionId)) {
-                    out_targetID = tiles(pos).id;
-                    return true;
+                if(tiles.IsWithinBounds(pos)) {
+                    if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId)) {
+                        out_targetID = tiles(pos).info[0].id;
+                        return true;
+                    }
+                    else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId)) {
+                        out_targetID = tiles(pos).info[1].id;
+                        return true;
+                    }
                 }
             }
         }
@@ -865,6 +877,8 @@ namespace eng {
 
         if(size.x == 0 || size.y == 0)
             ENG_LOG_WARN("Map::AddObject - object has no size");
+        
+        int i = int(navType == NavigationBit::AIR);
 
         for(int y = 0; y < size.y; y++) {
             for(int x = 0; x < size.x; x++) {
@@ -872,9 +886,9 @@ namespace eng {
                 if(!tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::AddObject - invalid placement location {} (navType={})", idx, navType);
                 tiles(idx).nav.Claim(navType, true, is_building);
-                tiles(idx).id = id;
-                tiles(idx).factionId = factionId;
-                tiles(idx).colorIdx = colorIdx;
+                tiles(idx).info[i].id = id;
+                tiles(idx).info[i].factionId = factionId;
+                tiles(idx).info[i].colorIdx = colorIdx;
             }
         }
 
@@ -889,15 +903,17 @@ namespace eng {
         if(size.x == 0 || size.y == 0)
             ENG_LOG_WARN("Map::RemoveObject - object has no size");
 
+        int i = int(navType == NavigationBit::AIR);
+
         for(int y = 0; y < size.y; y++) {
             for(int x = 0; x < size.x; x++) {
                 glm::vec2 idx = glm::ivec2(pos.x+x, pos.y+y);
                 if(tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
                 tiles(idx).nav.Unclaim(navType, is_building);
-                tiles(idx).id = ObjectID();
-                tiles(idx).factionId = -1;
-                tiles(idx).colorIdx = -1;
+                tiles(idx).info[i].id = ObjectID();
+                tiles(idx).info[i].factionId = -1;
+                tiles(idx).info[i].colorIdx = -1;
             }
         }
     }
@@ -905,16 +921,17 @@ namespace eng {
     void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight) {
         tiles(pos_prev).nav.Unclaim(unit_navType, false);
         tiles(pos_next).nav.Claim(unit_navType, permanently, false);
+        
+        int i = int(unit_navType == NavigationBit::AIR);
+        tiles(pos_next).info[i].id = tiles(pos_prev).info[i].id;
+        tiles(pos_prev).info[i].id = ObjectID();
 
-        tiles(pos_next).id = tiles(pos_prev).id;
-        tiles(pos_prev).id = ObjectID();
+        tiles(pos_next).info[i].factionId = tiles(pos_prev).info[i].factionId;
+        tiles(pos_prev).info[i].factionId = -1;
+        int factionId = tiles(pos_next).info[i].factionId;
 
-        tiles(pos_next).factionId = tiles(pos_prev).factionId;
-        tiles(pos_prev).factionId = -1;
-        int factionId = tiles(pos_next).factionId;
-
-        tiles(pos_next).colorIdx = tiles(pos_prev).colorIdx;
-        tiles(pos_prev).colorIdx = -1;
+        tiles(pos_next).info[i].colorIdx = tiles(pos_prev).info[i].colorIdx;
+        tiles(pos_prev).info[i].colorIdx = -1;
 
         if(factionId == playerFactionId) {
             VisibilityUpdate(pos_prev, pos_next, sight);
@@ -960,7 +977,7 @@ namespace eng {
 
 
     ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {
-        return IsWithinBounds(coords) ? tiles(coords).id : ObjectID();
+        return IsWithinBounds(coords) ? (ObjectID::IsValid(tiles(coords).info[0].id) ? tiles(coords).info[0].id : tiles(coords).info[1].id) : ObjectID();
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -1123,7 +1140,7 @@ namespace eng {
         }
         
         static int navType = NavigationBit::GROUND;
-        if(mode == 2 || mode == 3) {
+        if(mode == 2 || mode == 3 || mode == 6 || mode == 9) {
             btn_size = ImVec2(ImGui::GetContentRegionAvail().x * 0.31f, 0.f);
             ImGui::Text("Unit Navigation Mode:");
             if(ImGui::Button("Ground", btn_size)) navType = NavigationBit::GROUND;
@@ -1133,6 +1150,7 @@ namespace eng {
             if(ImGui::Button("Air", btn_size)) navType = NavigationBit::AIR;
             ImGui::Separator();
         }
+        int airborne = (navType == NavigationBit::AIR);
 
         ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
         // flags |= ImGuiTableFlags_NoHostExtendY;
@@ -1211,8 +1229,8 @@ namespace eng {
                             break;
                         case 6:
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
-                            if(tiles(y,x).id.type != ObjectType::INVALID) {
-                                ImGui::Text("%d|%d|%d", tiles(y,x).id.type, tiles(y,x).id.idx, tiles(y,x).id.id);
+                            if(tiles(y,x).info[airborne].id.type != ObjectType::INVALID) {
+                                ImGui::Text("%d|%d|%d", tiles(y,x).info[airborne].id.type, tiles(y,x).info[airborne].id.idx, tiles(y,x).info[airborne].id.id);
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr4);
                             }
                             else {
@@ -1229,10 +1247,10 @@ namespace eng {
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).nav.part_of_forrest ? clr2 : clr1);
                             break;
                         case 9:
-                            ImGui::Text("%d", tiles(y,x).factionId);
-                            if(tiles(y,x).factionId >= 0) {
-                                int a = tiles(y,x).factionId / 4;
-                                int b = tiles(y,x).factionId % 4;
+                            ImGui::Text("%d", tiles(y,x).info[airborne].factionId);
+                            if(tiles(y,x).info[airborne].factionId >= 0) {
+                                int a = tiles(y,x).info[airborne].factionId / 4;
+                                int b = tiles(y,x).info[airborne].factionId % 4;
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(0.1f, 0.1f + 0.9f * ((1+b)*0.25f), 0.1f, 1.0f)));
                             }
                             else
@@ -1445,16 +1463,16 @@ namespace eng {
             return tileType;
     }
 
-    glm::ivec2 Map::MinDistanceNeighbor(const glm::ivec2& center) {
-        glm::ivec2 idx = center - 1;
+    glm::ivec2 Map::MinDistanceNeighbor(const glm::ivec2& center, int step) {
+        glm::ivec2 idx = center - step;
         float min_d = std::numeric_limits<float>::infinity();
         
         glm::ivec2 size = tiles.Size();
-        for(int y = center.y-1; y <= center.y+1; y++) {
+        for(int y = center.y-step; y <= center.y+step; y+=step) {
             if(y < 0 || y >= size.y)
                 continue;
             
-            for(int x = center.x-1; x <= center.x+1; x++) {
+            for(int x = center.x-step; x <= center.x+step; x+=step) {
                 if(x < 0 || x >= size.x)
                     continue;
 
@@ -1474,6 +1492,7 @@ namespace eng {
     glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst_, int navType) {
         glm::ivec2 pos_dst = pos_dst_;
         glm::ivec2 dir = glm::sign(pos_dst - pos_src);
+        int step = 1 + int(navType == NavigationBit::AIR);
 
         char buf[256];
         std::stringstream ss;
@@ -1484,7 +1503,7 @@ namespace eng {
         int j = 0;
         //when the target destination is unreachable - find new (reachable) location along the way from dst to src position
         while((tiles(pos_dst).nav.d == std::numeric_limits<float>::infinity() || !tiles(pos_dst).TraversableOrForrest(navType)) && pos_dst != pos_src) {
-            pos_dst -= dir;
+            pos_dst -= dir * step;
             j++;
         }
 
@@ -1498,7 +1517,7 @@ namespace eng {
             tiles(pos_prev).nav.pathtile = true;
             
             //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
-            pos = MinDistanceNeighbor(pos);
+            pos = MinDistanceNeighbor(pos, step);
             ASSERT_MSG(pos_prev != pos, "Map::Pathfinding - path retrieval is stuck.");
             ASSERT_MSG(tiles(pos).TraversableOrForrest(navType) || pos == pos_src, "Map::Pathfinding - path leads through untraversable tiles ({}).", pos);
 
