@@ -1499,6 +1499,36 @@ namespace eng {
         msg_bar.Update();
     }
 
+    void PlayerFactionController::Update_Paused(Level& level) {
+        if(!is_menu_active) {
+            selectionTab->Interactable(false);
+            actionButtons.Buttons()->Interactable(false);
+
+            //update the GUI panel (but only the 2 buttons - menu & pause)
+            gui_handler.Update(&game_panel);
+
+            selectionTab->Interactable(true);
+            actionButtons.Buttons()->Interactable(true);
+        }
+        else {
+            menu.Update(level, *this, gui_handler);
+        }
+
+        //hide text prompt contents
+        text_prompt.Setup("");
+        price.ClearAlt();
+
+        //unset any previous btn clicks (to detect the new one)
+        actionButtons.ClearClick();
+        nontarget_cmd_issued = false;
+
+        //update cursor icon
+        Resources::CursorIcons::SetIcon(CursorIconName::HAND_HU + int(bool(Race())));
+        
+        //update timing on the message bar
+        msg_bar.Update();
+    }
+
     void PlayerFactionController::SwitchMenu(bool active) {
         ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
         is_menu_active = active;

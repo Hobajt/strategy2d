@@ -7,7 +7,12 @@ static std::string stage_names[] = { "CAMPAIGN", "CUSTOM", "LOAD" };
 IngameController::IngameController() {}
 
 void IngameController::Update() {
-    level.Update();
+    if(!paused || !can_be_paused) {
+        level.Update();
+    }
+    else {
+        level.factions.Player()->Update_Paused(level);
+    }
 }
 
 void IngameController::Render() {
@@ -67,6 +72,18 @@ void IngameController::OnStart(int prevStageID, int info, void* data) {
 
 void IngameController::OnStop() {
 
+}
+
+void IngameController::PauseRequest(bool pause) {
+    if(can_be_paused) {
+        paused = pause;
+    }
+}
+
+void IngameController::PauseToggleRequest() {
+    if(can_be_paused) {
+        paused = !paused;
+    }
 }
 
 void IngameController::DBG_GUI(bool active) {

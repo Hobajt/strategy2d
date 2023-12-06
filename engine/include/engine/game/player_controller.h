@@ -291,6 +291,8 @@ namespace eng {
 
         virtual void Update(Level& level) override;
 
+        void Update_Paused(Level& level);
+
         void SwitchMenu(bool active);
         void ChangeLevel(const std::string& filepath);
     private:
