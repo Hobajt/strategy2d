@@ -572,6 +572,48 @@ namespace eng {
         sound_master = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SOUND).GetChild(2);
         sound_music = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SOUND).GetChild(6);
 
+        menus.insert({ IngameMenuTab::OPTIONS_SPEED, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Speed Settings"),
+
+                new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Game Speed", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.6f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.6f, 6.f), 10),
+                new GUI::TextLabel(glm::vec2(0.f, -0.5f), glm::vec2(bw, bh), 1.f, text_style, "Mouse Scroll", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.4f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.1f, 10.f), 10),
+                new GUI::TextLabel(glm::vec2(0.f, -0.3f), glm::vec2(bw, bh), 1.f, text_style, "Key Scroll", false),
+                new GUI::ValueSlider(glm::vec2(0.f, -0.2f), glm::vec2(bw, bh*0.5f), 1.f, scrollBtnSize, slider_styles, glm::vec2(0.1f, 10.f), 10),
+                new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    IngameMenu* menu = static_cast<IngameMenu*>(handler);
+                    Config::UpdateSpeeds(menu->speed_game->Value(), menu->speed_mouse->Value(), menu->speed_keys->Value(), true);
+                    menu->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+            })
+        });
+        speed_game = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SPEED).GetChild(2);
+        speed_mouse = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SPEED).GetChild(4);
+        speed_keys = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SPEED).GetChild(6);
+
+        // menus.insert({ IngameMenuTab::OPTIONS_PREFERENCES, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+        //         new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Preferences"),
+
+        //         new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Fog of War:", false),
+        //         new GUI::Radio(glm::vec2(0.f, -0.6f), glm::vec2(bw, bh*0.5f), 1.f, text_style, slider_styles[], { "On", "Off" }),
+        //         new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+        //             static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+        //         }, glm::ivec2(0,1)),
+        //         new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
+        //             IngameMenu* menu = static_cast<IngameMenu*>(handler);
+        //             Config::Audio().UpdateSounds(menu->sound_master->Value(), menu->sound_digital->Value(), menu->sound_music->Value(), true);
+        //             menu->OpenTab(IngameMenuTab::MAIN);
+        //         }, glm::ivec2(0,1)),
+        //     })
+        // });
+        // fog_of_war = (Radio*)menus.at(IngameMenuTab::OPTIONS_PREFERENCES).GetChild(2);
+
+        
+
         menus.insert({ IngameMenuTab::LOAD, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Load Game"),
                 new GUI::ScrollMenu(glm::vec2(-0.075f,-0.1f), scrollMenuSize, 1.f, scrollMenuItems, scrollBtnSize, scrollMenu_styles),
@@ -783,6 +825,11 @@ namespace eng {
                     sound_master->SetValue(Config::Audio().volume_master);
                     sound_music->SetValue(Config::Audio().volume_music);
                     break;
+                case IngameMenuTab::OPTIONS_SPEED:
+                    speed_game->SetValue(Config::GameSpeed());
+                    speed_mouse->SetValue(Config::Map_MouseSpeed());
+                    speed_keys->SetValue(Config::Map_KeySpeed());
+                    break;
             }
         }
         else {
@@ -805,6 +852,12 @@ namespace eng {
         sound_digital = m.sound_digital;
         sound_master = m.sound_master;
         sound_music = m.sound_music;
+
+        speed_game = m.speed_game;
+        speed_mouse = m.speed_mouse;
+        speed_keys = m.speed_keys;
+
+        fog_of_war = m.fog_of_war;
 
         confirm_label = m.confirm_label;
         confirm_btn = m.confirm_btn;

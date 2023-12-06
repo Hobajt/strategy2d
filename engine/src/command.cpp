@@ -279,7 +279,7 @@ namespace eng {
         }
 
         //motion update tick
-        t += input.deltaTime * src.MoveSpeed();
+        t += input.deltaTime * src.MoveSpeed_Real();
         move_offset = (t/l) * glm::vec2(action.data.move_dir);
 
         return ACTION_INPROGRESS;

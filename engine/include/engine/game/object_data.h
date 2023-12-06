@@ -147,6 +147,8 @@ namespace eng {
 
         int deathAnimIdx = -1;
 
+        float speed;
+
         glm::ivec2 upgrade_src;
     };
     using UnitDataRef = std::shared_ptr<UnitData>;

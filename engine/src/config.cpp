@@ -128,6 +128,20 @@ namespace eng::Config {
         return data.fog_of_war;
     }
 
+    void UpdateSpeeds(float game, float mouse, float keys, bool save_changes) {
+        data.game_speed = game;
+        data.map_mouse_speed = mouse;
+        data.map_key_speed = keys;
+        if(save_changes)
+            SaveChanges();
+    }
+
+    void UpdatePreferences(bool fog, bool save_changes) {
+        data.fog_of_war = fog;
+        if(save_changes)
+            SaveChanges();
+    }
+
     namespace Saves {
 
         std::string FullPath(const std::string& name) {

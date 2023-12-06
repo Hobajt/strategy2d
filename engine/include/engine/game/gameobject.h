@@ -232,10 +232,12 @@ namespace eng {
 
         virtual int ActionIdx() const override;
 
-        float MoveSpeed() const { return 1.f; } //TODO:
+        int MoveSpeed() const { return data->speed; } //TODO:
         int UnitLevel() const { return 0; } //TODO:
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
+        
+        float MoveSpeed_Real() const { return data->speed * 0.1f; }
 
         int AttackUpgradeSource() const { return data->upgrade_src[0]; }
         int DefenseUpgradeSource() const { return data->upgrade_src[1]; }

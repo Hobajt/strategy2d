@@ -615,6 +615,8 @@ namespace eng::GUI {
         int step_count;
     };
 
+    //===== SelectMenu =====
+
     class SelectMenu : public TextButton, ButtonCallbackHandler {
     public:
         SelectMenu(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& btn_style, const std::vector<std::string>& items, int defaultItem = 0);
@@ -629,6 +631,12 @@ namespace eng::GUI {
 
         bool opened = false;
         int selection = 0;
+    };
+
+    //===== Radio =====
+
+    class Radio {
+
     };
 
 }//namespace eng::GUI

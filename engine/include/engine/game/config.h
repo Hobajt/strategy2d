@@ -37,6 +37,9 @@ namespace eng::Config {
     float Map_KeySpeed();
     bool FogOfWar();
 
+    void UpdateSpeeds(float game, float mouse, float keys, bool save_changes = true);
+    void UpdatePreferences(bool fog, bool save_changes = true);
+
     namespace Saves {
 
         std::string FullPath(const std::string& name);

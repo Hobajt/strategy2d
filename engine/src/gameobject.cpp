@@ -133,7 +133,7 @@ namespace eng {
             lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
             
             //play the dying sound effect
-            static constexpr std::array<const char*, 4> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", };
+            static constexpr std::array<const char*, 5> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode" };
             Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
         }
     }

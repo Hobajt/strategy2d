@@ -169,6 +169,12 @@ namespace eng {
             ValueSlider* sound_digital = nullptr;
             ValueSlider* sound_music = nullptr;
 
+            ValueSlider* speed_game = nullptr;
+            ValueSlider* speed_mouse = nullptr;
+            ValueSlider* speed_keys = nullptr;
+
+            Radio* fog_of_war = nullptr;
+
             ScrollText* confirm_label = nullptr;
             TextButton* confirm_btn = nullptr;
             int confirm_keycode = 0;
