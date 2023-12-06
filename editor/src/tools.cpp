@@ -314,6 +314,7 @@ void StartingLocationTool::OnLMB(int state) {
             if(idx < 0 && input.ctrl && startingLocations.size() < MAX_PLAYERS_COUNT) {
                 //create new
                 startingLocations.push_back(coord);
+                LocationsUpdated();
             }
             else if(idx >= 0 && !input.ctrl) {
                 //location dragging start
@@ -328,8 +329,10 @@ void StartingLocationTool::OnLMB(int state) {
         case InputButtonState::UP:
             if(drag) {
                 ASSERT_MSG(dragIdx < (int)startingLocations.size(), "Something went wrong, dragIdx is out of range.");
-                if(LocationIdx(coord) < 0)
+                if(LocationIdx(coord) < 0) {
                     startingLocations[dragIdx] = coord;
+                    LocationsUpdated();
+                }
             }
             drag = false;
             dragIdx = -1;
@@ -347,6 +350,7 @@ void StartingLocationTool::OnRMB(int state) {
         int idx = LocationIdx(coord);
         if(idx >= 0) {
             startingLocations.erase(startingLocations.begin() + idx);
+            LocationsUpdated();
         }
     }
 }
@@ -367,6 +371,10 @@ void StartingLocationTool::InnerRender() {
             tilemap.Render(pos, cam.Mult(), 0, 1, (float)i);
         }
     }
+}
+
+void StartingLocationTool::LocationsUpdated() {
+    context.level.info.startingLocations = startingLocations;
 }
 
 //===== EditorTools =====

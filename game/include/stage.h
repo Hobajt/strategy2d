@@ -148,7 +148,7 @@ private:
 //===== GameInitParams =====
 
 namespace GameParams {
-    namespace Race { enum { DEFAULT, RANDOM, HUMAN, ORC }; }
+    namespace Race { enum { HUMAN, ORC, RANDOM }; }
     namespace Resources { enum { DEFAULT, RANDOM, LOW, MEDIUM, HIGH }; }
     namespace Tileset { enum { DEFAULT, RANDOM, FOREST, WINTER, WASTELAND, ORC_SWAMP }; }
     namespace Units { enum { DEFAULT, ONE_PEASANT_ONLY }; }
@@ -161,7 +161,7 @@ struct GameInitParams {
     int opponents = -1;
     int units = GameParams::Units::DEFAULT;
 
-    int race = GameParams::Race::DEFAULT;
+    int race = GameParams::Race::RANDOM;
 
     std::string filepath = "";
 

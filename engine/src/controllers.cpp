@@ -4,7 +4,7 @@ namespace eng {
 
     //===== NatureFactionController =====
 
-    NatureFactionController::NatureFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize) : FactionController(std::move(entry), mapSize) {}
+    NatureFactionController::NatureFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize) : FactionController(std::move(entry), mapSize, FactionControllerID::NATURE) {}
 
     int NatureFactionController::GetColorIdx(const glm::ivec3& num_id) const {
         switch(num_id[0]) {

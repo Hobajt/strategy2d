@@ -9,6 +9,14 @@
 
 namespace eng {
 
+    namespace FactionControllerID {
+        int RandomAIMindset() {
+            //TODO:
+            return INVALID;
+            // return Random::UniformInt() ...;
+        }
+    }
+
     //===== Techtree =====
 
     void Techtree::DBG_GUI() {
@@ -36,15 +44,15 @@ namespace eng {
             case FactionControllerID::NATURE:
                 return std::make_shared<NatureFactionController>(std::move(entry), mapSize);
             default:
-                return std::make_shared<FactionController>(std::move(entry), mapSize);
+                return std::make_shared<FactionController>(std::move(entry), mapSize, entry.controllerID);
             // default:
             //     ENG_LOG_ERROR("Invalid FactionControllerID encountered.");
             //     throw std::runtime_error("");
         }
     }
 
-    FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize)
-        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race) {}
+    FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
+        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
 
     void FactionController::AddDropoffPoint(const Building& building) {
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...

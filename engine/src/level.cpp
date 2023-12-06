@@ -56,6 +56,7 @@ namespace eng {
         json data = {};
         data["map"] = Export_Mapfile(map);
         data["factions"] = Export_FactionsFile(factions);
+        data["info"] = Export_Info(info);
 
         WriteFile(filepath.c_str(), data.dump());
         
@@ -112,7 +113,11 @@ namespace eng {
         ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "Neutral", 5));
         ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  playerRace, "Player", 0));
 
-        int factionCount = std::min(info.maxPlayers, opponents);
+        if(opponents == 0) {
+            opponents = info.preferred_opponents;
+        }
+
+        int factionCount = std::min((int)info.startingLocations.size(), opponents+1);
         char name_buf[256];
         for(int i = 1; i < factionCount; i++) {
             snprintf(name_buf, sizeof(name_buf), "Faction %d", i);
@@ -125,6 +130,18 @@ namespace eng {
         }
         factions = Factions(std::move(ff), map.Size());
         map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
+
+        //spawn starting unit for each faction
+        std::vector<glm::ivec2> starting_locations = info.startingLocations;
+        std::vector<UnitDataRef> worker_data = { Resources::LoadUnit("human/peasant"), Resources::LoadUnit("orc/peon") };
+        for(FactionControllerRef& faction : factions) {
+            if(faction->ControllerID() != FactionControllerID::NATURE) {
+                int loc_idx = Random::UniformInt(starting_locations.size()-1);
+                objects.EmplaceUnit(*this, worker_data[faction->Race()], faction, starting_locations[loc_idx], false);
+                starting_locations.erase(starting_locations.begin() + loc_idx);
+            }
+        }
+
         ENG_LOG_INFO("CustomGame - factions initialized.");
     }
 
@@ -168,7 +185,19 @@ namespace eng {
 
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config) {
         //TODO:
-        info.maxPlayers = config.count("player_count") ? config.at("player_count") : 2;
+        if(config.count("starting_locations")) {
+            for(auto& entry : config.at("starting_locations")) {
+                info.startingLocations.push_back(json::parse_ivec2(entry));
+            }
+        }
+        else {
+            ENG_LOG_WARN("Loaded level has no starting locations defined, generating default ones.");
+            info.startingLocations.push_back(glm::ivec2(0,0));
+            info.startingLocations.push_back(glm::ivec2(1,0));
+        }
+
+        info.preferred_opponents = config.count("preferred_opponents") ? config.at("preferred_opponents") : 1;
+        
         return true;
     }
 
@@ -197,12 +226,27 @@ namespace eng {
     
     nlohmann::json Export_Info(const LevelInfo& info) {
         //TODO:
-        return {};
+        using json = nlohmann::json;
+
+        json out = {};
+
+        json& loc = out["starting_locations"] = {};
+        for(const glm::ivec2& pos : info.startingLocations) {
+            loc.push_back({ pos.x, pos.y });
+        }
+
+        out["preferred_opponents"] = info.preferred_opponents;
+
+        return out;
     }
 
     nlohmann::json Export_FactionsFile(const FactionsFile& factions) {
         //TODO:
-        return {};
+        using json = nlohmann::json;
+
+        json out = {};
+
+        return out;
     }
 
 }//namespace eng

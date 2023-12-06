@@ -13,14 +13,6 @@
 
 namespace eng {
 
-    namespace FactionControllerID {
-        int RandomAIMindset() {
-            //TODO:
-            return INVALID;
-            // return Random::UniformInt() ...;
-        }
-    }
-
     constexpr float GUI_WIDTH = 0.25f;
     constexpr float BORDER_SIZE = 0.025f;
 
@@ -1431,7 +1423,7 @@ namespace eng {
     }
 
     PlayerFactionController::PlayerFactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize)
-        : FactionController(std::move(entry), mapSize), mapview(MapView(mapSize)), occlusion(OcclusionMask(entry.occlusionData, mapSize)) {
+        : FactionController(std::move(entry), mapSize, FactionControllerID::LOCAL_PLAYER), mapview(MapView(mapSize)), occlusion(OcclusionMask(entry.occlusionData, mapSize)) {
         InitializeGUI();
     }
 

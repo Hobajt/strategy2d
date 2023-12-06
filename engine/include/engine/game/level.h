@@ -15,7 +15,8 @@ namespace eng {
 
     //Container for various level metadata.
     struct LevelInfo {
-        int maxPlayers;
+        int preferred_opponents;
+        std::vector<glm::ivec2> startingLocations;
     };
 
     //===== Savefile =====

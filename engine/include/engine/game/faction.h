@@ -11,6 +11,13 @@ namespace eng {
     class Level;
     class Building;
 
+    //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
+    namespace FactionControllerID {
+        enum { INVALID = 0, LOCAL_PLAYER, NATURE };
+
+        int RandomAIMindset();
+    }
+
     //===== Techtree =====
 
     class Techtree {
@@ -55,10 +62,11 @@ namespace eng {
         static FactionControllerRef CreateController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
     public:
         FactionController() = default;
-        FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
+        FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID);
 
         int ID() const { return id; }
         int Race() const { return race; }
+        int ControllerID() const { return controllerID; }
 
         virtual int GetColorIdx(const glm::ivec3& num_id) const { return colorIdx; }
 
@@ -94,6 +102,7 @@ namespace eng {
         int id = -1;
         int colorIdx = 0;
         std::string name = "unnamed_faction";
+        int controllerID = -1;
 
         int race = 0;
         glm::vec3 resources = glm::vec3(0);
@@ -151,6 +160,11 @@ namespace eng {
 
         FactionControllerRef operator[](int i);
         const FactionControllerRef operator[](int i) const;
+
+        std::vector<FactionControllerRef>::iterator begin() { return factions.begin(); }
+        std::vector<FactionControllerRef>::iterator end() { return factions.end(); }
+        std::vector<FactionControllerRef>::const_iterator begin() const { return factions.cbegin(); }
+        std::vector<FactionControllerRef>::const_iterator end() const { return factions.cend(); }
 
         void Update(Level& level);
 

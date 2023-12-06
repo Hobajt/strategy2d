@@ -138,6 +138,8 @@ public:
 private:
     int LocationIdx(const glm::ivec2& loc) const;
     void InnerRender();
+
+    void LocationsUpdated();
 private:
     std::vector<glm::ivec2> startingLocations;
     bool renderStartingLocations = true;
