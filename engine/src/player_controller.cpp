@@ -903,9 +903,9 @@ namespace eng {
         int selection_mode = 0;
         for(int y = im.y; y <= iM.y; y++) {
             for(int x = im.x; x <= iM.x; x++) {
-                const TileData& td = level.map(y, x);
-                
+
                 for(int i = 0; i < 2; i++) {
+                    const TileData& td = (i == 0) ? level.map(y, x) : level.map(make_even(glm::ivec2(x, y)));
 
                     if(!ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id))
                         continue;
@@ -919,7 +919,9 @@ namespace eng {
 
                     if(object_mode == selection_mode) {
                         if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
-                            selection[object_count++] = td.info[i].id;
+                            if(!AlreadySelected(td.info[i].id, object_count)) {
+                                selection[object_count++] = td.info[i].id;
+                            }
                         }
                     }
                 }
@@ -1330,6 +1332,15 @@ namespace eng {
                 }
             }
         }
+    }
+
+    bool PlayerSelection::AlreadySelected(const ObjectID& id, int object_count) {
+        for(int j = 0; j < object_count; j++) {
+            if(selection[j] == id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     //===== OcclusionMask =====

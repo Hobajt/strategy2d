@@ -218,6 +218,8 @@ namespace eng {
         bool IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
         void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
+    private:
+        bool AlreadySelected(const ObjectID& target_id, int currentSelectionSize);
     };
 
     //===== OcclusionMask =====

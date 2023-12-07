@@ -281,7 +281,8 @@ namespace eng {
     void Unit::Render() {
         if(!IsActive())
             return;
-        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, NavigationType() != NavigationBit::AIR);
+        bool airborne = (NavigationType() == NavigationBit::AIR);
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !airborne, airborne ? (-1e-3f) : 0.f);
     }
 
     bool Unit::Update() {
@@ -402,7 +403,7 @@ namespace eng {
             rendering_size = glm::vec2(2.f);
         }
         
-        RenderAt(glm::vec2(Position()) + rendering_offset, rendering_size);
+        RenderAt(glm::vec2(Position()) + rendering_offset, rendering_size, 1e-3f);
     }
 
     bool Building::Update() {
