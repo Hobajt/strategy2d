@@ -350,6 +350,7 @@ namespace eng::GUI {
 
         std::string CurrentSelection() const { return items[selectedItem]; }
         int CurrentSelectionIdx() const { return selectedItem; }
+        int ItemCount() const { return items.size(); }
 
         virtual void HandlerPtrMove(ButtonCallbackHandler* oldPtr, ButtonCallbackHandler* newPtr) override { menu_handler = (menu_handler == oldPtr) ? newPtr : menu_handler; }
     protected:

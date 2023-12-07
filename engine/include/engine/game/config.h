@@ -42,13 +42,16 @@ namespace eng::Config {
 
     namespace Saves {
 
-        std::string FullPath(const std::string& name);
+        std::string FullPath(const std::string& name, bool append_extension = true);
+        std::string CustomGames_FullPath(const std::string& name, bool append_extension = true);
 
         std::string DirPath();
         std::string CustomGames_DirPath();
 
-        std::vector<std::string> Scan();
-        std::vector<std::string> ScanCustomGames();
+        std::vector<std::string> Scan(bool extract_names = true);
+        std::vector<std::string> ScanCustomGames(bool extract_names = true);
+
+        bool Delete(const std::string& filename);
 
     }//namespace Saves
 

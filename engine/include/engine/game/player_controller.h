@@ -283,6 +283,8 @@ namespace eng {
             virtual void PauseRequest(bool pause) {}
             virtual void PauseToggleRequest() {}
 
+            virtual void ChangeLevel(const std::string& filename) {}
+
             void LinkController(const PlayerFactionControllerRef& ctrl);
         protected:
             void SignalKeyPress(int keycode, int modifiers, bool single_press);
@@ -302,7 +304,7 @@ namespace eng {
         void Update_Paused(Level& level);
 
         void SwitchMenu(bool active);
-        void ChangeLevel(const std::string& filepath);
+        void ChangeLevel(const std::string& filename);
     private:
         void OnKeyPressed(int keycode, int modifiers, bool single_press);
 

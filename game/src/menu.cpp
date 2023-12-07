@@ -67,9 +67,13 @@ void MainMenuController::SwitchState(int newState) {
     activeMenu = &menu[newState];
     activeState = newState;
 
-    if(newState == MainMenuState::SINGLE_CUSTOM) {
-        //TODO: extract mapnames from filepaths
-        mapSelection->UpdateContent(Config::Saves::ScanCustomGames(), true);
+    switch(newState) {
+        case MainMenuState::SINGLE_CUSTOM:
+            mapSelection->UpdateContent(Config::Saves::ScanCustomGames(), true);
+            break;
+        case MainMenuState::SINGLE_LOAD:
+            ((GUI::ScrollMenu*)menu[MainMenuState::SINGLE_LOAD].GetChild(1))->UpdateContent(Config::Saves::Scan(), true);
+            break;
     }
 }
 
@@ -94,8 +98,27 @@ void MainMenuController::StartCustomGame(bool asOrc, int opponents, const std::s
     );
 }
 
+void MainMenuController::LoadGame() {
+    GUI::ScrollMenu* scrollMenu = ((GUI::ScrollMenu*)menu[MainMenuState::SINGLE_LOAD].GetChild(1));
+    if(scrollMenu->ItemCount() <= 0) {
+        LOG_WARN("MainMenuController::LoadGame - invalid item, cannot load the game.");
+        return;
+    }
+    std::string filename = scrollMenu->CurrentSelection();
+
+    gameInitParams = {};
+    gameInitParams.filepath = Config::Saves::FullPath(filename);
+
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::LOAD, (void*)&gameInitParams, true)
+    );
+}
+
 void MainMenuController::OnPreStart(int prevStageID, int info, void* data) {
     LOG_INFO("GameStage = MainMenu");
+    if(info != -1) {
+        SwitchState(info);
+    }
 }
 
 void MainMenuController::OnStart(int prevStageID, int info, void* data) {
@@ -235,7 +258,7 @@ void MainMenuController::InitSubmenu_Single_Load(const glm::vec2& buttonSize, co
         }),
         new GUI::TextButton(glm::vec2(-0.4f, off+smStep), bSize, 1.f, styles["main"], "Load",
             this, [](GUI::ButtonCallbackHandler* handler, int id) {
-                //...
+                static_cast<MainMenuController*>(handler)->LoadGame();
             }, 0
         ),
         new GUI::TextButton(glm::vec2(1.f - sbSize.x + 0.1f, off+smStep), sbSize, 1.f, styles["small_btn"], "Cancel", 
@@ -244,10 +267,6 @@ void MainMenuController::InitSubmenu_Single_Load(const glm::vec2& buttonSize, co
             }, 0
         ),
     });
-
-    //TODO: dbg only, do this once the menu is opened - query saves folder for items
-    GUI::ScrollMenu* scrollMenu = ((GUI::ScrollMenu*)menu[MainMenuState::SINGLE_LOAD].GetChild(1));
-    scrollMenu->UpdateContent({ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_6", "item_7", "item_8", "item_9", "item_10", "item_11", "item_12", "item_13" });
 }
 
 void MainMenuController::InitSubmenu_Single_Campaign(const glm::vec2& buttonSize, const glm::vec2& menuSize, float gap, eng::GUI::StyleMap& styles) {
@@ -302,7 +321,7 @@ void MainMenuController::InitSubmenu_Single_Custom(const glm::vec2& buttonSize, 
 
                 std::string mapname = menu->mapSelection->CurrentSelection();
 
-                menu->StartCustomGame(race, opponents, Config::Saves::CustomGames_DirPath() + mapname);
+                menu->StartCustomGame(race, opponents, Config::Saves::CustomGames_FullPath(mapname));
             }, 0
         ),
         new GUI::TextButton(glm::vec2(1.f, 0.8f), bSize, 1.f, styles["main"], "Previous Menu",

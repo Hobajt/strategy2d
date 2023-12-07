@@ -144,24 +144,46 @@ namespace eng::Config {
 
     namespace Saves {
 
-        std::string FullPath(const std::string& name) {
-            return DirPath() + name;
+        bool string_ends_with(const std::string& fullString, const std::string& suffix) {
+            if (fullString.length() >= suffix.length()) {
+                return (fullString.compare(fullString.length() - suffix.length(), suffix.length(), suffix) == 0);
+            }
+            return false;
+        }
+
+        std::string FullPath(const std::string& name, bool append_extension) {
+            std::string res = DirPath() + name;
+            if(append_extension && !string_ends_with(name, ".json")) {
+                res += ".json";
+            }
+            return res;
+        }
+
+        std::string CustomGames_FullPath(const std::string& name, bool append_extension) {
+            std::string res = CustomGames_DirPath() + name;
+            if(append_extension && !string_ends_with(name, ".json")) {
+                res += ".json";
+            }
+            return res;
         }
 
         std::string DirPath() {
-            return "NO_PATH_JUST_YET/";
+            return "res/saves/";
         }
 
         std::string CustomGames_DirPath() {
             return "res/ignored/";
         }
 
-        std::vector<std::string> DirectoryScan(const std::string& dir) {
+        std::vector<std::string> DirectoryScan(const std::string& dir, bool extract_names = false) {
             std::vector<std::string> files;
             try {
                 for (const auto& entry : std::filesystem::directory_iterator(dir)) {
                     if (entry.is_regular_file() && entry.path().extension() == ".json") {
-                        files.push_back(entry.path().filename().string());
+                        if(extract_names)
+                            files.push_back(entry.path().stem().string());
+                        else
+                            files.push_back(entry.path().filename().string());
                     }
                 }
                 } catch (const std::filesystem::filesystem_error& e) {
@@ -172,12 +194,32 @@ namespace eng::Config {
             return files;
         }
 
-        std::vector<std::string> Scan() {
-            return DirectoryScan(DirPath());
+        std::vector<std::string> Scan(bool extract_names) {
+            return DirectoryScan(DirPath(), extract_names);
         }
 
-        std::vector<std::string> ScanCustomGames() {
-            return DirectoryScan(CustomGames_DirPath());
+        std::vector<std::string> ScanCustomGames(bool extract_names) {
+            return DirectoryScan(CustomGames_DirPath(), extract_names);
+        }
+
+        bool Delete(const std::string& filename) {
+            std::string filepath = FullPath(filename, true);
+
+            if(!std::filesystem::exists(filepath)) {
+                ENG_LOG_WARN("[R] Config::Saves::Delete - failed to delete '{}' - file not found.", filepath.c_str());
+                return false;
+            }
+
+            try {
+                std::filesystem::remove(filepath);
+            }
+            catch(std::filesystem::filesystem_error&) {
+                ENG_LOG_WARN("[R] Config::Saves::Delete - failed to delete '{}' - filesystem error.", filepath.c_str());
+                return false;
+            }
+
+            ENG_LOG_TRACE("[R] Config::Saves::Delete - successfully deleted savefile '{}'.", filepath.c_str());
+            return true;
         }
 
     }//namespace Saves

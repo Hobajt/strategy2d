@@ -197,12 +197,17 @@ namespace eng {
         }
 
         info.preferred_opponents = config.count("preferred_opponents") ? config.at("preferred_opponents") : 1;
+        info.campaignIdx = config.count("campaign_idx") ? config.at("campaign_idx") : -1;
         
         return true;
     }
 
     bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config) {
-        //TODO:
+        
+        for(auto& relation : config.at("diplomacy")) {
+            factions.diplomacy.push_back(json::parse_ivec3(relation));
+        }
+
         return true;
     }
 
@@ -236,15 +241,22 @@ namespace eng {
         }
 
         out["preferred_opponents"] = info.preferred_opponents;
+        if(info.campaignIdx >= 0) out["campaign_idx"] = info.campaignIdx;
 
         return out;
     }
 
     nlohmann::json Export_FactionsFile(const FactionsFile& factions) {
-        //TODO:
         using json = nlohmann::json;
 
         json out = {};
+
+        
+
+        json& diplomacy = out["diplomacy"] = {};
+        for(const glm::ivec3& r : factions.diplomacy) {
+            diplomacy.push_back({ r.x, r.y, r.z });
+        }
 
         return out;
     }

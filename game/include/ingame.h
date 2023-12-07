@@ -22,13 +22,19 @@ public:
 
     virtual void PauseRequest(bool pause) override;
     virtual void PauseToggleRequest() override;
+    virtual void ChangeLevel(const std::string& filename) override;
 
     virtual void DBG_GUI(bool active) override;
 private:
     void KeyPressCallback(int keycode, int modifiers);
+
+    void LevelSetup(int startType, GameInitParams* params);
 private:
     eng::Level level;
 
     bool can_be_paused = true;
     bool paused = false;
+
+    bool ready_to_render = false;
+    bool ready_to_run = false;
 };

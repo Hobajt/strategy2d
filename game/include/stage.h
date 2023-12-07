@@ -28,10 +28,11 @@ struct TransitionParameters {
     void* data = nullptr;
 
     bool autoFadeIn = false;
+    bool forcePreload = false;
 public:
     TransitionParameters() = default;
-    TransitionParameters(float duration, int transitionType, int nextStageID, int info, bool autoFadeIn);
-    TransitionParameters(float duration, int transitionType, int nextStageID, int info, void* data, bool autoFadeIn);
+    TransitionParameters(float duration, int transitionType, int nextStageID, int info, bool autoFadeIn, bool forcePreload = false);
+    TransitionParameters(float duration, int transitionType, int nextStageID, int info, void* data, bool autoFadeIn, bool forcePreload = false);
 
     bool EqualsTo(const TransitionParameters& other, float durationOverride = -1.f);
 
@@ -63,6 +64,9 @@ public:
     bool CompareTransitions(const TransitionParameters& other, float durationOverride = -1.f) { return params.EqualsTo(other, durationOverride); }
 
     void ForceFadeOut() { fadedOut = true; }
+    void ForceUnfade() { fadedOut = false; }
+    
+    bool ForcePreloadStage() const { return params.forcePreload; }
 
     void CancelTransition();
 

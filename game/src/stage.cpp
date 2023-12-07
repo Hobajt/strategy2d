@@ -6,14 +6,14 @@ using namespace eng;
 
 //===== TransitionHandler =====
 
-TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, bool autoFadeIn_)
-    : TransitionParameters(duration_, transitionType_, nextStageID_, info_, nullptr, autoFadeIn_) {}
+TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, bool autoFadeIn_, bool forcePreload_)
+    : TransitionParameters(duration_, transitionType_, nextStageID_, info_, nullptr, autoFadeIn_, forcePreload_) {}
 
-TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, void* data_, bool autoFadeIn_)
-    : duration(duration_), type(transitionType_), nextStage(nextStageID_), info(info_), autoFadeIn(autoFadeIn_), data(data_) {}
+TransitionParameters::TransitionParameters(float duration_, int transitionType_, int nextStageID_, int info_, void* data_, bool autoFadeIn_, bool forcePreload_)
+    : duration(duration_), type(transitionType_), nextStage(nextStageID_), info(info_), autoFadeIn(autoFadeIn_), data(data_), forcePreload(forcePreload_) {}
 
 bool TransitionParameters::EqualsTo(const TransitionParameters& o, float durationOverride) {
-    bool res = type == o.type && nextStage == o.nextStage && info == o.info && autoFadeIn == o.autoFadeIn;
+    bool res = type == o.type && nextStage == o.nextStage && info == o.info && autoFadeIn == o.autoFadeIn && forcePreload == o.forcePreload;
     res &= (durationOverride < 0.f) ? (duration == o.duration) : (duration == durationOverride);
     return res;
 }
@@ -93,7 +93,7 @@ void GameStage::Initialize(const std::vector<GameStageControllerRef>& stages_, i
 void GameStage::Update() {
     currentStage->Update();
 
-    if(transitionHandler.TransitionStarted() && currentStageID != transitionHandler.NextStageID()) {
+    if(transitionHandler.TransitionStarted() && (currentStageID != transitionHandler.NextStageID() || transitionHandler.ForcePreloadStage())) {
         stages[transitionHandler.NextStageID()]->OnPreLoad(currentStageID, transitionHandler.Info(), transitionHandler.Data());
     }
 }

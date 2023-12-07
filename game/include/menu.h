@@ -29,6 +29,7 @@ private:
 
     void StartCampaign(bool asOrc);
     void StartCustomGame(bool asOrc, int opponents, const std::string& mapfile);
+    void LoadGame();
 
     void KeyPressCallback(int keycode, int modifiers);
 

@@ -687,23 +687,26 @@ namespace eng {
         switch(action) {
             case MenuAction::SAVE:
                 ASSERT_MSG(textInput != nullptr, "TextInput GUI element not set.");
-                // level.Save(Config::Saves::FullPath(textInput->Text()));
-                ENG_LOG_INFO("SAVING GAME STATE TO '{}'", Config::Saves::FullPath(textInput->Text()));
+                level.Save(Config::Saves::FullPath(textInput->Text(), true));
+                ctrl.SwitchMenu(false);
                 break;
             case MenuAction::LOAD:
                 ASSERT_MSG(list_load != nullptr, "Scroll menu GUI element not set.");
-                ctrl.ChangeLevel(Config::Saves::FullPath(list_load->CurrentSelection()));
-                ENG_LOG_INFO("LOADING GAME STATE FROM '{}'", Config::Saves::FullPath(list_load->CurrentSelection()));
+                if(list_load->ItemCount() > 0) {
+                    ctrl.ChangeLevel(Config::Saves::FullPath(list_load->CurrentSelection()));
+                }
+                ctrl.SwitchMenu(false);
                 break;
             case MenuAction::DELETE:
                 ASSERT_MSG(list_save != nullptr, "Scroll menu GUI element not set.");
-                //TODO:
-                ENG_LOG_INFO("DELETING SAVEFILE '{}'", Config::Saves::FullPath(textInput->Text()));
+                if(list_save->ItemCount() > 0) {
+                    if(Config::Saves::Delete(list_save->CurrentSelection())) {
+                        list_save->UpdateContent(Config::Saves::Scan(), true);
+                    }
+                }
                 break;
         }
         action = MenuAction::NONE;
-
-        //TODO:
     }
 
     void GUI::IngameMenu::OnKeyPressed(int keycode, int modifiers, bool single_press) {
@@ -812,7 +815,7 @@ namespace eng {
             switch(tabID) {
                 case IngameMenuTab::SAVE:
                     list_save->UpdateContent(Config::Saves::Scan(), true);
-                    textInput->SetText(list_save->CurrentSelection());
+                    textInput->SetText((list_save->ItemCount() > 0) ? list_save->CurrentSelection() : "savegame01");
                     EnableDeleteButton(true);
                     break;
                 case IngameMenuTab::LOAD:
@@ -1614,12 +1617,8 @@ namespace eng {
         handler->PauseRequest(active);
     }
 
-    void PlayerFactionController::ChangeLevel(const std::string& filepath) {
-        //TODO:
-
-        //invoke level change on the stage controller (handler pointer)
-        //there's probably going to some stage switching involved (trigger internally from the stage controller)
-        //also switch to main menu if the file is missing or is invalid
+    void PlayerFactionController::ChangeLevel(const std::string& filename) {
+        handler->ChangeLevel(filename);
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers, bool single_press) {
