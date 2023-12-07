@@ -28,7 +28,7 @@ namespace eng {
 
     void RenderGUIBorders(bool isOrc, float z);
     std::vector<GUI::StyleRef> SetupScrollMenuStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
-    std::vector<GUI::StyleRef> SetupSliderStyles(const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
+    std::vector<GUI::StyleRef> SetupSliderStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
 
     //===== GUI::SelectionTab =====
 
@@ -459,7 +459,7 @@ namespace eng {
         glm::vec2 smallBtnSize = glm::vec2(0.1666f, 0.06f);
         glm::vec2 scrollMenuSize = glm::vec2(0.85f, 0.6f);
         std::vector<GUI::StyleRef> scrollMenu_styles = SetupScrollMenuStyles(text_style->font, scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
-        std::vector<GUI::StyleRef> slider_styles = SetupSliderStyles(scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
+        std::vector<GUI::StyleRef> slider_styles = SetupSliderStyles(text_style->font, scrollMenuSize, scrollMenuItems, scrollBtnSize, smallBtnSize);
         btn_styles = { btn_style, scrollMenu_styles.back() };
         
         menus.insert({ IngameMenuTab::MAIN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
@@ -595,24 +595,22 @@ namespace eng {
         speed_mouse = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SPEED).GetChild(4);
         speed_keys = (ValueSlider*)menus.at(IngameMenuTab::OPTIONS_SPEED).GetChild(6);
 
-        // menus.insert({ IngameMenuTab::OPTIONS_PREFERENCES, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
-        //         new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Preferences"),
+        menus.insert({ IngameMenuTab::OPTIONS_PREFERENCES, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Preferences"),
 
-        //         new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Fog of War:", false),
-        //         new GUI::Radio(glm::vec2(0.f, -0.6f), glm::vec2(bw, bh*0.5f), 1.f, text_style, slider_styles[], { "On", "Off" }),
-        //         new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
-        //             static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
-        //         }, glm::ivec2(0,1)),
-        //         new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
-        //             IngameMenu* menu = static_cast<IngameMenu*>(handler);
-        //             Config::Audio().UpdateSounds(menu->sound_master->Value(), menu->sound_digital->Value(), menu->sound_music->Value(), true);
-        //             menu->OpenTab(IngameMenuTab::MAIN);
-        //         }, glm::ivec2(0,1)),
-        //     })
-        // });
-        // fog_of_war = (Radio*)menus.at(IngameMenuTab::OPTIONS_PREFERENCES).GetChild(2);
-
-        
+                new GUI::TextLabel(glm::vec2(0.f, -0.7f), glm::vec2(bw, bh), 1.f, text_style, "Fog of War:", false),
+                new GUI::Radio(glm::vec2(-0.5f, -0.6f), glm::vec2(0.05f, 0.0375f), 1.f, slider_styles[4], slider_styles[3], { "On", "Off" }, 0),
+                new GUI::TextButton(glm::vec2(-0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "Cancel", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+                new GUI::TextButton(glm::vec2( 0.5f, 0.7f), glm::vec2(bw*0.45f, bh), 1.f, btn_style, "OK", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    IngameMenu* menu = static_cast<IngameMenu*>(handler);
+                    Config::UpdatePreferences(menu->fog_of_war->IsSelected(0), true);
+                    menu->OpenTab(IngameMenuTab::MAIN);
+                }, glm::ivec2(0,1)),
+            })
+        });
+        fog_of_war = (Radio*)menus.at(IngameMenuTab::OPTIONS_PREFERENCES).GetChild(2);
 
         menus.insert({ IngameMenuTab::LOAD, Menu(offset, glm::vec2(size.x * 1.5f, size.y * 0.85f), zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Load Game"),
@@ -829,6 +827,9 @@ namespace eng {
                     speed_game->SetValue(Config::GameSpeed());
                     speed_mouse->SetValue(Config::Map_MouseSpeed());
                     speed_keys->SetValue(Config::Map_KeySpeed());
+                    break;
+                case IngameMenuTab::OPTIONS_PREFERENCES:
+                    fog_of_war->Select(1 - int(Config::FogOfWar()));
                     break;
             }
         }
@@ -2217,7 +2218,7 @@ namespace eng {
         return res;
     }
 
-    std::vector<GUI::StyleRef> SetupSliderStyles(const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
+    std::vector<GUI::StyleRef> SetupSliderStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize) {
         GUI::StyleRef s = nullptr;
         std::vector<GUI::StyleRef> res;
 
@@ -2257,10 +2258,23 @@ namespace eng {
 
         s = std::make_shared<GUI::Style>();
         GUI::StyleRef z = s;
-        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+        s->texture = TextureGenerator::ButtonTexture_Gem2(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;
+        s->font = font;
+        s->textScale = 0.6f;
+        s->textColor = textClr;
+
+        s = std::make_shared<GUI::Style>();
+        GUI::StyleRef w = s;
+        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio(), glm::u8vec4(110,110,110,255));
+        s->hoverTexture = s->texture;
+        s->holdTexture = s->texture;
+        s->highlightMode = GUI::HighlightMode::NONE;
+        s->font = font;
+        s->textScale = 0.6f;
+        s->textColor = textClr;
 
         //scroll slider style
         buttonSize = glm::vec2(scrollButtonSize, scrollMenuSize.y);
@@ -2275,6 +2289,7 @@ namespace eng {
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
         res.push_back(z);
+        res.push_back(w);
 
         return res;
     }

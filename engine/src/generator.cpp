@@ -18,12 +18,14 @@ namespace eng {
         void basicButton3(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w);
         void basicButton3(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w, const rgb& b3, int b3w);
         void triangle(rgb* data, int width, int height, int left, int right, int top, int bottom, bool flipShading, bool up);
-        template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio);
+        template<typename T> void gem(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio, const T centerFillColor);
+        template<typename T> void gem2(T* data, int width, int height, int offset, int borderWidth, int goldWidth, float ratio, const T clr1, const T clr2);
 
         template<typename T> void fillColor(T* data, int width, int height, const T& color);
 
         float ellipseEQ(float x, float y, float a, float b);
         bool withinCircle(float x, float y, float r_sq);
+        glm::vec2 rotate(const glm::vec2& v, float deg);
 
         //========================================
 
@@ -149,12 +151,31 @@ namespace eng {
             return texture;
         }
 
-        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio) {
+        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio, const rgba& clr) {
             rgba* data = new rgba[width * height];
 
             fillColor<rgba>(data, width, height, rgba(0));
             // basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
-            gem<rgba>(data, width, height, borderWidth, borderWidth*2, borderWidth*2, ratio);
+            gem<rgba>(data, width, height, borderWidth, borderWidth*2, borderWidth*2, ratio, clr);
+
+            //--------------------------
+
+            TextureRef texture = std::make_shared<Texture>(
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),
+                (void*)data,
+                std::string("btnTex_gem")
+            );
+
+            delete[] data;
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Gem2(int width, int height, int borderWidth, float ratio, const rgba& clr1, const rgba& clr2) {
+            rgba* data = new rgba[width * height];
+
+            fillColor<rgba>(data, width, height, rgba(0));
+            // basicButton(data, width, height, 0, borderWidth, flipShading, flipShading);
+            gem2<rgba>(data, width, height, borderWidth, borderWidth*2, borderWidth*2, ratio, clr1, clr2);
 
             //--------------------------
 
@@ -702,9 +723,10 @@ namespace eng {
         }
 
         template<typename T> 
-        inline void gem(T* data, int width, int height, int offset, int bw, int gw, float ratio) {
+        inline void gem(T* data, int width, int height, int offset, int bw, int gw, float ratio, const T centerFillColor) {
             //best variable initialization ever
-            T fillGem = T(255); fillGem[0] = 71; fillGem[1] = fillGem[2] = 0;
+            // T fillGem = T(255); fillGem[0] = 71; fillGem[1] = fillGem[2] = 0;
+            T fillGem = centerFillColor;
             T fillGold = T(255); fillGold[0] = 210; fillGold[1] = 190; fillGold[2] = 28;
             T fillBorder = T(255); fillBorder[0] = 30; fillBorder[1] = fillBorder[2] = 0;
             //=====
@@ -741,12 +763,80 @@ namespace eng {
             //shading
         }
 
+        template<typename T> 
+        inline void gem2(T* data, int width, int height, int offset, int bw, int gw, float ratio, const T clr1, const T clr2) {
+            //best variable initialization ever
+            // T fillGem = T(255); fillGem[0] = 71; fillGem[1] = fillGem[2] = 0;
+            T fillGem = clr1;
+            T fillGold = T(255); fillGold[0] = 210; fillGold[1] = 190; fillGold[2] = 28;
+            T fillBorder = T(255); fillBorder[0] = 30; fillBorder[1] = fillBorder[2] = 0;
+            //=====
+
+            glm::vec2 rat = glm::vec2(1.f, ratio);
+
+            glm::vec2 c = glm::vec2(width, height) * 0.5f * rat;
+            glm::vec2 r1 = c - float(offset+bw+gw);
+            glm::vec2 r2 = c - float(offset+bw);
+            glm::vec2 r3 = c - float(offset);
+            glm::vec2 r4 = c * 1.25f;
+            glm::vec2 r5 = c * 1.5f;
+
+            glm::vec2 p1 = c * 0.4f;
+            glm::vec2 p2 = glm::vec2(0);
+            glm::vec2 p3 = c * 0.7f;
+            glm::vec2 p4 = c + rotate(c*0.5f, -20.f);
+
+            //circles rendering
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    T& pixel = data[y * width + x];
+                    
+                    glm::vec2 p = glm::vec2(x, y) * rat;
+                    
+                    //gem (inner circle)
+                    if(ellipseEQ(p.x-c.x, p.y-c.y, r1.x, r1.y) < 1.f) {
+                        pixel = fillGem;
+                        if(ellipseEQ(p.x-p2.x, p.y-p2.y, r5.x, r5.y) > 1.f) {
+                            pixel = rgba(110, 0, 0, 255);
+                        }
+                        if(ellipseEQ(p.x-p1.x, p.y-p1.y, r4.x, r4.y) > 1.f) {
+                            pixel = clr2;
+                        }
+                    }
+                    //gold fittings
+                    else if(ellipseEQ(p.x-c.x, p.y-c.y, r2.x, r2.y) < 1.f) {
+                        pixel = fillGold;
+                    }
+                    //borders
+                    else if(ellipseEQ(p.x-c.x, p.y-c.y, r3.x, r3.y) < 1.f) {
+                        pixel = fillBorder;
+                        
+                    }
+
+                    glm::vec2 v = rotate(p - p3, 45.f);
+                    if(ellipseEQ(v.x, v.y, 16.f, 4.f) < 1.f)
+                        pixel = rgba(220,220,220,255);
+                    
+                    v = rotate(p - p4, 60.f);
+                    if(ellipseEQ(v.x, v.y, 32.f, 2.f) < 1.f)
+                        pixel = rgba(150,150,150,255);
+                }
+            }
+        }
+
         float ellipseEQ(float x, float y, float a, float b) {
             return (x*x)/(a*a) + (y*y)/(b*b);
         }
 
         bool withinCircle(float x, float y, float r_sq) {
             return x*x + y*y < r_sq;
+        }
+
+        glm::vec2 rotate(const glm::vec2& v, float deg) {
+            float rad = deg * glm::pi<float>() / 180.f;
+            float c = std::cosf(rad);
+            float s = std::sinf(rad);
+            return glm::vec2(v.x*c - v.y*s, v.x*s + v.y*c);
         }
 
     }//namespace TextureGenerator

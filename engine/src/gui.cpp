@@ -348,14 +348,25 @@ namespace eng::GUI {
     void TextButton::InnerRender() {
         ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
 
+        RenderText();
+        Button::InnerRender();
+    }
+
+    void TextButton::RenderText(bool centered, const glm::vec2& offset) {
         glm::vec4 clr = (Hover() || Hold()) ? style->hoverColor : style->textColor;
         clr = (Highlight() && style->highlightMode == HighlightMode::TEXT) ? style->highlightColor : clr;
         glm::ivec2 pxOffset = Hold() ? style->holdOffset : glm::ivec2(0);
-        Button::InnerRender();
 
-        style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y), style->textScale, 
-            clr, style->hoverColor, highlight_range, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
-        );
+        if(centered) {
+            style->font->RenderTextCentered(text.c_str(), glm::vec2(position.x, -position.y) + offset, style->textScale, 
+                clr, style->hoverColor, highlight_range, pxOffset, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
+            );
+        }
+        else {
+            style->font->RenderTextAlignLeft(text.c_str(), glm::vec2(position.x, -position.y) + offset, style->textScale, 
+                clr, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
+            );
+        }
     }
 
     //===== Menu =====
@@ -1079,6 +1090,39 @@ namespace eng::GUI {
             btn->Enable(unrolled);
             btn->Interactable(unrolled);
         }
+    }
+
+    //===== Radio =====
+    
+    RadioButton::RadioButton(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_, ButtonCallbackHandler* handler_, ButtonCallbackType callback_, int highlightIdx_, int buttonID_)
+        : TextButton(offset_, size_, zOffset_, style_, text_, handler_, callback_, highlightIdx_, buttonID_) {}
+    
+    void RadioButton::InnerRender() {
+        ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
+        RenderText(false, glm::vec2(size.x * 1.25f, 0.f));
+        Button::InnerRender();
+    }
+
+    Radio::Radio(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& gem_style_, const StyleRef& selection_style_, const std::vector<std::string>& items_, int selectionIdx_)
+        : Element(offset_, size_, zOffset_, nullptr, nullptr), selection(std::min(selectionIdx_, int(items_.size()-1))), gemStyle(gem_style_), selectionStyle(selection_style_) {
+        
+        int i = 0;
+        for(const std::string& item : items_) {
+            btns.push_back((RadioButton*)AddChild(
+                new RadioButton(glm::vec2(0.f, i * 2.f), glm::vec2(1.f, 1.f), 1.f, gem_style_, item, this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<Radio*>(handler)->Select(id);
+                }, -1, i)
+            ));
+            i++;
+        }
+
+        btns[selection]->ChangeStyle(selectionStyle);
+    }
+
+    void Radio::Select(int idx) {
+        btns[selection]->ChangeStyle(gemStyle);
+        selection = idx;
+        btns[selection]->ChangeStyle(selectionStyle);
     }
 
 }//namespace eng::GUI

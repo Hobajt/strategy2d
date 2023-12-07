@@ -15,7 +15,8 @@ namespace eng {
         TextureRef ButtonTexture_Triangle(int width, int height, int borderWidth, bool flipShading, bool up);
 
         //ratio is screen width/height - to make it a circle rather than ellipsoid
-        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio);
+        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio, const glm::u8vec4& fillColor = glm::u8vec4(71,0,0,255));
+        TextureRef ButtonTexture_Gem2(int width, int height, int borderWidth, float ratio, const glm::u8vec4& clr1 = glm::u8vec4(71,0,0,255), const glm::u8vec4& clr2 = glm::u8vec4(222,0,0,255));
 
         //Yellow outline that marks selected button.
         TextureRef ButtonHighlightTexture(int width, int height, int borderWidth);

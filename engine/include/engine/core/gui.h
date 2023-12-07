@@ -281,6 +281,9 @@ namespace eng::GUI {
         void Text(const std::string& newText, const glm::ivec2& highlightRange = glm::ivec2(-1));
     protected:
         virtual void InnerRender() override;
+
+        //Call before parent::InnerRender() because of the values reset.
+        void RenderText(bool centered = true, const glm::vec2& offset = glm::vec2(0.f));
     private:
         std::string text;
         glm::ivec2 highlight_range;
@@ -635,8 +638,29 @@ namespace eng::GUI {
 
     //===== Radio =====
 
-    class Radio {
+    class RadioButton : public TextButton {
+    public:
+        RadioButton(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& style, const std::string& text,
+            ButtonCallbackHandler* handler, ButtonCallbackType callback, int highlightIdx = -1, int buttonID = -1
+        );
+    protected:
+        virtual void InnerRender() override;
+    };
 
+    class Radio : public Element, ButtonCallbackHandler {
+    public:
+        Radio(const glm::vec2& offset, const glm::vec2& size, float zOffset, const StyleRef& gem_style, const StyleRef& selected_style, const std::vector<std::string>& items, int selectionIdx = 0);
+
+        void Select(int idx);
+
+        int SelectionIdx() { return selection; }
+        bool IsSelected(int idx) { return selection == idx; }
+    private:
+        std::vector<RadioButton*> btns;
+        int selection;
+
+        StyleRef gemStyle;
+        StyleRef selectionStyle;
     };
 
 }//namespace eng::GUI
