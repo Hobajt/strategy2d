@@ -23,6 +23,7 @@ public:
     virtual void PauseRequest(bool pause) override;
     virtual void PauseToggleRequest() override;
     virtual void ChangeLevel(const std::string& filename) override;
+    virtual void QuitMission() override;
 
     virtual void DBG_GUI(bool active) override;
 private:

@@ -90,6 +90,13 @@ void IngameController::ChangeLevel(const std::string& filename) {
     ready_to_run = false;
 }
 
+void IngameController::QuitMission() {
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true)
+    );
+    ready_to_run = false;
+}
+
 void IngameController::DBG_GUI(bool active) {
 #ifdef ENGINE_ENABLE_GUI
     if(active && level.initialized) {

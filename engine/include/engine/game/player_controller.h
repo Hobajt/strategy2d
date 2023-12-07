@@ -124,7 +124,7 @@ namespace eng {
         //===== GUI::IngameMenu =====
 
         namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO, CONFIRM_SCREEN }; }
-        namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE }; }
+        namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE, QUIT_MISSION }; }
 
         class IngameMenu : public ButtonCallbackHandler {
         public:
@@ -152,6 +152,7 @@ namespace eng {
 
             void EnableDeleteButton(bool enabled);
             void SetupConfirmScreen(const std::string& label, const std::string& btn, const glm::ivec2& highlightIdx, int keycode);
+            void EndGame();
         private:
             std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
@@ -284,6 +285,7 @@ namespace eng {
             virtual void PauseToggleRequest() {}
 
             virtual void ChangeLevel(const std::string& filename) {}
+            virtual void QuitMission() {}
 
             void LinkController(const PlayerFactionControllerRef& ctrl);
         protected:
@@ -305,6 +307,7 @@ namespace eng {
 
         void SwitchMenu(bool active);
         void ChangeLevel(const std::string& filename);
+        void QuitMission();
     private:
         void OnKeyPressed(int keycode, int modifiers, bool single_press);
 

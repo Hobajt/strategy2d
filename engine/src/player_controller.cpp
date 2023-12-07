@@ -510,7 +510,7 @@ namespace eng {
                     static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to quit to\nthe main menu?", "Quit to Menu", glm::ivec2(0, 1), GLFW_KEY_Q);
                 }, glm::vec2(0, 1)),
                 new GUI::TextButton(glm::vec2(0.f, -0.05f), glm::vec2(bw, bh), 1.f, btn_style, "Exit Program", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to exit\nthe game?", "Exit Program", glm::ivec2(0, 1), GLFW_KEY_X);
+                    static_cast<IngameMenu*>(handler)->SetupConfirmScreen("Are you sure you\nwant to exit\nthe game?", "Exit Program", glm::ivec2(1, 2), GLFW_KEY_X);
                 }, glm::vec2(1, 2)),
                 new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Previous (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
@@ -521,8 +521,7 @@ namespace eng {
         menus.insert({ IngameMenuTab::CONFIRM_SCREEN, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::ScrollText(glm::vec2(0.f, -0.7f), glm::vec2(bw, 0.25f), 1.f, text_style, ""),
                 new GUI::TextButton(glm::vec2(0.f, -0.35f), glm::vec2(bw, bh), 1.f, btn_style, "Confirm", this, [](GUI::ButtonCallbackHandler* handler, int id){
-                    // static_cast<IngameMenu*>(handler)->SetupConfirmationScreen();
-                    ENG_LOG_WARN("NOT IMPLEMENTED YET");
+                    static_cast<IngameMenu*>(handler)->EndGame();
                 }, glm::vec2(0, 1)),
                 new GUI::TextButton(glm::vec2( 0.f, 0.7f), glm::vec2(bw, bh), 1.f, btn_style, "Cancel (Esc)", this, [](GUI::ButtonCallbackHandler* handler, int id){
                     static_cast<IngameMenu*>(handler)->OpenTab(IngameMenuTab::MAIN);
@@ -649,15 +648,6 @@ namespace eng {
         list_save = dynamic_cast<ScrollMenu*>(menus.at(IngameMenuTab::SAVE).GetChild(2));
         delet_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::SAVE).GetChild(4));
 
-        /*TODO:
-            - implement save logic      - saving can be done just directly from here (invoke on Level object)
-            - implement load logic      - need to call methods on StageController objects in order to change level
-            - implement delete logic    - can probably do also from here
-
-            - Config::Saves - directory path (maybe from config?) & directory scan
-            - update ingame menu visuals (different color for each race)
-        */
-
         menus.insert({ IngameMenuTab::HELP, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Help"),
                 new GUI::TextLabel(glm::vec2(0.0f, -0.65f), glm::vec2(bw*0.45f, bh), 1.f, text_style, "No help here, use google."),
@@ -704,6 +694,9 @@ namespace eng {
                         list_save->UpdateContent(Config::Saves::Scan(), true);
                     }
                 }
+                break;
+            case MenuAction::QUIT_MISSION:
+                ctrl.QuitMission();
                 break;
         }
         action = MenuAction::NONE;
@@ -885,6 +878,25 @@ namespace eng {
         confirm_btn->Text(btn, highlightIdx);
         confirm_keycode = keycode;
         OpenTab(IngameMenuTab::CONFIRM_SCREEN);
+    }
+
+    void GUI::IngameMenu::EndGame() {
+        switch(confirm_keycode) {
+            // //TODO:
+            // case GLFW_KEY_L: //load custom
+            //     break;
+            // case GLFW_KEY_S: //surrender
+            //     break;
+            case GLFW_KEY_Q:
+                action = MenuAction::QUIT_MISSION;
+                break;
+            case GLFW_KEY_X:
+                Window::Get().Close();
+                break;
+            default:
+                ENG_LOG_WARN("NOT IMPLEMENTED YET");
+                break;
+        }
     }
 
     //===== PlayerSelection =====
@@ -1619,6 +1631,10 @@ namespace eng {
 
     void PlayerFactionController::ChangeLevel(const std::string& filename) {
         handler->ChangeLevel(filename);
+    }
+
+    void PlayerFactionController::QuitMission() {
+        handler->QuitMission();
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers, bool single_press) {
