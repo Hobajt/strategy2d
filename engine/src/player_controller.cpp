@@ -677,6 +677,7 @@ namespace eng {
         switch(action) {
             case MenuAction::SAVE:
                 ASSERT_MSG(textInput != nullptr, "TextInput GUI element not set.");
+                ctrl.UpdateOcclusions(level);
                 level.Save(Config::Saves::FullPath(textInput->Text(), true));
                 ctrl.SwitchMenu(false);
                 break;
@@ -1367,11 +1368,7 @@ namespace eng {
         for(int i = 0; i < area; i++)
             data[i] = 0;
 
-        if(occlusionData.size() > 0) {
-            if((occlusionData.size() * 32) < area) {
-                ENG_LOG_WARN("OcclusionMask - loaded data don't cover the entire map (filling with unexplored).");
-            }
-        }
+        Import(occlusionData);
     }
 
     OcclusionMask::~OcclusionMask() {
@@ -1409,6 +1406,52 @@ namespace eng {
     const int& OcclusionMask::operator()(int y, int x) const {
         ASSERT_MSG((unsigned int)(y) < (unsigned int)(size.x) && (unsigned int)(x) < (unsigned int)(size.x), "Array index ({}, {}) is out of bounds.", y, x);
         return data[y * size.x + x];
+    }
+
+    std::vector<uint32_t> OcclusionMask::Export() {
+        std::vector<uint32_t> res;
+
+        uint32_t val = 0;
+        int i = 0;
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                val |= (int(data[y * size.x + x] != 0) << i);
+
+                if((++i) == 32) {
+                    res.push_back(val);
+                    val = 0;
+                    i = 0;
+                }
+            }
+        }
+
+        return res;
+    }
+
+    void OcclusionMask::Import(const std::vector<uint32_t>& vals) {
+        if(vals.size() == 0)
+            return;
+        if((vals.size() * 32) < (size.x * size.y))
+            ENG_LOG_WARN("OcclusionMask - loaded data don't cover the entire map (filling with unexplored).");
+
+        int i = 0;
+        int j = 0;
+        uint32_t val = vals[j++];
+        for(int y = 0; y < size.y; y++) {
+            if(j >= vals.size())
+                break;
+            
+            for(int x = 0; x < size.x; x++) {
+                data[y*size.x + x] = ((val & (1 << i)) != 0) ? -1 : 0;
+
+                if((++i) == 32) {
+                    if(j >= vals.size())
+                        break;
+                    val = vals[j++];
+                    i = 0;
+                }
+            }
+        }
     }
 
     //===== MapView =====
@@ -2116,6 +2159,14 @@ namespace eng {
 #ifdef ENGINE_ENABLE_GUI
         // ImGui::ColorEdit4("shadows", (float*)&clr);
 #endif
+    }
+
+    void PlayerFactionController::UpdateOcclusions(Level& level) {
+        level.map.DownloadOcclusionMask(occlusion, ID());
+    }
+
+    std::vector<uint32_t> PlayerFactionController::ExportOcclusion() {
+        return occlusion.Export();
     }
 
     //==============================================================

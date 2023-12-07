@@ -95,8 +95,10 @@ namespace eng {
     }
 
     int Level::Load(const std::string& filepath, Level& out_level) {
-        if(!std::filesystem::exists(filepath))
+        if(!std::filesystem::exists(filepath)) {
+            ENG_LOG_WARN("Level::Load - Invalid filepath '{}'", filepath);
             return 1;
+        }
         
         try {
             Savefile sf = Savefile(filepath);
@@ -124,7 +126,7 @@ namespace eng {
             int race = Random::UniformInt(1);
             ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::RandomAIMindset(), race, std::string(name_buf), i));
 
-            for(int j = 1; j < i; j++) {
+            for(int j = 1; j < i+2; j++) {
                 ff.diplomacy.push_back({i, j, 1});
             }
         }
@@ -203,6 +205,24 @@ namespace eng {
     }
 
     bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config) {
+        for(auto& entry : config.at("factions")) {
+            FactionsFile::FactionEntry e = {};
+
+            glm::ivec3 v = json::parse_ivec3(entry.at(0));
+            e.controllerID  = v[0];
+            e.colorIdx      = v[1];
+            e.race          = v[2];
+
+            e.name = entry.at(1);
+
+            for(auto& v : entry.at(2)) {
+                e.occlusionData.push_back(v);
+            }
+
+            factions.factions.push_back(e);
+
+            //TODO: add techtree parsing
+        }
         
         for(auto& relation : config.at("diplomacy")) {
             factions.diplomacy.push_back(json::parse_ivec3(relation));
@@ -251,7 +271,18 @@ namespace eng {
 
         json out = {};
 
-        
+        json& f = out["factions"] = {};
+        for(const FactionsFile::FactionEntry& entry : factions.factions) {
+            json e = {};
+
+            e.push_back({ entry.controllerID, entry.colorIdx, entry.race });
+            e.push_back(entry.name);
+            e.push_back(entry.occlusionData);
+            
+            //TODO: add techtree data export
+
+            f.push_back(e);
+        }
 
         json& diplomacy = out["diplomacy"] = {};
         for(const glm::ivec3& r : factions.diplomacy) {

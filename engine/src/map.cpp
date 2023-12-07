@@ -951,6 +951,16 @@ namespace eng {
         }
     }
 
+    void Map::DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId_) {
+        ASSERT_MSG(Size() == occlusion.Size(), "Map size and occlusion mask size do not match.");
+
+        for(int y = 0; y < Size().y; y++) {
+            for(int x = 0; x < Size().x; x++) {
+                occlusion(y,x) = int(tiles(y,x).occlusion & (~2) != 0);
+            }
+        }
+    }
+
     void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
         tiles.VisibilityIncrement(pos, size, range);
     }

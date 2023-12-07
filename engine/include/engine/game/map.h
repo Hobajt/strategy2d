@@ -382,6 +382,7 @@ namespace eng {
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight);
 
         void UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId);
+        void DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId);
         void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range);
         void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
 

@@ -54,6 +54,19 @@ namespace eng {
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
         : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
 
+    FactionsFile::FactionEntry FactionController::Export() {
+        FactionsFile::FactionEntry entry = {};
+
+        entry.controllerID = controllerID;
+        entry.colorIdx = colorIdx;
+        entry.race = race;
+        entry.name = name;
+        entry.techtree = techtree;
+        entry.occlusionData = ExportOcclusion();
+
+        return entry;
+    }
+
     void FactionController::AddDropoffPoint(const Building& building) {
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...
         dropoff_points.push_back({ building.MinPos(), building.MaxPos(), building.OID(), building.DropoffMask() });
@@ -159,6 +172,21 @@ namespace eng {
         return this->operator()(f1, f2) != 0;
     }
 
+    std::vector<glm::ivec3> DiplomacyMatrix::Export() const { 
+        std::vector<glm::ivec3> res;
+
+        for(int i = 0; i < factionCount; i++) {
+            for(int j = i+1; j < factionCount; j++) {
+                int val = operator()(i,j);
+                if(val != 0) {
+                    res.push_back(glm::ivec3(i, j, val));
+                }
+            }
+        }
+
+        return res;
+    }
+
     void DiplomacyMatrix::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         if(relation == nullptr || factionCount < 1) {
@@ -262,8 +290,15 @@ namespace eng {
     }
 
     FactionsFile Factions::Export() {
-        //TODO:
-        return {};
+        FactionsFile file = {};
+
+        for(FactionControllerRef& faction : factions) {
+            file.factions.push_back(faction->Export());
+        }
+
+        file.diplomacy = diplomacy.Export();
+
+        return file;
     }
 
     void Factions::DBG_GUI() {

@@ -70,6 +70,8 @@ namespace eng {
 
         virtual int GetColorIdx(const glm::ivec3& num_id) const { return colorIdx; }
 
+        FactionsFile::FactionEntry Export();
+
         void AddDropoffPoint(const Building& building);
         void RemoveDropoffPoint(const Building& building);
         const std::vector<buildingMapCoords>& DropoffPoints() const { return dropoff_points; }
@@ -95,6 +97,7 @@ namespace eng {
         void DBG_GUI();
     private:
         virtual void Inner_DBG_GUI() {}
+        virtual std::vector<uint32_t> ExportOcclusion() { return {}; }
     private:
         Techtree techtree;
         std::vector<buildingMapCoords> dropoff_points;
@@ -131,6 +134,8 @@ namespace eng {
         DiplomacyMatrix& operator=(DiplomacyMatrix&&) noexcept;
 
         bool AreHostile(int f1, int f2) const;
+
+        std::vector<glm::ivec3> Export() const;
         
         void DBG_GUI();
     private:

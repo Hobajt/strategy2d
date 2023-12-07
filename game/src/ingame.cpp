@@ -82,7 +82,7 @@ void IngameController::PauseToggleRequest() {
 
 void IngameController::ChangeLevel(const std::string& filename) {
     gameInitParams = {};
-    gameInitParams.filepath = Config::Saves::FullPath(filename, true);
+    gameInitParams.filepath = filename;
 
     GetTransitionHandler()->InitTransition(
         TransitionParameters(TransitionDuration::SHORT, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::LOAD, (void*)&gameInitParams, true, true)

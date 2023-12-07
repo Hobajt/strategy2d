@@ -242,6 +242,9 @@ namespace eng {
         int& operator()(int y, int x);
         const int& operator()(int y, int x) const;
 
+        std::vector<uint32_t> Export();
+        void Import(const std::vector<uint32_t>& data);
+
         glm::ivec2 Size() const { return size; }
     private:
         glm::ivec2 size;
@@ -308,6 +311,8 @@ namespace eng {
         void SwitchMenu(bool active);
         void ChangeLevel(const std::string& filename);
         void QuitMission();
+
+        void UpdateOcclusions(Level& level);
     private:
         void OnKeyPressed(int keycode, int modifiers, bool single_press);
 
@@ -328,6 +333,8 @@ namespace eng {
         void InitializeGUI();
         
         virtual void Inner_DBG_GUI() override;
+
+        virtual std::vector<uint32_t> ExportOcclusion() override;
     private:
         GUIRequestHandler* handler = nullptr;
 
