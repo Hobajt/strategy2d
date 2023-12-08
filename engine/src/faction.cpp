@@ -7,6 +7,8 @@
 #include "engine/game/player_controller.h"
 #include "engine/game/controllers.h"
 
+#define POPULATION_CAP 200
+
 namespace eng {
 
     namespace FactionControllerID {
@@ -67,12 +69,61 @@ namespace eng {
         return entry;
     }
 
+    void FactionController::ObjectAdded(const FactionObjectDataRef& data) {
+        ASSERT_MSG(data != nullptr, "FactionController::ObjectAdded - data is nullptr.");
+        // ENG_LOG_INFO("ADDING {}, {} ({})", data->name, data->num_id, data->objectType);
+        switch(data->objectType) {
+            case ObjectType::BUILDING:
+                stats.buildingCount++;
+                if(data->num_id[1] < BuildingType::COUNT) {
+                    stats.buildings[data->num_id[1]]++;
+                }
+                break;
+            case ObjectType::UNIT:
+                stats.unitCount++;
+                break;
+            default:
+                ENG_LOG_ERROR("FactionController::ObjectAdded - invalid object type (neither building nor unit - {})", data->objectType);
+                throw std::runtime_error("shouldn't happen");
+                break;
+        }
+        PopulationUpdate();
+    }
+
+    void FactionController::ObjectRemoved(const FactionObjectDataRef& data) {
+        ASSERT_MSG(data != nullptr, "FactionController::ObjectRemoved - data is nullptr.");
+        // ENG_LOG_INFO("REMOVING {}, {} ({})", data->name, data->num_id, data->objectType);
+        switch(data->objectType) {
+            case ObjectType::BUILDING:
+                stats.buildingCount--;
+                if(data->num_id[1] < BuildingType::COUNT) {
+                    stats.buildings[data->num_id[1]]--;
+                    if(stats.buildings[data->num_id[1]] < 0) { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.buildings[data->num_id[1]] = 0; }
+                }
+                if(stats.buildingCount < 0)              { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.buildingCount = 0; }
+                break;
+            case ObjectType::UNIT:
+                stats.unitCount--;
+                if(stats.unitCount < 0)     { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.unitCount = 0; }
+                break;
+            default:
+                ENG_LOG_ERROR("FactionController::ObjectAdded - invalid object type (neither building nor unit - {})", data->objectType);
+                throw std::runtime_error("shouldn't happen");
+                break;
+        }
+        PopulationUpdate();
+    }
+
+    void FactionController::ObjectUpgraded(const FactionObjectDataRef& old_data, const FactionObjectDataRef& new_data) {
+        //TODO: update stats (move value from one type to another)
+        //if it's a main hall, update stats.mainHallCounts and stats.tier value
+    }
+
     void FactionController::AddDropoffPoint(const Building& building) {
         //TODO: maybe add some assertion checks? - coords overlap, multiple entries with the same ID, ...
         dropoff_points.push_back({ building.MinPos(), building.MaxPos(), building.OID(), building.DropoffMask() });
 
-        //TODO: print out legit faction identifier
-        ENG_LOG_TRACE("Faction {} - registered dropoff point '{}' (mask={}, count={})", 0, building, building.DropoffMask(), dropoff_points.size());
+        ENG_LOG_TRACE("Faction {} - registered dropoff point '{}' (mask={}, count={})", ID(), building, building.DropoffMask(), dropoff_points.size());
     }
 
     void FactionController::RemoveDropoffPoint(const Building& building) {
@@ -85,14 +136,14 @@ namespace eng {
             ENG_LOG_WARN("Dropoff point entry not found.");
         }
 
-        //TODO: print out legit faction identifier
-        ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={}, count={})", 0, building, building.DropoffMask(), dropoff_points.size());
+        ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={}, count={})", ID(), building, building.DropoffMask(), dropoff_points.size());
     }
 
     bool FactionController::CanBeBuilt(int buildingID, bool orcBuildings) const {
         //have a precomputed bitmap - condition check for each building type
         //have values for both races, in case you somehow obtain worker of the other race
-        //do resources check on the fly
+        //do resources check here as well
+        //dont handle map placement validation here, handled elsewhere
         return true;
     }
 
@@ -109,8 +160,17 @@ namespace eng {
     }
 
     int FactionController::ProductionBoost(int res_idx) {
-        //TODO: decide, based on building existence (lumber mill? -> lumber boost)
-        //gold boost is computed based on town hall tier (0, 10, 25)
+        switch(res_idx) {
+            case 0:     //gold
+                return (stats.tier == 3) * 25 + (stats.tier == 2) * 10;
+            case 1:     //wood
+                return (stats.buildings[BuildingType::LUMBER_MILL] > 0) * 25;
+            case 2:     //oil
+                return (stats.buildings[BuildingType::OIL_REFINERY] > 0) * 25;
+            default:
+                ENG_LOG_ERROR("There's only 3 resource types (idx={})", res_idx);
+                throw std::runtime_error("invalid resource type");
+        }
         return 10;
     }
 
@@ -121,16 +181,55 @@ namespace eng {
         return true;
     }
 
+    bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {
+        //TODO:
+        //also do resource check here
+        return true;
+    }
+
     void FactionController::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
-        ImGui::Text("ID: %d | Name: %s", id, name.c_str());
+        ImGui::PushID(this);
+        ImGui::Text("ID: %d | Race: %s | Name: %s", id, race == 0 ? "HU" : "OC", name.c_str());
         if(ImGui::CollapsingHeader("Techtree")) {
             techtree.DBG_GUI();
+        }
+
+        ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
+        // flags |= ImGuiTableFlags_NoHostExtendY;
+        flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * 3.f;
+
+        if(ImGui::CollapsingHeader("Stats")) {
+            ImGui::Text("Population: %d/%d", population[0], population[1]);
+            ImGui::Text("Resources: %d G, %d W, %d O", resources[0], resources[1], resources[2]);
+            ImGui::Text("Units: %d, Buildings:  %d", stats.unitCount, stats.buildingCount);
+
+            ImGui::Text("By building type:");
+            if (ImGui::BeginTable("table1", stats.buildings.size(), flags)) {
+                for(int x = 0; x < stats.buildings.size(); x++)
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+
+                ImGuiStyle& style = ImGui::GetStyle();
+                ImGui::TableNextRow();
+                for(int i = 0; i < stats.buildings.size(); i++) {
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%d", stats.buildings[i]);
+                }
+                
+                ImGui::EndTable();
+            }
         }
         ImGui::Separator();
 
         Inner_DBG_GUI();
+        ImGui::PopID();
 #endif
+    }
+
+    void FactionController::PopulationUpdate() {
+        population = glm::ivec2(stats.unitCount, std::min(stats.buildings[BuildingType::TOWN_HALL] + stats.buildings[BuildingType::FARM] * 4, POPULATION_CAP));
     }
 
     //===== DiplomacyMatrix =====

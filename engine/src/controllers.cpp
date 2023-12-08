@@ -1,4 +1,5 @@
 #include "engine/game/controllers.h"
+#include "engine/game/gameobject.h"
 
 namespace eng {
 
@@ -10,7 +11,7 @@ namespace eng {
         switch(num_id[0]) {
             case ObjectType::BUILDING:
                 switch(num_id[1]) {
-                    case 1: //gold_mine
+                    case BuildingType::GOLD_MINE: //gold_mine
                         return 7;
                 }
         }

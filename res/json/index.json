@@ -39,7 +39,7 @@
     ],
     "utility": [],
     "other": [
-        { "name": "misc/gold_mine", "id": [1, 0]},
-        { "name": "misc/oil", "id": [2, 0]}
+        { "name": "misc/gold_mine", "id": [101, 0]},
+        { "name": "misc/oil", "id": [102, 0]}
     ]
 }

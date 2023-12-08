@@ -3,12 +3,14 @@
 #include "engine/game/camera.h"
 #include "engine/game/level.h"
 #include "engine/game/resources.h"
+#include "engine/game/faction.h"
 #include "engine/core/palette.h"
 
 #include "engine/utils/dbg_gui.h"
 #include "engine/utils/randomness.h"
 #include "engine/core/audio.h"
 #include "engine/core/input.h"
+
 
 namespace eng {
 
@@ -114,10 +116,13 @@ namespace eng {
 
     //===== FactionObject =====
 
-    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_)
-        : FactionObject(level_, data_, faction_, 100.f, position_, colorIdx_) {}
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool is_finished_)
+        : FactionObject(level_, data_, faction_, 100.f, position_, -1, is_finished_) {}
+    
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, int colorIdx_, bool is_finished_)
+        : FactionObject(level_, data_, faction_, 100.f, position_, colorIdx_, is_finished_) {}
 
-    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, float health_p, const glm::vec2& position_, int colorIdx_)
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionControllerRef& faction_, float health_p, const glm::vec2& position_, int colorIdx_, bool is_finished_)
         : GameObject(level_, std::static_pointer_cast<GameObjectData>(data_), position_), faction(faction_), data_f(data_) {
 
         health = (health_p * 1e-2f) * data_->MaxHealth();
@@ -125,6 +130,9 @@ namespace eng {
         ASSERT_MSG((faction != nullptr) && (faction->ID() >= 0), "FactionObject must be assigned to a valid faction!");
         factionIdx = faction->ID();
         ChangeColor(colorIdx_);
+        if(is_finished_) {
+            faction->ObjectAdded(data_f);
+        }
     }
 
     FactionObject::~FactionObject() {
@@ -132,6 +140,7 @@ namespace eng {
         lvl()->objects.KillObjectsInside(OID());
         if(lvl() != nullptr && Data() != nullptr) {
             ENG_LOG_TRACE("Removing {}", OID());
+            faction->ObjectRemoved(data_f);
         }
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
@@ -372,7 +381,7 @@ namespace eng {
     //===== Building =====
 
     Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool constructed)
-        : FactionObject(level_, data_, faction_, position_), data(data_) {
+        : FactionObject(level_, data_, faction_, position_, false), data(data_) {
         
         if(constructed) {
             //can't register dropoff point from constructor - ID isn't setup properly yet (called from IntegrateIntoLevel() instead)
@@ -452,6 +461,8 @@ namespace eng {
             Faction()->AddDropoffPoint(*this);
         }
 
+        Faction()->ObjectAdded(data);
+
         static constexpr std::array<const char*, 2> sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
         if(kickoutWorkers) {
             Audio::Play(SoundEffect::GetPath(sound_name[data->race]), Position());
@@ -462,6 +473,9 @@ namespace eng {
     void Building::OnUpgradeFinished() {
         action = BuildingAction::Idle(CanAttack());
         //TODO: modify building object by changing the data pointers (update animator too)
+
+        //TODO: signal to faction controller, so that it updates its stats
+        // Faction()->ObjectUpgraded(...);
     }
 
     void Building::Inner_DBG_GUI() {

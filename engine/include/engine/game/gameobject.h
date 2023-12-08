@@ -5,13 +5,15 @@
 
 #include "engine/game/object_data.h"
 #include "engine/game/command.h"
-#include "engine/game/faction.h"
 
 #include <ostream>
 
 namespace eng {
 
     class Level;
+
+    class FactionController;
+    using FactionControllerRef = std::shared_ptr<FactionController>;
 
     namespace BuildingType {
         enum { 
@@ -20,6 +22,11 @@ namespace eng {
             INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
             GUARD_TOWER, CANNON_TOWER,
             COUNT
+        };
+
+        enum {
+            GOLD_MINE = 101,
+            OIL_PATCH = 102,
         };
     }
 
@@ -125,8 +132,9 @@ namespace eng {
     class FactionObject : public GameObject {
     public:
         FactionObject() = default;
-        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
-        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, float health_percentage, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position, bool is_finished);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1, bool is_finished = true);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, float health_percentage, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1, bool is_finished = true);
         virtual ~FactionObject();
 
         //move enabled
@@ -234,7 +242,7 @@ namespace eng {
 
         virtual int ActionIdx() const override;
 
-        int MoveSpeed() const { return data->speed; } //TODO:
+        int MoveSpeed() const { return data->speed; }
         int UnitLevel() const { return 0; } //TODO:
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }

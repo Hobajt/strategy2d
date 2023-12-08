@@ -4,6 +4,7 @@
 
 #include "engine/core/input.h"
 #include "engine/game/config.h"
+#include "engine/game/map.h"
 
 #define WORKER_ENTRY_DURATION 1.f
 

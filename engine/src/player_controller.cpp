@@ -1124,12 +1124,15 @@ namespace eng {
         bool conditions_met = true;
 
         if(GUI::ActionButton_CommandType::IsSingleUser(command_id) && selected_count == 1) {
-            // do resource check here(), display message in GUI, if not enough resources
             Unit& unit = level.objects.GetUnit(selection[0]);
 
             switch(command_id) {
                 case GUI::ActionButton_CommandType::CAST:
-                    //TODO: resource check (mana on unit), target check, techtree check (is the spell available)
+                    if(!unit.Faction()->CastConditionCheck(unit, payload_id)) {
+                        ENG_LOG_FINE("Targeted command - '{}' - conditions not met - (pos: ({}, {}), payload: {})", cmd_name, target_pos.x, target_pos.y, payload_id);
+                        msg_bar.DisplayMessage("You cannot cast that");
+                        return false;
+                    }
                     cmd = Command::Cast(payload_id);
                     cmd_name = cmd_names[0];
                     break;
@@ -1144,7 +1147,13 @@ namespace eng {
                         return false;
                     }
 
-                    //TODO: resource check, techtree check
+                    //resources & techtree conditions checks
+                    if(!unit.Faction()->CanBeBuilt(payload_id, bool(unit.Race()))) {
+                        ENG_LOG_FINE("Targeted command - '{}' - conditions not met - (pos: ({}, {}), payload: {})", cmd_name, target_pos.x, target_pos.y, payload_id);
+                        msg_bar.DisplayMessage("You cannot build this");
+                        Audio::Play(SoundEffect::Error().Random());
+                        return false;
+                    }
 
                     cmd = Command::Build(payload_id, target_pos);
                     cmd_name = cmd_names[1];
