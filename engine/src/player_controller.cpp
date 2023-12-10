@@ -128,37 +128,52 @@ namespace eng {
                     stats[1]->Setup(buf);
                 }
                 else if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
-                    int production_boost;
-                    switch(building->NumID()[1]) {
-                        case BuildingType::TOWN_HALL:
-                            stats[0]->Setup("Production ");
-                            for(int i = 0; i < 3; i++) {
-                                production_boost = building->Faction()->ProductionBoost(i);
+                    if(building->ProgressableAction()) {
+                        //progressable action (construction, upgrade, research, training) -> display progress bar
+                        production_bar->Setup(building->ActionProgress(), "% Complete");
+                        progress_bar_flag = true;
+                        if(building->Constructed()) {
+                            //not construction -> show icon of the target & label
+                            stats[1]->Setup(building->IsTraining() ? "Training:" : "Upgrading:");
+                            production_icon->Setup("icon", -1, building->ActionPayloadIcon(), glm::ivec4(0));
+                        }
+                    }
+                    else {
+                        //show additional building info (production/population stats)
+                        int production_boost;
+                        switch(building->NumID()[1]) {
+                            case BuildingType::TOWN_HALL:
+                            case BuildingType::KEEP:
+                            case BuildingType::CASTLE:
+                                stats[0]->Setup("Production ");
+                                for(int i = 0; i < 3; i++) {
+                                    production_boost = building->Faction()->ProductionBoost(i);
+                                    if(production_boost != 0)
+                                        snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(i), production_boost);
+                                    else
+                                        snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(i));
+                                    stats[1+i]->Setup(buf);
+                                }
+                                break;
+                            case BuildingType::OIL_REFINERY:
+                            case BuildingType::LUMBER_MILL:
+                                stats[1]->Setup("Production ");
+                                production_boost = building->Faction()->ProductionBoost(1+not_gnd);
                                 if(production_boost != 0)
-                                    snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(i), production_boost);
+                                    snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(1+not_gnd), production_boost);
                                 else
-                                    snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(i));
-                                stats[1+i]->Setup(buf);
-                            }
-                            break;
-                        case BuildingType::OIL_REFINERY:
-                        case BuildingType::LUMBER_MILL:
-                            stats[1]->Setup("Production ");
-                            production_boost = building->Faction()->ProductionBoost(1+not_gnd);
-                            if(production_boost != 0)
-                                snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(1+not_gnd), production_boost);
-                            else
-                                snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(1+not_gnd));
-                            stats[2]->Setup(buf);
-                            break;
-                        case BuildingType::FARM:        //display population statistics
-                            glm::ivec2 pop = building->Faction()->Population();
-                            stats[0]->Setup("Food Usage ");
-                            snprintf(buf, sizeof(buf), "Grown: %d", pop[1]);
-                            stats[1]->Setup(buf);
-                            snprintf(buf, sizeof(buf), "Used: %d", pop[0]);
-                            stats[2]->Setup(buf);
-                            break;
+                                    snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(1+not_gnd));
+                                stats[2]->Setup(buf);
+                                break;
+                            case BuildingType::FARM:        //display population statistics
+                                glm::ivec2 pop = building->Faction()->Population();
+                                stats[0]->Setup("Food Usage ");
+                                snprintf(buf, sizeof(buf), "Grown: %d", pop[1]);
+                                stats[1]->Setup(buf);
+                                snprintf(buf, sizeof(buf), "Used: %d", pop[0]);
+                                stats[2]->Setup(buf);
+                                break;
+                        }
                     }
                 }
             }
@@ -183,6 +198,17 @@ namespace eng {
             if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                 snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
                 health->Setup(std::string(buf));
+
+                if(!object->IsUnit() && progress_bar_flag) {
+                    Building* building = static_cast<Building*>(object);
+                    if(building->ProgressableAction()) {
+                        production_bar->SetValue(building->ActionProgress());
+                    }
+                    else {
+                        //refresh the entire gui if the action is finished
+                        Update(level, selection);
+                    }
+                }
             }
         }
         else if(selection.selected_count > 1) {
@@ -215,6 +241,8 @@ namespace eng {
         for(size_t i = 0; i < stats.size(); i++) {
             stats[i]->Enable(false);
         }
+
+        progress_bar_flag = false;
     }
 
     //===== GUI::ActionButtons =====
@@ -232,8 +260,10 @@ namespace eng {
         PageData& p = pages[0];
         
         //no player owned selection -> no pages
-        if(selection.selection_type < SelectionType::PLAYER_BUILDING || selection.selected_count < 1)
+        if(selection.selection_type < SelectionType::PLAYER_BUILDING || selection.selected_count < 1) {
+            ChangePage(0);
             return;
+        }
 
         if(selection.selection_type == SelectionType::PLAYER_UNIT) {
             //scan through the selection & obtain properties that define how the GUI will look
@@ -297,6 +327,12 @@ namespace eng {
             }
         }
 
+        buildingAction_inProgress = false;
+        if(selection.selection_type == SelectionType::PLAYER_BUILDING) {
+            Building& building = level.objects.GetBuilding(selection.selection[0]);
+            buildingAction_inProgress = building.ProgressableAction();
+        }
+
         //display specialized buttons only if there's no more than 1 object in the selection
         if(selection.selected_count == 1) {
             //retrieve object_data reference & page descriptions from that
@@ -317,12 +353,24 @@ namespace eng {
             }
         }
         
-        ChangePage(0);
+        if(!buildingAction_inProgress)
+            ChangePage(0);
+        else
+            ShowCancelPage();
     }
 
     void GUI::ActionButtons::ValuesUpdate(Level& level, const PlayerSelection& selection) {
         if(selection.selected_count < 1)
             return;
+
+        //full refresh if building action was finished
+        if(selection.selection_type == SelectionType::PLAYER_BUILDING && buildingAction_inProgress) {
+            Building& building = level.objects.GetBuilding(selection.selection[0]);
+            if(!building.ProgressableAction()) {
+                Update(level, selection);
+                return;
+            }
+        }
         
         PageData& pg = pages[page];
         FactionObject& obj = level.objects.GetObject(selection.selection[0]);
@@ -1321,10 +1369,12 @@ namespace eng {
             if(command_id == GUI::ActionButton_CommandType::UPGRADE) {
                 ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
                 building.IssueAction(BuildingAction::Upgrade(payload_id));
+                update_flag = true;
             }
             else {
                 ENG_LOG_FINE("Targetless command - Train/Research (payload={})", payload_id);
                 building.IssueAction(BuildingAction::TrainOrResearch(payload_id));
+                update_flag = true;
             }
         }
         else {
@@ -1358,6 +1408,35 @@ namespace eng {
                 }
             }
         }
+    }
+
+    void PlayerSelection::CancelBuildingAction(Level& level) {
+        if(selection_type != SelectionType::PLAYER_BUILDING) {
+            ENG_LOG_WARN("Cancel building action - invalid selection (requires player owned building selected).");
+            return;
+        }
+
+        Building& building = level.objects.GetBuilding(selection[0]);
+        if(!building.ProgressableAction()) {
+            ENG_LOG_WARN("Cancel building action - nothing to cancel.");
+            return;
+        }
+
+        ENG_LOG_FINE("Canceling building action (action type={})", building.BuildActionType());
+        building.CancelAction();
+    }
+
+    void PlayerSelection::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        if(ImGui::CollapsingHeader("PlayerSelection")) {
+            ImGui::Text("Type: %d, Count: %d", selection_type, selected_count);
+
+            for(int i = 0; i < selected_count; i++) {
+                ObjectID id = selection.at(i);
+                ImGui::Text("ID[%d] - (%d, %d, %d)", i, id.type, id.idx, id.id);
+            }
+        }
+#endif
     }
 
     bool PlayerSelection::AlreadySelected(const ObjectID& id, int object_count) {
@@ -1782,6 +1861,9 @@ namespace eng {
                         selection.IssueTargetlessCommand(level, command_data);
                         command_data = glm::ivec2(-1);
                     }
+                    else if(actionButtons.BuildingActionCancelled()) {
+                        selection.CancelBuildingAction(level);
+                    }
                 }
                 else if(cursor_in_game_view) {
                     glm::vec2 coords = camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f;
@@ -2166,6 +2248,7 @@ namespace eng {
 
     void PlayerFactionController::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
+        selection.DBG_GUI();
         // ImGui::ColorEdit4("shadows", (float*)&clr);
 #endif
     }

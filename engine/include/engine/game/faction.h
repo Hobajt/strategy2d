@@ -66,7 +66,6 @@ namespace eng {
         int unitCount = 0;
         int buildingCount = 0;
         std::array<int, BuildingType::COUNT> buildings = {0};
-        std::array<int, 3> mainHallCounts = {0};
         int tier = 0;
     };
     
@@ -100,6 +99,8 @@ namespace eng {
         void AddDropoffPoint(const Building& building);
         void RemoveDropoffPoint(const Building& building);
         const std::vector<buildingMapCoords>& DropoffPoints() const { return dropoff_points; }
+
+        void RefundResources(const glm::ivec3& refund);
 
         //Returns true if all the conditions for given building are met (including resources check).
         bool CanBeBuilt(int buildingID, bool orcBuildings) const;

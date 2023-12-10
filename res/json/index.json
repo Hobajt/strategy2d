@@ -35,7 +35,10 @@
         ["human/aviary", "orc/dragon_roost"],
 
         ["human/tower_guard", "orc/tower_guard"],
-        ["human/tower_cannon", "orc/tower_cannon"]
+        ["human/tower_cannon", "orc/tower_cannon"],
+
+        ["human/keep", "orc/stronghold"],
+        ["human/castle", "orc/fortress"]
     ],
     "utility": [],
     "other": [

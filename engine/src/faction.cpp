@@ -98,13 +98,22 @@ namespace eng {
                 stats.buildingCount--;
                 if(data->num_id[1] < BuildingType::COUNT) {
                     stats.buildings[data->num_id[1]]--;
-                    if(stats.buildings[data->num_id[1]] < 0) { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.buildings[data->num_id[1]] = 0; }
+                    if(stats.buildings[data->num_id[1]] < 0) {
+                        ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
+                        stats.buildings[data->num_id[1]] = 0;
+                    }
                 }
-                if(stats.buildingCount < 0)              { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.buildingCount = 0; }
+                if(stats.buildingCount < 0) {
+                    ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
+                    stats.buildingCount = 0;
+                }
                 break;
             case ObjectType::UNIT:
                 stats.unitCount--;
-                if(stats.unitCount < 0)     { ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!"); stats.unitCount = 0; }
+                if(stats.unitCount < 0) {
+                    ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
+                    stats.unitCount = 0;
+                }
                 break;
             default:
                 ENG_LOG_ERROR("FactionController::ObjectAdded - invalid object type (neither building nor unit - {})", data->objectType);
@@ -115,8 +124,27 @@ namespace eng {
     }
 
     void FactionController::ObjectUpgraded(const FactionObjectDataRef& old_data, const FactionObjectDataRef& new_data) {
-        //TODO: update stats (move value from one type to another)
-        //if it's a main hall, update stats.mainHallCounts and stats.tier value
+        if(old_data->objectType != ObjectType::BUILDING)
+            return;
+        
+        int old_type = old_data->num_id[1];
+        int new_type = new_data->num_id[1];
+
+        stats.buildings[old_type]--;
+        stats.buildings[new_type]++;
+
+        if(stats.buildingCount < 0) {
+            ENG_LOG_WARN("FactionController::ObjectUpgraded - negative count detected!");
+            stats.buildingCount = 0;
+        }
+
+        stats.tier = 0;
+        if(stats.buildings[BuildingType::CASTLE] != 0)
+            stats.tier = 3;
+        else if(stats.buildings[BuildingType::KEEP] != 0)
+            stats.tier = 2;
+        else if(stats.buildings[BuildingType::TOWN_HALL] != 0)
+            stats.tier = 1;
     }
 
     void FactionController::AddDropoffPoint(const Building& building) {
@@ -145,6 +173,12 @@ namespace eng {
         //do resources check here as well
         //dont handle map placement validation here, handled elsewhere
         return true;
+    }
+
+    void FactionController::RefundResources(const glm::ivec3& refund) {
+        ASSERT_MSG(refund.x >= 0 && refund.y >= 0 && refund.z >= 0, "Cannot refund negative values.");
+        resources += refund;
+        ENG_LOG_FINE("FactionController::RefundResources - {} returned (val={})", refund, resources);
     }
 
     BuildingDataRef FactionController::FetchBuildingData(int buildingID, bool orcBuildings) {
@@ -220,6 +254,7 @@ namespace eng {
                 
                 ImGui::EndTable();
             }
+            ImGui::Text("Tier: %d", stats.tier);
         }
         ImGui::Separator();
 

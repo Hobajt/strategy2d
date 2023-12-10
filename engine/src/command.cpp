@@ -861,12 +861,17 @@ namespace eng {
 
     BuildingAction BuildingAction::TrainOrResearch(int payload_id) {
         //TODO: implement
+        //TODO: lookup the command target (refs[payload_id]) & set act.data.flag (to distinguish between training & research)
+        //          - set flag = true if training (already using this presumption in Building::IsTraining())
+        //TODO: also finish methods on Building afterwards - ActionProgress(), ActionPayloadIcon(), ActionPrice()
         return Idle();
     }
 
     BuildingAction BuildingAction::Upgrade(int payload_id) {
-        //TODO: implement
-        return Idle();
+        BuildingAction act = BuildingAction();
+        act.data.flag = true;       //mark as upgrade (instead of construction)
+        act.data.i = payload_id;
+        return act;
     }
     
     void BuildingAction::Update(Building& source, Level& level) {
@@ -893,8 +898,11 @@ namespace eng {
             snprintf(buf, sizeof(buf), "Action: Idle");
             break;
         case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
-            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%d%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t3, int((data.t1/data.t3)*100.f));
+        {
+            float progress = data.t3 != 0 ? int((data.t1/data.t3)*100.f) : 0.f;
+            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%.0f%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t3, progress);
             break;
+        }
         default:
             snprintf(buf, sizeof(buf), "Action: Unknown type (%d)", logic.type);
             break;
@@ -1003,7 +1011,7 @@ namespace eng {
         Input& input = Input::Get();
         float& progress = action.data.t1;
         float& prev_health = action.data.t2;
-        int& next_tick = action.data.i;
+        int& next_tick = action.data.i;         //only for construction, for upgrade, it carries payloadID
         bool is_construction = !action.data.flag;
         int target = is_construction ? src.BuildTime() : src.UpgradeTime();
         action.data.t3 = target;        //displayed in debug messages
@@ -1034,12 +1042,11 @@ namespace eng {
 
         //construction finished condition
         if(progress >= target) {
-
             if(is_construction) {
                 src.OnConstructionFinished();
             }
             else {
-                src.OnUpgradeFinished();
+                src.OnUpgradeFinished(action.data.i);
             }
         }
     }

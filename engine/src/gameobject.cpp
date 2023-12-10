@@ -140,7 +140,9 @@ namespace eng {
         lvl()->objects.KillObjectsInside(OID());
         if(lvl() != nullptr && Data() != nullptr) {
             ENG_LOG_TRACE("Removing {}", OID());
-            faction->ObjectRemoved(data_f);
+            if(finalized) {
+                faction->ObjectRemoved(data_f);
+            }
         }
         //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
@@ -272,6 +274,11 @@ namespace eng {
         }
     }
 
+    void FactionObject::UpdateDataPointer(const FactionObjectDataRef& data_) {
+        data_f = data_;
+        GameObject::UpdateDataPointer(data_);
+    }
+
     bool FactionObject::ValidColor(int idx) {
         return (unsigned int)idx < (unsigned int)ColorPalette::FactionColorCount();
     }
@@ -394,8 +401,11 @@ namespace eng {
     }
 
     Building::~Building() {
+        Finalized(constructed);
         if(lvl() != nullptr && Data() != nullptr) {
-            UnregisterDropoffPoint();
+            if(constructed) {
+                UnregisterDropoffPoint();
+            }
         }
     }
 
@@ -429,6 +439,20 @@ namespace eng {
 
     void Building::CancelAction() {
         ENG_LOG_FINE("CancelAction: Building: {} ({}) ... {}", ID(), Name(), action.to_string());
+
+        glm::ivec3 refund;
+
+        //construction action -> destroy the site, respawn worker & return only portion of the building price
+        if(!constructed) {
+            refund = 3 * Price() / 4;
+            lvl()->objects.IssueExit_Construction(OID());
+            Kill();
+        }
+        else {
+            refund = ActionPrice();
+        }
+
+        Faction()->RefundResources(refund);
         action = BuildingAction::Idle(CanAttack());
     }
 
@@ -451,6 +475,48 @@ namespace eng {
         }
     }
 
+    bool Building::IsTraining() const {
+        return action.logic.type == BuildingActionType::TRAIN_OR_RESEARCH && action.data.flag;
+    }
+
+    bool Building::ProgressableAction() const {
+        return (action.logic.type == BuildingActionType::TRAIN_OR_RESEARCH || action.logic.type == BuildingActionType::CONSTRUCTION_OR_UPGRADE);
+    }
+
+    float Building::ActionProgress() const {
+        switch(action.logic.type) {
+            case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+                return action.data.t1 / action.data.t3;
+            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
+            //     return ...;
+            default:
+                return 0.f;
+        }
+    }
+
+    glm::ivec2 Building::ActionPayloadIcon() const {
+        switch(action.logic.type) {
+            case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+                return (action.data.flag) ? data->refs.at(action.data.i)->icon : glm::ivec2(0);
+            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
+            //     return ...;
+            default:
+                return glm::ivec2(0);
+        }
+    }
+
+    glm::ivec3 Building::ActionPrice() const {
+        switch(action.logic.type) {
+            case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+                return (action.data.flag) ? data->refs.at(action.data.i)->cost : glm::ivec4(0);
+            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
+            //     return ...;
+            default:
+                ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
+                return glm::ivec4(0);
+        }
+    }
+
     void Building::OnConstructionFinished(bool registerDropoffPoint, bool kickoutWorkers) {
         ASSERT_MSG(!constructed, "Building::OnConstructionFinished - multiple invokations (building already constructed, {})", OID());
         constructed = true;
@@ -470,12 +536,35 @@ namespace eng {
         }
     }
 
-    void Building::OnUpgradeFinished() {
-        action = BuildingAction::Idle(CanAttack());
-        //TODO: modify building object by changing the data pointers (update animator too)
+    void Building::OnUpgradeFinished(int ref_idx) {
+        ASSERT_MSG(constructed, "Building::OnUpgradeFinished - upgraded building should already be constructed (id={})", OID());
 
-        //TODO: signal to faction controller, so that it updates its stats
-        // Faction()->ObjectUpgraded(...);
+        if(ref_idx < 0 || ref_idx >= data->refs.size()) {
+            ENG_LOG_ERROR("Building::OnUpgradeFinished - ref_idx is out of range.");
+            throw std::out_of_range("");
+        }
+        BuildingDataRef new_data = std::dynamic_pointer_cast<BuildingData>(data->refs.at(ref_idx));
+        if(new_data == nullptr) {
+            ENG_LOG_ERROR("Building::OnUpgradeFinished - invalid data type for the upgrade.");
+            throw std::runtime_error("");
+        }
+
+        //health update
+        int new_health = HealthPercentage() * new_data->MaxHealth();
+
+        //signal to faction controller, so that it updates its stats
+        Faction()->ObjectUpgraded(data, new_data);
+
+        //data pointer & animator updates
+        data = new_data;
+        UpdateDataPointer(new_data);
+        animator = Animator(new_data->animData);
+
+        SetHealth(new_health);
+
+        Audio::Play(SoundEffect::GetPath((Faction()->Race() == 0) ? "peasant/pswrkdon" : "orc/owrkdone"), Position());
+
+        action = BuildingAction::Idle(CanAttack());
     }
 
     void Building::Inner_DBG_GUI() {

@@ -21,6 +21,7 @@ namespace eng {
             SHIPYARD, FOUNDRY, OIL_REFINERY, OIL_PLATFORM,
             INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
             GUARD_TOWER, CANNON_TOWER,
+            KEEP, CASTLE,
             COUNT
         };
 
@@ -84,6 +85,8 @@ namespace eng {
         glm::vec2 MinPos() const { return glm::vec2(position); }
         glm::vec2 MaxPos() const { return glm::vec2(position) + data->size - 1.f; }
 
+        glm::ivec4 Price() const { return data->cost; }
+
         glm::ivec2& pos() { return position; }
         int& ori() { return orientation; }
         int& act() { return actionIdx; }
@@ -106,6 +109,8 @@ namespace eng {
     protected:
         virtual void Inner_DBG_GUI();
         bool IsKilled() const { return killed; }
+
+        void UpdateDataPointer(const GameObjectDataRef& data_) { data = data_; }
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
@@ -205,6 +210,9 @@ namespace eng {
 
         //Resets object's state, used when reinserting object into the level.
         virtual void ClearState() { variationIdx = 0; }
+
+        void UpdateDataPointer(const FactionObjectDataRef& data_);
+        void Finalized(bool state) { finalized = state; }
     private:
         static bool ValidColor(int idx);
     private:
@@ -218,6 +226,7 @@ namespace eng {
         int variationIdx = 0;       //to enable variations for certain animations (increment based on how many overridable animations there are)
 
         bool active = true;
+        bool finalized = true;
     };
 
     //===== Unit =====
@@ -330,8 +339,16 @@ namespace eng {
 
         static int WinterSpritesOffset() { return BuildingAnimationType::COUNT; }
 
+        bool Constructed() const { return constructed; }
+        int BuildActionType() const { return action.logic.type; }
+        bool IsTraining() const;
+        bool ProgressableAction() const;
+        float ActionProgress() const;
+        glm::ivec2 ActionPayloadIcon() const;
+        glm::ivec3 ActionPrice() const;
+
         void OnConstructionFinished(bool registerDropoffPoint = true, bool kickoutWorkers = true);
-        void OnUpgradeFinished();
+        void OnUpgradeFinished(int ref_idx);
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;

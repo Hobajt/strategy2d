@@ -303,7 +303,6 @@ namespace eng {
         int wo = Building::WinterSpritesOffset();
         std::string building_name = config.at("str_id");
         auto [name_prefix, name_suffix] = SplitName(building_name);
-
         
         std::map<int, SpriteGroup> animations = {};
         if(config.count("custom_sprites") && config.at("custom_sprites")) {
@@ -312,10 +311,10 @@ namespace eng {
 
             if(config.count("animations")) {
                 for(auto& [anim_name, anim_data] : config.at("animations").items()) {
-                    int anim_id = ResolveBuildingAnimationID(anim_data.at("id"));
-                    bool is_summer = anim_data.count("summer") ? anim_data.at("summer") : true;
-                    bool both_weathers = anim_data.count("both_weathers") ? anim_data.at("both_weathers") : false;
-                    bool anim_repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
+                    int anim_id         = ResolveBuildingAnimationID(anim_data.at("id"));
+                    bool is_summer      = anim_data.count("summer")         ? anim_data.at("summer") : true;
+                    bool both_weathers  = anim_data.count("both_weathers")  ? anim_data.at("both_weathers") : false;
+                    bool anim_repeat    = anim_data.count("repeat")         ? anim_data.at("repeat") : false;
 
                     if(!is_summer && !both_weathers)
                         anim_id += wo;

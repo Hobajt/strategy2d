@@ -48,6 +48,8 @@ namespace eng {
 
             ValueBar* production_bar;
             ImageButton* production_icon;
+
+            bool progress_bar_flag = false;
         };
 
         //===== GUI::ActionButtons =====
@@ -73,6 +75,8 @@ namespace eng {
 
             void ShowCancelPage() { ChangePage(3); }
             bool IsAtCancelPage() const { return page == 3; }
+
+            bool BuildingActionCancelled() const { return buildingAction_inProgress && !IsAtCancelPage(); }
         private:
             void ResetPage(int idx);
         private:
@@ -81,6 +85,7 @@ namespace eng {
             int page = 0;
 
             int clicked_btn_idx = -1;
+            bool buildingAction_inProgress = false;
         };
 
         //===== GUI::ResourceBar =====
@@ -219,6 +224,10 @@ namespace eng {
         bool IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
         void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
+
+        void CancelBuildingAction(Level& level);
+
+        void DBG_GUI();
     private:
         bool AlreadySelected(const ObjectID& target_id, int currentSelectionSize);
     };
