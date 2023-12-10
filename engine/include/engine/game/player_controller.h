@@ -32,6 +32,8 @@ namespace eng {
             void Update(Level& level, const PlayerSelection& selection);
             //Values update, no real GUI changes tho.
             void ValuesUpdate(Level& level, const PlayerSelection& selection);
+
+            void LastClickIcon(const glm::ivec2& icon) { last_click_icon = icon; }
         private:
             //Reverts elements into their default state (as if nothing is selected).
             void Reset();
@@ -49,6 +51,7 @@ namespace eng {
             ValueBar* production_bar;
             ImageButton* production_icon;
 
+            glm::ivec2 last_click_icon = glm::ivec2(0, 0);
             bool progress_bar_flag = false;
         };
 

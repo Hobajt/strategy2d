@@ -135,7 +135,7 @@ namespace eng {
                         if(building->Constructed()) {
                             //not construction -> show icon of the target & label
                             stats[1]->Setup(building->IsTraining() ? "Training:" : "Upgrading:");
-                            production_icon->Setup("icon", -1, building->ActionPayloadIcon(), glm::ivec4(0));
+                            production_icon->Setup("icon", -1, last_click_icon, glm::ivec4(0));
                         }
                     }
                     else {
@@ -445,16 +445,20 @@ namespace eng {
     void GUI::ResourceBar::UpdateAlt(const glm::ivec4& price) {
         char buf[256];
 
+        //display gold/wood/oil price
         bool values_displayed = false;
         for(size_t i = 0; i < 3; i++) {
-            if(price[i] == 0)
+            if(price[i] <= 0) {
+                text[i]->Enable(false);
                 continue;
+            }
             values_displayed = true;
             snprintf(buf, sizeof(buf), "%d", price[i]);
             text[i]->Setup(IconIdx(i), std::string(buf));
         }
 
-        if(!values_displayed && price[3] != 0) {
+        //display mana cost instead
+        if(!values_displayed && price[3] > 0) {
             snprintf(buf, sizeof(buf), "%d", price[3]);
             text[0]->Setup(IconIdx(3), std::string(buf));
         }
@@ -1978,6 +1982,7 @@ namespace eng {
             return;
             
         const GUI::ActionButtonDescription& btn = actionButtons.ButtonData(actionButtons.ClickIdx());
+        selectionTab->LastClickIcon(btn.icon);
 
         switch(btn.command_id) {
             case GUI::ActionButton_CommandType::DISABLED:

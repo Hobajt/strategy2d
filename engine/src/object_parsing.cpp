@@ -26,6 +26,7 @@ namespace eng {
     //=======
 
     int ObjectTypeFromCommandID(int cmd_id);
+    void SetupActionButtonText(GUI::ActionButtonDescription& btn, const std::string& object_name);
     void ParseButtonDescriptions(const nlohmann::json& config, FactionObjectData& data);
     void ParseAnimations_Building(const nlohmann::json& config, BuildingDataRef& data);
     void ParseAnimations_Unit(const nlohmann::json& config, UnitDataRef& data);
@@ -96,6 +97,7 @@ namespace eng {
                 if(btn.price == GUI::ActionButtonDescription::MissingVisuals()) {
                     GameObjectDataRef obj = Resources::LinkObject(glm::ivec3(ObjectTypeFromCommandID(btn.command_id), btn.payload_id, data->race), true);
                     btn.name    = obj->name;
+                    SetupActionButtonText(btn, obj->name);
                     btn.price   = obj->cost;
                     btn.icon    = obj->icon;
                 }
@@ -238,6 +240,32 @@ namespace eng {
     }
 
     //=======================================================================
+
+    void SetupActionButtonText(GUI::ActionButtonDescription& btn, const std::string& object_name) {
+        const char* prefix;
+        switch(btn.command_id) {
+            case GUI::ActionButton_CommandType::RESEARCH:   prefix = "UPGRADE ";        break;
+            case GUI::ActionButton_CommandType::BUILD:      prefix = "BUILD ";          break;
+            case GUI::ActionButton_CommandType::UPGRADE:    prefix = "UPGRADE TO ";     break;
+            case GUI::ActionButton_CommandType::TRAIN:      prefix = "TRAIN ";          break;
+            default:                                        prefix = "";                break;
+        }
+
+        char buf[512];
+        snprintf(buf, sizeof(buf), "%s%s", prefix, object_name.c_str());
+        btn.name = std::string(buf);
+        
+        if(btn.has_hotkey) {
+            size_t pos = object_name.find(btn.hotkey);
+            if(pos != std::string::npos) {
+                size_t prefix_len = strlen(prefix);
+                btn.hotkey_idx = prefix_len + pos;
+            }
+            else {
+                btn.hotkey_idx = -1;
+            }
+        }
+    }
 
     int ObjectTypeFromCommandID(int cmd_id) {
         switch(cmd_id) {

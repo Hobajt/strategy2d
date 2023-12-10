@@ -494,17 +494,6 @@ namespace eng {
         }
     }
 
-    glm::ivec2 Building::ActionPayloadIcon() const {
-        switch(action.logic.type) {
-            case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
-                return (action.data.flag) ? data->refs.at(action.data.i)->icon : glm::ivec2(0);
-            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
-            //     return ...;
-            default:
-                return glm::ivec2(0);
-        }
-    }
-
     glm::ivec3 Building::ActionPrice() const {
         switch(action.logic.type) {
             case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
@@ -536,14 +525,14 @@ namespace eng {
         }
     }
 
-    void Building::OnUpgradeFinished(int ref_idx) {
+    void Building::OnUpgradeFinished(int payload_id) {
         ASSERT_MSG(constructed, "Building::OnUpgradeFinished - upgraded building should already be constructed (id={})", OID());
 
-        if(ref_idx < 0 || ref_idx >= data->refs.size()) {
-            ENG_LOG_ERROR("Building::OnUpgradeFinished - ref_idx is out of range.");
+        if(payload_id < 0 || payload_id >= BuildingType::COUNT) {
+            ENG_LOG_ERROR("Building::OnUpgradeFinished - payload_id is out of range.");
             throw std::out_of_range("");
         }
-        BuildingDataRef new_data = std::dynamic_pointer_cast<BuildingData>(data->refs.at(ref_idx));
+        BuildingDataRef new_data = Resources::LoadBuilding(payload_id, bool(Race()));
         if(new_data == nullptr) {
             ENG_LOG_ERROR("Building::OnUpgradeFinished - invalid data type for the upgrade.");
             throw std::runtime_error("");

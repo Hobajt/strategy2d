@@ -344,7 +344,6 @@ namespace eng {
         bool IsTraining() const;
         bool ProgressableAction() const;
         float ActionProgress() const;
-        glm::ivec2 ActionPayloadIcon() const;
         glm::ivec3 ActionPrice() const;
 
         void OnConstructionFinished(bool registerDropoffPoint = true, bool kickoutWorkers = true);
