@@ -125,7 +125,7 @@ namespace eng {
 
         //construction related fields
         data.build_time     = config.at("build_time");
-        data.upgrade_time   = config.count("upgrade_time") ? config.at("upgrade_time") : 0;
+        data.upgrade_time   = config.count("upgrade_time") ? int(config.at("upgrade_time")) : 0;
 
         //ingame object statistics
         data.basic_damage       = config.at("basic_damage");
@@ -133,10 +133,10 @@ namespace eng {
         data.attack_range       = config.at("attack_range");
         data.armor              = config.at("armor");
         data.vision_range       = config.at("vision_range");
-        data.cooldown           = config.count("cooldown") ? config.at("cooldown") : 0.f;
+        data.cooldown           = config.count("cooldown") ? float(config.at("cooldown")) : 0.f;
 
-        data.deathSoundIdx      = config.count("death_sound") ? config.at("death_sound") : 0;
-        data.race               = config.count("race") ? config.at("race") : 0;
+        data.deathSoundIdx      = config.count("death_sound") ? int(config.at("death_sound")) : 0;
+        data.race               = config.count("race") ? int(config.at("race")) : 0;
 
         //sounds
         if(config.count("sounds")) {
@@ -174,11 +174,11 @@ namespace eng {
 
         ParseAnimations_Building(config, data);
 
-        data->traversable           = config.count("traversable") ? config.at("traversable") : false;
-        data->gatherable            = config.count("gatherable") ? config.at("gatherable") : false;
-        data->resource              = (config.count("resource") ? config.at("resource") : false) || data->gatherable;
-        data->dropoff_mask          = config.count("dropoff_mask") ? config.at("dropoff_mask") : 0;
-        data->attack_speed          = config.count("attack_speed") ? config.at("attack_speed") : 2.f;
+        data->traversable           = config.count("traversable") ? bool(config.at("traversable")) : false;
+        data->gatherable            = config.count("gatherable") ? bool(config.at("gatherable")) : false;
+        data->resource              = (config.count("resource") ? bool(config.at("resource")) : false) || data->gatherable;
+        data->dropoff_mask          = config.count("dropoff_mask") ? int(config.at("dropoff_mask")) : 0;
+        data->attack_speed          = config.count("attack_speed") ? float(config.at("attack_speed")) : 2.f;
     }
 
     void Parse_UnitData(const nlohmann::json& config, GameObjectDataRef dt) {
@@ -205,8 +205,8 @@ namespace eng {
         if(config.count("worker")) data->worker = config.at("worker");
         if(config.count("caster")) data->caster = config.at("caster");
 
-        data->speed = config.count("speed") ? config.at("speed") : 10;
-        data->scale = config.count("scale") ? config.at("scale") : 1.f;
+        data->speed = config.count("speed") ? int(config.at("speed")) : 10;
+        data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;
 
         data->upgrade_src = config.count("upgrade_src") ? json::parse_ivec2(config.at("upgrade_src")) : glm::ivec2(UnitUpgradeSource::NONE);
     }
@@ -296,7 +296,7 @@ namespace eng {
                 for(auto& btn_entry : page_entry) {
                     int btn_idx = btn_entry.at("idx");
                     int cmd_id  = btn_entry.at("cmd");
-                    int payload = btn_entry.count("pid") ? btn_entry.at("pid") : -1;
+                    int payload = btn_entry.count("pid") ? int(btn_entry.at("pid")) : -1;
                     
                     int hotkey_idx = -1;
                     char hotkey = '-';
@@ -340,9 +340,9 @@ namespace eng {
             if(config.count("animations")) {
                 for(auto& [anim_name, anim_data] : config.at("animations").items()) {
                     int anim_id         = ResolveBuildingAnimationID(anim_data.at("id"));
-                    bool is_summer      = anim_data.count("summer")         ? anim_data.at("summer") : true;
-                    bool both_weathers  = anim_data.count("both_weathers")  ? anim_data.at("both_weathers") : false;
-                    bool anim_repeat    = anim_data.count("repeat")         ? anim_data.at("repeat") : false;
+                    bool is_summer      = anim_data.count("summer")         ? bool(anim_data.at("summer")) : true;
+                    bool both_weathers  = anim_data.count("both_weathers")  ? bool(anim_data.at("both_weathers")) : false;
+                    bool anim_repeat    = anim_data.count("repeat")         ? bool(anim_data.at("repeat")) : false;
 
                     if(!is_summer && !both_weathers)
                         anim_id += wo;
@@ -361,10 +361,10 @@ namespace eng {
             if(config.count("animations")) {
                 for(auto& [anim_name, anim_data] : config.at("animations").items()) {
                     //animation ID - either given in JSON or derive from the animation name
-                    int anim_id = anim_data.count("id") ? anim_data.at("id") : ResolveBuildingAnimationID(anim_name);
+                    int anim_id = anim_data.count("id") ? int(anim_data.at("id")) : ResolveBuildingAnimationID(anim_name);
 
-                    std::string sprite_name = anim_data.count("sprite_name") ? anim_data.at("sprite_name") : anim_name;
-                    bool anim_repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
+                    std::string sprite_name = anim_data.count("sprite_name") ? std::string(anim_data.at("sprite_name")) : anim_name;
+                    bool anim_repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : false;
 
                     LoadBuildingSprites(animations, anim_id, name_prefix, sprite_name, anim_repeat);
                 }
@@ -395,15 +395,15 @@ namespace eng {
         std::map<int, SpriteGroup> animations = {};
         for(auto& [anim_name, anim_data] : config.at("animations").items()) {
             //animation ID - either given in JSON or derive from the animation name
-            int anim_id = anim_data.count("id") ? anim_data.at("id") : ResolveUnitAnimationID(anim_name);
+            int anim_id = anim_data.count("id") ? int(anim_data.at("id")) : ResolveUnitAnimationID(anim_name);
 
             //path to the sprite - either explicitly defined in JSON or created by combining unit name & animation name
-            std::string sprite_path = anim_data.count("sprite_path") ? anim_data.at("sprite_path") : unit_name;
-            std::string sprite_name = anim_data.count("sprite_name") ? anim_data.at("sprite_name") : anim_name;
+            std::string sprite_path = anim_data.count("sprite_path") ? std::string(anim_data.at("sprite_path")) : unit_name;
+            std::string sprite_name = anim_data.count("sprite_name") ? std::string(anim_data.at("sprite_name")) : anim_name;
             
             float duration = anim_data.at("duration");
-            bool repeat = anim_data.count("repeat") ? anim_data.at("repeat") : true;
-            float keyframe = anim_data.count("keyframe") ? anim_data.at("keyframe") : 1.f;
+            bool repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : true;
+            float keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 1.f;
             animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe)) });
         }
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));
@@ -420,9 +420,9 @@ namespace eng {
                 std::string sprite_name;
                 if(anim_data.is_object()) {
                     sprite_name = anim_data.at("sprite_name");
-                    repeat = anim_data.count("repeat") ? anim_data.at("repeat") : false;
-                    keyframe = anim_data.count("keyframe") ? anim_data.at("keyframe") : 1.f;
-                    duration = anim_data.count("duration") ? anim_data.at("duration") : 1.f;
+                    repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : false;
+                    keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 1.f;
+                    duration = anim_data.count("duration") ? float(anim_data.at("duration")) : 1.f;
                 }
                 else {
                     sprite_name = anim_data;

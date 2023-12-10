@@ -32,19 +32,19 @@ namespace eng {
         //parse map data
         if(!config.count("map") || !Parse_Mapfile(map, config.at("map"))) {
             ENG_LOG_WARN("Savefile - invalid map data.");
-            throw std::exception("Savefile - invalid map data.");
+            throw std::runtime_error("Savefile - invalid map data.");
         }
 
         //parse factions data
         if(config.count("factions") && !Parse_FactionsFile(factions, config.at("factions"))) {
             ENG_LOG_WARN("Savefile - invalid factions data.");
-            throw std::exception("Savefile - invalid factions data.");
+            throw std::runtime_error("Savefile - invalid factions data.");
         }
         
         
         if(!config.count("info") || !Parse_Info(info, config.at("info"))) {
             ENG_LOG_WARN("Savefile - invalid info data.");
-            throw std::exception("Savefile - invalid info data.");
+            throw std::runtime_error("Savefile - invalid info data.");
         }
 
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
@@ -198,8 +198,8 @@ namespace eng {
             info.startingLocations.push_back(glm::ivec2(1,0));
         }
 
-        info.preferred_opponents = config.count("preferred_opponents") ? config.at("preferred_opponents") : 1;
-        info.campaignIdx = config.count("campaign_idx") ? config.at("campaign_idx") : -1;
+        info.preferred_opponents = config.count("preferred_opponents")  ? int(config.at("preferred_opponents")) : 1;
+        info.campaignIdx         = config.count("campaign_idx")         ? int(config.at("campaign_idx")) : -1;
         
         return true;
     }

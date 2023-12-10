@@ -337,7 +337,7 @@ namespace eng {
         if(selection.selected_count == 1) {
             //retrieve object_data reference & page descriptions from that
             FactionObject& object = level.objects.GetObject(selection.selection[0]);
-            const ButtonDescriptions& desc = object.ButtonDescriptions();
+            const ButtonDescriptions& desc = object.GetButtonDescriptions();
 
             int p_idx = 0;
             for(const ButtonDescriptions::PageEntry& page_desc : desc.pages) {

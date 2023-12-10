@@ -834,8 +834,8 @@ namespace eng {
 
         glm::vec2 rotate(const glm::vec2& v, float deg) {
             float rad = deg * glm::pi<float>() / 180.f;
-            float c = std::cosf(rad);
-            float s = std::sinf(rad);
+            float c = std::cos(rad);
+            float s = std::sin(rad);
             return glm::vec2(v.x*c - v.y*s, v.x*s + v.y*c);
         }
 

@@ -1235,12 +1235,12 @@ namespace eng {
                             break;
                         case 5:
                             ImGui::Text("%5.1f", tiles(y,x).nav.d);
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(std::min(1.f, std::powf(tiles(y,x).nav.d / D, 2.2f)), 0.1f, 0.1f, 1.0f)));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(std::min(1.f, std::pow(tiles(y,x).nav.d / D, 2.2f)), 0.1f, 0.1f, 1.0f)));
                             break;
                         case 6:
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
                             if(tiles(y,x).info[airborne].id.type != ObjectType::INVALID) {
-                                ImGui::Text("%d|%d|%d", tiles(y,x).info[airborne].id.type, tiles(y,x).info[airborne].id.idx, tiles(y,x).info[airborne].id.id);
+                                ImGui::Text("%d|%d|%d", int(tiles(y,x).info[airborne].id.type), int(tiles(y,x).info[airborne].id.idx), int(tiles(y,x).info[airborne].id.id));
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr4);
                             }
                             else {

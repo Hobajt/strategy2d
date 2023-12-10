@@ -184,7 +184,7 @@ namespace eng {
         virtual bool IsRepairable() const { return true; }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
-        const ButtonDescriptions& ButtonDescriptions() const { return data_f->gui_btns; }
+        const ButtonDescriptions& GetButtonDescriptions() const { return data_f->gui_btns; }
 
         int VariationIdx() const { return variationIdx; }
         void SetVariationIdx(int idx) { variationIdx = idx; }

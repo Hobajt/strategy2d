@@ -283,7 +283,7 @@ void FileMenu::FileDialog() {
             filepath[0] = '\0';
             ENG_LOG_WARN("NDF: Filepath too long ({})", len);
         }
-        else if(strncpy_s(filepath, BUF_SIZE, outPath, len)) {
+        else if(strncpy(filepath, outPath, len)) {
             filepath[0] = '\0';
             ENG_LOG_WARN("NDF: Failed to copy the filepath.");
         }
@@ -317,7 +317,7 @@ void InfoMenu::GUI_Update() {
 
     ImGui::Text("Level info");
     ImGui::InputText("Name", levelName, sizeof(char) * BUF_SIZE);
-    glm::ivec2& size = level.map.Size();
+    glm::ivec2 size = level.map.Size();
     ImGui::Text("Size: [%d x %d]", size.x, size.y);
     ImGui::Separator();
     ImGui::Text("Tileset");
