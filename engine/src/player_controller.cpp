@@ -349,6 +349,11 @@ namespace eng {
 
                 for(const auto& [pos_idx, btn_data] : page_desc) {
                     current_page[pos_idx] = btn_data;
+
+                    //visuals prep for the research buttons (others are already pre-set)
+                    if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
+                        level.factions.Player()->SetupResearchButtonVisuals(current_page[pos_idx]);
+                    }
                 }
             }
         }
@@ -1370,15 +1375,22 @@ namespace eng {
 
         if(building_command) {
             Building& building = level.objects.GetBuilding(selection[0]);
-            if(command_id == GUI::ActionButton_CommandType::UPGRADE) {
-                ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
-                building.IssueAction(BuildingAction::Upgrade(payload_id));
-                update_flag = true;
-            }
-            else {
-                ENG_LOG_FINE("Targetless command - Train/Research (payload={})", payload_id);
-                building.IssueAction(BuildingAction::TrainOrResearch(payload_id));
-                update_flag = true;
+            switch(command_id) {
+                case GUI::ActionButton_CommandType::UPGRADE:
+                    ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
+                    building.IssueAction(BuildingAction::Upgrade(payload_id));
+                    update_flag = true;
+                    break;
+                case GUI::ActionButton_CommandType::RESEARCH:
+                    ENG_LOG_FINE("Targetless command - Research (payload={})", payload_id);
+                    building.IssueAction(BuildingAction::TrainOrResearch(false, payload_id, building.TrainOrResearchTime(false, payload_id)));
+                    update_flag = true;
+                    break;
+                case GUI::ActionButton_CommandType::TRAIN:
+                    ENG_LOG_FINE("Targetless command - Train (payload={})", payload_id);
+                    building.IssueAction(BuildingAction::TrainOrResearch(true, payload_id, building.TrainOrResearchTime(true, payload_id)));
+                    update_flag = true;
+                    break;
             }
         }
         else {
@@ -1437,7 +1449,7 @@ namespace eng {
 
             for(int i = 0; i < selected_count; i++) {
                 ObjectID id = selection.at(i);
-                ImGui::Text("ID[%d] - (%d, %d, %d)", i, id.type, id.idx, id.id);
+                ImGui::Text("ID[%d] - (%d, %d, %d)", i, (int)id.type, (int)id.idx, (int)id.id);
             }
         }
 #endif

@@ -859,12 +859,14 @@ namespace eng {
         return act;
     }
 
-    BuildingAction BuildingAction::TrainOrResearch(int payload_id) {
-        //TODO: implement
-        //TODO: lookup the command target (refs[payload_id]) & set act.data.flag (to distinguish between training & research)
-        //          - set flag = true if training (already using this presumption in Building::IsTraining())
-        //TODO: also finish methods on Building afterwards - ActionProgress(), ActionPayloadIcon(), ActionPrice()
-        return Idle();
+    BuildingAction BuildingAction::TrainOrResearch(bool training, int payload_id, float required_time) {
+        BuildingAction act = {};
+        act.logic = BuildingAction::Logic(BuildingActionType::TRAIN_OR_RESEARCH, BuildingAction_TrainOrResearch);
+        act.data = {};
+        act.data.flag = training;
+        act.data.i = payload_id;
+        act.data.t3 = required_time;
+        return act;
     }
 
     BuildingAction BuildingAction::Upgrade(int payload_id) {
@@ -901,6 +903,12 @@ namespace eng {
         {
             float progress = data.t3 != 0 ? int((data.t1/data.t3)*100.f) : 0.f;
             snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%.0f%%)", data.flag ? "Upgrade" : "Construction", data.t1, data.t3, progress);
+            break;
+        }
+        case BuildingActionType::TRAIN_OR_RESEARCH:
+        {
+            float progress = data.t3 != 0 ? int((data.t1/data.t3)*100.f) : 0.f;
+            snprintf(buf, sizeof(buf), "Action: %s - %.0f/%.0f (%.0f%%)", data.flag ? "Train" : "Research", data.t1, data.t3, progress);
             break;
         }
         default:
@@ -1004,7 +1012,49 @@ namespace eng {
     }
 
     void BuildingAction_TrainOrResearch(Building& src, Level& level, BuildingAction& action) {
-        //TODO:
+        Input& input = Input::Get();
+        float& progress = action.data.t1;
+        float& prev_health = action.data.t2;
+        bool is_training = action.data.flag;
+        int payload_id = action.data.i;
+        float target = action.data.t3;
+        //=====
+
+        //compute the uptick for this frame
+        float uptick = input.deltaTime * CONSTRUCTION_SPEED;
+
+        //increment construction tracking as well as building health
+        progress += uptick;
+
+        // src.act() = BuildingAnimationType::IDLE;
+
+        //construction finished condition
+        if(progress >= target) {
+            src.TrainingOrResearchFinished(is_training, payload_id);
+        }
+
+
+        /*how to do this:   
+            - will need access to build time for the object being worked on:
+                - either need to lookup the unit/research that is being worked on every frame
+                - or have it stored in building's refs (seems shitty, as there might be way too many of these)
+                - or retrieve the value only once, during the action initialization and store it in the data struct (probably the best approach)
+    
+        */
+
+        /*how to handle all the references from buildings to the objects that they can train/research
+            - i mean training is pretty straightforward - can just add button definitions to the building
+            - research, however, is more trickier as there might be multiple levels to a reasearch
+            - this also ties into how are researches going to be defined
+                - they could have their own objects - Research or somthing - loadable from JSON
+                - they could also just be plain bool/int values contained within the Techtree
+                - the 2nd approach seems a bit better
+                    - sure is less flexible (probably harder to add new researches) - can still load research values from JSON tho
+                    - can just reference research by a number (enum for Techtree)
+                    - research button can then have checks in GUI to check for conditions:
+                        - already researched, level-disabled upgrade, etc.
+                        - this would be done through yet another method on the Faction class
+        */
     }
 
     void BuildingAction_ConstructOrUpgrade(Building& src, Level& level, BuildingAction& action) {

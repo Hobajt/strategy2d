@@ -453,7 +453,7 @@ namespace eng {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("GameObjects");
 
-        ImGui::Text("Units: %d, Buildings: %d, Utilities: %d", units.size(), buildings.size(), utilityObjs.size());
+        ImGui::Text("Units: %d, Buildings: %d, Utilities: %d", (int)units.size(), (int)buildings.size(), (int)utilityObjs.size());
         ImGui::Separator();
 
         // float indent_val = ImGui::GetWindowSize().x * 0.05f;

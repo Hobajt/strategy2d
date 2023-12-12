@@ -95,11 +95,20 @@ namespace eng {
         for(auto& page : data->gui_btns.pages) {
             for(auto& [idx, btn] : page) {
                 if(btn.price == GUI::ActionButtonDescription::MissingVisuals()) {
-                    GameObjectDataRef obj = Resources::LinkObject(glm::ivec3(ObjectTypeFromCommandID(btn.command_id), btn.payload_id, data->race), true);
-                    btn.name    = obj->name;
-                    SetupActionButtonText(btn, obj->name);
-                    btn.price   = obj->cost;
-                    btn.icon    = obj->icon;
+                    if(btn.command_id != GUI::ActionButton_CommandType::RESEARCH) {
+                        int id = ObjectTypeFromCommandID(btn.command_id);
+                        GameObjectDataRef obj = Resources::LinkObject(glm::ivec3(id, btn.payload_id, data->race), true);
+                        btn.name    = obj->name;
+                        SetupActionButtonText(btn, obj->name);
+                        btn.price   = obj->cost;
+                        btn.icon    = obj->icon;
+                    }
+                    else {
+                        //only temporary values for research buttons
+                        btn.name = "research btn";
+                        btn.price = glm::ivec4(0,0,0,btn.payload_id);
+                        btn.icon = glm::ivec2(3,18);
+                    }
                 }
             }
         }
@@ -270,8 +279,10 @@ namespace eng {
     int ObjectTypeFromCommandID(int cmd_id) {
         switch(cmd_id) {
             case GUI::ActionButton_CommandType::CAST:
-            case GUI::ActionButton_CommandType::RESEARCH:
                 return ObjectType::UTILITY;
+            case GUI::ActionButton_CommandType::RESEARCH:
+                ENG_LOG_ERROR("ObjectTypeFromCommandID - research buttons have no command type! check before calling this function");
+                throw std::runtime_error("ObjectTypeFromCommandID - research buttons have no command type! check before calling this function");
             case GUI::ActionButton_CommandType::BUILD:
             case GUI::ActionButton_CommandType::UPGRADE:
                 return ObjectType::BUILDING;

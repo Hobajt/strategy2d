@@ -162,7 +162,7 @@ namespace eng {
         static BuildingAction IdleAttack();
         static BuildingAction Construction();
 
-        static BuildingAction TrainOrResearch(int payload_id);
+        static BuildingAction TrainOrResearch(bool training, int payload_id, float required_time);
         static BuildingAction Upgrade(int payload_id);
 
         void Update(Building& src, Level& level);

@@ -346,8 +346,12 @@ namespace eng {
         float ActionProgress() const;
         glm::ivec3 ActionPrice() const;
 
+        float TrainOrResearchTime(bool training, int payload_id) const;
+
         void OnConstructionFinished(bool registerDropoffPoint = true, bool kickoutWorkers = true);
         void OnUpgradeFinished(int ref_idx);
+
+        void TrainingOrResearchFinished(bool training, int payload_id);
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;

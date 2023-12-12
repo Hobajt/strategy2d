@@ -119,6 +119,7 @@ namespace eng {
         int ProductionBoost(int res_idx);
 
         bool ButtonConditionCheck(const FactionObject& src, const GUI::ActionButtonDescription& btn) const;
+        void SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const;
 
         bool CastConditionCheck(const Unit& src, int payload_id) const;
 

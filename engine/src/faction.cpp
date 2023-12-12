@@ -215,6 +215,16 @@ namespace eng {
         return true;
     }
 
+    void FactionController::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const {
+        //TODO:
+        //setup for research buttons - lookup current research state (based on payload_id) in the Techtree
+        //no need to signal if the research is unavailable -> should be handled by ButtonConditionCheck() (called per frame, this one's not)
+        btn.name = "asdfasdf";
+        btn.has_hotkey = true;
+        btn.hotkey = 'x';
+        btn.hotkey_idx = 1;
+    }
+
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {
         //TODO:
         //also do resource check here

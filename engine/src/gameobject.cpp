@@ -486,9 +486,8 @@ namespace eng {
     float Building::ActionProgress() const {
         switch(action.logic.type) {
             case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+            case BuildingActionType::TRAIN_OR_RESEARCH:
                 return action.data.t1 / action.data.t3;
-            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
-            //     return ...;
             default:
                 return 0.f;
         }
@@ -497,12 +496,31 @@ namespace eng {
     glm::ivec3 Building::ActionPrice() const {
         switch(action.logic.type) {
             case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
-                return (action.data.flag) ? data->refs.at(action.data.i)->cost : glm::ivec4(0);
-            // case BuildingActionType::TRAIN_OR_RESEARCH:      //TODO:
-            //     return ...;
+                ASSERT_MSG(((unsigned)action.data.i) < BuildingType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with building type ({}, max {})", action.data.i, BuildingType::COUNT-1);
+                return Resources::LoadBuilding(action.data.i, bool(Race()))->cost;
+            case BuildingActionType::TRAIN_OR_RESEARCH:
+                if(action.data.flag) {
+                    //training
+                    ASSERT_MSG(((unsigned)action.data.i) < UnitType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with unit type ({}, max {})", action.data.i, UnitType::COUNT-1);
+                    return Resources::LoadUnit(action.data.i, bool(Race()))->cost;
+                }
+                else {
+                    //TODO: research -> retrieve price from Techree (access through Faction object, as payload_id doesn't fully identify research, only the type)
+                    return glm::ivec3(-1);
+                }
             default:
                 ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
-                return glm::ivec4(0);
+                return glm::ivec3(0);
+        }
+    }
+
+    float Building::TrainOrResearchTime(bool training, int payload_id) const {
+        if(training) {
+            return Resources::LoadUnit(payload_id, bool(Race()))->build_time;
+        }
+        else {
+            //TODO: research -> retrieve value from Techree (same as ActionPrice(), just different value)
+            return 1.f;
         }
     }
 
@@ -552,6 +570,12 @@ namespace eng {
         SetHealth(new_health);
 
         Audio::Play(SoundEffect::GetPath((Faction()->Race() == 0) ? "peasant/pswrkdon" : "orc/owrkdone"), Position());
+
+        action = BuildingAction::Idle(CanAttack());
+    }
+
+    void Building::TrainingOrResearchFinished(bool training, int payload_id) {
+        ENG_LOG_INFO("TRAIN/RESEARCH FINISHED!!!!");
 
         action = BuildingAction::Idle(CanAttack());
     }
