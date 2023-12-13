@@ -351,6 +351,8 @@ namespace eng {
             const ButtonDescriptions& desc = object.GetButtonDescriptions();
 
             int p_idx = 0;
+            bool bld_isOrc = false;
+            bool bld_raceRetrieved = false;
             for(const ButtonDescriptions::PageEntry& page_desc : desc.pages) {
                 if(p_idx > 0) {
                     ResetPage(p_idx);
@@ -363,7 +365,13 @@ namespace eng {
 
                     //visuals prep for the research buttons (others are already pre-set)
                     if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
-                        level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx], bool(level.factions.Player()->Race()));
+                        if(!bld_raceRetrieved) {
+                            bld_isOrc = bool(level.objects.GetBuilding(selection.selection[0]).Race());
+                            bld_raceRetrieved = true;
+                        }
+                        if(!level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx], bld_isOrc)) {
+                            current_page[pos_idx].command_id = ActionButton_CommandType::DISABLED;
+                        }
                     }
                 }
             }
@@ -2488,6 +2496,7 @@ namespace eng {
         }
         else {
             strncpy(buf, prefix, len);
+            buf[len] = '\0';
             out_highlight_idx = glm::ivec2(-1);
         }
     }

@@ -16,6 +16,8 @@ namespace eng {
 
 #define UNIT_MANA_REGEN_SPEED 1.f
 
+    static constexpr std::array<const char*, 2> workdone_sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
+
     //===== GameObject =====
 
     int GameObject::idCounter = 0;
@@ -508,7 +510,7 @@ namespace eng {
                     return Resources::LoadUnit(action.data.i, bool(Race()))->cost;
                 }
                 else {
-                    return Tech().ResearchPrice(action.data.i);
+                    return Tech().ResearchPrice(action.data.i, bool(Race()));
                 }
             default:
                 ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
@@ -537,9 +539,9 @@ namespace eng {
 
         Faction()->ObjectAdded(data);
 
-        static constexpr std::array<const char*, 2> sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
+        
         if(kickoutWorkers) {
-            Audio::Play(SoundEffect::GetPath(sound_name[data->race]), Position());
+            Audio::Play(SoundEffect::GetPath(workdone_sound_name[data->race]), Position());
             lvl()->objects.IssueExit_Construction(OID());
         }
     }
@@ -576,7 +578,25 @@ namespace eng {
     }
 
     void Building::TrainingOrResearchFinished(bool training, int payload_id) {
-        ENG_LOG_INFO("TRAIN/RESEARCH FINISHED!!!!");
+        if(training) {
+            UnitDataRef unit_data = Resources::LoadUnit(payload_id, Race());
+            glm::ivec2 spawn_pos;
+            lvl()->map.NearbySpawnCoords(Position(), Data()->size, 3, unit_data->navigationType, spawn_pos);
+            lvl()->objects.EmplaceUnit(*lvl(), unit_data, Faction(), spawn_pos);
+            ENG_LOG_TRACE("Building::TrainingOrResearchFinished - new unit (type={}, name={}) spawned at ({}, {})", payload_id, unit_data->name, spawn_pos.x, spawn_pos.y);
+        }
+        else {
+            int new_level = -1;
+            if(!Tech().IncrementResearch(payload_id, &new_level)) {
+                //could maybe not throw & refund the money instead (... but this shouldn't really happen so I guess it doesn't matter that much)
+                ENG_LOG_WARN("Building::TrainingOrResearchFinished - research couldn't be upgraded any further (type={}, level={})", payload_id, new_level);
+                throw std::runtime_error("");
+            }
+            else {
+                ENG_LOG_TRACE("Building::TrainingOrResearchFinished - research (type={}) improved to level {}", payload_id, new_level);
+                Audio::Play(SoundEffect::GetPath(workdone_sound_name[data->race]), Position());
+            }
+        }
 
         action = BuildingAction::Idle(CanAttack());
     }

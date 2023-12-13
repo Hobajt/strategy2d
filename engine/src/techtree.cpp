@@ -17,28 +17,26 @@ namespace eng {
 
     //===== Techtree =====
 
-    int Techtree::UnitLevel(int unit_type) const {
-        //TODO:
-        return 0;
-    }
-
-    //TODO: fillup properly
-    constexpr static std::array<glm::ivec2, UnitType::COUNT> idx_LUT = {
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //peasant
-        glm::ivec2{ TechtreeAttackBonusType::MELEE, TechtreeArmorBonusType::MELEE },      //footman
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //archer
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //ballista
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //knight
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //paladin
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //tanker
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //destroyer
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //battleship
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //submarine
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //roflcopter
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //demosquad
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //mage
-        glm::ivec2{ TechtreeAttackBonusType::NONE, TechtreeArmorBonusType::NONE },      //gryphon
+    constexpr static std::array<glm::ivec3, UnitType::COUNT> idx_LUT = {
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //peasant
+        glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::MELEE },     //footman
+        glm::ivec3{ TechtreeAttackBonusType::RANGED,    TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::RANGED },    //archer
+        glm::ivec3{ TechtreeAttackBonusType::SIEGE,     TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::SIEGE },     //ballista
+        glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::MELEE },     //knight
+        glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::PALA },      //paladin
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //tanker
+        glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //destroyer
+        glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //battleship
+        glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //submarine
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //roflcopter
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //demosquad
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::MAGE },      //mage
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //gryphon
     };
+
+    int Techtree::UnitLevel(int unit_type) const {
+        return level_counters[idx_LUT[unit_type].z];
+    }
 
     int Techtree::BonusArmor(int unit_type) const {
         return armor_bonus[idx_LUT[unit_type].y];
@@ -56,30 +54,34 @@ namespace eng {
         return (unit_type == UnitType::ARCHER) * range_bonus;
     }
 
-    void Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const {
+    bool Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const {
         ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::SetupResearchButtonVisuals - invalid research type");
 
         int type = btn.payload_id;
-        int next_level = research[btn.payload_id]+1;
+        int level = research[btn.payload_id];
+        int race = int(isOrc);
 
         ResearchInfo info = {};
-        if(Resources::LoadResearchInfo(type, next_level, info)) {
-            btn.name        = info.viz.name[int(isOrc)];
+        if(Resources::LoadResearchInfo(type, level+1, info)) {
+            btn.name        = info.viz.name[race];
             btn.has_hotkey  = info.viz.has_hotkey;
-            btn.hotkey      = info.viz.hotkey;
-            btn.hotkey_idx  = info.viz.hotkey_idx;
-            btn.price       = info.data.price;
-            btn.icon        = Icon_AddOffset(info.viz.icon[int(isOrc)], next_level);
+            btn.hotkey      = info.viz.hotkey[race];
+            btn.hotkey_idx  = info.viz.hotkey_idx[race];
+            btn.price       = info.data.price[race];
+            btn.icon        = Icon_AddOffset(info.viz.icon[race], level);
             std::transform(btn.name.begin(), btn.name.end(), btn.name.begin(), ::toupper);
+            return true;
         }
+        return false;
     }
 
-    glm::ivec3 Techtree::ResearchPrice(int research_type) const {
+    glm::ivec3 Techtree::ResearchPrice(int research_type, bool isOrc) const {
         ASSERT_MSG(((unsigned)research_type) < ((unsigned)ResearchType::COUNT), "Techtree::ResearchPrice - invalid research type");
         ResearchInfo info = {};
+        int race = int(isOrc);
         int level = research[research_type];
         if(Resources::LoadResearchInfo(research_type, level, info)) {
-            return info.data.price;
+            return info.data.price[race];
         }
         else {
             ENG_LOG_WARN("Techtree::ResearchPrice - research definition for (type={}, level={}) not found", research_type, level);
@@ -90,6 +92,29 @@ namespace eng {
     float Techtree::ResearchTime(int research_type) const {
         //TODO:
         return 100.f;
+    }
+
+    bool Techtree::IncrementResearch(int research_type, int* out_level) {
+        ASSERT_MSG(((unsigned)research_type) < ((unsigned)ResearchType::COUNT), "Techtree::ResearchPrice - invalid research type");
+        int level = research[research_type];
+        bool success = false;
+
+        ResearchInfo info = {};
+        if(Resources::LoadResearchInfo(research_type, level+1, info)) {
+            research[research_type]++;
+            success = true;
+
+            Recalculate();
+        }
+
+        if(out_level != nullptr)
+            *out_level = research[research_type];
+        return success;
+    }
+
+    void Techtree::Recalculate() {
+        RecomputeUnitLevels();
+        RecomputeBonuses();
     }
 
     //TODO: when exporting to JSON, only need to store the research array (other values can be recomputed on the fly)
@@ -187,9 +212,51 @@ namespace eng {
             ImGui::EndTable();
         }
 
-
-        
+        if(ImGui::Button("Recalculate")) {
+            Recalculate();
+        }
 #endif
     }
+
+    void Techtree::RecomputeUnitLevels() {
+        level_counters[TechtreeLevelCounter::NONE]  = 1;
+        level_counters[TechtreeLevelCounter::MELEE] = 1 + research[ResearchType::MELEE_ATTACK] + research[ResearchType::MELEE_DEFENSE];
+        level_counters[TechtreeLevelCounter::NAVAL] = 1 + research[ResearchType::NAVAL_ATTACK] + research[ResearchType::NAVAL_DEFENSE];
+        level_counters[TechtreeLevelCounter::SIEGE] = 1 + research[ResearchType::SIEGE_ATTACK];
+
+        level_counters[TechtreeLevelCounter::RANGED] = 1 + 
+            research[ResearchType::RANGED_ATTACK] +
+            research[ResearchType::LM_RANGER_UPGRADE] +
+            research[ResearchType::LM_RANGE] +
+            research[ResearchType::LM_SIGHT] +
+            research[ResearchType::LM_UNIQUE];
+        
+        level_counters[TechtreeLevelCounter::PALA] =
+            level_counters[TechtreeLevelCounter::MELEE] +
+            research[ResearchType::PALA_UPGRADE] +
+            research[ResearchType::PALA_EXORCISM] +
+            research[ResearchType::PALA_HEAL];
+        
+        level_counters[TechtreeLevelCounter::MAGE] = 1 + 
+            research[ResearchType::MAGE_SLOW] +
+            research[ResearchType::MAGE_SHIELD] +
+            research[ResearchType::MAGE_INVIS] +
+            research[ResearchType::MAGE_POLY] +
+            research[ResearchType::MAGE_BLIZZARD];
+    }
+
+    void Techtree::RecomputeBonuses() {
+        attack_bonus[TechtreeAttackBonusType::MELEE]    = Resources::LoadResearchBonus(ResearchType::MELEE_ATTACK, research[ResearchType::MELEE_ATTACK]);
+        attack_bonus[TechtreeAttackBonusType::NAVAL]    = Resources::LoadResearchBonus(ResearchType::NAVAL_ATTACK, research[ResearchType::NAVAL_ATTACK]);
+        attack_bonus[TechtreeAttackBonusType::RANGED]   = Resources::LoadResearchBonus(ResearchType::RANGED_ATTACK, research[ResearchType::RANGED_ATTACK]);
+        attack_bonus[TechtreeAttackBonusType::SIEGE]    = Resources::LoadResearchBonus(ResearchType::SIEGE_ATTACK, research[ResearchType::SIEGE_ATTACK]);
+
+        armor_bonus[TechtreeArmorBonusType::MELEE] = Resources::LoadResearchBonus(ResearchType::MELEE_DEFENSE, research[ResearchType::MELEE_DEFENSE]);
+        armor_bonus[TechtreeArmorBonusType::NAVAL] = Resources::LoadResearchBonus(ResearchType::NAVAL_DEFENSE, research[ResearchType::NAVAL_DEFENSE]);
+
+        vision_bonus    = Resources::LoadResearchBonus(ResearchType::LM_SIGHT, research[ResearchType::LM_SIGHT]);
+        range_bonus     = Resources::LoadResearchBonus(ResearchType::LM_RANGE, research[ResearchType::LM_RANGE]);
+    }
+
 
 }//namespace eng

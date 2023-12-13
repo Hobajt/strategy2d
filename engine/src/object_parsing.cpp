@@ -135,21 +135,35 @@ namespace eng {
 
         if(entry.count("hotkey")) {
             auto& hk = entry.at("hotkey");
-            viz.has_hotkey  = true;
-            viz.hotkey      = std::string(hk.at(0)).at(0);
-            viz.hotkey_idx  = hk.at(1);
+            if(hk.at(0).is_array()) {
+                viz.hotkey[0]      = std::string(hk.at(0).at(0)).at(0);
+                viz.hotkey_idx[0]  = hk.at(0).at(1);
+                viz.hotkey[1]      = std::string(hk.at(1).at(0)).at(0);
+                viz.hotkey_idx[1]  = hk.at(1).at(1);
+            }
+            else {
+                viz.hotkey[0] = viz.hotkey[1]           = std::string(hk.at(0)).at(0);
+                viz.hotkey_idx[0] = viz.hotkey_idx[1]   = hk.at(1);
+            }
+            viz.has_hotkey = true;
         }
         else {
             viz.has_hotkey = false;
-            viz.hotkey = 'x';
-            viz.hotkey_idx = -1;
+            viz.hotkey[0] = viz.hotkey[1] = 'x';
+            viz.hotkey_idx[0] = viz.hotkey_idx[1] = -1;
         }
 
         if(entry.count("price")) {
             //single level research
             ResearchData data = {};
-            data.price = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
-            data.value = -1;
+            if(entry.at("price").size() == 2) {
+                data.price[0] = glm::ivec4(json::parse_ivec3(entry.at("price").at(0)), 0);
+                data.price[1] = glm::ivec4(json::parse_ivec3(entry.at("price").at(1)), 0);
+            }
+            else {
+                data.price[0] = data.price[1] = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
+            }
+            data.value = entry.count("value") ? entry.at("value") : 0;
             level_entries.push_back(data);
         }
         else {
@@ -162,11 +176,22 @@ namespace eng {
                 throw std::runtime_error("");
             }
 
-            for(int i = 0; i < prices.size(); i++) {
-                ResearchData data = {};
-                data.price  = glm::ivec4(json::parse_ivec3(prices.at(i)), 0);
-                data.value  = values.at(i);
-                level_entries.push_back(data);
+            if(prices.at(0).size() != 3) {
+                for(int i = 0; i < prices.at(0).size(); i++) {
+                    ResearchData data = {};
+                    data.price[0]   = glm::ivec4(json::parse_ivec3(prices.at(0).at(i)), 0);
+                    data.price[1]   = glm::ivec4(json::parse_ivec3(prices.at(1).at(i)), 0);
+                    data.value      = values.at(i);
+                    level_entries.push_back(data);
+                }
+            }
+            else {
+                for(int i = 0; i < prices.size(); i++) {
+                    ResearchData data = {};
+                    data.price[0] = data.price[1]  = glm::ivec4(json::parse_ivec3(prices.at(i)), 0);
+                    data.value  = values.at(i);
+                    level_entries.push_back(data);
+                }
             }
         }
 

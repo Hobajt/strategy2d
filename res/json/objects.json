@@ -173,6 +173,58 @@
         "buttons": [[ { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] } ]]
     },
     {
+        "str_id": "human/blacksmith",
+        "name": "Blacksmith",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,4],
+        "vision_range": 3,
+        "health": 775,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [800,450,100],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 0 },
+                { "idx": 1, "cmd": 12, "pid": 1 },
+                { "idx": 2, "cmd": 12, "pid": 5 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/smith" }
+    },
+    {
+        "str_id": "orc/blacksmith",
+        "name": "Blacksmith",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [7,4],
+        "vision_range": 3,
+        "health": 775,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [800,450,100],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 0 },
+                { "idx": 1, "cmd": 12, "pid": 1 },
+                { "idx": 2, "cmd": 12, "pid": 5 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/smith" }
+    },
+    {
         "str_id": "human/farm",
         "name": "farm",
         "type": 3,

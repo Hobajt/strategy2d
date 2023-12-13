@@ -1,128 +1,118 @@
 [
     {
         "name": ["Swords", "Weapons"],
-        "icon": [[6,11], [9,11]],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "icon": [[7,11], [0,12]],
+        "hotkey": [["w", 1], ["w", 0]],
+        "prices": [[[800,0,0],[2400,0,0]], [[500,100,0],[1500,300,0]]],
+        "values": [2,4]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": "Shields",
+        "icon": [[4,16], [7,16]],
+        "hotkey": ["h", 1],
+        "prices": [[300,300,0],[900,500,0]],
+        "values": [2,4]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": "Cannons",
+        "icon": [[4,14], [7,14]],
+        "hotkey": ["c", 0],
+        "prices": [[700,100,1000],[2000,250,3000]],
+        "values": [5,10]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": "Ship Armor",
+        "icon": [[4,15], [7,15]],
+        "hotkey": ["a", 5],
+        "prices": [[500,500,0],[1500,900,0]],
+        "values": [5,10]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Arrows", "Throwing Axes"],
+        "icon": [[4,12], [7,12]],
+        "hotkey": [["a", 0], ["a", 9]],
+        "prices": [[300,300,0],[900,500,0]],
+        "values": [1,2]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Ballistas", "Catapults"],
+        "icon": [[0,14], [8,13]],
+        "hotkey": [["b", 0], ["c", 0]],
+        "prices": [[1500,0,0],[4000,0,0]],
+        "values": [15,30]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Elven Ranger Training", "Troll Berserker Training"],
+        "icon": [[6,0], [7,0]],
+        "hotkey": [["r", 6], ["b", 0]],
+        "price": [1500,0,0]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": "Scouting",
+        "icon": [[3,13], [6,13]],
+        "hotkey": ["s", 0],
+        "price": [1500,0,0],
+        "value": 3
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Longbow", "Lighter Axes"],
+        "icon": [[2,13], [5,13]],
+        "hotkey": [["l", 0], ["x", 9]],
+        "price": [2000,0,0],
+        "value": 1
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Marksmanship", "Regeneration"],
+        "icon": [[4,13], [7,13]],
+        "hotkey": [["m", 0], ["r", 0]],
+        "price": [[2500,0,0], [3000,0,0]]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Knights to Paladins", "Ogres to Mages"],
+        "icon": [[0,1], [1,1]],
+        "hotkey": [["p", 11], ["m", 9]],
+        "price": [1000,0,0]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Healing", "Bloodlust"],
+        "icon": [[7,10], [2,11]],
+        "hotkey": [["h", 0], ["b", 0]],
+        "price": [1000,0,0]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Exorcism", "Runes"],
+        "icon": [[0,11], [2,11]],
+        "hotkey": [["e", 0], ["r", 0]],
+        "price": [[2000,0,0], [1000,0,0]]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Slow", "Haste"],
+        "icon": [[4,9],[6,9]],
+        "hotkey": [["o", 2], ["h", 0]],
+        "price": [500,0,0]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Flame Shield", "Raise Dead"],
+        "icon": [[0,10],[4,11]],
+        "hotkey": [["l", 1], ["r", 0]],
+        "price": [[1000,0,0], [1500,0,0]]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Invisibility", "Whirlwind"],
+        "icon": [[5,9], [4,10]],
+        "hotkey": [["i", 0], ["w", 0]],
+        "price": [[2500,0,0], [1500,0,0]]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Polymorph", "Unholy Armor"],
+        "icon": [[5,11],[8,9]],
+        "hotkey": [["p", 0],["u", 0]],
+        "price": [[2000,0,0], [2500,0,0]]
     },
     {
-        "name": "Swords",
-        "icon": [6,11],
-        "hotkey": ["w", 1],
-        "prices": [[800,0,0],[800,0,0],[800,0,0]],
-        "values": [2,4,6]
+        "name": ["Blizzard", "Death and Decay"],
+        "icon": [[5,10],[3,10]],
+        "hotkey": [["b", 1], ["d", 0]],
+        "price": [2000,0,0]
     }
 ]

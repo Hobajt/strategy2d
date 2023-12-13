@@ -67,6 +67,7 @@ namespace eng::Resources {
     UnitDataRef LoadUnit(int num_id, bool isOrc);
 
     bool LoadResearchInfo(int type, int level, ResearchInfo& out_info);
+    int LoadResearchBonus(int type, int level);
 
     //===== Cursor icons =====
 

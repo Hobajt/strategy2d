@@ -400,6 +400,14 @@ namespace eng::Resources {
         return true;
     }
 
+    int LoadResearchBonus(int type, int level) {
+        int idx = type * RESEARCH_MAX_LEVEL + level;
+        if(data.research_data.count(idx)) {
+            return data.research_data.at(idx).value;
+        }
+        return 0;
+    }
+
     namespace CursorIcons {
 
         void Update() {
@@ -564,7 +572,7 @@ namespace eng::Resources {
             data.research_viz[i] = ResearchInfo_Parse(entry, i, level_entries);
 
             for(int j = 0; j < (int)level_entries.size(); j++) {
-                data.research_data.insert({ i * RESEARCH_MAX_LEVEL + j, level_entries[j] });
+                data.research_data.insert({ i * RESEARCH_MAX_LEVEL + (j+1), level_entries[j] });
             }
             level_entries.clear();
         }

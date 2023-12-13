@@ -20,8 +20,7 @@ namespace eng {
         };
     }
 
-    namespace TechtreeLevelCounter { enum { MELEE, NAVAL, SIEGE, RANGED, PALA, MAGE, COUNT }; }
-
+    namespace TechtreeLevelCounter { enum { NONE, MELEE, NAVAL, SIEGE, RANGED, PALA, MAGE, COUNT }; }
     namespace TechtreeAttackBonusType { enum { NONE, MELEE, NAVAL, SIEGE, RANGED, COUNT }; }
     namespace TechtreeArmorBonusType { enum { NONE, MELEE, NAVAL, COUNT }; }
 
@@ -33,12 +32,12 @@ namespace eng {
         std::string name[2];
 
         bool has_hotkey;
-        int hotkey_idx;
-        char hotkey;
+        int hotkey_idx[2];
+        char hotkey[2];
     };
 
     struct ResearchData {
-        glm::ivec4 price;
+        glm::ivec4 price[2];
         int value;
     };
 
@@ -58,12 +57,18 @@ namespace eng {
         int BonusVision(int unit_type) const;
         int BonusRange(int unit_type) const;
 
-        void SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const;
+        bool SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const;
 
-        glm::ivec3 ResearchPrice(int research_type) const;
+        glm::ivec3 ResearchPrice(int research_type, bool isOrc) const;
         float ResearchTime(int research_type) const;
 
+        bool IncrementResearch(int research_type, int* out_level = nullptr);
+        void Recalculate();
+
         void DBG_GUI();
+    private:
+        void RecomputeUnitLevels();
+        void RecomputeBonuses();
     private:
         std::array<uint8_t, ResearchType::COUNT> research;                      //levels of inidividual researches
 

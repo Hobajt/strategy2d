@@ -43,7 +43,7 @@ void Sandbox::OnInit() {
         //temporary faction initialization - will be done on level loads or during custom game initialization
         FactionsFile tst = {};
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "neutral", 5));
-        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  1, "faction_1", 0));
+        tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  0, "faction_1", 0));
         tst.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::INVALID,       0, "faction_2", 1));
         tst.diplomacy.push_back({1, 2, 1});
         level.factions = Factions(std::move(tst), level.map.Size());
@@ -67,7 +67,8 @@ void Sandbox::OnInit() {
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), f1, glm::vec2(5.f, 0.f));
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(16.f, 3.f), false);
 
-
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(21.f, 23.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(25.f, 23.f), true);
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
