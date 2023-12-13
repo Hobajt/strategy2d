@@ -10,6 +10,7 @@
 
 #include "engine/game/map.h"
 #include "engine/game/object_data.h"
+#include "engine/game/techtree.h"
 
 //Basic resources manager. Nothing fancy, mostly for resource sharing and name2path translation.
 namespace eng::Resources {
@@ -65,8 +66,10 @@ namespace eng::Resources {
     BuildingDataRef LoadBuilding(int num_id, bool isOrc);
     UnitDataRef LoadUnit(int num_id, bool isOrc);
 
-    //===== Cursor icons =====
+    ResearchInfo& LoadResearchInfo(const ResearchID& id);
+    bool TryLoadResearchInfo(const ResearchID& id, ResearchInfo& out_info);
 
+    //===== Cursor icons =====
 
     namespace CursorIcons {
         void Update();

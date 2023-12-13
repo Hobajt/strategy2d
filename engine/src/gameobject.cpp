@@ -213,6 +213,9 @@ namespace eng {
         health = (health <= MaxHealth()) ? health : MaxHealth();
     }
 
+    Techtree& FactionObject::Tech() { return faction->Tech(); }
+    const Techtree& FactionObject::Tech() const { return faction->Tech(); }
+
     void FactionObject::WithdrawObject() {
         if(active) {
             RemoveFromMap();
@@ -520,7 +523,7 @@ namespace eng {
         }
         else {
             //TODO: research -> retrieve value from Techree (same as ActionPrice(), just different value)
-            return 1.f;
+            return 100.f;
         }
     }
 

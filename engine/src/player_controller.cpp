@@ -26,6 +26,8 @@ namespace eng {
     constexpr glm::vec2 MAP_A = glm::vec2(0.025f,                0.05f);
     constexpr glm::vec2 MAP_B = glm::vec2(0.025f+GUI_WIDTH*0.8f, 0.3f);
 
+    void format_wBonus(char* buf, size_t buf_size, const char* prefix, int val_bonus, glm::ivec2& out_highlight_idx);
+
     void RenderGUIBorders(bool isOrc, float z);
     std::vector<GUI::StyleRef> SetupScrollMenuStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
     std::vector<GUI::StyleRef> SetupSliderStyles(const FontRef& font, const glm::vec2& scrollMenuSize, int scrollMenuItems, float scrollButtonSize, const glm::vec2& smallBtnSize);
@@ -77,6 +79,7 @@ namespace eng {
         Reset();
 
         char buf[1024];
+        char buf_tmp[1024];
         if(selection.selected_count == 1) {
             FactionObject* object = &level.objects.GetObject(selection.selection[0]);
             borders->Enable(true);
@@ -94,21 +97,29 @@ namespace eng {
             if(object->IsUnit() && selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                 //display units stats (always the same, except the mana bar might be hidden)
                 Unit* unit = static_cast<Unit*>(object);
+                glm::ivec2 highlight_idx = glm::ivec2(-1);
+
+                //TODO: rework to display bonus values as '+x' - create additional value getters BaseArmor() and BonusArmor() - purely for this purpose
+                //will also need to setup the highlight index (to make the bonus value colored)
 
                 snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
                 level_text->Setup(std::string(buf));
 
-                snprintf(buf, sizeof(buf), "Armor: %d", unit->Armor());
-                stats[0]->Setup(buf);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", unit->BaseArmor());
+                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusArmor(), highlight_idx);
+                stats[0]->Setup(buf, highlight_idx);
 
-                snprintf(buf, sizeof(buf), "Damage: %d-%d", unit->MinDamage(), unit->MaxDamage());
-                stats[1]->Setup(buf);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", unit->BaseMinDamage(), unit->BaseMaxDamage());
+                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusDamage(), highlight_idx);
+                stats[1]->Setup(buf, highlight_idx);
 
-                snprintf(buf, sizeof(buf), "Range: %d", unit->AttackRange());
-                stats[2]->Setup(buf);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", unit->BaseAttackRange());
+                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusAttackRange(), highlight_idx);
+                stats[2]->Setup(buf, highlight_idx);
 
-                snprintf(buf, sizeof(buf), "Sight: %d", unit->VisionRange());
-                stats[3]->Setup(buf);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", unit->BaseVisionRange());
+                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusVisionRange(), highlight_idx);
+                stats[3]->Setup(buf, highlight_idx);
 
                 snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
                 stats[4]->Setup(buf);
@@ -352,7 +363,7 @@ namespace eng {
 
                     //visuals prep for the research buttons (others are already pre-set)
                     if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
-                        level.factions.Player()->SetupResearchButtonVisuals(current_page[pos_idx]);
+                        level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx]);
                     }
                 }
             }
@@ -2467,6 +2478,18 @@ namespace eng {
         res.push_back(w);
 
         return res;
+    }
+
+    void format_wBonus(char* buf, size_t buf_size, const char* prefix, int val_bonus, glm::ivec2& out_highlight_idx) {
+        size_t len = strlen(prefix);
+        if(val_bonus != 0) {
+            snprintf(buf, sizeof(buf), "%s+%d", prefix, val_bonus);
+            out_highlight_idx = glm::ivec2(len, 99);
+        }
+        else {
+            strncpy(buf, prefix, len);
+            out_highlight_idx = glm::ivec2(-1);
+        }
     }
 
 }//namespace eng

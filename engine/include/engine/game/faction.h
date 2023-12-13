@@ -6,18 +6,9 @@
 
 #include "engine/game/map.h"
 #include "engine/game/gameobject.h"
+#include "engine/game/techtree.h"
 
 namespace eng {
-
-    namespace ResearchType {
-        enum {
-            MELEE_ATTACK, MELEE_DEFENSE, NAVAL_ATTACK, NAVAL_DEFENSE, RANGED_ATTACK, SIEGE_ATTACK,
-            LM_RANGER_UPGRADE, LM_SIGHT, LM_RANGE, LM_UNIQUE,
-            PALA_UPGRADE, PALA_HEAL, PALA_EXORCISM,
-            MAGE_SLOW, MAGE_SHIELD, MAGE_INVIS, MAGE_POLY, MAGE_BLIZZARD,
-            COUNT
-        };
-    }
 
     class Level;
     class Building;
@@ -28,16 +19,6 @@ namespace eng {
 
         int RandomAIMindset();
     }
-
-    //===== Techtree =====
-
-    class Techtree {
-    public:
-        void DBG_GUI();
-    private:
-        std::array<uint8_t, ResearchType::COUNT> research;
-        std::array<uint8_t, 4> level_counters;      //melee_upgrade_count, naval_upgrade_count, siege_upgrade_count, lm_upgrade_count, pala_upgrade_count, mage_upgrade_count
-    };
 
     namespace ResourceBit { enum { GOLD = 1, WOOD = 2, OIL = 4 }; }
     const char* GameResourceName(int res_idx);
@@ -119,9 +100,11 @@ namespace eng {
         int ProductionBoost(int res_idx);
 
         bool ButtonConditionCheck(const FactionObject& src, const GUI::ActionButtonDescription& btn) const;
-        void SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const;
 
         bool CastConditionCheck(const Unit& src, int payload_id) const;
+
+        Techtree& Tech() { return techtree; }
+        const Techtree& Tech() const { return techtree; }
 
         void DBG_GUI();
     private:

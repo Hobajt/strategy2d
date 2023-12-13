@@ -114,6 +114,31 @@ namespace eng {
         }
     }
 
+    ResearchInfo ResearchInfo_Parse(nlohmann::json& entry) {
+        ResearchInfo res = {};
+        
+        res.id.type     = entry.at("type");
+        res.id.level    = entry.count("level") ? entry.at("level") : 0;
+        res.name        = entry.at("name");
+        res.price       = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
+        res.value       = entry.count("value") ? entry.at("value") : 0;
+        res.icon        = json::parse_ivec2(entry.at("icon"));
+
+        if(entry.count("hotkey")) {
+            auto& hk = entry.at("hotkey");
+            res.has_hotkey  = true;
+            res.hotkey      = std::string(hk.at(0)).at(0);
+            res.hotkey_idx  = hk.at(1);
+        }
+        else {
+            res.has_hotkey = false;
+            res.hotkey = 'x';
+            res.hotkey_idx = -1;
+        }
+
+        return res;
+    }
+
     //=======================================================================
 
     void Parse_GameObjectData(const nlohmann::json& config, GameObjectDataRef data) {

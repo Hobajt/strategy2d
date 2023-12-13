@@ -121,7 +121,7 @@
             [
                 { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] },
                 { "idx": 1, "cmd": 13, "pid": 17, "hotkey": ["k", 11] },
-                { "idx": 4, "cmd": 12, "pid": 1 }
+                { "idx": 4, "cmd": 12, "pid": 0 }
             ]
         ]
     },

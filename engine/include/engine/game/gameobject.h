@@ -5,6 +5,7 @@
 
 #include "engine/game/object_data.h"
 #include "engine/game/command.h"
+#include "engine/game/techtree.h"
 
 #include <ostream>
 
@@ -155,15 +156,29 @@ namespace eng {
         bool RangeCheck(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
 
         bool CanAttack() const { return data_f->CanAttack(); }
-        int AttackRange() const { return data_f->attack_range; }
-        int BasicDamage() const { return data_f->basic_damage; }
-        int PierceDamage() const { return data_f->pierce_damage; }
         float Cooldown() const { return data_f->cooldown; }
-        int Armor() const { return data_f->armor; }
-        int VisionRange() const { return data_f->vision_range; }
 
-        int MinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
-        int MaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
+        //====== object stats getters - anything Base/Bonus prefix returns partial value (mostly for GUI), the rest returns final stat value ======
+
+        int BasicDamage() const { return data_f->basic_damage; }
+        int PierceDamage() const { return data_f->pierce_damage + BonusDamage(); }
+        int BonusDamage() const { return Tech().BonusDamage(NumID()[1]); }
+        int BaseMinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
+        int BaseMaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
+
+        int Armor() const { return BaseArmor() + BonusArmor(); }
+        int BaseArmor() const { return data_f->armor; }
+        int BonusArmor() const { return Tech().BonusArmor(NumID()[1]); }
+
+        int AttackRange() const { return BaseAttackRange() + BonusAttackRange(); }
+        int BaseAttackRange() const { return data_f->attack_range; }
+        int BonusAttackRange() const { return Tech().BonusRange(NumID()[1]); }
+
+        int VisionRange() const { return BaseVisionRange() + BonusVisionRange(); }
+        int BaseVisionRange() const { return data_f->vision_range; }
+        int BonusVisionRange() const { return Tech().BonusVision(NumID()[1]); }
+
+        //===============
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
@@ -191,6 +206,9 @@ namespace eng {
 
         FactionControllerRef Faction() { return faction; }
         int FactionIdx() const { return factionIdx; }
+
+        Techtree& Tech();
+        const Techtree& Tech() const;
 
         bool IsActive() const { return active; }
 
@@ -252,7 +270,7 @@ namespace eng {
         virtual int ActionIdx() const override;
 
         int MoveSpeed() const { return data->speed; }
-        int UnitLevel() const { return 0; } //TODO:
+        int UnitLevel() const { return Tech().UnitLevel(NumID()[1]); }
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
 

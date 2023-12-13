@@ -948,6 +948,11 @@ namespace eng::GUI {
         if(enable)
             Enable(true);
     }
+
+    void KeyValue::Setup(const std::string& text_, const glm::ivec2& highlight_idx_, bool enable) {
+        //TODO: add support for highlight_idx
+        Setup(text_, enable);
+    }
     
     void KeyValue::InnerRender() {
         Element::InnerRender();

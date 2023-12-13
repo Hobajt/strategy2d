@@ -541,6 +541,7 @@ namespace eng::GUI {
         virtual void OnHighlight() override {}
 
         void Setup(const std::string& text, bool enable = true);
+        void Setup(const std::string& text, const glm::ivec2& highlight_idx, bool enable = true);
     protected:
         virtual void InnerRender() override;
     private:

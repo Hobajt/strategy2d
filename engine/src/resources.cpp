@@ -35,6 +35,8 @@ namespace eng::Resources {
         std::array<std::array<UnitDataRef, 2>, UnitType::COUNT> units;
         std::vector<UtilityObjectDataRef> utilities;
 
+        std::unordered_map<ResearchID, ResearchInfo> researches;
+
         CursorIconManager cursorIcons;
 
         bool linkable = false;
@@ -51,6 +53,7 @@ namespace eng::Resources {
 
     void ProcessIndexFile();
     void LoadObjectDefinitions();
+    void PreloadResearchDefinitions();
     void FinalizeOthers();
 
     void ValidateIndexEntries();
@@ -63,11 +66,13 @@ namespace eng::Resources {
     //============
 
     void Preload() {
-        ASSERT_MSG(!data.preloaded, "Calling Resources::PreloadObjects multiple times!");
+        ASSERT_MSG(!data.preloaded, "Calling Resources::Preload multiple times!");
 
         PreloadSpritesheets();
 
         PreloadObjects();
+
+        PreloadResearchDefinitions();
 
         data.cursorIcons = CursorIconManager("res/json/cursors.json");
 
@@ -373,6 +378,30 @@ namespace eng::Resources {
         return data.units[num_id][(int)(isOrc)];
     }
 
+    ResearchInfo& LoadResearchInfo(const ResearchID& id) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadResearchInfo - data need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if(!data.researches.count(id)) {
+            ENG_LOG_ERROR("Resources::LoadResearchInfo - invalid ID ({},{})", id.type, id.level);
+            throw std::runtime_error("");
+        }
+        return data.researches.at(id);
+    }
+
+    bool TryLoadResearchInfo(const ResearchID& id, ResearchInfo& out_info) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadResearchInfo - data need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if(!data.researches.count(id))
+            return false;
+            
+        out_info = data.researches.at(id);
+        return true;
+    }
+
     namespace CursorIcons {
 
         void Update() {
@@ -518,6 +547,24 @@ namespace eng::Resources {
             else
                 GameObjectData_ParseExisting(entry, data.objects.at(str_id));
         }
+    }
+
+    void PreloadResearchDefinitions() {
+        Timer t = {};
+        t.Reset();
+
+        using json = nlohmann::json;
+        json config = json::parse(ReadFile("res/json/research.json"));
+        for(auto& entry : config) {
+            ResearchInfo info = ResearchInfo_Parse(entry);
+            if(data.researches.count(info.id)) {
+                ENG_LOG_WARN("Resources::PreloadResearchDefinitions - entry redefinition (id=({},{}))", info.id.type, info.id.level);
+            }
+            data.researches.insert({ info.id, info });
+        }
+
+        float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
+        ENG_LOG_TRACE("Resources::PreloadResearchDefinitions - parsed {} research descriptions ({:.2f}s)", data.researches.size(), time_elapsed);
     }
 
     void FinalizeOthers() {

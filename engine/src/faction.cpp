@@ -19,14 +19,6 @@ namespace eng {
         }
     }
 
-    //===== Techtree =====
-
-    void Techtree::DBG_GUI() {
-#ifdef ENGINE_ENABLE_GUI
-        //....
-#endif
-    }
-
     const char* GameResourceName(int res_idx) {
         constexpr static std::array<const char*, 3> names = { "Gold", "Lumber", "Oil" };
         return names[res_idx];
@@ -213,16 +205,6 @@ namespace eng {
         //decode the action, that's supposed to be triggered by given button
         //evaluate conditions for said action (for example action is build -> check whether given building (payload_id) can be built)
         return true;
-    }
-
-    void FactionController::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const {
-        //TODO:
-        //setup for research buttons - lookup current research state (based on payload_id) in the Techtree
-        //no need to signal if the research is unavailable -> should be handled by ButtonConditionCheck() (called per frame, this one's not)
-        btn.name = "asdfasdf";
-        btn.has_hotkey = true;
-        btn.hotkey = 'x';
-        btn.hotkey_idx = 1;
     }
 
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {
