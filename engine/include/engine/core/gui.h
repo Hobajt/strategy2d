@@ -546,6 +546,7 @@ namespace eng::GUI {
         virtual void InnerRender() override;
     private:
         std::string text;
+        glm::ivec2 highlight_idx;
         size_t sep_pos;
     };
 

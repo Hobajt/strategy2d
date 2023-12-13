@@ -2494,14 +2494,17 @@ namespace eng {
 
     void format_wBonus(char* buf, size_t buf_size, const char* prefix, int val_bonus, glm::ivec2& out_highlight_idx) {
         size_t len = strlen(prefix);
+        out_highlight_idx = glm::ivec2(-1);
         if(val_bonus != 0) {
-            snprintf(buf, sizeof(buf), "%s+%d", prefix, val_bonus);
-            out_highlight_idx = glm::ivec2(len, 99);
+            snprintf(buf, buf_size, "%s+%d", prefix, val_bonus);
+            const char* ptr = strchr(buf, ':');
+            if(ptr != nullptr) {
+                out_highlight_idx = glm::ivec2(len - int(ptr-buf) - 1, 99);
+            }
         }
         else {
             strncpy(buf, prefix, len);
             buf[len] = '\0';
-            out_highlight_idx = glm::ivec2(-1);
         }
     }
 

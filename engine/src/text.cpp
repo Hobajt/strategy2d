@@ -183,6 +183,30 @@ namespace eng {
         RenderText(text + max_len, center - offset, scale, color, zIndex, info);
     }
 
+    void Font::RenderTextKeyValue(const char* text, size_t max_len, const glm::vec2 center, float scale, const glm::vec4& color1, const glm::vec4& color2, const glm::ivec2& highlightRange, float zIndex, const glm::uvec4& info) {
+        int height = 0;
+        int width = 0;
+        for (const char* c = text; *c; c++) {
+            const CharInfo& ch = GetChar(*c);
+            
+            int charHeight = ch.advance.x * scale;
+            height = std::max(charHeight, height);
+
+            if(c < text+max_len) {
+                width += ch.advance.x * scale;
+            }
+        }
+        glm::vec2 offset;
+
+        //render key - aligned right (center anchors separator character)
+        offset = glm::vec2(width, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text, max_len, center - offset, scale, color1, zIndex, info);
+
+        //render value - aligned left
+        offset = glm::vec2(0.f, height / 2) / glm::vec2(Window::Get().Size());
+        RenderText(text + max_len, center - offset, scale, color1, color2, highlightRange, zIndex, info);
+    }
+
     void Font::RenderText(const char* text, const glm::vec2 topLeft, float scale, const glm::vec4& color1, const glm::vec4& color2, 
             int letterIdx, float zIndex, const glm::uvec4& info) {
         

@@ -934,30 +934,33 @@ namespace eng::GUI {
     //===== KeyValue =====
 
     KeyValue::KeyValue(const glm::vec2& offset_, const glm::vec2& size_, float zOffset_, const StyleRef& style_, const std::string& text_)
-        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_) {
+        : Element(offset_, size_, zOffset_, style_, nullptr), text(text_), highlight_idx(glm::ivec2(-1)) {
         
         sep_pos = text.find(':');
         sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
     }
 
     void KeyValue::Setup(const std::string& text_, bool enable) {
-        text = text_;
-        sep_pos = text.find(':');
-        sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
-
-        if(enable)
-            Enable(true);
+        Setup(text_, glm::ivec2(-1), enable);
     }
 
     void KeyValue::Setup(const std::string& text_, const glm::ivec2& highlight_idx_, bool enable) {
-        //TODO: add support for highlight_idx
-        Setup(text_, enable);
+        text = text_;
+        sep_pos = text.find(':');
+        sep_pos = (sep_pos != std::string::npos) ? (sep_pos+1) : text.size();
+        highlight_idx = highlight_idx_;
+
+        if(enable)
+            Enable(true);
     }
     
     void KeyValue::InnerRender() {
         Element::InnerRender();
         ASSERT_MSG(style->font != nullptr, "GUI element with text has to have a font assigned.");
-        style->font->RenderTextKeyValue(text.c_str(), sep_pos, glm::vec2(position.x, -position.y), style->textScale, style->textColor, Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET);
+        style->font->RenderTextKeyValue(text.c_str(), sep_pos, glm::vec2(position.x, -position.y), 
+            style->textScale, style->textColor, style->highlightColor, highlight_idx, 
+            Z_INDEX_BASE - zIdx * Z_INDEX_MULT - Z_TEXT_OFFSET
+        );
     }
 
     //===== ImageAndLabel =====
