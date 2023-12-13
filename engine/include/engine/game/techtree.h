@@ -56,7 +56,7 @@ namespace eng {
         int range_bonus;
     public:
         void RecomputeUnitLevels();
-        void RecomputeBonuses();
+        void RecomputeBonuses(bool isOrc);
     };
 
     //===== Techtree =====
@@ -71,6 +71,7 @@ namespace eng {
         int BonusRange(int unit_type, bool isOrc) const;
 
         bool SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const;
+        int UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc) const;
 
         glm::ivec3 ResearchPrice(int research_type, bool isOrc, bool forCancel = true) const;
         float ResearchTime(int research_type, bool isOrc) const;

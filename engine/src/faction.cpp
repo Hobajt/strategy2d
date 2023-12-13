@@ -180,9 +180,8 @@ namespace eng {
             return nullptr;
     }
 
-    int FactionController::UnitUpgradeTier(bool attack_upgrade, int upgrade_type) {
-        //TODO: lookup in the research values, translate input arguments to proper research index
-        return 2;
+    int FactionController::UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc) {
+        return Tech().UnitUpgradeTier(attack_upgrade, upgrade_type, isOrc);
     }
 
     int FactionController::ProductionBoost(int res_idx) {
@@ -218,7 +217,9 @@ namespace eng {
         ImGui::PushID(this);
         ImGui::Text("ID: %d | Race: %s | Name: %s", id, race == 0 ? "HU" : "OC", name.c_str());
         if(ImGui::CollapsingHeader("Techtree")) {
+            ImGui::PushID(&techtree);
             techtree.DBG_GUI();
+            ImGui::PopID();
         }
 
         ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;

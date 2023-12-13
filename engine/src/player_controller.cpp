@@ -286,6 +286,7 @@ namespace eng {
             int att_upgrade_src = UnitUpgradeSource::NONE;
             int def_upgrade_src = UnitUpgradeSource::NONE;
             FactionControllerRef faction = nullptr;
+            bool isOrc = false;
 
             for(size_t i = 0; i < selection.selected_count; i++) {
                 Unit& unit = level.objects.GetUnit(selection.selection[i]);
@@ -300,6 +301,7 @@ namespace eng {
                     att_upgrade_src = unit.AttackUpgradeSource();
                     def_upgrade_src = unit.DefenseUpgradeSource();
                     faction = unit.Faction();
+                    isOrc = unit.IsOrc();
                 }
                 else {
                     if(att_upgrade_src != unit.AttackUpgradeSource())  att_upgrade_src = UnitUpgradeSource::NONE;
@@ -307,19 +309,18 @@ namespace eng {
                 }
             }
 
-            bool isOrc = bool(faction->Race());
             att_upgrade_src = (att_upgrade_src == UnitUpgradeSource::BLACKSMITH_BALLISTA) ? UnitUpgradeSource::BLACKSMITH : att_upgrade_src;
             def_upgrade_src = (def_upgrade_src >  UnitUpgradeSource::FOUNDRY) ? UnitUpgradeSource::BLACKSMITH : def_upgrade_src;
 
             //add default unit commands for unit selection
             p[0] = ActionButtonDescription::Move(isOrc, all_water_units);
-            p[1] = ActionButtonDescription::Stop(isOrc, def_upgrade_src, faction->UnitUpgradeTier(false, def_upgrade_src));
+            p[1] = ActionButtonDescription::Stop(isOrc, def_upgrade_src, faction->UnitUpgradeTier(false, def_upgrade_src, isOrc));
             p[3] = ActionButtonDescription::Patrol(isOrc, all_water_units);
             p[4] = ActionButtonDescription::StandGround(isOrc);
 
             //attack command only if there's at least one unit that can attack
             if(can_attack) {
-                p[2] = ActionButtonDescription::Attack(isOrc, att_upgrade_src, faction->UnitUpgradeTier(true, att_upgrade_src));
+                p[2] = ActionButtonDescription::Attack(isOrc, att_upgrade_src, faction->UnitUpgradeTier(true, att_upgrade_src, isOrc));
             }
 
             //repair & harvest if they're all workers
@@ -361,17 +362,20 @@ namespace eng {
                 PageData& current_page = pages[p_idx++];
 
                 for(const auto& [pos_idx, btn_data] : page_desc) {
-                    current_page[pos_idx] = btn_data;
-
                     //visuals prep for the research buttons (others are already pre-set)
                     if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
                         if(!bld_raceRetrieved) {
                             bld_isOrc = bool(level.objects.GetBuilding(selection.selection[0]).Race());
                             bld_raceRetrieved = true;
                         }
-                        if(!level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx], bld_isOrc)) {
-                            current_page[pos_idx].command_id = ActionButton_CommandType::DISABLED;
+
+                        GUI::ActionButtonDescription btn = btn_data;
+                        if(level.factions.Player()->Tech().SetupResearchButtonVisuals(btn, bld_isOrc)) {
+                            current_page[pos_idx] = btn;
                         }
+                    }
+                    else {
+                        current_page[pos_idx] = btn_data;
                     }
                 }
             }

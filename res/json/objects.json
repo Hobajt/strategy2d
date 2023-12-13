@@ -120,8 +120,7 @@
         "buttons": [
             [
                 { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] },
-                { "idx": 1, "cmd": 13, "pid": 17, "hotkey": ["k", 11] },
-                { "idx": 4, "cmd": 12, "pid": 0 }
+                { "idx": 1, "cmd": 13, "pid": 17, "hotkey": ["k", 11] }
             ]
         ]
     },
@@ -223,6 +222,64 @@
             ]
         ],
         "sounds": { "yes": "bldg/smith" }
+    },
+    {
+        "str_id": "orc/lumber_mill",
+        "name": "Lumber Mill",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [5,4],
+        "vision_range": 3,
+        "health": 600,
+        "mana": 0,
+        "build_time": 150,
+        "cost": [600,450,100],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "dropoff_mask": 2,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 4 },
+                { "idx": 3, "cmd": 12, "pid": 7 },
+                { "idx": 4, "cmd": 12, "pid": 8 },
+                { "idx": 5, "cmd": 12, "pid": 9 },
+                { "idx": 3, "cmd": 12, "pid": 6 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/lumbmill" }
+    },
+    {
+        "str_id": "human/lumber_mill",
+        "name": "Lumber Mill",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [5,4],
+        "vision_range": 3,
+        "health": 600,
+        "mana": 0,
+        "build_time": 150,
+        "cost": [600,450,100],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "dropoff_mask": 2,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 4 },
+                { "idx": 3, "cmd": 12, "pid": 7 },
+                { "idx": 4, "cmd": 12, "pid": 8 },
+                { "idx": 5, "cmd": 12, "pid": 9 },
+                { "idx": 3, "cmd": 12, "pid": 6 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/lumbmill" }
     },
     {
         "str_id": "human/farm",
@@ -480,6 +537,7 @@
         "death_sound": 4,
         "scale": 2,
         "icon": [7,1],
+        "upgrade_src": [1,1],
         "sounds": {
             "yes": "misc/catyessr",
             "ready": "orc/oready",

@@ -7,6 +7,7 @@
 
 //represents column count in the icons spritesheet
 #define ICON_MAX_X 10
+#define MARKSMANSHIP_BOOST 3
 
 namespace eng {
 
@@ -44,11 +45,11 @@ namespace eng {
             research[ResearchType::MAGE_BLIZZARD];
     }
 
-    void TechtreeData::RecomputeBonuses() {
+    void TechtreeData::RecomputeBonuses(bool isOrc) {
         attack_bonus[TechtreeAttackBonusType::MELEE]    = Resources::LoadResearchBonus(ResearchType::MELEE_ATTACK, research[ResearchType::MELEE_ATTACK]);
         attack_bonus[TechtreeAttackBonusType::NAVAL]    = Resources::LoadResearchBonus(ResearchType::NAVAL_ATTACK, research[ResearchType::NAVAL_ATTACK]);
-        attack_bonus[TechtreeAttackBonusType::RANGED]   = Resources::LoadResearchBonus(ResearchType::RANGED_ATTACK, research[ResearchType::RANGED_ATTACK]);
         attack_bonus[TechtreeAttackBonusType::SIEGE]    = Resources::LoadResearchBonus(ResearchType::SIEGE_ATTACK, research[ResearchType::SIEGE_ATTACK]);
+        attack_bonus[TechtreeAttackBonusType::RANGED]   = Resources::LoadResearchBonus(ResearchType::RANGED_ATTACK, research[ResearchType::RANGED_ATTACK]) + MARKSMANSHIP_BOOST * int(research[ResearchType::LM_UNIQUE] != 0 && !isOrc);
 
         armor_bonus[TechtreeArmorBonusType::MELEE] = Resources::LoadResearchBonus(ResearchType::MELEE_DEFENSE, research[ResearchType::MELEE_DEFENSE]);
         armor_bonus[TechtreeArmorBonusType::NAVAL] = Resources::LoadResearchBonus(ResearchType::NAVAL_DEFENSE, research[ResearchType::NAVAL_DEFENSE]);
@@ -117,6 +118,20 @@ namespace eng {
         return false;
     }
 
+    int Techtree::UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc) const {
+        switch(upgrade_type) {
+            case UnitUpgradeSource::BLACKSMITH:
+            case UnitUpgradeSource::BLACKSMITH_BALLISTA:
+                return data[int(isOrc)].research[ResearchType::MELEE_ATTACK + int(!attack_upgrade)];
+            case UnitUpgradeSource::FOUNDRY:
+                return data[int(isOrc)].research[ResearchType::NAVAL_ATTACK + int(!attack_upgrade)];
+            case UnitUpgradeSource::LUMBERMILL:
+                return data[int(isOrc)].research[attack_upgrade ? ResearchType::RANGED_ATTACK : ResearchType::MELEE_DEFENSE];
+            default:
+                return 0;
+        }
+    }
+
     glm::ivec3 Techtree::ResearchPrice(int research_type, bool isOrc, bool forCancel) const {
         ASSERT_MSG(((unsigned)research_type) < ((unsigned)ResearchType::COUNT), "Techtree::ResearchPrice - invalid research type");
         ResearchInfo info = {};
@@ -161,7 +176,7 @@ namespace eng {
 
     void Techtree::RecalculateRace(bool isOrc) {
         data[int(isOrc)].RecomputeUnitLevels();
-        data[int(isOrc)].RecomputeBonuses();
+        data[int(isOrc)].RecomputeBonuses(isOrc);
     }
 
     //TODO: when exporting to JSON, only need to store the research array (other values can be recomputed on the fly)

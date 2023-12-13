@@ -90,7 +90,7 @@ namespace eng {
         BuildingDataRef FetchBuildingData(int buildingID, bool orcBuildings);
 
         //Lookup research tier for unit upgrades.
-        int UnitUpgradeTier(bool attack_upgrade, int upgrade_type);
+        int UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc);
 
         virtual void Update(Level& level) {}
 
