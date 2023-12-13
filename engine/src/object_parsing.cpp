@@ -114,29 +114,63 @@ namespace eng {
         }
     }
 
-    ResearchInfo ResearchInfo_Parse(nlohmann::json& entry) {
-        ResearchInfo res = {};
+    ResearchVisuals ResearchInfo_Parse(const nlohmann::json& entry, int type, std::vector<ResearchData>& level_entries) {
+        ResearchVisuals viz = {};
         
-        res.id.type     = entry.at("type");
-        res.id.level    = entry.count("level") ? entry.at("level") : 0;
-        res.name        = entry.at("name");
-        res.price       = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
-        res.value       = entry.count("value") ? entry.at("value") : 0;
-        res.icon        = json::parse_ivec2(entry.at("icon"));
+        viz.type = type;
+        if(entry.at("name").is_array()) {
+            viz.name[0] = entry.at("name").at(0);
+            viz.name[1] = entry.at("name").at(1);
+        }
+        else {
+            viz.name[0] = viz.name[1] = entry.at("name");
+        }
+        if(entry.at("icon").at(0).is_array()) {
+            viz.icon[0] = json::parse_ivec2(entry.at("icon").at(0));
+            viz.icon[1] = json::parse_ivec2(entry.at("icon").at(1));
+        }
+        else {
+            viz.icon[0] = viz.icon[1] = json::parse_ivec2(entry.at("icon"));
+        }
 
         if(entry.count("hotkey")) {
             auto& hk = entry.at("hotkey");
-            res.has_hotkey  = true;
-            res.hotkey      = std::string(hk.at(0)).at(0);
-            res.hotkey_idx  = hk.at(1);
+            viz.has_hotkey  = true;
+            viz.hotkey      = std::string(hk.at(0)).at(0);
+            viz.hotkey_idx  = hk.at(1);
         }
         else {
-            res.has_hotkey = false;
-            res.hotkey = 'x';
-            res.hotkey_idx = -1;
+            viz.has_hotkey = false;
+            viz.hotkey = 'x';
+            viz.hotkey_idx = -1;
         }
 
-        return res;
+        if(entry.count("price")) {
+            //single level research
+            ResearchData data = {};
+            data.price = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
+            data.value = -1;
+            level_entries.push_back(data);
+        }
+        else {
+            //multi-level researches
+            auto& prices = entry.at("prices");
+            auto& values = entry.at("values");
+
+            if(prices.size() != values.size()) {
+                ENG_LOG_ERROR("ResearchInfo_Parse - mismatch between number of prices & number of values.");
+                throw std::runtime_error("");
+            }
+
+            for(int i = 0; i < prices.size(); i++) {
+                ResearchData data = {};
+                data.price  = glm::ivec4(json::parse_ivec3(prices.at(i)), 0);
+                data.value  = values.at(i);
+                level_entries.push_back(data);
+            }
+        }
+
+        return viz;
     }
 
     //=======================================================================
@@ -288,6 +322,7 @@ namespace eng {
         char buf[512];
         snprintf(buf, sizeof(buf), "%s%s", prefix, object_name.c_str());
         btn.name = std::string(buf);
+        std::transform(btn.name.begin(), btn.name.end(), btn.name.begin(), ::toupper);
         
         if(btn.has_hotkey) {
             size_t pos = object_name.find(btn.hotkey);

@@ -5,23 +5,14 @@
 #include "engine/game/resources.h"
 #include "engine/utils/dbg_gui.h"
 
+//represents column count in the icons spritesheet
+#define ICON_MAX_X 10
+
 namespace eng {
 
-    //===== ResearchID =====
-
-    std::string ResearchID::to_string() const { 
-        char buf[512];
-        snprintf(buf, sizeof(buf), "(%d, %d)", type, level);
-        return std::string(buf);
-    }
-
-    std::ostream& operator<<(std::ostream& os, const ResearchID& id) {
-        os << id.to_string();
-        return os;
-    }
-
-    bool operator==(const ResearchID& lhs, const ResearchID& rhs) {
-        return lhs.type == rhs.type && lhs.level == rhs.level;
+    glm::ivec2 Icon_AddOffset(const glm::ivec2& icon, int offset) {
+        int x = icon.x + offset;
+        return glm::ivec2(x % ICON_MAX_X, icon.y + (x / ICON_MAX_X));
     }
 
     //===== Techtree =====
@@ -65,19 +56,40 @@ namespace eng {
         return (unit_type == UnitType::ARCHER) * range_bonus;
     }
 
+    void Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const {
+        ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::SetupResearchButtonVisuals - invalid research type");
 
-    void Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const {
-        ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::SetupResearchButtonVisuals - invalid payload_id");
-        ResearchID id = ResearchID(btn.payload_id, research[btn.payload_id]+1);
+        int type = btn.payload_id;
+        int next_level = research[btn.payload_id]+1;
+
         ResearchInfo info = {};
-        if(Resources::TryLoadResearchInfo(id, info)) {
-            btn.name = info.name;
-            btn.has_hotkey = info.has_hotkey;
-            btn.hotkey = info.hotkey;
-            btn.hotkey_idx = info.hotkey_idx;
-            btn.price = info.price;
-            btn.icon = info.icon;
+        if(Resources::LoadResearchInfo(type, next_level, info)) {
+            btn.name        = info.viz.name[int(isOrc)];
+            btn.has_hotkey  = info.viz.has_hotkey;
+            btn.hotkey      = info.viz.hotkey;
+            btn.hotkey_idx  = info.viz.hotkey_idx;
+            btn.price       = info.data.price;
+            btn.icon        = Icon_AddOffset(info.viz.icon[int(isOrc)], next_level);
+            std::transform(btn.name.begin(), btn.name.end(), btn.name.begin(), ::toupper);
         }
+    }
+
+    glm::ivec3 Techtree::ResearchPrice(int research_type) const {
+        ASSERT_MSG(((unsigned)research_type) < ((unsigned)ResearchType::COUNT), "Techtree::ResearchPrice - invalid research type");
+        ResearchInfo info = {};
+        int level = research[research_type];
+        if(Resources::LoadResearchInfo(research_type, level, info)) {
+            return info.data.price;
+        }
+        else {
+            ENG_LOG_WARN("Techtree::ResearchPrice - research definition for (type={}, level={}) not found", research_type, level);
+            return glm::ivec3(-1);
+        }
+    }
+
+    float Techtree::ResearchTime(int research_type) const {
+        //TODO:
+        return 100.f;
     }
 
     //TODO: when exporting to JSON, only need to store the research array (other values can be recomputed on the fly)
@@ -178,6 +190,6 @@ namespace eng {
 
         
 #endif
-    }    
+    }
 
 }//namespace eng

@@ -66,8 +66,7 @@ namespace eng::Resources {
     BuildingDataRef LoadBuilding(int num_id, bool isOrc);
     UnitDataRef LoadUnit(int num_id, bool isOrc);
 
-    ResearchInfo& LoadResearchInfo(const ResearchID& id);
-    bool TryLoadResearchInfo(const ResearchID& id, ResearchInfo& out_info);
+    bool LoadResearchInfo(int type, int level, ResearchInfo& out_info);
 
     //===== Cursor icons =====
 

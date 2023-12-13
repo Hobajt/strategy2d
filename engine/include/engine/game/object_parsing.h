@@ -12,6 +12,6 @@ namespace eng {
 
     void GameObjectData_FinalizeButtonDescriptions(GameObjectDataRef& data);
 
-    ResearchInfo ResearchInfo_Parse(nlohmann::json& entry);
+    ResearchVisuals ResearchInfo_Parse(const nlohmann::json& entry, int type, std::vector<ResearchData>& level_entries);
 
 }//namespace eng

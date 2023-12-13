@@ -363,7 +363,7 @@ namespace eng {
 
                     //visuals prep for the research buttons (others are already pre-set)
                     if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
-                        level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx]);
+                        level.factions.Player()->Tech().SetupResearchButtonVisuals(current_page[pos_idx], bool(level.factions.Player()->Race()));
                     }
                 }
             }

@@ -27,28 +27,24 @@ namespace eng {
 
     //===== ResearchInfo =====
 
-    struct ResearchID {
+    struct ResearchVisuals {
         int type;
-        int level;
-    public:
-        ResearchID() : type(-1), level(-1) {}
-        ResearchID(int type_, int level_) : type(type_), level(level_) {}
-
-        std::string to_string() const;
-        friend std::ostream& operator<<(std::ostream& os, const ResearchID& id);
-        friend bool operator==(const ResearchID& lhs, const ResearchID& rhs);
-    };
-
-    struct ResearchInfo {
-        ResearchID id;
-        std::string name;
-        glm::ivec2 icon;
-        glm::ivec4 price;
-        int value;
+        glm::ivec2 icon[2];
+        std::string name[2];
 
         bool has_hotkey;
         int hotkey_idx;
         char hotkey;
+    };
+
+    struct ResearchData {
+        glm::ivec4 price;
+        int value;
+    };
+
+    struct ResearchInfo {
+        ResearchVisuals viz;
+        ResearchData data;
     };
 
     //===== Techtree =====
@@ -62,8 +58,10 @@ namespace eng {
         int BonusVision(int unit_type) const;
         int BonusRange(int unit_type) const;
 
-        void SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn) const;
+        void SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const;
 
+        glm::ivec3 ResearchPrice(int research_type) const;
+        float ResearchTime(int research_type) const;
 
         void DBG_GUI();
     private:
@@ -77,12 +75,3 @@ namespace eng {
     };
 
 }//namespace eng
-
-
-//Hash function for eng::ResearchID
-template<>
-struct std::hash<eng::ResearchID> {
-    size_t operator()(const eng::ResearchID& id) const {
-        return std::hash<int>()(id.type) ^ (std::hash<int>()(id.level) << 1);
-    }
-};

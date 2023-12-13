@@ -508,8 +508,7 @@ namespace eng {
                     return Resources::LoadUnit(action.data.i, bool(Race()))->cost;
                 }
                 else {
-                    //TODO: research -> retrieve price from Techree (access through Faction object, as payload_id doesn't fully identify research, only the type)
-                    return glm::ivec3(-1);
+                    return Tech().ResearchPrice(action.data.i);
                 }
             default:
                 ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
@@ -522,8 +521,7 @@ namespace eng {
             return Resources::LoadUnit(payload_id, bool(Race()))->build_time;
         }
         else {
-            //TODO: research -> retrieve value from Techree (same as ActionPrice(), just different value)
-            return 100.f;
+            return Tech().ResearchTime(payload_id);
         }
     }
 

@@ -13,6 +13,8 @@
 
 constexpr float DEFAULT_FONT_SCALE = 0.055f;
 
+#define RESEARCH_MAX_LEVEL 10
+
 namespace eng {
     //defined in sprite.cpp:280 (+-)
     SpritesheetData ParseConfig_Spritesheet(const std::string& name, const nlohmann::json& config, int texture_flags);
@@ -35,7 +37,8 @@ namespace eng::Resources {
         std::array<std::array<UnitDataRef, 2>, UnitType::COUNT> units;
         std::vector<UtilityObjectDataRef> utilities;
 
-        std::unordered_map<ResearchID, ResearchInfo> researches;
+        std::array<ResearchVisuals, ResearchType::COUNT> research_viz;
+        std::unordered_map<int, ResearchData> research_data;
 
         CursorIconManager cursorIcons;
 
@@ -378,27 +381,22 @@ namespace eng::Resources {
         return data.units[num_id][(int)(isOrc)];
     }
 
-    ResearchInfo& LoadResearchInfo(const ResearchID& id) {
+    bool LoadResearchInfo(int type, int level, ResearchInfo& out_info) {
         if(!data.preloaded) {
             ENG_LOG_ERROR("Resources::LoadResearchInfo - data need to be preloaded!");
             throw std::runtime_error("");
         }
-        if(!data.researches.count(id)) {
-            ENG_LOG_ERROR("Resources::LoadResearchInfo - invalid ID ({},{})", id.type, id.level);
-            throw std::runtime_error("");
-        }
-        return data.researches.at(id);
-    }
-
-    bool TryLoadResearchInfo(const ResearchID& id, ResearchInfo& out_info) {
-        if(!data.preloaded) {
-            ENG_LOG_ERROR("Resources::LoadResearchInfo - data need to be preloaded!");
-            throw std::runtime_error("");
-        }
-        if(!data.researches.count(id))
+        if((unsigned int)(type) >= data.research_viz.size()) {
             return false;
-            
-        out_info = data.researches.at(id);
+        }
+        int idx = type * RESEARCH_MAX_LEVEL + level;
+        if(!data.research_data.count(idx)) {
+            return false;
+        }
+        
+        out_info.viz    = data.research_viz[type];
+        out_info.data   = data.research_data[idx];
+        
         return true;
     }
 
@@ -555,16 +553,24 @@ namespace eng::Resources {
 
         using json = nlohmann::json;
         json config = json::parse(ReadFile("res/json/research.json"));
-        for(auto& entry : config) {
-            ResearchInfo info = ResearchInfo_Parse(entry);
-            if(data.researches.count(info.id)) {
-                ENG_LOG_WARN("Resources::PreloadResearchDefinitions - entry redefinition (id=({},{}))", info.id.type, info.id.level);
+        if(config.size() != ResearchType::COUNT) {
+            ENG_LOG_ERROR("Resources::PreloadResearchDefinitions - invalid number of researches detected.");
+            throw std::runtime_error("");
+        }
+        
+        std::vector<ResearchData> level_entries = {};
+        for(int i = 0; i < ResearchType::COUNT; i++) {
+            auto& entry = config.at(i);
+            data.research_viz[i] = ResearchInfo_Parse(entry, i, level_entries);
+
+            for(int j = 0; j < (int)level_entries.size(); j++) {
+                data.research_data.insert({ i * RESEARCH_MAX_LEVEL + j, level_entries[j] });
             }
-            data.researches.insert({ info.id, info });
+            level_entries.clear();
         }
 
         float time_elapsed = t.TimeElapsed<Timer::ms>() * 1e-3f;
-        ENG_LOG_TRACE("Resources::PreloadResearchDefinitions - parsed {} research descriptions ({:.2f}s)", data.researches.size(), time_elapsed);
+        ENG_LOG_TRACE("Resources::PreloadResearchDefinitions - parsed {} research descriptions ({:.2f}s)", data.research_viz.size(), time_elapsed);
     }
 
     void FinalizeOthers() {
