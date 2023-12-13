@@ -162,21 +162,21 @@ namespace eng {
 
         int BasicDamage() const { return data_f->basic_damage; }
         int PierceDamage() const { return data_f->pierce_damage + BonusDamage(); }
-        int BonusDamage() const { return Tech().BonusDamage(NumID()[1]); }
+        int BonusDamage() const { return Tech().BonusDamage(NumID()[1], IsOrc()); }
         int BaseMinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
         int BaseMaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
 
         int Armor() const { return BaseArmor() + BonusArmor(); }
         int BaseArmor() const { return data_f->armor; }
-        int BonusArmor() const { return Tech().BonusArmor(NumID()[1]); }
+        int BonusArmor() const { return Tech().BonusArmor(NumID()[1], IsOrc()); }
 
         int AttackRange() const { return BaseAttackRange() + BonusAttackRange(); }
         int BaseAttackRange() const { return data_f->attack_range; }
-        int BonusAttackRange() const { return Tech().BonusRange(NumID()[1]); }
+        int BonusAttackRange() const { return Tech().BonusRange(NumID()[1], IsOrc()); }
 
         int VisionRange() const { return BaseVisionRange() + BonusVisionRange(); }
         int BaseVisionRange() const { return data_f->vision_range; }
-        int BonusVisionRange() const { return Tech().BonusVision(NumID()[1]); }
+        int BonusVisionRange() const { return Tech().BonusVision(NumID()[1], IsOrc()); }
 
         //===============
 
@@ -199,6 +199,7 @@ namespace eng {
         virtual bool IsRepairable() const { return true; }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
+        bool IsOrc() const { return bool(data_f->race); }
         const ButtonDescriptions& GetButtonDescriptions() const { return data_f->gui_btns; }
 
         int VariationIdx() const { return variationIdx; }
@@ -270,10 +271,10 @@ namespace eng {
         virtual int ActionIdx() const override;
 
         int MoveSpeed() const { return data->speed; }
-        int UnitLevel() const { return Tech().UnitLevel(NumID()[1]); }
+        int UnitLevel() const { return Tech().UnitLevel(NumID()[1], IsOrc()); }
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
-
+        
         float MoveSpeed_Real() const { return data->speed * 0.1f; }
 
         int AttackUpgradeSource() const { return data->upgrade_src[0]; }

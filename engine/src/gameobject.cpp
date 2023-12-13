@@ -502,15 +502,16 @@ namespace eng {
         switch(action.logic.type) {
             case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
                 ASSERT_MSG(((unsigned)action.data.i) < BuildingType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with building type ({}, max {})", action.data.i, BuildingType::COUNT-1);
-                return Resources::LoadBuilding(action.data.i, bool(Race()))->cost;
+                return Resources::LoadBuilding(action.data.i, IsOrc())->cost;
             case BuildingActionType::TRAIN_OR_RESEARCH:
                 if(action.data.flag) {
                     //training
                     ASSERT_MSG(((unsigned)action.data.i) < UnitType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with unit type ({}, max {})", action.data.i, UnitType::COUNT-1);
-                    return Resources::LoadUnit(action.data.i, bool(Race()))->cost;
+                    return Resources::LoadUnit(action.data.i, IsOrc())->cost;
                 }
                 else {
-                    return Tech().ResearchPrice(action.data.i, bool(Race()));
+                    //reseach
+                    return Tech().ResearchPrice(action.data.i, IsOrc(), true);
                 }
             default:
                 ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
@@ -520,10 +521,10 @@ namespace eng {
 
     float Building::TrainOrResearchTime(bool training, int payload_id) const {
         if(training) {
-            return Resources::LoadUnit(payload_id, bool(Race()))->build_time;
+            return Resources::LoadUnit(payload_id, IsOrc())->build_time;
         }
         else {
-            return Tech().ResearchTime(payload_id);
+            return Tech().ResearchTime(payload_id, IsOrc());
         }
     }
 
@@ -553,7 +554,7 @@ namespace eng {
             ENG_LOG_ERROR("Building::OnUpgradeFinished - payload_id is out of range.");
             throw std::out_of_range("");
         }
-        BuildingDataRef new_data = Resources::LoadBuilding(payload_id, bool(Race()));
+        BuildingDataRef new_data = Resources::LoadBuilding(payload_id, IsOrc());
         if(new_data == nullptr) {
             ENG_LOG_ERROR("Building::OnUpgradeFinished - invalid data type for the upgrade.");
             throw std::runtime_error("");
@@ -579,7 +580,7 @@ namespace eng {
 
     void Building::TrainingOrResearchFinished(bool training, int payload_id) {
         if(training) {
-            UnitDataRef unit_data = Resources::LoadUnit(payload_id, Race());
+            UnitDataRef unit_data = Resources::LoadUnit(payload_id, IsOrc());
             glm::ivec2 spawn_pos;
             lvl()->map.NearbySpawnCoords(Position(), Data()->size, 3, unit_data->navigationType, spawn_pos);
             lvl()->objects.EmplaceUnit(*lvl(), unit_data, Faction(), spawn_pos);
@@ -587,7 +588,7 @@ namespace eng {
         }
         else {
             int new_level = -1;
-            if(!Tech().IncrementResearch(payload_id, &new_level)) {
+            if(!Tech().IncrementResearch(payload_id, IsOrc(), &new_level)) {
                 //could maybe not throw & refund the money instead (... but this shouldn't really happen so I guess it doesn't matter that much)
                 ENG_LOG_WARN("Building::TrainingOrResearchFinished - research couldn't be upgraded any further (type={}, level={})", payload_id, new_level);
                 throw std::runtime_error("");
