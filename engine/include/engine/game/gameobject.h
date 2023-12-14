@@ -182,7 +182,7 @@ namespace eng {
 
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
-        int Health() const { return health; }
+        int Health() const { return int(health); }
         float HealthPercentage() const { return float(health) / data_f->health; }
         glm::ivec2 Icon() const { return data_f->icon; }
 
@@ -191,7 +191,7 @@ namespace eng {
         void ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
 
         void SetHealth(int health);
-        void AddHealth(int value);
+        void AddHealth(float value);
 
         virtual bool IsUnit() const { return false; }
         virtual bool IsGatherable(int unitNavType) const { return false; }
@@ -240,7 +240,7 @@ namespace eng {
         int factionIdx;
         int colorIdx;
 
-        int health;
+        float health;
 
         int variationIdx = 0;       //to enable variations for certain animations (increment based on how many overridable animations there are)
 
@@ -306,6 +306,7 @@ namespace eng {
 
         void UpdateVariationIdx();
         void ManaIncrement();
+        void TrollRegeneration();
     private:
         UnitDataRef data = nullptr;
 

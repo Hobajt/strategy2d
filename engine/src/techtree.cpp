@@ -230,14 +230,19 @@ namespace eng {
         return success;
     }
 
+    void Techtree::RecalculateRace(bool isOrc) {
+        data[int(isOrc)].RecomputeUnitLevels();
+        data[int(isOrc)].RecomputeBonuses(isOrc);
+    }
+
     void Techtree::RecalculateBoth() {
         RecalculateRace(false);
         RecalculateRace(true);
     }
 
-    void Techtree::RecalculateRace(bool isOrc) {
-        data[int(isOrc)].RecomputeUnitLevels();
-        data[int(isOrc)].RecomputeBonuses(isOrc);
+    int Techtree::GetResearch(int research_type, bool isOrc) {
+        ASSERT_MSG(((unsigned)research_type) < ((unsigned)ResearchType::COUNT), "Techtree::ResearchPrice - invalid research type");
+        return data[int(isOrc)].research[research_type];
     }
 
     //TODO: when exporting to JSON, only need to store the research array (other values can be recomputed on the fly)

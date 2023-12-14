@@ -15,6 +15,7 @@
 namespace eng {
 
 #define UNIT_MANA_REGEN_SPEED 1.f
+#define TROLL_REGENERATION_SPEED 0.1f
 
     static constexpr std::array<const char*, 2> workdone_sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
 
@@ -210,7 +211,7 @@ namespace eng {
         health = (health <= MaxHealth()) ? health : MaxHealth();
     }
 
-    void FactionObject::AddHealth(int value) {
+    void FactionObject::AddHealth(float value) {
         health += value;
         health = (health <= MaxHealth()) ? health : MaxHealth();
     }
@@ -251,8 +252,8 @@ namespace eng {
         }
         ImGui::Separator();
 
-        ImGui::Text("Health: %d/%d", health, data_f->MaxHealth());
-        ImGui::SliderInt("health", &health, 0, data_f->MaxHealth());
+        ImGui::Text("Health: %d/%d", int(health), data_f->MaxHealth());
+        ImGui::SliderFloat("health", &health, 0, data_f->MaxHealth());
         if(ImGui::SliderInt("color", &colorIdx, 0, ColorPalette::FactionColorCount()))
             ChangeColor(colorIdx);
         ImGui::SliderInt("variationIdx", &variationIdx, 0, 5);
@@ -313,6 +314,7 @@ namespace eng {
         command.Update(*this, *lvl());
         UpdateVariationIdx();
         ManaIncrement();
+        TrollRegeneration();
         animation_ended = animator.Update(ActionIdx());
         return (Health() <= 0) || IsKilled();
     }
@@ -418,6 +420,12 @@ namespace eng {
             mana += Input::Get().deltaTime * UNIT_MANA_REGEN_SPEED;
             if(mana > 255.f)
                 mana = 255.f;
+        }
+    }
+
+    void Unit::TrollRegeneration() {
+        if(IsOrc() && NumID()[1] == UnitType::RANGER && Tech().GetResearch(ResearchType::LM_UNIQUE, true)) {
+            AddHealth(Input::Get().deltaTime * TROLL_REGENERATION_SPEED);
         }
     }
 

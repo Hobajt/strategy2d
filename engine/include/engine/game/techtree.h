@@ -89,6 +89,7 @@ namespace eng {
         void RecalculateRace(bool isorc);
         void RecalculateBoth();
 
+        int GetResearch(int type, bool isOrc);
 
         void DBG_GUI();
     private:
