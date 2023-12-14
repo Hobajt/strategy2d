@@ -1,0 +1,22 @@
+[
+    {
+        "str_id": "human/tower_guard",
+        "name": "guard tower",
+        "type": 3,
+        "nav_type": 1,
+        "size": [2, 2],
+        "icon": [5,7],
+        "vision_range": 3,
+        "health": 400,
+        "mana": 0,
+        "build_time": 100,
+        "cost": [500,250,0],
+        "attack_range": 3,
+        "armor": 20,
+        "basic_damage": 4,
+        "pierce_damage": 12,
+        "race": 0,
+        "attack_speed": 2.0,
+        "refs": ["arrow"]
+    }
+]

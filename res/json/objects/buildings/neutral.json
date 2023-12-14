@@ -1,0 +1,56 @@
+[
+    {
+        "str_id": "misc/gold_mine",
+        "name": "gold mine",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3, 3],
+        "icon": [4,7],
+        "vision_range": 3,
+        "health": 1000,
+        "mana": 0,
+        "build_time": 1,
+        "cost": [0,0,0],
+        "attack_range": 0,
+        "armor": 100,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "custom_sprites": true,
+        "sprites_prefix": "misc/buildings",
+        "gatherable": true,
+        "animations": {
+            "gm_empty_summer": { "id": "idle" },
+            "gm_full_summer": { "id": "idle2" },
+            "gm_empty_winter": { "id": "idle", "summer": false },
+            "gm_full_winter": { "id": "idle2", "summer": false }
+        },
+        "sounds": { "yes": "bldg/mine" }
+    },
+    {
+        "str_id": "misc/oil",
+        "name": "oil patch",
+        "type": 3,
+        "nav_type": 2,
+        "size": [2, 2],
+        "icon": [9,7],
+        "vision_range": 3,
+        "health": 1000,
+        "mana": 0,
+        "build_time": 1,
+        "cost": [0,0,0],
+        "attack_range": 0,
+        "armor": 100,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "unattackable": true,
+        "traversable": true,
+        "custom_sprites": true,
+        "resource": true,
+        "sprites_prefix": "misc/buildings",
+        "animations": {
+            "oil": { "id": "idle", "both_weathers": true }
+        }
+    }
+]

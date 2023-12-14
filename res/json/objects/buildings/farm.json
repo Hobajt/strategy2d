@@ -1,0 +1,40 @@
+[
+    {
+        "str_id": "human/farm",
+        "name": "farm",
+        "type": 3,
+        "nav_type": 1,
+        "size": [2, 2],
+        "icon": [8,3],
+        "vision_range": 3,
+        "health": 400,
+        "mana": 0,
+        "build_time": 100,
+        "cost": [500,250,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "sounds": { "yes": "bldg/hfarm" }
+    },
+    {
+        "str_id": "orc/farm",
+        "name": "farm",
+        "type": 3,
+        "nav_type": 1,
+        "size": [2, 2],
+        "icon": [9,3],
+        "vision_range": 3,
+        "health": 400,
+        "mana": 0,
+        "build_time": 100,
+        "cost": [500,250,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "sounds": { "yes": "bldg/ofarm" }
+    }
+]

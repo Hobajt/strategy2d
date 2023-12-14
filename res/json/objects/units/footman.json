@@ -1,0 +1,35 @@
+[
+    {
+        "str_id": "human/footman",
+        "name": "footman",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 60,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [600,0,0],
+        "attack_range": 1,
+        "armor": 2,
+        "basic_damage": 60,
+        "pierce_damage": 3,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 1,
+        "icon": [2,0],
+        "upgrade_src": [1, 1],
+        "sounds": {
+            "yes": ["human/hyessir", 4],
+            "what": ["human/hwhat", 6],
+            "pissed": ["human/hpissed", 7],
+            "ready": "human/hready",
+            "attack": ["misc/sword", 3]
+        }
+    }
+]

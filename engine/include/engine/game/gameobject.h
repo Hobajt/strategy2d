@@ -34,7 +34,7 @@ namespace eng {
 
     namespace UnitType {
         enum {
-            PEASANT, FOOTMAN, ARCHER, BALLISTA, KNIGHT, PALADIN,
+            PEASANT, FOOTMAN, ARCHER, RANGER, BALLISTA, KNIGHT, PALADIN,
             TANKER, DESTROYER, BATTLESHIP, SUBMARINE,
             ROFLCOPTER, DEMOSQUAD,
             MAGE,

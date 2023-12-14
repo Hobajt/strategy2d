@@ -64,6 +64,7 @@ namespace eng {
         glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //peasant
         glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::MELEE },     //footman
         glm::ivec3{ TechtreeAttackBonusType::RANGED,    TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::RANGED },    //archer
+        glm::ivec3{ TechtreeAttackBonusType::RANGED,    TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::RANGED },    //ranger
         glm::ivec3{ TechtreeAttackBonusType::SIEGE,     TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::SIEGE },     //ballista
         glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::MELEE },     //knight
         glm::ivec3{ TechtreeAttackBonusType::MELEE,     TechtreeArmorBonusType::MELEE,  TechtreeLevelCounter::PALA },      //paladin
@@ -90,11 +91,11 @@ namespace eng {
     }
 
     int Techtree::BonusVision(int unit_type, bool isOrc) const {
-        return (unit_type == UnitType::ARCHER) * data[int(isOrc)].vision_bonus;
+        return (unit_type == UnitType::RANGER) * data[int(isOrc)].vision_bonus;
     }
 
     int Techtree::BonusRange(int unit_type, bool isOrc) const {
-        return (unit_type == UnitType::ARCHER) * data[int(isOrc)].range_bonus;
+        return (unit_type == UnitType::RANGER) * data[int(isOrc)].range_bonus;
     }
 
     bool Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const {

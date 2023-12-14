@@ -3,6 +3,7 @@
         ["human/peasant", "orc/peon"],
         ["human/footman", "orc/grunt"],
         ["human/archer", "orc/troll"],
+        ["human/ranger", "orc/berserker"],
         ["human/ballista", "orc/catapult"],
         ["human/knight", "orc/ogre"],
         ["human/paladin", "orc/ogre_magi"],

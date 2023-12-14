@@ -1,0 +1,75 @@
+[
+    {
+        "str_id": "human/town_hall",
+        "name": "town hall",
+        "type": 3,
+        "nav_type": 1,
+        "size": [4, 4],
+        "icon": [0,4],
+        "vision_range": 4,
+        "health": 1200,
+        "mana": 0,
+        "build_time": 255,
+        "upgrade_time": 200,
+        "cost": [1200,800,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "dropoff_mask": 3,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] },
+                { "idx": 1, "cmd": 13, "pid": 17, "hotkey": ["k", 11] }
+            ]
+        ]
+    },
+    {
+        "str_id": "human/keep",
+        "name": "keep",
+        "type": 3,
+        "nav_type": 1,
+        "size": [4, 4],
+        "icon": [6,6],
+        "vision_range": 6,
+        "health": 1400,
+        "mana": 0,
+        "build_time": 200,
+        "upgrade_time": 200,
+        "cost": [2000,1000,200],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "dropoff_mask": 3,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] },
+                { "idx": 1, "cmd": 13, "pid": 18, "hotkey": ["c", 11] }
+            ]
+        ]
+    },
+    {
+        "str_id": "human/castle",
+        "name": "castle",
+        "type": 3,
+        "nav_type": 1,
+        "size": [4, 4],
+        "icon": [8,6],
+        "vision_range": 9,
+        "health": 1600,
+        "mana": 0,
+        "build_time": 200,
+        "upgrade_time": 200,
+        "cost": [2500,1200,500],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "dropoff_mask": 3,
+        "buttons": [[ { "idx": 0, "cmd": 11, "pid": 0, "hotkey": ["p", 6] } ]]
+    }
+]
