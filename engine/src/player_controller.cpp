@@ -398,7 +398,7 @@ namespace eng {
         //iterate through all the buttons (in active page) & enable/disable them based on whether the button action conditions are met
         for(size_t i = 0; i < pg.size(); i++) {
             ActionButtonDescription btn = pg[i];
-            bool conditions_met = (btn.command_id != ActionButton_CommandType::DISABLED) && player->ActionButtonConditionCheck(btn, obj);
+            bool conditions_met = (btn.command_id != ActionButton_CommandType::DISABLED);
             btns->GetButton(i)->Enable(conditions_met);
         }
     }

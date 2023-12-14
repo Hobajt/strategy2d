@@ -103,9 +103,6 @@ namespace eng {
         //Doesn't check for resources, returns false if given button doesn't meet the conditions and shouldn't be displayed.
         bool ActionButtonSetup(GUI::ActionButtonDescription& btn, bool isOrc) const;
 
-        //Condition check for periodical calling. Call whenever the button is clicked.
-        bool ActionButtonConditionCheck(const GUI::ActionButtonDescription& btn, const FactionObject& src) const;
-
         bool TrainingPreconditionsMet(int unit_type) const;
 
         bool CastConditionCheck(const Unit& src, int payload_id) const;

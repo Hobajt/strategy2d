@@ -215,18 +215,12 @@ namespace eng {
                 break;
             case GUI::ActionButton_CommandType::CAST:
                 return techtree.SetupSpellButton(btn, isOrc);
+            case GUI::ActionButton_CommandType::BUILD:
+                
+                return true;
             default:
                 return true;
         }
-
-        
-    }
-
-    bool FactionController::ActionButtonConditionCheck(const GUI::ActionButtonDescription& btn, const FactionObject& src) const {
-        //TODO: 
-        //decode the action, that's supposed to be triggered by given button
-        //evaluate conditions for said action (for example action is build -> check whether given building (payload_id) can be built)
-        return true;
     }
 
     bool FactionController::TrainingPreconditionsMet(int unit_type) const {

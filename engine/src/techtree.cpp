@@ -106,6 +106,9 @@ namespace eng {
         int type = btn.payload_id;
         int level = data[race].research[btn.payload_id];
 
+        if(!ResearchDependenciesMet(btn.payload_id, isOrc))
+            return false;
+
         ResearchInfo info = {};
         if(Resources::LoadResearchInfo(type, level+1, info)) {
             btn.name        = info.viz.name[race];
@@ -164,6 +167,20 @@ namespace eng {
         // btn.payload_id
         //TODO: 
         return true;
+    }
+
+    bool Techtree::ResearchDependenciesMet(int research_type, bool isOrc) const {
+        switch(research_type) {
+            case ResearchType::LM_RANGE:
+            case ResearchType::LM_SIGHT:
+            case ResearchType::LM_UNIQUE:
+                return data[int(isOrc)].research[ResearchType::LM_RANGER_UPGRADE] > 0;
+            case ResearchType::PALA_HEAL:
+            case ResearchType::PALA_EXORCISM:
+                return data[int(isOrc)].research[ResearchType::PALA_UPGRADE] > 0;
+            default:
+                return true;
+        }
     }
 
     bool Techtree::ApplyUnitUpgrade(int& unit_type, bool isOrc) const {
