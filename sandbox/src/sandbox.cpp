@@ -71,11 +71,17 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/berserker"),  f1, glm::vec2(5.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/ranger"),   f1, glm::vec2(4.f, 5.f), false);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(21.f, 21.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(25.f, 21.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(27.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/barracks"), f1, glm::vec2(21.f, 22.f), true);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(21.f, 25.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/lumber_mill"), f1, glm::vec2(25.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(27.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/lumber_mill"), f1, glm::vec2(24.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/barracks"), f1, glm::vec2(21.f, 25.f), true);
+
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(18.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f1, glm::vec2(18.f, 25.f), true);
+
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);

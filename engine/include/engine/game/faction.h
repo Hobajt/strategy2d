@@ -99,11 +99,12 @@ namespace eng {
 
         int ProductionBoost(int res_idx);
 
-        //Button condition check, to be called once (not every frame). Button may get modified by calling the method.
+        //Button condition check, button description may get modified by calling the method.
         //Doesn't check for resources, returns false if given button doesn't meet the conditions and shouldn't be displayed.
         bool ActionButtonSetup(GUI::ActionButtonDescription& btn, bool isOrc) const;
 
         bool TrainingPreconditionsMet(int unit_type) const;
+        bool BuildingPreconditionsMet(int building_type) const;
 
         bool CastConditionCheck(const Unit& src, int payload_id) const;
 

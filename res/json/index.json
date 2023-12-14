@@ -31,7 +31,7 @@
         ["human/platform", "orc/platform"],
 
         ["human/inventor", "orc/inventor"],
-        ["human/stables", "orc/mound"],
+        ["human/stables", "orc/ogre_mound"],
         ["human/church", "orc/altar"],
         ["human/wizard_tower", "orc/temple"],
         ["human/aviary", "orc/dragon_roost"],

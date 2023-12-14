@@ -1,0 +1,38 @@
+[
+    {
+        "str_id": "human/stables",
+        "name": "Stables",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,5],
+        "vision_range": 3,
+        "health": 500,
+        "mana": 0,
+        "build_time": 150,
+        "cost": [1000,300,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0
+    },
+    {
+        "str_id": "orc/ogre_mound",
+        "name": "ogre mound",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [7,5],
+        "vision_range": 3,
+        "health": 500,
+        "mana": 0,
+        "build_time": 150,
+        "cost": [1000,300,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1
+    }
+]

@@ -216,8 +216,7 @@ namespace eng {
             case GUI::ActionButton_CommandType::CAST:
                 return techtree.SetupSpellButton(btn, isOrc);
             case GUI::ActionButton_CommandType::BUILD:
-                
-                return true;
+                return BuildingPreconditionsMet(btn.payload_id);
             default:
                 return true;
         }
@@ -238,6 +237,25 @@ namespace eng {
                 return (stats.buildings[BuildingType::FOUNDRY] > 0);
             case UnitType::SUBMARINE:
                 return (stats.buildings[BuildingType::INVENTOR] > 0);
+            default:
+                return true;
+        }
+    }
+
+    bool FactionController::BuildingPreconditionsMet(int building_type) const {
+        switch(building_type) {
+            case BuildingType::STABLES:
+            case BuildingType::INVENTOR:
+                return (stats.tier >= 2);
+            case BuildingType::CHURCH:
+            case BuildingType::WIZARD_TOWER:
+            case BuildingType::DRAGON_ROOST:
+                return (stats.tier >= 3);
+            case BuildingType::SHIPYARD:
+                return stats.buildings[BuildingType::LUMBER_MILL] > 0;
+            case BuildingType::FOUNDRY:
+            case BuildingType::OIL_REFINERY:
+                return stats.buildings[BuildingType::SHIPYARD] > 0;
             default:
                 return true;
         }

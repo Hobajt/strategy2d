@@ -1,0 +1,54 @@
+[
+    {
+        "str_id": "human/barracks",
+        "name": "Barracks",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [3,4],
+        "vision_range": 3,
+        "health": 800,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [700,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 1 },
+                { "idx": 1, "cmd": 11, "pid": 2 },
+                { "idx": 2, "cmd": 11, "pid": 4 },
+                { "idx": 3, "cmd": 11, "pid": 5 }
+            ]
+        ]
+    },
+    {
+        "str_id": "orc/barracks",
+        "name": "Barracks",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [3,4],
+        "vision_range": 3,
+        "health": 800,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [700,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 1 },
+                { "idx": 1, "cmd": 11, "pid": 2 },
+                { "idx": 2, "cmd": 11, "pid": 4 },
+                { "idx": 3, "cmd": 11, "pid": 5 }
+            ]
+        ]
+    }
+]

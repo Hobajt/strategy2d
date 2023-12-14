@@ -1,0 +1,138 @@
+[
+    {
+        "str_id": "human/knight",
+        "name": "knight",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "speed": 13,
+        "health": 90,
+        "mana": 0,
+        "build_time": 90,
+        "cost": [800,100,0],
+        "attack_range": 1,
+        "armor": 4,
+        "basic_damage": 8,
+        "pierce_damage": 4,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 1,
+        "icon": [8,0],
+        "upgrade_src": [1, 1],
+        "sounds": {
+            "yes": ["knight/knyessr", 4],
+            "what": ["knight/knwhat", 4],
+            "pissed": ["knight/knpissd", 3],
+            "ready": "knight/knready",
+            "attack": ["misc/sword", 3]
+        }
+    },
+    {
+        "str_id": "human/paladin",
+        "name": "paladin",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":     { "sprite_path": "human/knight", "duration": 1.0 },
+            "walk":     { "sprite_path": "human/knight", "duration": 1.0 },
+            "action":   { "sprite_path": "human/knight", "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death":    { "sprite_path": "human/knight", "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 5,
+        "speed": 13,
+        "health": 90,
+        "mana": 0,
+        "build_time": 90,
+        "cost": [800,100,0],
+        "attack_range": 1,
+        "armor": 4,
+        "basic_damage": 8,
+        "pierce_damage": 4,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 1,
+        "icon": [0,1],
+        "upgrade_src": [1, 1],
+        "sounds": {
+            "yes": ["paladin/pkyessr", 4],
+            "what": ["paladin/pkwhat", 4],
+            "pissed": ["paladin/pkpissd", 3],
+            "ready": "paladin/pkready",
+            "attack": ["misc/sword", 3]
+        }
+    },
+    {
+        "str_id": "orc/ogre",
+        "name": "ogre",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "speed": 13,
+        "health": 90,
+        "mana": 0,
+        "build_time": 90,
+        "cost": [800,100,0],
+        "attack_range": 1,
+        "armor": 4,
+        "basic_damage": 8,
+        "pierce_damage": 4,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 1,
+        "icon": [9,0],
+        "upgrade_src": [1, 1],
+        "sounds": {
+            "yes": ["ogre/ogyessr", 3],
+            "what": ["ogre/ogwhat", 4],
+            "pissed": ["ogre/ogpissd", 5],
+            "ready": "ogre/ogready",
+            "attack": "misc/punch"
+        }
+    },
+    {
+        "str_id": "orc/ogre_magi",
+        "name": "ogre-mage",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":     { "sprite_path": "orc/ogre", "duration": 1.0 },
+            "walk":     { "sprite_path": "orc/ogre", "duration": 1.0 },
+            "action":   { "sprite_path": "orc/ogre", "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death":    { "sprite_path": "orc/ogre", "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 5,
+        "speed": 13,
+        "health": 90,
+        "mana": 0,
+        "build_time": 90,
+        "cost": [800,100,0],
+        "attack_range": 1,
+        "armor": 4,
+        "basic_damage": 8,
+        "pierce_damage": 4,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 1,
+        "icon": [1,1],
+        "upgrade_src": [1, 1],
+        "sounds": {
+            "yes": ["ogremage/omyessr", 3],
+            "what": ["ogremage/omwhat", 4],
+            "pissed": ["ogremage/ompissd", 3],
+            "ready": "ogremage/omready",
+            "attack": "misc/punch"
+        }
+    }
+]
