@@ -199,11 +199,54 @@ namespace eng {
         return 10;
     }
 
-    bool FactionController::ButtonConditionCheck(const FactionObject& src, const GUI::ActionButtonDescription& btn) const {
+    bool FactionController::ActionButtonSetup(GUI::ActionButtonDescription& btn, bool isOrc) const {
+        switch(btn.command_id) {
+            case GUI::ActionButton_CommandType::RESEARCH:
+                return techtree.SetupResearchButton(btn, isOrc);
+            case GUI::ActionButton_CommandType::TRAIN:
+                //requirements check (building preconditions)
+                if(TrainingPreconditionsMet(btn.payload_id)) {
+                    techtree.SetupTrainButton(btn, isOrc);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+                break;
+            case GUI::ActionButton_CommandType::CAST:
+                return techtree.SetupSpellButton(btn, isOrc);
+            default:
+                return true;
+        }
+
+        
+    }
+
+    bool FactionController::ActionButtonConditionCheck(const GUI::ActionButtonDescription& btn, const FactionObject& src) const {
         //TODO: 
         //decode the action, that's supposed to be triggered by given button
         //evaluate conditions for said action (for example action is build -> check whether given building (payload_id) can be built)
         return true;
+    }
+
+    bool FactionController::TrainingPreconditionsMet(int unit_type) const {
+        switch(unit_type) {
+            case UnitType::ARCHER:
+            case UnitType::RANGER:
+                return (stats.buildings[BuildingType::LUMBER_MILL] > 0);
+            case UnitType::KNIGHT:
+            case UnitType::PALADIN:
+                return (stats.buildings[BuildingType::STABLES] > 0);
+            case UnitType::BALLISTA:
+                return (stats.buildings[BuildingType::BLACKSMITH] > 0);
+            case UnitType::BATTLESHIP:
+            case UnitType::TRANSPORT:
+                return (stats.buildings[BuildingType::FOUNDRY] > 0);
+            case UnitType::SUBMARINE:
+                return (stats.buildings[BuildingType::INVENTOR] > 0);
+            default:
+                return true;
+        }
     }
 
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {

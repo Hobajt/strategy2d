@@ -328,6 +328,18 @@ namespace eng {
             u.Render();
     }
 
+    void ObjectPool::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
+        int count = 0;
+
+        for(Unit& u : units) {
+            if(u.UnitUpgrade(factionID, old_type, new_type, isOrcUnit)) {
+                count++;
+            }
+        }
+
+        ENG_LOG_TRACE("ObjectPool::UnitUpgade - upgraded {} -> {} (faction{}, unit count={})", old_type, new_type, factionID, count);
+    }
+
     //===== getters =====
 
     ObjectID ObjectPool::GetObjectAt(const glm::ivec2& map_coords) {

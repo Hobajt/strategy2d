@@ -33,6 +33,39 @@
         "refs": ["arrow"]
     },
     {
+        "str_id": "human/ranger",
+        "name": "ranger",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":   { "sprite_path": "human/archer", "duration": 1.0 },
+            "walk":   { "sprite_path": "human/archer", "duration": 1.0 },
+            "action": { "sprite_path": "human/archer", "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death":  { "sprite_path": "human/archer", "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 6,
+        "health": 50,
+        "mana": 0,
+        "build_time": 70,
+        "cost": [500,50,0],
+        "attack_range": 4,
+        "armor": 0,
+        "basic_damage": 3,
+        "pierce_damage": 6,
+        "cooldown": 1.5,
+        "race": 0,
+        "death_sound": 1,
+        "icon": [6,0],
+        "upgrade_src": [4, 1],
+        "sounds": {
+            "yes": ["elves/eyessir", 4],
+            "what": ["elves/ewhat", 4],
+            "pissed": ["elves/epissed", 3],
+            "ready": "elves/eready"
+        },
+        "refs": ["arrow"]
+    },
+    {
         "str_id": "orc/troll",
         "name": "troll",
         "type": 2,
@@ -56,6 +89,39 @@
         "race": 1,
         "death_sound": 2,
         "icon": [5,0],
+        "upgrade_src": [4, 1],
+        "sounds": {
+            "yes": ["troll/tryessr", 3],
+            "what": ["troll/trwhat", 3],
+            "pissed": ["troll/trpissd", 3],
+            "ready": "troll/trready",
+            "attack": "misc/axe"
+        }
+    },
+    {
+        "str_id": "orc/berserker",
+        "name": "berserker",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":   { "sprite_path": "orc/troll", "duration": 1.0 },
+            "walk":   { "sprite_path": "orc/troll", "duration": 1.0 },
+            "action": { "sprite_path": "orc/troll", "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death":  { "sprite_path": "orc/troll", "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 6,
+        "health": 50,
+        "mana": 0,
+        "build_time": 70,
+        "cost": [500,50,0],
+        "attack_range": 4,
+        "armor": 0,
+        "basic_damage": 3,
+        "pierce_damage": 6,
+        "cooldown": 1.5,
+        "race": 1,
+        "death_sound": 2,
+        "icon": [7,0],
         "upgrade_src": [4, 1],
         "sounds": {
             "yes": ["troll/tryessr", 3],

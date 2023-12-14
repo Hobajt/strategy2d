@@ -59,6 +59,9 @@ namespace eng {
         void Update();
         void Render();
 
+        //Update units of certain type to new type.
+        void UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
+
         //===== entrance controller API =====
 
         bool IssueEntrance_Work(const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmdType) { return entranceController.IssueEntrance_Work(*this, buildingID, workerID, cmd_target, cmdType); }

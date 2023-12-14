@@ -35,7 +35,7 @@ namespace eng {
     namespace UnitType {
         enum {
             PEASANT, FOOTMAN, ARCHER, RANGER, BALLISTA, KNIGHT, PALADIN,
-            TANKER, DESTROYER, BATTLESHIP, SUBMARINE,
+            TANKER, DESTROYER, BATTLESHIP, SUBMARINE, TRANSPORT,
             ROFLCOPTER, DEMOSQUAD,
             MAGE,
             GRYPHON,
@@ -269,6 +269,8 @@ namespace eng {
         void IssueCommand(const Command& cmd);
 
         virtual int ActionIdx() const override;
+
+        bool UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
 
         int MoveSpeed() const { return data->speed; }
         int UnitLevel() const { return Tech().UnitLevel(NumID()[1], IsOrc()); }

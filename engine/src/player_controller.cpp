@@ -351,9 +351,10 @@ namespace eng {
             FactionObject& object = level.objects.GetObject(selection.selection[0]);
             const ButtonDescriptions& desc = object.GetButtonDescriptions();
 
+            bool selection_isOrc = level.objects.GetObject(selection.selection[0]).IsOrc();
+            PlayerFactionControllerRef player = level.factions.Player();
+
             int p_idx = 0;
-            bool bld_isOrc = false;
-            bool bld_raceRetrieved = false;
             for(const ButtonDescriptions::PageEntry& page_desc : desc.pages) {
                 if(p_idx > 0) {
                     ResetPage(p_idx);
@@ -362,20 +363,10 @@ namespace eng {
                 PageData& current_page = pages[p_idx++];
 
                 for(const auto& [pos_idx, btn_data] : page_desc) {
-                    //visuals prep for the research buttons (others are already pre-set)
-                    if(btn_data.command_id == ActionButton_CommandType::RESEARCH) {
-                        if(!bld_raceRetrieved) {
-                            bld_isOrc = bool(level.objects.GetBuilding(selection.selection[0]).Race());
-                            bld_raceRetrieved = true;
-                        }
-
-                        GUI::ActionButtonDescription btn = btn_data;
-                        if(level.factions.Player()->Tech().SetupResearchButtonVisuals(btn, bld_isOrc)) {
-                            current_page[pos_idx] = btn;
-                        }
-                    }
-                    else {
-                        current_page[pos_idx] = btn_data;
+                    GUI::ActionButtonDescription btn = btn_data;
+                    //override only after conditions are checked - to allow multiple button definitions on the same slot
+                    if(player->ActionButtonSetup(btn, selection_isOrc)) {
+                        current_page[pos_idx] = btn;
                     }
                 }
             }
@@ -407,7 +398,7 @@ namespace eng {
         //iterate through all the buttons (in active page) & enable/disable them based on whether the button action conditions are met
         for(size_t i = 0; i < pg.size(); i++) {
             ActionButtonDescription btn = pg[i];
-            bool conditions_met = (btn.command_id != ActionButton_CommandType::DISABLED) && player->ButtonConditionCheck(obj, btn);
+            bool conditions_met = (btn.command_id != ActionButton_CommandType::DISABLED) && player->ActionButtonConditionCheck(btn, obj);
             btns->GetButton(i)->Enable(conditions_met);
         }
     }

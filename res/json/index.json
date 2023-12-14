@@ -11,6 +11,7 @@
         ["human/destroyer", "orc/destroyer"],
         ["human/battleship", "orc/battleship"],
         ["human/submarine", "orc/submarine"],
+        ["human/transport", "orc/transport"],
         ["human/roflcopter", "orc/roflcopter"],
         ["human/demosquad", "orc/demosquad"],
         ["human/mage", "orc/death_knight"],

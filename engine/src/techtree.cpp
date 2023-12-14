@@ -98,8 +98,9 @@ namespace eng {
         return (unit_type == UnitType::RANGER) * data[int(isOrc)].range_bonus;
     }
 
-    bool Techtree::SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const {
-        ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::SetupResearchButtonVisuals - invalid research type");
+    bool Techtree::SetupResearchButton(GUI::ActionButtonDescription& btn, bool isOrc) const {
+        ASSERT_MSG(btn.command_id == GUI::ActionButton_CommandType::RESEARCH, "Techtree::ButtonSetup - invalid command type detected ({})", btn.command_id);
+        ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::ButtonSetup - invalid research type.");
 
         int race = int(isOrc);
         int type = btn.payload_id;
@@ -114,6 +115,65 @@ namespace eng {
             btn.price       = info.data.price[race];
             btn.icon        = Icon_AddOffset(info.viz.icon[race], level);
             std::transform(btn.name.begin(), btn.name.end(), btn.name.begin(), ::toupper);
+            return true;
+        }
+        return false;
+    }
+
+    bool Techtree::SetupTrainButton(GUI::ActionButtonDescription& btn, bool isOrc) const {
+        ASSERT_MSG(btn.command_id == GUI::ActionButton_CommandType::TRAIN, "Techtree::ButtonSetup - invalid command type detected ({})", btn.command_id);
+        int race = int(isOrc);
+        if(btn.payload_id == UnitType::ARCHER && data[race].research[ResearchType::LM_RANGER_UPGRADE]) {
+            btn.payload_id  = UnitType::RANGER;
+            btn.icon        = glm::ivec2(btn.icon.x + 2, btn.icon.y);
+            btn.has_hotkey  = true;
+            if(isOrc) {
+                btn.name        = "berserker";
+                btn.hotkey      = 'b';
+                btn.hotkey_idx  = 0;
+            }
+            else {
+                btn.name        = "ranger";
+                btn.hotkey      = 'a';
+                btn.hotkey_idx  = 1;
+            }
+            return true;
+        }
+        else if(btn.payload_id == UnitType::KNIGHT && data[race].research[ResearchType::PALA_UPGRADE]) {
+            btn.payload_id  = UnitType::PALADIN;
+            btn.icon        = glm::ivec2(btn.icon.x + 2, btn.icon.y);
+            btn.has_hotkey  = true;
+            if(isOrc) {
+                btn.name        = "ogre-mage";
+                btn.hotkey      = 'o';
+                btn.hotkey_idx  = 0;
+            }
+            else {
+                btn.name        = "paladin";
+                btn.hotkey      = 'p';
+                btn.hotkey_idx  = 0;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool Techtree::SetupSpellButton(GUI::ActionButtonDescription& btn, bool isOrc) const {
+        ASSERT_MSG(btn.command_id == GUI::ActionButton_CommandType::CAST, "Techtree::ButtonSetup - invalid command type detected ({})", btn.command_id);
+        // ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::ButtonSetup - invalid research type.");
+        // btn.payload_id
+        //TODO: 
+        return true;
+    }
+
+    bool Techtree::ApplyUnitUpgrade(int& unit_type, bool isOrc) const {
+        int race = int(isOrc);
+        if(unit_type == UnitType::ARCHER && data[race].research[ResearchType::LM_RANGER_UPGRADE]) {
+            unit_type = UnitType::RANGER;
+            return true;
+        }
+        else if(unit_type == UnitType::KNIGHT && data[race].research[ResearchType::PALA_UPGRADE]) {
+            unit_type = UnitType::PALADIN;
             return true;
         }
         return false;

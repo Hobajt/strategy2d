@@ -332,6 +332,37 @@ namespace eng {
         return idx;
     }
 
+    bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
+        if(factionID != FactionIdx() || old_type != NumID()[1] || isOrcUnit != IsOrc()) {
+            return false;
+        }
+
+        if(((unsigned)new_type) >= ((unsigned)UnitType::COUNT)) {
+            ENG_LOG_ERROR("Unit::UnitUpgrade - invalid unit type provided ({}).", new_type);
+            throw std::out_of_range("");
+        }
+        UnitDataRef new_data = Resources::LoadUnit(new_type, IsOrc());
+        if(new_data == nullptr) {
+            ENG_LOG_ERROR("Unit::UnitUpgrade - invalid data type for the upgrade.");
+            throw std::runtime_error("");
+        }
+
+        //health update
+        int new_health = HealthPercentage() * new_data->MaxHealth();
+
+        //signal to faction controller, so that it updates its stats
+        Faction()->ObjectUpgraded(data, new_data);
+
+        //data pointer & animator updates
+        data = new_data;
+        UpdateDataPointer(new_data);
+        animator = Animator(new_data->animData);
+
+        SetHealth(new_health);
+
+        return true;
+    }
+
     glm::vec2 Unit::RenderPosition() const {
         glm::vec2 pos = glm::vec2(Position()) + move_offset;
         if(NavigationType() != NavigationBit::AIR) {
@@ -580,6 +611,7 @@ namespace eng {
 
     void Building::TrainingOrResearchFinished(bool training, int payload_id) {
         if(training) {
+            Tech().ApplyUnitUpgrade(payload_id, IsOrc());
             UnitDataRef unit_data = Resources::LoadUnit(payload_id, IsOrc());
             glm::ivec2 spawn_pos;
             lvl()->map.NearbySpawnCoords(Position(), Data()->size, 3, unit_data->navigationType, spawn_pos);
@@ -588,14 +620,23 @@ namespace eng {
         }
         else {
             int new_level = -1;
-            if(!Tech().IncrementResearch(payload_id, IsOrc(), &new_level)) {
+            if(Tech().IncrementResearch(payload_id, IsOrc(), &new_level)) {
+                ENG_LOG_TRACE("Building::TrainingOrResearchFinished - research (type={}) improved to level {}", payload_id, new_level);
+                Audio::Play(SoundEffect::GetPath(workdone_sound_name[data->race]), Position());
+
+                //issue unit upgrade
+                if(payload_id == ResearchType::LM_RANGER_UPGRADE) {
+                    lvl()->objects.UnitUpgrade(FactionIdx(), UnitType::ARCHER, UnitType::RANGER, IsOrc());
+                }
+                else if(payload_id == ResearchType::PALA_UPGRADE) {
+
+                }
+                
+            }
+            else {
                 //could maybe not throw & refund the money instead (... but this shouldn't really happen so I guess it doesn't matter that much)
                 ENG_LOG_WARN("Building::TrainingOrResearchFinished - research couldn't be upgraded any further (type={}, level={})", payload_id, new_level);
                 throw std::runtime_error("");
-            }
-            else {
-                ENG_LOG_TRACE("Building::TrainingOrResearchFinished - research (type={}) improved to level {}", payload_id, new_level);
-                Audio::Play(SoundEffect::GetPath(workdone_sound_name[data->race]), Position());
             }
         }
 

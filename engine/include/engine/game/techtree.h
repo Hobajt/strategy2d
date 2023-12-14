@@ -70,7 +70,16 @@ namespace eng {
         int BonusVision(int unit_type, bool isOrc) const;
         int BonusRange(int unit_type, bool isOrc) const;
 
-        bool SetupResearchButtonVisuals(GUI::ActionButtonDescription& btn, bool isOrc) const;
+        //Updates price & visuals of the research button (to correspond with current researched level).
+        bool SetupResearchButton(GUI::ActionButtonDescription& btn, bool isOrc) const;
+        //Overrides the button in case it's an archer/knight unit and their upgrade has already been researched.
+        bool SetupTrainButton(GUI::ActionButtonDescription& btn, bool isOrc) const;
+        //Checks if given spell is already researched.
+        bool SetupSpellButton(GUI::ActionButtonDescription& btn, bool isOrc) const;
+
+        //Changes provided unit_type if the upgarde was researched.
+        bool ApplyUnitUpgrade(int& unit_type, bool isOrc) const;
+
         int UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc) const;
 
         glm::ivec3 ResearchPrice(int research_type, bool isOrc, bool forCancel = true) const;
@@ -79,6 +88,7 @@ namespace eng {
         bool IncrementResearch(int research_type, bool isOrc, int* out_level = nullptr);
         void RecalculateRace(bool isorc);
         void RecalculateBoth();
+
 
         void DBG_GUI();
     private:
