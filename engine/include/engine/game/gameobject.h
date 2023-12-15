@@ -162,21 +162,21 @@ namespace eng {
 
         int BasicDamage() const { return data_f->basic_damage; }
         int PierceDamage() const { return data_f->pierce_damage + BonusDamage(); }
-        int BonusDamage() const { return Tech().BonusDamage(NumID()[1], IsOrc()); }
+        int BonusDamage() const { return IsUnit() ? Tech().BonusDamage(NumID()[1], IsOrc()) : 0; }
         int BaseMinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
         int BaseMaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
 
         int Armor() const { return BaseArmor() + BonusArmor(); }
         int BaseArmor() const { return data_f->armor; }
-        int BonusArmor() const { return Tech().BonusArmor(NumID()[1], IsOrc()); }
+        int BonusArmor() const { return IsUnit() ? Tech().BonusArmor(NumID()[1], IsOrc()) : 0; }
 
         int AttackRange() const { return BaseAttackRange() + BonusAttackRange(); }
         int BaseAttackRange() const { return data_f->attack_range; }
-        int BonusAttackRange() const { return Tech().BonusRange(NumID()[1], IsOrc()); }
+        int BonusAttackRange() const { return IsUnit() ? Tech().BonusRange(NumID()[1], IsOrc()) : 0; }
 
         int VisionRange() const { return BaseVisionRange() + BonusVisionRange(); }
         int BaseVisionRange() const { return data_f->vision_range; }
-        int BonusVisionRange() const { return Tech().BonusVision(NumID()[1], IsOrc()); }
+        int BonusVisionRange() const { return IsUnit() ? Tech().BonusVision(NumID()[1], IsOrc()) : 0; }
 
         //===============
 
@@ -193,6 +193,7 @@ namespace eng {
         void SetHealth(int health);
         void AddHealth(float value);
 
+        // bool HasUnitType() const { return NumID()[0] == ObjectType::UNIT; }
         virtual bool IsUnit() const { return false; }
         virtual bool IsGatherable(int unitNavType) const { return false; }
         virtual bool IsGatherable() const { return false; }

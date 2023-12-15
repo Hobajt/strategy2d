@@ -96,26 +96,25 @@ namespace eng {
 
             bool is_upgraded_tower = object->NumID()[1] == BuildingType::GUARD_TOWER || object->NumID()[1] == BuildingType::CANNON_TOWER;
             if(selection.selection_type >= SelectionType::PLAYER_BUILDING && (object->IsUnit() || is_upgraded_tower)) {
-                bool is_unit = object->IsUnit();
                 glm::ivec2 highlight_idx = glm::ivec2(-1);
 
                 snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", object->BaseArmor());
-                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusArmor() : 0, highlight_idx);
+                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusArmor(), highlight_idx);
                 stats[0]->Setup(buf, highlight_idx);
 
                 snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", object->BaseMinDamage(), object->BaseMaxDamage());
-                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusDamage() : 0, highlight_idx);
+                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusDamage(), highlight_idx);
                 stats[1]->Setup(buf, highlight_idx);
 
                 snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", object->BaseAttackRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusAttackRange() : 0, highlight_idx);
+                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusAttackRange(), highlight_idx);
                 stats[2]->Setup(buf, highlight_idx);
 
                 snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", object->BaseVisionRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusVisionRange() : 0, highlight_idx);
+                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusVisionRange(), highlight_idx);
                 stats[3]->Setup(buf, highlight_idx);
 
-                if(is_unit) {
+                if(object->IsUnit()) {
                     Unit* unit = static_cast<Unit*>(object);
 
                     snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
