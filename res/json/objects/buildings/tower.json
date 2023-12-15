@@ -10,9 +10,16 @@
         "health": 100,
         "mana": 0,
         "build_time": 60,
+        "upgrade_time": 140,
         "cost": [550,200,0],
         "armor": 20,
-        "race": 0
+        "race": 0,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 13, "pid": 15, "hotkey": ["g", 0] },
+                { "idx": 1, "cmd": 13, "pid": 16, "hotkey": ["c", 0] }
+            ]
+        ]
     },
     {
         "str_id": "human/guard_tower",
@@ -25,6 +32,7 @@
         "health": 130,
         "mana": 0,
         "build_time": 140,
+        "upgrade_time": 140,
         "cost": [500,150,0],
         "attack_range": 6,
         "armor": 20,
@@ -44,12 +52,12 @@
         "vision_range": 9,
         "health": 160,
         "mana": 0,
-        "build_time": 190,
+        "upgrade_time": 190,
         "cost": [1000,300,0],
         "attack_range": 6,
         "armor": 20,
-        "basic_damage": 50,
-        "pierce_damage": 0,
+        "basic_damage": 30,
+        "pierce_damage": 20,
         "race": 0,
         "attack_speed": 2.0,
         "refs": ["cannon_ball"]
@@ -65,9 +73,16 @@
         "health": 100,
         "mana": 0,
         "build_time": 60,
+        "upgrade_time": 140,
         "cost": [550,200,0],
         "armor": 20,
-        "race": 1
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 13, "pid": 15, "hotkey": ["g", 0] },
+                { "idx": 1, "cmd": 13, "pid": 16, "hotkey": ["c", 0] }
+            ]
+        ]
     },
     {
         "str_id": "orc/guard_tower",
@@ -79,7 +94,7 @@
         "vision_range": 9,
         "health": 130,
         "mana": 0,
-        "build_time": 140,
+        "upgrade_time": 140,
         "cost": [500,150,0],
         "attack_range": 6,
         "armor": 20,
@@ -99,12 +114,12 @@
         "vision_range": 9,
         "health": 160,
         "mana": 0,
-        "build_time": 190,
+        "upgrade_time": 190,
         "cost": [1000,300,0],
         "attack_range": 6,
         "armor": 20,
-        "basic_damage": 50,
-        "pierce_damage": 0,
+        "basic_damage": 30,
+        "pierce_damage": 20,
         "race": 1,
         "attack_speed": 2.0,
         "refs": ["cannon_ball"]

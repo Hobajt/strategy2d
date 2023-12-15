@@ -213,6 +213,8 @@ namespace eng {
                     return false;
                 }
                 break;
+            case GUI::ActionButton_CommandType::UPGRADE:
+                return UpgradePreconditionsMet(btn.payload_id);
             case GUI::ActionButton_CommandType::CAST:
                 return techtree.SetupSpellButton(btn, isOrc);
             case GUI::ActionButton_CommandType::BUILD:
@@ -256,6 +258,17 @@ namespace eng {
             case BuildingType::FOUNDRY:
             case BuildingType::OIL_REFINERY:
                 return stats.buildings[BuildingType::SHIPYARD] > 0;
+            default:
+                return true;
+        }
+    }
+
+    bool FactionController::UpgradePreconditionsMet(int building_type) const {
+        switch(building_type) {
+            case BuildingType::GUARD_TOWER:
+                return stats.buildings[BuildingType::LUMBER_MILL] > 0;
+            case BuildingType::CANNON_TOWER:
+                return stats.buildings[BuildingType::BLACKSMITH] > 0;
             default:
                 return true;
         }

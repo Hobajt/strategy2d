@@ -94,41 +94,43 @@ namespace eng {
                 health->Setup(std::string(buf));
             }
 
-            if(object->IsUnit() && selection.selection_type >= SelectionType::PLAYER_BUILDING) {
-                //display units stats (always the same, except the mana bar might be hidden)
-                Unit* unit = static_cast<Unit*>(object);
+            bool is_upgraded_tower = object->NumID()[1] == BuildingType::GUARD_TOWER || object->NumID()[1] == BuildingType::CANNON_TOWER;
+            if(selection.selection_type >= SelectionType::PLAYER_BUILDING && (object->IsUnit() || is_upgraded_tower)) {
+                bool is_unit = object->IsUnit();
                 glm::ivec2 highlight_idx = glm::ivec2(-1);
 
-                //TODO: rework to display bonus values as '+x' - create additional value getters BaseArmor() and BonusArmor() - purely for this purpose
-                //will also need to setup the highlight index (to make the bonus value colored)
-
-                snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
-                level_text->Setup(std::string(buf));
-
-                snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", unit->BaseArmor());
-                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusArmor(), highlight_idx);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", object->BaseArmor());
+                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusArmor() : 0, highlight_idx);
                 stats[0]->Setup(buf, highlight_idx);
 
-                snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", unit->BaseMinDamage(), unit->BaseMaxDamage());
-                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusDamage(), highlight_idx);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", object->BaseMinDamage(), object->BaseMaxDamage());
+                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusDamage() : 0, highlight_idx);
                 stats[1]->Setup(buf, highlight_idx);
 
-                snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", unit->BaseAttackRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusAttackRange(), highlight_idx);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", object->BaseAttackRange());
+                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusAttackRange() : 0, highlight_idx);
                 stats[2]->Setup(buf, highlight_idx);
 
-                snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", unit->BaseVisionRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, unit->BonusVisionRange(), highlight_idx);
+                snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", object->BaseVisionRange());
+                format_wBonus(buf, sizeof(buf), buf_tmp, is_unit ? object->BonusVisionRange() : 0, highlight_idx);
                 stats[3]->Setup(buf, highlight_idx);
 
-                snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
-                stats[4]->Setup(buf);
+                if(is_unit) {
+                    Unit* unit = static_cast<Unit*>(object);
 
-                if(unit->IsCaster()) {
-                    stats[5]->Setup("Magic:");
-                    snprintf(buf, sizeof(buf), "%d", unit->Mana());
-                    mana_bar->Setup(unit->Mana(), buf);
+                    snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
+                    level_text->Setup(std::string(buf));
+
+                    snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
+                    stats[4]->Setup(buf);
+
+                    if(unit->IsCaster()) {
+                        stats[5]->Setup("Magic:");
+                        snprintf(buf, sizeof(buf), "%d", unit->Mana());
+                        mana_bar->Setup(unit->Mana(), buf);
+                    }
                 }
+
             }
             else {
                 Building* building = static_cast<Building*>(object);

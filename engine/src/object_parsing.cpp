@@ -217,7 +217,7 @@ namespace eng {
         data.mana           = config.at("mana");
 
         //construction related fields
-        data.build_time     = config.at("build_time");
+        data.build_time     = config.count("build_time") ? int(config.at("build_time")) : 0;
         data.upgrade_time   = config.count("upgrade_time") ? int(config.at("upgrade_time")) : 0;
 
         //ingame object statistics

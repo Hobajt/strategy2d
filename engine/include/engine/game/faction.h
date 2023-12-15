@@ -105,6 +105,7 @@ namespace eng {
 
         bool TrainingPreconditionsMet(int unit_type) const;
         bool BuildingPreconditionsMet(int building_type) const;
+        bool UpgradePreconditionsMet(int building_type) const;
 
         bool CastConditionCheck(const Unit& src, int payload_id) const;
 
