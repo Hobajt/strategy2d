@@ -317,6 +317,8 @@ namespace eng {
 
         virtual void Update(Level& level) override;
 
+        virtual void SignalGUIUpdate() override;
+
         void Update_Paused(Level& level);
 
         void SwitchMenu(bool active);

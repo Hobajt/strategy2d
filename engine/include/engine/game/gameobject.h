@@ -372,7 +372,6 @@ namespace eng {
 
         void OnConstructionFinished(bool registerDropoffPoint = true, bool kickoutWorkers = true);
         void OnUpgradeFinished(int ref_idx);
-
         void TrainingOrResearchFinished(bool training, int payload_id);
 
         glm::ivec2& LastBtnIcon() { return last_btn_icon; }

@@ -578,7 +578,6 @@ namespace eng {
         }
 
         Faction()->ObjectAdded(data);
-
         
         if(kickoutWorkers) {
             Audio::Play(SoundEffect::GetPath(workdone_sound_name[data->race]), Position());
@@ -637,9 +636,10 @@ namespace eng {
                     lvl()->objects.UnitUpgrade(FactionIdx(), UnitType::ARCHER, UnitType::RANGER, IsOrc());
                 }
                 else if(payload_id == ResearchType::PALA_UPGRADE) {
-
+                    lvl()->objects.UnitUpgrade(FactionIdx(), UnitType::KNIGHT, UnitType::PALADIN, IsOrc());
                 }
-                
+
+                Faction()->SignalGUIUpdate();
             }
             else {
                 //could maybe not throw & refund the money instead (... but this shouldn't really happen so I guess it doesn't matter that much)

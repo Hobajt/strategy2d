@@ -55,7 +55,7 @@ namespace eng {
     class FactionController;
     using FactionControllerRef = std::shared_ptr<FactionController>;
 
-    //TODO: make abstract
+    //TODO: make abstract (once I implement additional controllers)
     class FactionController {
     public:
         //Factory method, creates proper controller type (based on controllerID).
@@ -93,6 +93,9 @@ namespace eng {
         int UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc);
 
         virtual void Update(Level& level) {}
+
+        //Only for player controller, signals that GUI panel needs to be updated.
+        virtual void SignalGUIUpdate() {}
 
         glm::ivec3 Resources() const { return resources; }
         glm::ivec2 Population() const { return population; }

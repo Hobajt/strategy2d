@@ -1758,6 +1758,10 @@ namespace eng {
         msg_bar.Update();
     }
 
+    void PlayerFactionController::SignalGUIUpdate() {
+        selection.update_flag = true;
+    }
+
     void PlayerFactionController::Update_Paused(Level& level) {
         if(!is_menu_active) {
             selectionTab->Interactable(false);

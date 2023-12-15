@@ -80,6 +80,7 @@ namespace eng {
                 break;
         }
         PopulationUpdate();
+        SignalGUIUpdate();
     }
 
     void FactionController::ObjectRemoved(const FactionObjectDataRef& data) {
@@ -113,6 +114,7 @@ namespace eng {
                 break;
         }
         PopulationUpdate();
+        SignalGUIUpdate();
     }
 
     void FactionController::ObjectUpgraded(const FactionObjectDataRef& old_data, const FactionObjectDataRef& new_data) {
