@@ -193,11 +193,11 @@ namespace eng {
         void SetHealth(int health);
         void AddHealth(float value);
 
-        // bool HasUnitType() const { return NumID()[0] == ObjectType::UNIT; }
-        virtual bool IsUnit() const { return false; }
+        bool IsUnit() const { return NumID()[0] == ObjectType::UNIT; }
+
         virtual bool IsGatherable(int unitNavType) const { return false; }
         virtual bool IsGatherable() const { return false; }
-        virtual bool IsRepairable() const { return true; }
+        bool IsRepairable() const { return !IsUnit(); }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
         bool IsOrc() const { return bool(data_f->race); }
@@ -290,8 +290,6 @@ namespace eng {
         bool AnimationFinished() const { return animation_ended; }
 
         UnitDataRef UData() const { return data; }
-        virtual bool IsUnit() const override { return true; }
-        virtual bool IsRepairable() const { return false; }
         virtual int DeathAnimIdx() const override { return data->deathAnimIdx; }
 
         bool IsWorker() const { return data->worker; }
