@@ -24,7 +24,7 @@ namespace eng {
 
     //===== Animator =====
 
-    Animator::Animator(const AnimatorDataRef& data_) : data(data_) {}
+    Animator::Animator(const AnimatorDataRef& data_, float anim_speed_) : data(data_), anim_speed(anim_speed_) {}
 
     bool Animator::Update(int action) {
         SpriteGroup& graphics = data->GetGraphics(action);
@@ -34,7 +34,7 @@ namespace eng {
         }
         lastAction = action;
 
-        frame += Input::Get().deltaTime;
+        frame += Input::Get().deltaTime * anim_speed;
         bool res = false;
         while(frame >= graphics.Duration() && graphics.Repeat()) {
             frame -= graphics.Duration();

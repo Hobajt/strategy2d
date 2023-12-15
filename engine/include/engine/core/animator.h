@@ -38,7 +38,7 @@ namespace eng {
     class Animator {
     public:
         Animator() = default;
-        Animator(const AnimatorDataRef& data);
+        Animator(const AnimatorDataRef& data, float anim_speed = 1.f);
 
         //Updates animation switching logic
         bool Update(int action);
@@ -57,11 +57,14 @@ namespace eng {
         int GetCurrentFrameCount() const;
         float GetCurrentFrame() const { return frame; }
 
+        void SetAnimSpeed(float value) { anim_speed = value; }
+
         bool KeyframeSignal() const;
     private:
         AnimatorDataRef data = nullptr;
         float frame = 0;
         int lastAction = 0;
+        float anim_speed = 1.f;
 
         float paletteIdx = -1.f;
     };

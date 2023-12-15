@@ -87,6 +87,8 @@ namespace eng {
         glm::vec2 size;
         int navigationType;
 
+        float anim_speed;
+
         AnimatorDataRef animData = nullptr;
     public:
         virtual ~GameObjectData() = default;

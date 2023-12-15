@@ -239,6 +239,19 @@ namespace eng {
             }
         }
     }
+
+    void MapTiles::VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& obj_size, int range) {
+        glm::ivec2 m = glm::ivec2(std::max(pos.x-range+1, 0), std::max(pos.y-range+1, 0));
+        glm::ivec2 M = glm::ivec2(std::min(pos.x+obj_size.x+range, size.x+1), std::min(pos.y+obj_size.y+range, size.y+1));
+
+        RoundCorners_Increment(m, M, range);
+        
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                operator()(y, x).VisionDecrement();
+            }
+        }
+    }
     
     void MapTiles::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
         //TODO: could detect motion to neighboring tile & only update the borders instead of the entire vision range
@@ -897,7 +910,7 @@ namespace eng {
         }
     }
 
-    void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building) {
+    void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building, int factionId, int sight) {
         ENG_LOG_FINE("Map::RemoveObject - removing at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -915,6 +928,10 @@ namespace eng {
                 tiles(idx).info[i].factionId = -1;
                 tiles(idx).info[i].colorIdx = -1;
             }
+        }
+
+        if(factionId == playerFactionId) {
+            VisibilityDecrement(pos, size, sight);
         }
     }
 
@@ -964,9 +981,18 @@ namespace eng {
     void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
         tiles.VisibilityIncrement(pos, size, range);
     }
+
+    void Map::VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
+        tiles.VisibilityDecrement(pos, size, range);
+    }
     
     void Map::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
         tiles.VisibilityUpdate(pos_prev, pos_next, range);
+    }
+
+    void Map::VisionRangeUpdate(const glm::ivec2& pos, const glm::ivec2& size, int old_range, int new_range) {
+        tiles.VisibilityDecrement(pos, size, old_range);
+        tiles.VisibilityIncrement(pos, size, new_range);
     }
 
     void Map::AddTraversableObject(const ObjectID& id) {

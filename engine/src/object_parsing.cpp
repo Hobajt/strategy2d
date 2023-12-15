@@ -206,6 +206,8 @@ namespace eng {
         data->size              = config.count("size") ? eng::json::parse_vec2(config.at("size")) : glm::vec2(1.f);
         data->navigationType    = config.at("nav_type");
 
+        data->anim_speed        = config.count("anim_speed") ? config.at("anim_speed") : 1.f;
+
         data->icon              = config.count("icon") ? json::parse_ivec2(config.at("icon")) : glm::ivec2(0);
         data->cost              = config.count("cost") ? ParseCost(config.at("cost")) : glm::ivec4(0);
         data->name              = config.at("name");

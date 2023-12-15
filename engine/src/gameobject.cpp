@@ -30,7 +30,7 @@ namespace eng {
         if(data_->navigationType == NavigationBit::AIR)
             position = make_even(position);
 
-        animator = Animator(data->animData);
+        animator = Animator(data->animData, data->anim_speed);
     }
 
     void GameObject::Render() {
@@ -270,7 +270,7 @@ namespace eng {
             if(lvl() != nullptr && Data() != nullptr) {
                 if(data_f->IntegrateInMap()) {
                     //remove from pathfinding (if it's a part of it to begin with)
-                    lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING);
+                    lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING, FactionIdx(), VisionRange());
                 }
                 else {
                     lvl()->map.RemoveTraversableObject(OID());
@@ -354,6 +354,9 @@ namespace eng {
 
         //signal to faction controller, so that it updates its stats
         Faction()->ObjectUpgraded(data, new_data);
+
+        //update vision range
+        lvl()->map.VisionRangeUpdate(Position(), data->size, data->vision_range, new_data->vision_range);
 
         //data pointer & animator updates
         data = new_data;
@@ -603,6 +606,9 @@ namespace eng {
 
         //signal to faction controller, so that it updates its stats
         Faction()->ObjectUpgraded(data, new_data);
+
+        //update vision range
+        lvl()->map.VisionRangeUpdate(Position(), data->size, data->vision_range, new_data->vision_range);
 
         //data pointer & animator updates
         data = new_data;

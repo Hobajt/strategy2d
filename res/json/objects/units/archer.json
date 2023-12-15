@@ -96,7 +96,8 @@
             "pissed": ["troll/trpissd", 3],
             "ready": "troll/trready",
             "attack": "misc/axe"
-        }
+        },
+        "refs": ["axe"]
     },
     {
         "str_id": "orc/berserker",
@@ -129,6 +130,7 @@
             "pissed": ["troll/trpissd", 3],
             "ready": "troll/trready",
             "attack": "misc/axe"
-        }
+        },
+        "refs": ["axe"]
     }
 ]
