@@ -23,7 +23,7 @@
         ["human/farm", "orc/farm"],
         ["human/lumber_mill", "orc/lumber_mill"],
         ["human/blacksmith", "orc/blacksmith"],
-        ["human/tower", "orc/tower"],
+        ["human/watch_tower", "orc/watch_tower"],
     
         ["human/shipyard", "orc/shipyard"],
         ["human/foundry", "orc/foundry"],
@@ -36,8 +36,8 @@
         ["human/wizard_tower", "orc/temple"],
         ["human/aviary", "orc/dragon_roost"],
 
-        ["human/tower_guard", "orc/tower_guard"],
-        ["human/tower_cannon", "orc/tower_cannon"],
+        ["human/guard_tower", "orc/guard_tower"],
+        ["human/cannon_tower", "orc/cannon_tower"],
 
         ["human/keep", "orc/stronghold"],
         ["human/castle", "orc/fortress"]

@@ -425,6 +425,8 @@ namespace eng {
 
         UtilityObjectDataRef UData() const { return data; }
         LiveData& LD() { return live_data; }
+
+        glm::vec2 SizeScaled() const { return data->size * data->scale; }
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

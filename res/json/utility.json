@@ -1,18 +1,5 @@
 [
     {
-        "str_id": "arrow",
-        "name": "arrow",
-        "type": 4,
-        "nav_type": 1,
-        "size": [1, 1],
-        "utility_id": 0,
-        "animations": [ "misc/effects/arrow" ],
-        "duration": 0.25,
-        "sounds": {
-            "on_spawn": "misc/bowfire"
-        }
-    },
-    {
         "str_id": "corpse",
         "name": "corpse",
         "type": 4,
@@ -29,5 +16,77 @@
             { "sprite_name": "misc/buildings/ruins_water", "duration": 5},
             { "sprite_name": "misc/effects/explosion_big", "duration": 2.0}
         ]
+    },
+    {
+        "str_id": "arrow",
+        "name": "arrow",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/arrow" ],
+        "duration": 0.25,
+        "sounds": {
+            "on_spawn": "misc/bowfire",
+            "on_done": "misc/bowhit"
+        }
+    },
+    {
+        "str_id": "cannon_ball",
+        "name": "cannon ball",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/cannon_ball" ],
+        "duration": 0.75,
+        "scale": 0.5,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        }
+    },
+    {
+        "str_id": "fiery_cannon_ball",
+        "name": "fiery cannon ball",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/fiery_cannon_ball" ],
+        "duration": 0.75,
+        "scale": 0.5,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        }
+    },
+    {
+        "str_id": "ballista_projectile",
+        "name": "ballista projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/ballista_projectile" ],
+        "duration": 0.75,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        }
+    },
+    {
+        "str_id": "catapult_projectile",
+        "name": "catapult projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/catapult_projectile" ],
+        "duration": 0.75,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        }
     }
 ]

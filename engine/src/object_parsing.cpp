@@ -221,9 +221,9 @@ namespace eng {
         data.upgrade_time   = config.count("upgrade_time") ? int(config.at("upgrade_time")) : 0;
 
         //ingame object statistics
-        data.basic_damage       = config.at("basic_damage");
-        data.pierce_damage      = config.at("pierce_damage");
-        data.attack_range       = config.at("attack_range");
+        data.basic_damage       = config.count("basic_damage") ? config.at("basic_damage") : 0;
+        data.pierce_damage      = config.count("pierce_damage") ? config.at("pierce_damage") : 0;
+        data.attack_range       = config.count("attack_range") ? config.at("attack_range") : 0;
         data.armor              = config.at("armor");
         data.vision_range       = config.at("vision_range");
         data.cooldown           = config.count("cooldown") ? float(config.at("cooldown")) : 0.f;
@@ -322,7 +322,10 @@ namespace eng {
         if(config.count("sounds")) {
             auto& sounds = config.at("sounds");
             if(sounds.count("on_spawn")) data->on_spawn = ParseSoundEffect(sounds.at("on_spawn"));
+            if(sounds.count("on_done" )) data->on_done  = ParseSoundEffect(sounds.at("on_done"));
         }
+
+        data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;
 
         //parse fields specific to different utility object types
         switch(data->utility_id) {

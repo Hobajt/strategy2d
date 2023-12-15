@@ -189,8 +189,10 @@ namespace eng {
         RenderHandlerFn Render = nullptr;
 
         float duration = 1.f;
+        float scale = 1.f;
 
         SoundEffect on_spawn;
+        SoundEffect on_done;
     };
     using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
 

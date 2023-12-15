@@ -728,6 +728,9 @@ namespace eng {
         ASSERT_MSG(data != nullptr, "UtilityObject isn't properly initialized!");
         ASSERT_MSG(data->Update != nullptr, "UtilityObject - Update() handler in prefab '{}' isn't setup properly!", data->name);
         bool res = data->Update(*this, *lvl());
+        if(res && data->on_done.valid) {
+            Audio::Play(data->on_done.Random(), Position());
+        }
         animator.Update(ActionIdx());
         return res || IsKilled();
     }

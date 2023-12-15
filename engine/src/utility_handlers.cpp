@@ -6,6 +6,8 @@
 
 #include <tuple>
 
+#define Z_OFFSET -0.1f
+
 namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
@@ -42,7 +44,7 @@ namespace eng {
     //===================================================================
 
     void UtilityHandler_Default_Render(UtilityObject& obj) {
-        obj.RenderAt(obj.real_pos(), obj.real_size());
+        obj.RenderAt(obj.real_pos(), obj.real_size(), Z_OFFSET);
     }
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject& src) {
@@ -52,10 +54,11 @@ namespace eng {
         glm::vec2 target_dir = d.target_pos - d.source_pos;
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
         d.f1 = d.f2 = (float)Input::CurrentTime();
-        obj.real_pos() = glm::vec2(src.Position());
-        obj.real_size() = obj.Data()->size;
+        obj.real_size() = obj.SizeScaled();
+        obj.real_pos() = glm::vec2(src.Position()) + 0.5f - obj.real_size() * 0.5f;
         d.i2 = src.BasicDamage();
         d.i3 = src.PierceDamage();
+        // ENG_LOG_INFO("PROJECTILE PTS: {}, {}", d.source_pos, d.target_pos);
     }
 
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
@@ -68,7 +71,8 @@ namespace eng {
         d.f2 += input.deltaTime;
         float t = (d.f2 - d.f1) / obj.UData()->duration;
 
-        obj.real_pos() = d.InterpolatePosition(t);
+        //adding sizes cuz rendering uses Quad::FromCorner
+        obj.real_pos() = d.InterpolatePosition(t) + 0.5f - obj.real_size() * 0.5f;
         if(t >= 1.f) {
             bool attack_happened = ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
             return true;
