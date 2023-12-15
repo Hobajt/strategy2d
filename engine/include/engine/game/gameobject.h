@@ -374,6 +374,9 @@ namespace eng {
         void OnUpgradeFinished(int ref_idx);
 
         void TrainingOrResearchFinished(bool training, int payload_id);
+
+        glm::ivec2& LastBtnIcon() { return last_btn_icon; }
+        const glm::ivec2& LastBtnIcon() const { return last_btn_icon; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -387,6 +390,7 @@ namespace eng {
 
         bool constructed = false;
         int amount_left = 0;
+        glm::ivec2 last_btn_icon = glm::ivec2(-1);
     };
 
     //===== UtilityObject =====

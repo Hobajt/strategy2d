@@ -148,7 +148,7 @@ namespace eng {
                         if(building->Constructed()) {
                             //not construction -> show icon of the target & label
                             stats[1]->Setup(building->IsTraining() ? "Training:" : "Upgrading:");
-                            production_icon->Setup("icon", -1, last_click_icon, glm::ivec4(0));
+                            production_icon->Setup("icon", -1, building->LastBtnIcon(), glm::ivec4(0));
                         }
                     }
                     else {
@@ -1395,16 +1395,19 @@ namespace eng {
                 case GUI::ActionButton_CommandType::UPGRADE:
                     ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
                     building.IssueAction(BuildingAction::Upgrade(payload_id));
+                    building.LastBtnIcon() = last_click_icon;
                     update_flag = true;
                     break;
                 case GUI::ActionButton_CommandType::RESEARCH:
                     ENG_LOG_FINE("Targetless command - Research (payload={})", payload_id);
                     building.IssueAction(BuildingAction::TrainOrResearch(false, payload_id, building.TrainOrResearchTime(false, payload_id)));
+                    building.LastBtnIcon() = last_click_icon;
                     update_flag = true;
                     break;
                 case GUI::ActionButton_CommandType::TRAIN:
                     ENG_LOG_FINE("Targetless command - Train (payload={})", payload_id);
                     building.IssueAction(BuildingAction::TrainOrResearch(true, payload_id, building.TrainOrResearchTime(true, payload_id)));
+                    building.LastBtnIcon() = last_click_icon;
                     update_flag = true;
                     break;
             }
@@ -2010,7 +2013,7 @@ namespace eng {
             return;
             
         const GUI::ActionButtonDescription& btn = actionButtons.ButtonData(actionButtons.ClickIdx());
-        selectionTab->LastClickIcon(btn.icon);
+        selection.last_click_icon = btn.icon;
 
         switch(btn.command_id) {
             case GUI::ActionButton_CommandType::DISABLED:
