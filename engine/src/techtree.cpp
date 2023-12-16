@@ -262,7 +262,13 @@ namespace eng {
         return data[int(isOrc)].research[research_type];
     }
 
-    //TODO: when exporting to JSON, only need to store the research array (other values can be recomputed on the fly)
+    std::array<uint8_t, ResearchType::COUNT>& Techtree::ResearchData(bool isOrc) {
+        return data[int(isOrc)].research;
+    }
+
+    const std::array<uint8_t, ResearchType::COUNT>& Techtree::ResearchData(bool isOrc) const {
+        return data[int(isOrc)].research;
+    }
 
     void Techtree::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI

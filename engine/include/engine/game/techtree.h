@@ -92,6 +92,8 @@ namespace eng {
         void RecalculateBoth();
 
         int GetResearch(int type, bool isOrc);
+        std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc);
+        const std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc) const;
 
         void DBG_GUI();
     private:

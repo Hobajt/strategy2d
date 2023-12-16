@@ -16,10 +16,12 @@ namespace eng {
     bool Parse_Mapfile(Mapfile& map, const nlohmann::json& config);
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
     bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config);
+    Techtree Parse_Techtree(const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
     nlohmann::json Export_FactionsFile(const FactionsFile& factions);
+    nlohmann::json Export_Techtree(const Techtree& techtree);
 
     //===== Savefile =====
 
@@ -219,9 +221,9 @@ namespace eng {
                 e.occlusionData.push_back(v);
             }
 
-            factions.factions.push_back(e);
+            e.techtree = Parse_Techtree(entry.at(3));
 
-            //TODO: add techtree parsing
+            factions.factions.push_back(e);
         }
         
         for(auto& relation : config.at("diplomacy")) {
@@ -229,6 +231,19 @@ namespace eng {
         }
 
         return true;
+    }
+
+    Techtree Parse_Techtree(const nlohmann::json& config) {
+        Techtree t = {};
+        for(int i = 0; i < 2; i++) {
+            std::array<uint8_t, ResearchType::COUNT>& data = t.ResearchData(bool(i));
+            auto& entry = config.at(i);
+            for(int j = 0; j < ResearchType::COUNT; j++) {
+                data[j] = entry.at(j);
+            }
+        }
+        t.RecalculateBoth();
+        return t;
     }
 
     nlohmann::json Export_Mapfile(const Mapfile& map) {
@@ -278,8 +293,7 @@ namespace eng {
             e.push_back({ entry.controllerID, entry.colorIdx, entry.race });
             e.push_back(entry.name);
             e.push_back(entry.occlusionData);
-            
-            //TODO: add techtree data export
+            e.push_back(Export_Techtree(entry.techtree));
 
             f.push_back(e);
         }
@@ -289,6 +303,13 @@ namespace eng {
             diplomacy.push_back({ r.x, r.y, r.z });
         }
 
+        return out;
+    }
+
+    nlohmann::json Export_Techtree(const Techtree& techtree) {
+        nlohmann::json out = {};
+        out.push_back(techtree.ResearchData(false));
+        out.push_back(techtree.ResearchData(true));
         return out;
     }
 
