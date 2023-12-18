@@ -15,6 +15,33 @@
 
 namespace eng {
 
+    namespace BuildingType {
+        enum { 
+            TOWN_HALL, BARRACKS, FARM, LUMBER_MILL, BLACKSMITH, TOWER, 
+            SHIPYARD, FOUNDRY, OIL_REFINERY, OIL_PLATFORM,
+            INVENTOR, STABLES, CHURCH, WIZARD_TOWER, DRAGON_ROOST,
+            GUARD_TOWER, CANNON_TOWER,
+            KEEP, CASTLE,
+            COUNT
+        };
+
+        enum {
+            GOLD_MINE = 101,
+            OIL_PATCH = 102,
+        };
+    }
+
+    namespace UnitType {
+        enum {
+            PEASANT, FOOTMAN, ARCHER, RANGER, BALLISTA, KNIGHT, PALADIN,
+            TANKER, DESTROYER, BATTLESHIP, SUBMARINE, TRANSPORT,
+            ROFLCOPTER, DEMOSQUAD,
+            MAGE,
+            GRYPHON,
+            COUNT
+        };
+    }
+
     //===== ObjectID =====
 
     namespace ObjectType { enum { INVALID = 0, GAMEOBJECT, UNIT, BUILDING, UTILITY, MAP_OBJECT }; }

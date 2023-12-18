@@ -262,12 +262,25 @@ namespace eng {
         return data[int(isOrc)].research[research_type];
     }
 
-    std::array<uint8_t, ResearchType::COUNT>& Techtree::ResearchData(bool isOrc) {
-        return data[int(isOrc)].research;
+    bool Techtree::HasResearchLimits() const {
+        bool has_limits = false;
+        for(int i = 0; i < ResearchType::COUNT; i++)
+            has_limits |= research_limits[i] != 0;
+        return has_limits;
     }
 
-    const std::array<uint8_t, ResearchType::COUNT>& Techtree::ResearchData(bool isOrc) const {
-        return data[int(isOrc)].research;
+    bool Techtree::HasBuildingLimits() const {
+        bool has_limits = false;
+        for(int i = 0; i < BuildingType::COUNT; i++)
+            has_limits |= building_limits[i];
+        return has_limits;
+    }
+
+    bool Techtree::HasUnitLimits() const {
+        bool has_limits = false;
+        for(int i = 0; i < UnitType::COUNT; i++)
+            has_limits |= unit_limits[i];
+        return has_limits;
     }
 
     void Techtree::DBG_GUI() {
@@ -386,6 +399,10 @@ namespace eng {
         float cell_width = TEXT_BASE_WIDTH * 3.f;
         char buf[64];
 
+        ImU32 clr_green  = ImGui::GetColorU32(ImVec4(0.1f, 1.0f, 0.1f, 1.0f));
+        ImU32 clr_gray   = ImGui::GetColorU32(ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImU32 clr_red    = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
+
         ImGui::Text("Research levels:");
         if (ImGui::BeginTable("table1", ResearchType::COUNT+1, flags)) {
             for(int x = 0; x < ResearchType::COUNT+1; x++)
@@ -405,6 +422,64 @@ namespace eng {
                             data[race_idx].research[i] = 0;
                     }
                 }
+            }
+            ImGui::EndTable();
+        }
+
+        ImGui::Text("Limits:");
+        if (ImGui::BeginTable("table2", ResearchType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < ResearchType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Research");
+            for(int i = 0; i < ResearchType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                int max_value = Resources::LoadResearchLevels(i);
+                int display_value = Resources::LoadResearchLevels(i) - research_limits[i];
+                snprintf(buf, sizeof(buf), "%d###btn_r_%d", display_value, i);
+                if(ImGui::Button(buf, ImVec2(-FLT_MIN, 0.f))) {
+                    research_limits[i]++;
+                    if(research_limits[i] > max_value)
+                        research_limits[i] = 0;
+                }
+            }
+            ImGui::EndTable();
+        }
+        if (ImGui::BeginTable("table3", BuildingType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < BuildingType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Buildings");
+            for(int i = 0; i < BuildingType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                int display_value = (int)building_limits[i];
+                snprintf(buf, sizeof(buf), "%d###btn_b_%d", display_value, i);
+                if(ImGui::Button(buf, ImVec2(-FLT_MIN, 0.f))) {
+                    building_limits[i] = !building_limits[i];
+                }
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, building_limits[i] ? clr_red : clr_gray);
+            }
+            ImGui::EndTable();
+        }
+        if (ImGui::BeginTable("table5", UnitType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < UnitType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Units");
+            for(int i = 0; i < UnitType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                int display_value = (int)unit_limits[i];
+                snprintf(buf, sizeof(buf), "%d###btn_u_%d", display_value, i);
+                if(ImGui::Button(buf, ImVec2(-FLT_MIN, 0.f))) {
+                    unit_limits[i] = !unit_limits[i];
+                }
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, unit_limits[i] ? clr_red : clr_gray);
             }
             ImGui::EndTable();
         }

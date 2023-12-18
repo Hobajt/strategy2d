@@ -257,6 +257,31 @@ namespace eng {
                 data[j] = entry.at(j);
             }
         }
+
+        std::array<uint8_t, ResearchType::COUNT>& research_limits = t.ResearchLimits();
+        if(config.at(2).size() != 0) {
+            auto& entry = config.at(2);
+            for(int j = 0; j < ResearchType::COUNT; j++) {
+                research_limits[j] = entry.at(j);
+            }
+        }
+
+        std::array<bool, BuildingType::COUNT>& building_limits = t.BuildingLimits();
+        if(config.at(3).size() != 0) {
+            auto& entry = config.at(3);
+            for(int j = 0; j < BuildingType::COUNT; j++) {
+                building_limits[j] = bool(int(entry.at(j)));
+            }
+        }
+
+        std::array<bool, UnitType::COUNT>& unit_limits = t.UnitLimits();
+        if(config.at(4).size() != 0) {
+            auto& entry = config.at(4);
+            for(int j = 0; j < UnitType::COUNT; j++) {
+                unit_limits[j] = bool(int(entry.at(j)));
+            }
+        }
+        
         t.RecalculateBoth();
         return t;
     }
@@ -324,8 +349,33 @@ namespace eng {
 
     nlohmann::json Export_Techtree(const Techtree& techtree) {
         nlohmann::json out = {};
+
         out.push_back(techtree.ResearchData(false));
         out.push_back(techtree.ResearchData(true));
+
+        if(techtree.HasResearchLimits())
+            out.push_back(techtree.ResearchLimits());
+        else
+            out.push_back(std::vector<int>{});
+        
+        if(techtree.HasBuildingLimits()) {
+            std::vector<int> vals = {};
+            for (bool b : techtree.BuildingLimits()) {
+                vals.push_back((int)b);
+            }
+            out.push_back(vals);
+        } else
+            out.push_back(std::vector<int>{});
+        
+        if(techtree.HasUnitLimits()) {
+            std::vector<int> vals = {};
+            for (bool b : techtree.UnitLimits()) {
+                vals.push_back((int)b);
+            }
+            out.push_back(vals);
+        } else
+            out.push_back(std::vector<int>{});
+
         return out;
     }
 

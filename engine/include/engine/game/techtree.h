@@ -5,6 +5,7 @@
 
 #include "engine/utils/mathdefs.h"
 #include "engine/core/gui_action_buttons.h"
+#include "engine/game/object_data.h"
 
 namespace eng {
 
@@ -94,13 +95,28 @@ namespace eng {
         void RecalculateBoth();
 
         int GetResearch(int type, bool isOrc);
-        std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc);
-        const std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc) const;
+        std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc) { return data[int(isOrc)].research; }
+        const std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc) const { return data[int(isOrc)].research; }
+
+        bool HasResearchLimits() const;
+        std::array<uint8_t, ResearchType::COUNT>& ResearchLimits() { return research_limits; }
+        const std::array<uint8_t, ResearchType::COUNT>& ResearchLimits() const { return research_limits; }
+
+        bool HasBuildingLimits() const;
+        std::array<bool, BuildingType::COUNT>& BuildingLimits() { return building_limits; }
+        const std::array<bool, BuildingType::COUNT>& BuildingLimits() const { return building_limits; }
+
+        bool HasUnitLimits() const;
+        std::array<bool, UnitType::COUNT>& UnitLimits() { return unit_limits; }
+        const std::array<bool, UnitType::COUNT>& UnitLimits() const { return unit_limits; }
 
         void DBG_GUI();
         void EditableGUI();
     private:
         TechtreeData data[2];
+        std::array<uint8_t, ResearchType::COUNT> research_limits;
+        std::array<bool, BuildingType::COUNT> building_limits;
+        std::array<bool, UnitType::COUNT> unit_limits;
     };
 
 }//namespace eng
