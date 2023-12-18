@@ -15,7 +15,7 @@ namespace eng {
 
     //can setup enum for the IDs as well (PLAYER_LOCAL, PLAYER_REMOTE1, PLAYER_REMOTEn, AI_EASY, ...)
     namespace FactionControllerID {
-        enum { INVALID = 0, LOCAL_PLAYER, NATURE };
+        enum { INVALID = 0, LOCAL_PLAYER, NATURE, COUNT };
 
         int RandomAIMindset();
     }
@@ -43,11 +43,32 @@ namespace eng {
         std::vector<glm::ivec3> diplomacy;
     };
 
+    //Wrapper for various stat values tracked within the faction controller objects.
     struct FactionStats {
         int unitCount = 0;
         int buildingCount = 0;
         std::array<int, BuildingType::COUNT> buildings = {0};
         int tier = 0;
+    };
+
+    //===== FactionsEditor =====
+
+    class Factions;
+
+    //For editor implementation, has deeper access to the Factions data.
+    class FactionsEditor {
+    protected:
+        DiplomacyMatrix& Diplomacy(Factions& factions);
+
+        void AddFaction(Factions& factions, const char* name, int controllerID, int colorIdx);
+        void RemoveFaction(Factions& factions, int idx);
+        void UpdateFactionCount(Factions& factions, int count);
+        void CheckForRequiredFactions(Factions& factions, bool& has_player, bool& has_nature);
+
+        void Faction_Name(FactionController& f, const char* name);
+        int& Faction_Race(FactionController& f);
+        int& Faction_Color(FactionController& f);
+        int& Faction_ControllerType(FactionController& f);
     };
     
     //===== FactionController =====
@@ -57,6 +78,7 @@ namespace eng {
 
     //TODO: make abstract (once I implement additional controllers)
     class FactionController {
+        friend class FactionsEditor;
     public:
         //Factory method, creates proper controller type (based on controllerID).
         static FactionControllerRef CreateController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize);
@@ -67,6 +89,7 @@ namespace eng {
         int ID() const { return id; }
         int Race() const { return race; }
         int ControllerID() const { return controllerID; }
+        std::string Name() const { return name; }
 
         virtual int GetColorIdx(const glm::ivec3& num_id) const { return colorIdx; }
 
@@ -162,6 +185,7 @@ namespace eng {
         std::vector<glm::ivec3> Export() const;
         
         void DBG_GUI();
+        void EditableGUI(int factionCount);
     private:
         int& operator()(int y, int x);
         const int& operator()(int y, int x) const;
@@ -179,6 +203,7 @@ namespace eng {
     using PlayerFactionControllerRef = std::shared_ptr<PlayerFactionController>;
 
     class Factions {
+        friend class FactionsEditor;
     public:
         Factions() = default;
         Factions(FactionsFile&& data, const glm::ivec2& mapSize);
@@ -194,6 +219,8 @@ namespace eng {
         std::vector<FactionControllerRef>::iterator end() { return factions.end(); }
         std::vector<FactionControllerRef>::const_iterator begin() const { return factions.cbegin(); }
         std::vector<FactionControllerRef>::const_iterator end() const { return factions.cend(); }
+
+        size_t size() const { return factions.size(); }
 
         void Update(Level& level);
 

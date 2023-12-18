@@ -249,6 +249,11 @@ void StartingLocationTool::GUI_Update() {
     ImGui::Text("Starting Location Tool");
     ImGui::Separator();
 
+    if(!context.level.info.custom_game) {
+        ImGui::Text("Starting locations are ignored for non-custom games.");
+        return;
+    }
+
     ImGui::Checkbox("Render locations", &renderStartingLocations);
     ImGui::Separator();
 
@@ -295,6 +300,9 @@ void StartingLocationTool::Render_NotSelected() {
 }
 
 void StartingLocationTool::OnLMB(int state) {
+    if(!context.level.info.custom_game)
+        return;
+
     Input& input = Input::Get();
     Camera& cam = Camera::Get();
 
@@ -341,6 +349,9 @@ void StartingLocationTool::OnLMB(int state) {
 }
 
 void StartingLocationTool::OnRMB(int state) {
+    if(!context.level.info.custom_game)
+        return;
+
     if(state == InputButtonState::DOWN) {
         Camera& cam = Camera::Get();
 
@@ -361,6 +372,9 @@ int StartingLocationTool::LocationIdx(const glm::ivec2& loc) const {
 }
 
 void StartingLocationTool::InnerRender() {
+    if(!context.level.info.custom_game)
+        return;
+    
     if(renderStartingLocations) {
         Camera& cam = Camera::Get();
         const Sprite& tilemap = context.level.map.GetTileset()->Tilemap();

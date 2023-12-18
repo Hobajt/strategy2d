@@ -23,6 +23,8 @@ void Editor::OnInit() {
         throw e;
     }
 
+    context.level.map.EnableOcclusion(false);
+
     btn_toggleFullscreen = InputButton(GLFW_KEY_T);
 }
 
@@ -65,9 +67,9 @@ void Editor::OnGUI() {
         comp->GUI_Update();
     }
 
-    ImGui::Begin("Palette");
-    palette.GetTexture()->DBG_GUI();
-    ImGui::End();
+    // ImGui::Begin("Palette");
+    // palette.GetTexture()->DBG_GUI();
+    // ImGui::End();
 
     context.level.map.DBG_GUI();
 #endif

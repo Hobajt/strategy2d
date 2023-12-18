@@ -27,6 +27,47 @@ namespace eng {
     FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_)
         : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}) {}
 
+    //===== FactionsEditor =====
+
+    DiplomacyMatrix& FactionsEditor::Diplomacy(Factions& factions) { return factions.diplomacy; }
+
+    void FactionsEditor::AddFaction(Factions& factions, const char* name, int controllerID, int colorIdx) {
+        //TODO: maybe create separate class for faction controller representation in the editor
+        FactionControllerRef faction = std::make_shared<FactionController>(FactionsFile::FactionEntry(controllerID, 0, std::string(name), colorIdx), glm::ivec2(-1), controllerID);
+        factions.factions.push_back(faction);
+    }
+
+    void FactionsEditor::RemoveFaction(Factions& factions, int idx) {
+        factions.factions.erase(factions.begin() + idx);
+    }
+
+    void FactionsEditor::UpdateFactionCount(Factions& factions, int count) {
+        if(factions.factions.size() != count) {
+            char buf[1024];
+            for(int i = factions.factions.size(); i < count; i++) {
+                snprintf(buf, sizeof(buf), "Faction %d", i);
+                AddFaction(factions, buf, 3, 0);
+            }
+
+            for(int i = factions.factions.size()-1; i >= count; i--) {
+                RemoveFaction(factions, i);
+            }
+        }
+    }
+
+    void FactionsEditor::CheckForRequiredFactions(Factions& factions, bool& has_player, bool& has_nature) {
+        has_player = has_nature = false;
+        for(const auto& faction : factions.factions) {
+            has_nature |= (faction->controllerID == FactionControllerID::NATURE);
+            has_player |= (faction->controllerID == FactionControllerID::LOCAL_PLAYER);
+        }
+    }
+
+    void FactionsEditor::Faction_Name(FactionController& f, const char* name) { f.name = std::string(name); }
+    int& FactionsEditor::Faction_Race(FactionController& f) { return f.race; }
+    int& FactionsEditor::Faction_Color(FactionController& f) { return f.colorIdx; }
+    int& FactionsEditor::Faction_ControllerType(FactionController& f) { return f.controllerID; }
+
     //===== FactionController =====
 
     int FactionController::idCounter = 0;
@@ -424,6 +465,86 @@ namespace eng {
             }
             ImGui::EndTable();
         }
+#endif
+    }
+
+    void DiplomacyMatrix::EditableGUI(int newFactionCount) {
+#ifdef ENGINE_ENABLE_GUI
+        if(newFactionCount != factionCount || relation == nullptr) {
+            int* prev = relation;
+            int prevCount = factionCount;
+
+            factionCount = newFactionCount;
+            relation = new int[factionCount * factionCount];
+            for(int i = 0; i < factionCount * factionCount; i++)
+                relation[i] = 0;
+
+            if(prev != nullptr) {
+                int len = std::min(prevCount, factionCount);
+                for(int y = 0; y < len; y++) {
+                    for(int x = 0; x < len; x++) {
+                        relation[y*factionCount+x] = prev[y*prevCount+x];
+                    }
+                }
+                delete[] prev;
+            }
+        }
+
+        ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
+        // flags |= ImGuiTableFlags_NoHostExtendY;
+        flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
+        flags |= ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX;
+
+        int num_cols = factionCount;
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * 3.f;
+
+        ImU32 clr_red    = ImGui::GetColorU32(ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
+        ImU32 clr_green  = ImGui::GetColorU32(ImVec4(0.1f, 1.0f, 0.1f, 1.0f));
+        ImU32 clr_gray   = ImGui::GetColorU32(ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImU32 clr_purple = ImGui::GetColorU32(ImVec4(0.59f, 0.21f, 0.76f, 1.0f));
+
+        char buf[64];
+        if (ImGui::BeginTable("table1", num_cols, flags)) {
+            ImGui::TableSetupColumn("---", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            for(int x = 1; x < num_cols; x++) {
+                snprintf(buf, sizeof(buf), "f%d", x);
+                ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, cell_width);
+            }
+            ImGui::TableHeadersRow();
+
+            ImGuiStyle& style = ImGui::GetStyle();
+            for(int y = 1; y < factionCount; y++) {
+                ImGui::TableNextRow();
+
+                ImGui::TableNextColumn();
+                ImGui::Text("f%d", y);
+
+                for(int x = 1; x < factionCount; x++) {
+                    ImGui::TableNextColumn();
+
+                    int& value = operator()(y, x);
+                    bool enemy = (value != 0);
+                    
+                    if(x != y) {
+                        ImGui::PushID(y*factionCount+x);
+                        if(ImGui::Button(enemy ? "X" : "O", ImVec2(-FLT_MIN, 0.0f))) {
+                            value = int(!bool(value));
+                            operator()(x,y) = value;
+                        }
+                        ImGui::PopID();
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, enemy ? clr_red : clr_gray);
+                    }
+                    else {
+                        ImGui::Text("---");
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr_purple);
+                    }
+                }
+            }
+            ImGui::EndTable();
+        }
+
+        ImGui::Text("(Nature faction is omitted)");
 #endif
     }
 

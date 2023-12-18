@@ -24,7 +24,9 @@ void EditorContext::Terrain_SetupNew(const glm::ivec2& size, const eng::TilesetR
     camera.Position(glm::vec2(size) * 0.5f - 0.5f);
     camera.ZoomToFit(glm::vec2(size) + 1.f);
 
-    std::static_pointer_cast<InfoMenu, EditorComponent>(GetComponent<InfoMenu>())->NewLevelCreated();
+    for(EditorComponentRef& comp : components) {
+        comp->NewLevelCreated();
+    }
     tools.NewLevelCreated(size);
 }
 
@@ -38,7 +40,20 @@ int EditorContext::Terrain_Load(const std::string& filepath) {
 }
 
 int EditorContext::Terrain_Save(const std::string& filepath) {
-    return int(!level.Save(filepath));
+    //don't store faction entries into custom game file
+    Factions backup;
+    if(level.info.custom_game) {
+        backup = std::move(level.factions);
+        level.factions = Factions();
+    }
+    
+    int res = int(!level.Save(filepath));
+
+    if(level.info.custom_game) {
+        level.factions = std::move(backup);
+    }
+
+    return res;
 }
 
 void EditorContext::Render() {

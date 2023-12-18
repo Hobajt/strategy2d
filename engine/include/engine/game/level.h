@@ -15,8 +15,9 @@ namespace eng {
 
     //Container for various level metadata.
     struct LevelInfo {
-        int campaignIdx;
-        int preferred_opponents;
+        int campaignIdx = -1;
+        bool custom_game = true;
+        int preferred_opponents = 1;
         std::vector<glm::ivec2> startingLocations;
     };
 

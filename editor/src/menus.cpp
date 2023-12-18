@@ -319,6 +319,7 @@ void InfoMenu::GUI_Update() {
     ImGui::InputText("Name", levelName, sizeof(char) * BUF_SIZE);
     glm::ivec2 size = level.map.Size();
     ImGui::Text("Size: [%d x %d]", size.x, size.y);
+    ImGui::SliderInt("Preferred opponents", &level.info.preferred_opponents, 1, 7);
     ImGui::Separator();
     ImGui::Text("Tileset");
     if(tileset.GUI_Combo()) {
@@ -395,5 +396,86 @@ DiplomacyMenu::DiplomacyMenu(EditorContext& context_) : EditorComponent(context_
 
 void DiplomacyMenu::GUI_Update() {
     ImGui::Begin(DiplomacyMenu::TabName());
+    Level& level = context.level;
+
+    ImGui::Text("Game type:");
+    ImGui::SameLine();
+    bool& is_custom = level.info.custom_game;
+    if(ImGui::Button(is_custom ? "Custom" : "Scenario")) {
+        is_custom = !is_custom;
+    }
+    ImGui::Separator();
+
+    if(!is_custom) {
+        Factions& factions = level.factions;
+
+        //slider that creates/deletes faction entries
+        if(ImGui::SliderInt("faction count", &factionCount, 2, 12)) {
+            UpdateFactionCount(factions, factionCount);
+        }
+
+        //recreate nature & player factions if somehow deleted (or initially)
+        bool has_player, has_nature;
+        CheckForRequiredFactions(factions, has_player, has_nature);
+        if(!has_nature) AddFaction(factions, "Nature", FactionControllerID::NATURE, 5);
+        if(!has_player) AddFaction(factions, "Player", FactionControllerID::LOCAL_PLAYER, 0);
+
+        //display editable entry for each faction
+        char buf[1024];
+        int faction_idx = 0;
+        std::vector<int> to_delete = {};
+        for(auto& faction : factions) {
+            FactionController& f = *faction.get();
+            bool mandatory = f.ControllerID() == FactionControllerID::LOCAL_PLAYER || f.ControllerID() == FactionControllerID::NATURE;
+            std::string name = f.Name();
+            snprintf(buf, sizeof(buf), "[%d] %s###%llu", faction_idx, name.c_str(), uint64_t(&f));
+            if(ImGui::CollapsingHeader(buf)) {
+                ImGui::PushID(&f);
+                strncpy(buf, name.c_str(), std::min(int(sizeof(buf)), int(name.size()+1)));
+                if(ImGui::InputText("Name", buf, sizeof(buf))) {
+                    Faction_Name(f, buf);
+                }
+
+                ImGui::SliderInt("Color", &Faction_Color(f), 0, ColorPalette::FactionColorCount());
+
+                ImGui::Text("Race:"); ImGui::SameLine();
+                ImGui::RadioButton("Human", &Faction_Race(f), 0); ImGui::SameLine();
+                ImGui::RadioButton("Orc", &Faction_Race(f), 1);
+
+                if(!mandatory) {
+                    if(ImGui::SliderInt("Controller type", &Faction_ControllerType(f), 3, FactionControllerID::COUNT)) {
+                        //prevents from switching to player/nature factions (hides the delete btn)
+                        Faction_ControllerType(f) = std::max(3, Faction_ControllerType(f));
+                    }
+                }
+
+                if(!mandatory) {
+                    if(ImGui::Button("Delete faction")) {
+                        to_delete.push_back(faction_idx);
+                    }
+                }
+
+                ImGui::PopID();
+            }
+            faction_idx++;
+        }
+
+        //remove factions marked by clicking the delete button
+        for(int i = to_delete.size()-1; i >= 0; i--) {
+            RemoveFaction(factions, to_delete[i]);
+            factionCount--;
+        }
+
+        ImGui::Separator();
+
+        //display editable diplomacy matrix
+        if(ImGui::CollapsingHeader("Diplomacy matrix")) {
+            Diplomacy(factions).EditableGUI(factionCount);
+        }
+    }
+    else {
+        ImGui::Text("Diplomacy can only be defined for non-custom games...");
+    }
+
     ImGui::End();
 }

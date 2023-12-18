@@ -15,12 +15,12 @@ namespace eng {
 
     bool Parse_Mapfile(Mapfile& map, const nlohmann::json& config);
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
-    bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config);
+    bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config);
     Techtree Parse_Techtree(const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
-    nlohmann::json Export_FactionsFile(const FactionsFile& factions);
+    nlohmann::json Export_FactionsFile(const LevelInfo& info, const FactionsFile& factions);
     nlohmann::json Export_Techtree(const Techtree& techtree);
 
     //===== Savefile =====
@@ -31,22 +31,22 @@ namespace eng {
         //load the config and parse it as json file
         json config = json::parse(ReadFile(filepath.c_str()));
 
+        //parse level info
+        if(!config.count("info") || !Parse_Info(info, config.at("info"))) {
+            ENG_LOG_WARN("Savefile - invalid info data.");
+            throw std::runtime_error("Savefile - invalid info data.");
+        }
+
         //parse map data
         if(!config.count("map") || !Parse_Mapfile(map, config.at("map"))) {
             ENG_LOG_WARN("Savefile - invalid map data.");
             throw std::runtime_error("Savefile - invalid map data.");
         }
 
-        //parse factions data
-        if(config.count("factions") && !Parse_FactionsFile(factions, config.at("factions"))) {
+        //parse factions data (optional entry, but malformed structure throws)
+        if(config.count("factions") && !Parse_FactionsFile(info, factions, config.at("factions"))) {
             ENG_LOG_WARN("Savefile - invalid factions data.");
             throw std::runtime_error("Savefile - invalid factions data.");
-        }
-        
-        
-        if(!config.count("info") || !Parse_Info(info, config.at("info"))) {
-            ENG_LOG_WARN("Savefile - invalid info data.");
-            throw std::runtime_error("Savefile - invalid info data.");
         }
 
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
@@ -57,7 +57,7 @@ namespace eng {
 
         json data = {};
         data["map"] = Export_Mapfile(map);
-        data["factions"] = Export_FactionsFile(factions);
+        data["factions"] = Export_FactionsFile(info, factions);
         data["info"] = Export_Info(info);
 
         WriteFile(filepath.c_str(), data.dump());
@@ -188,7 +188,6 @@ namespace eng {
     }
 
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config) {
-        //TODO:
         if(config.count("starting_locations")) {
             for(auto& entry : config.at("starting_locations")) {
                 info.startingLocations.push_back(json::parse_ivec2(entry));
@@ -202,11 +201,12 @@ namespace eng {
 
         info.preferred_opponents = config.count("preferred_opponents")  ? int(config.at("preferred_opponents")) : 1;
         info.campaignIdx         = config.count("campaign_idx")         ? int(config.at("campaign_idx")) : -1;
+        info.custom_game         = config.count("custom_game")          ? bool(config.at("custom_game")) : true;
         
         return true;
     }
 
-    bool Parse_FactionsFile(FactionsFile& factions, const nlohmann::json& config) {
+    bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config) {
         for(auto& entry : config.at("factions")) {
             FactionsFile::FactionEntry e = {};
 
@@ -225,9 +225,24 @@ namespace eng {
 
             factions.factions.push_back(e);
         }
-        
-        for(auto& relation : config.at("diplomacy")) {
-            factions.diplomacy.push_back(json::parse_ivec3(relation));
+
+        if(info.custom_game) {
+            //default diplomacy -> everyone hostile to everyone (excluding neutral factions)
+            for(int i = 0; i < factions.factions.size(); i++) {
+                if(factions.factions[i].controllerID == FactionControllerID::NATURE)
+                    continue;
+                for(int j = i+1; j < factions.factions.size(); j++) {
+                    if(factions.factions[j].controllerID == FactionControllerID::NATURE)
+                        continue;
+                    
+                    factions.diplomacy.push_back(glm::ivec3(i,j,1));
+                }
+            }
+        }
+        else {
+            for(auto& relation : config.at("diplomacy")) {
+                factions.diplomacy.push_back(json::parse_ivec3(relation));
+            }
         }
 
         return true;
@@ -265,9 +280,7 @@ namespace eng {
     }
     
     nlohmann::json Export_Info(const LevelInfo& info) {
-        //TODO:
         using json = nlohmann::json;
-
         json out = {};
 
         json& loc = out["starting_locations"] = {};
@@ -275,15 +288,16 @@ namespace eng {
             loc.push_back({ pos.x, pos.y });
         }
 
-        out["preferred_opponents"] = info.preferred_opponents;
-        if(info.campaignIdx >= 0) out["campaign_idx"] = info.campaignIdx;
+        out["custom_game"]          = info.custom_game;
+        out["preferred_opponents"]  = info.preferred_opponents;
+        if(info.campaignIdx >= 0)
+            out["campaign_idx"] = info.campaignIdx;
 
         return out;
     }
 
-    nlohmann::json Export_FactionsFile(const FactionsFile& factions) {
+    nlohmann::json Export_FactionsFile(const LevelInfo& info, const FactionsFile& factions) {
         using json = nlohmann::json;
-
         json out = {};
 
         json& f = out["factions"] = {};
@@ -298,9 +312,11 @@ namespace eng {
             f.push_back(e);
         }
 
-        json& diplomacy = out["diplomacy"] = {};
-        for(const glm::ivec3& r : factions.diplomacy) {
-            diplomacy.push_back({ r.x, r.y, r.z });
+        if(!info.custom_game) {
+            json& diplomacy = out["diplomacy"] = {};
+            for(const glm::ivec3& r : factions.diplomacy) {
+                diplomacy.push_back({ r.x, r.y, r.z });
+            }
         }
 
         return out;

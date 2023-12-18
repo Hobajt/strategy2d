@@ -40,6 +40,8 @@ public:
 
     virtual void GUI_Update() = 0;
     virtual void Render() {}
+
+    virtual void NewLevelCreated() {}
 protected:
     EditorContext& context;
 };
@@ -100,7 +102,7 @@ public:
 
     static const char* TabName() { return "Level Info"; }
 
-    void NewLevelCreated();
+    void NewLevelCreated() override;
 private:
     char* levelName;
 
@@ -134,11 +136,13 @@ public:
 
 //===== DiplomacyMenu =====
 
-class DiplomacyMenu : public EditorComponent {
+class DiplomacyMenu : public EditorComponent, eng::FactionsEditor {
 public:
     DiplomacyMenu(EditorContext& context);
 
     static const char* TabName() { return "Diplomacy"; }
 
     virtual void GUI_Update() override;
+private:
+    int factionCount = 2;
 };

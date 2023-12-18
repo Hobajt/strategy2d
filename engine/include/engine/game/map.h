@@ -406,6 +406,8 @@ namespace eng {
 
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
 
+        void EnableOcclusion(bool enabled) { enable_occlusion = enabled; }
+
         void DBG_GUI();
     private:
         //Flood-fill; Adds all tiles that are marked for painting or are neighboring with a marked tile (starting at the specified location (y,x)).
