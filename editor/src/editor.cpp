@@ -13,6 +13,8 @@ void Editor::OnInit() {
         shader = std::make_shared<Shader>("res/shaders/shader");
         shader->InitTextureSlots(Renderer::TextureSlotsCount());
 
+        Resources::Preload();
+
         palette = ColorPalette(true);
         palette.UpdateShaderValues(shader);
 

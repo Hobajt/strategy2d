@@ -408,6 +408,10 @@ namespace eng::Resources {
         return 0;
     }
 
+    int LoadResearchLevels(int type) {
+        return data.research_viz.at(type).levels;
+    }
+
     namespace CursorIcons {
 
         void Update() {

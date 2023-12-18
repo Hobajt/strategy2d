@@ -68,6 +68,7 @@ namespace eng::Resources {
 
     bool LoadResearchInfo(int type, int level, ResearchInfo& out_info);
     int LoadResearchBonus(int type, int level);
+    int LoadResearchLevels(int type);
 
     //===== Cursor icons =====
 

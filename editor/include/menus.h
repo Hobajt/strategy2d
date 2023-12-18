@@ -123,24 +123,13 @@ private:
     void GUI_ToolSelect();
 };
 
-//===== TechtreeMenu =====
+//===== FactionsMenu =====
 
-class TechtreeMenu : public EditorComponent {
+class FactionsMenu : public EditorComponent, eng::FactionsEditor {
 public:
-    TechtreeMenu(EditorContext& context);
+    FactionsMenu(EditorContext& context);
 
-    static const char* TabName() { return "Techtree"; }
-
-    virtual void GUI_Update() override;
-};
-
-//===== DiplomacyMenu =====
-
-class DiplomacyMenu : public EditorComponent, eng::FactionsEditor {
-public:
-    DiplomacyMenu(EditorContext& context);
-
-    static const char* TabName() { return "Diplomacy"; }
+    static const char* TabName() { return "Factions"; }
 
     virtual void GUI_Update() override;
 private:

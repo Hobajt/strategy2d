@@ -155,6 +155,7 @@ namespace eng {
 
         if(entry.count("price")) {
             //single level research
+            viz.levels = 1;
             ResearchData data = {};
             if(entry.at("price").size() == 2) {
                 data.price[0] = glm::ivec4(json::parse_ivec3(entry.at("price").at(0)), 0);
@@ -177,6 +178,7 @@ namespace eng {
             }
 
             if(prices.at(0).size() != 3) {
+                viz.levels = prices.at(0).size();
                 for(int i = 0; i < prices.at(0).size(); i++) {
                     ResearchData data = {};
                     data.price[0]   = glm::ivec4(json::parse_ivec3(prices.at(0).at(i)), 0);
@@ -186,6 +188,7 @@ namespace eng {
                 }
             }
             else {
+                viz.levels = prices.size();
                 for(int i = 0; i < prices.size(); i++) {
                     ResearchData data = {};
                     data.price[0] = data.price[1]  = glm::ivec4(json::parse_ivec3(prices.at(i)), 0);

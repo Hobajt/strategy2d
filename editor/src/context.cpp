@@ -8,8 +8,7 @@ using namespace eng;
 
 EditorContext::EditorContext() : input(EditorInputHandler(*this)), tools(EditorTools(*this)) {
     components.push_back(std::make_shared<HotkeysMenu>(*this));
-    components.push_back(std::make_shared<DiplomacyMenu>(*this));
-    components.push_back(std::make_shared<TechtreeMenu>(*this));
+    components.push_back(std::make_shared<FactionsMenu>(*this));
     components.push_back(std::make_shared<ToolsMenu>(*this));
     components.push_back(std::make_shared<InfoMenu>(*this));
     components.push_back(std::make_shared<FileMenu>(*this));

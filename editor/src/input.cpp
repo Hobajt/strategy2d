@@ -35,12 +35,8 @@ void EditorInputHandler::InputCallback(int keycode, int modifiers, bool single_p
             ENGINE_IF_GUI(ImGui::SetWindowFocus(ToolsMenu::TabName()));
             context.tools.SwitchTool(ToolType::STARTING_LOCATION);
             break;
-        case GLFW_KEY_4:        //techtree tab
-            ENGINE_IF_GUI(ImGui::SetWindowFocus(TechtreeMenu::TabName()));
-            context.tools.SwitchTool(ToolType::SELECT);
-            break;
-        case GLFW_KEY_5:        //diplomacy tab
-            ENGINE_IF_GUI(ImGui::SetWindowFocus(DiplomacyMenu::TabName()));
+        case GLFW_KEY_5:        //factions tab
+            ENGINE_IF_GUI(ImGui::SetWindowFocus(FactionsMenu::TabName()));
             context.tools.SwitchTool(ToolType::SELECT);
             break;
         case GLFW_KEY_6:        //level info tab

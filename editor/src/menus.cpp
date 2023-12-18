@@ -381,21 +381,12 @@ void ToolsMenu::GUI_ToolSelect() {
 #endif
 }
 
-//===== TechtreeMenu =====
+//===== FactionsMenu =====
 
-TechtreeMenu::TechtreeMenu(EditorContext& context_) : EditorComponent(context_) {}
+FactionsMenu::FactionsMenu(EditorContext& context_) : EditorComponent(context_) {}
 
-void TechtreeMenu::GUI_Update() {
-    ImGui::Begin(TechtreeMenu::TabName());
-    ImGui::End();
-}
-
-//===== DiplomacyMenu =====
-
-DiplomacyMenu::DiplomacyMenu(EditorContext& context_) : EditorComponent(context_) {}
-
-void DiplomacyMenu::GUI_Update() {
-    ImGui::Begin(DiplomacyMenu::TabName());
+void FactionsMenu::GUI_Update() {
+    ImGui::Begin(FactionsMenu::TabName());
     Level& level = context.level;
 
     ImGui::Text("Game type:");
@@ -441,6 +432,10 @@ void DiplomacyMenu::GUI_Update() {
                 ImGui::Text("Race:"); ImGui::SameLine();
                 ImGui::RadioButton("Human", &Faction_Race(f), 0); ImGui::SameLine();
                 ImGui::RadioButton("Orc", &Faction_Race(f), 1);
+
+                if(ImGui::CollapsingHeader("Techtree")) {
+                    f.Tech().EditableGUI();
+                }
 
                 if(!mandatory) {
                     if(ImGui::SliderInt("Controller type", &Faction_ControllerType(f), 3, FactionControllerID::COUNT)) {

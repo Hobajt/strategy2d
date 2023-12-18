@@ -377,5 +377,39 @@ namespace eng {
 #endif
     }
 
+    void Techtree::EditableGUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
+        // flags |= ImGuiTableFlags_NoHostExtendY;
+        flags |= ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV;
+        float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+        float cell_width = TEXT_BASE_WIDTH * 3.f;
+        char buf[64];
+
+        ImGui::Text("Research levels:");
+        if (ImGui::BeginTable("table1", ResearchType::COUNT+1, flags)) {
+            for(int x = 0; x < ResearchType::COUNT+1; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+
+            ImGuiStyle& style = ImGui::GetStyle();
+            for(int race_idx = 0; race_idx < 2; race_idx++) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(race_idx ? "HU" : "OC");
+                for(int i = 0; i < ResearchType::COUNT; i++) {
+                    ImGui::TableNextColumn();
+                    snprintf(buf, sizeof(buf), "%d###btn%d_%d", data[race_idx].research[i], race_idx, i);
+                    if(ImGui::Button(buf, ImVec2(-FLT_MIN, 0.f))) {
+                        data[race_idx].research[i]++;
+                        if(data[race_idx].research[i] > Resources::LoadResearchLevels(i))
+                            data[race_idx].research[i] = 0;
+                    }
+                }
+            }
+            ImGui::EndTable();
+        }
+#endif
+    }
+
 
 }//namespace eng

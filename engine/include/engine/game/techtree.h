@@ -34,6 +34,8 @@ namespace eng {
         bool has_hotkey;
         int hotkey_idx[2];
         char hotkey[2];
+
+        int levels;
     };
 
     struct ResearchData {
@@ -96,6 +98,7 @@ namespace eng {
         const std::array<uint8_t, ResearchType::COUNT>& ResearchData(bool isOrc) const;
 
         void DBG_GUI();
+        void EditableGUI();
     private:
         TechtreeData data[2];
     };
