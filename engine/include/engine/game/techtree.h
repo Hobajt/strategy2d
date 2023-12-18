@@ -81,6 +81,9 @@ namespace eng {
         bool SetupSpellButton(GUI::ActionButtonDescription& btn, bool isOrc) const;
 
         bool ResearchDependenciesMet(int research_type, bool isOrc) const;
+        bool ResearchConstrained(int research_type, int current_level) const;
+        bool TrainingConstrained(int unit_type) const;
+        bool BuildingConstrained(int building_type) const;
 
         //Changes provided unit_type if the upgarde was researched.
         bool ApplyUnitUpgrade(int& unit_type, bool isOrc) const;

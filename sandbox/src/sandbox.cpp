@@ -53,6 +53,16 @@ void Sandbox::OnInit() {
         FactionControllerRef f1 = level.factions[1];
         FactionControllerRef f2 = level.factions[2];
 
+        //to test the limits
+        f1->Tech().ResearchLimits()[0] = 1;
+        f1->Tech().ResearchLimits()[1] = 2;
+
+        f1->Tech().BuildingLimits()[0] = true;
+        f1->Tech().BuildingLimits()[1] = true;
+
+        f1->Tech().UnitLimits()[0] = true;
+        f1->Tech().UnitLimits()[1] = true;
+
         //TODO: link an actual ingame stage after the level init (sandbox has none tho, so using mock instead)
         ingameStage = {};
         ingameStage.LinkController(level.factions.Player());
@@ -93,6 +103,7 @@ void Sandbox::OnInit() {
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f2, glm::vec2(6.f, 5.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
 
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), f1, glm::vec2(5.f, 4.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), f1, glm::vec2(5.f, 3.f), false);

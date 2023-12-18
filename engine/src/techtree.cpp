@@ -106,7 +106,7 @@ namespace eng {
         int type = btn.payload_id;
         int level = data[race].research[btn.payload_id];
 
-        if(!ResearchDependenciesMet(btn.payload_id, isOrc))
+        if(!ResearchDependenciesMet(btn.payload_id, isOrc) || ResearchConstrained(btn.payload_id, level))
             return false;
 
         ResearchInfo info = {};
@@ -181,6 +181,19 @@ namespace eng {
             default:
                 return true;
         }
+    }
+
+    bool Techtree::ResearchConstrained(int research_type, int current_level) const {
+        int max_level = Resources::LoadResearchLevels(research_type) - research_limits[research_type];
+        return current_level >= max_level;
+    }
+
+    bool Techtree::TrainingConstrained(int unit_type) const {
+        return unit_limits[unit_type];
+    }
+
+    bool Techtree::BuildingConstrained(int building_type) const {
+        return building_limits[building_type];
     }
 
     bool Techtree::ApplyUnitUpgrade(int& unit_type, bool isOrc) const {
@@ -437,7 +450,7 @@ namespace eng {
             for(int i = 0; i < ResearchType::COUNT; i++) {
                 ImGui::TableNextColumn();
                 int max_value = Resources::LoadResearchLevels(i);
-                int display_value = Resources::LoadResearchLevels(i) - research_limits[i];
+                int display_value = max_value - research_limits[i];
                 snprintf(buf, sizeof(buf), "%d###btn_r_%d", display_value, i);
                 if(ImGui::Button(buf, ImVec2(-FLT_MIN, 0.f))) {
                     research_limits[i]++;

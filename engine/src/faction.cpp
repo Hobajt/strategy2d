@@ -248,7 +248,7 @@ namespace eng {
                 return techtree.SetupResearchButton(btn, isOrc);
             case GUI::ActionButton_CommandType::TRAIN:
                 //requirements check (building preconditions)
-                if(TrainingPreconditionsMet(btn.payload_id)) {
+                if(TrainingPreconditionsMet(btn.payload_id) && !techtree.TrainingConstrained(btn.payload_id)) {
                     techtree.SetupTrainButton(btn, isOrc);
                     return true;
                 }
@@ -257,11 +257,11 @@ namespace eng {
                 }
                 break;
             case GUI::ActionButton_CommandType::UPGRADE:
-                return UpgradePreconditionsMet(btn.payload_id);
+                return UpgradePreconditionsMet(btn.payload_id) && !techtree.BuildingConstrained(btn.payload_id);
             case GUI::ActionButton_CommandType::CAST:
                 return techtree.SetupSpellButton(btn, isOrc);
             case GUI::ActionButton_CommandType::BUILD:
-                return BuildingPreconditionsMet(btn.payload_id);
+                return BuildingPreconditionsMet(btn.payload_id) && !techtree.BuildingConstrained(btn.payload_id);
             default:
                 return true;
         }
