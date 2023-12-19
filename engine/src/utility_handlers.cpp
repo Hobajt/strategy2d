@@ -44,6 +44,8 @@ namespace eng {
     //===================================================================
 
     void UtilityHandler_Default_Render(UtilityObject& obj) {
+        if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
+            return;
         obj.RenderAt(obj.real_pos(), obj.real_size(), Z_OFFSET);
     }
 
@@ -126,6 +128,11 @@ namespace eng {
             }
         }
 
+        //visibility setup (copy object's original vision range)
+        d.i5 = src.VisionRange();
+        d.i6 = src.FactionIdx();
+        src.lvl()->map.VisibilityIncrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
+
         // ENG_LOG_TRACE("CORPSE OBJECT - INIT: {}, {}, {}, {}, {}", d.i1, d.i2, d.i3, d.f1, d.f2);
     }
 
@@ -141,11 +148,17 @@ namespace eng {
             d.f1 = t + d.f2;
             d.i2 = -1;
 
+            //visibility update - from object's original vision range to small circle around the corpse
+            obj.lvl()->map.VisibilityDecrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
+            d.i5 = (d.i5 != 2) ? 2 : 0;     //no vision for 3rd animation
+            obj.lvl()->map.VisibilityIncrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
+
             //dying ground unit - queue 3rd animation (generic, decayed corpse)
             if(d.i1 == CorpseAnimID::CORPSE1_HU || d.i1 == CorpseAnimID::CORPSE1_OC) {
                 d.i2 = CorpseAnimID::CORPSE2;
                 d.f2 = obj.Data()->animData->GetGraphics(d.i2).Duration();
             }
+
         }
 
         //terminate explosion animation
@@ -157,10 +170,19 @@ namespace eng {
         obj.ori() = d.i4;
 
         //terminate if ran out of animations to play
-        return (d.i1 < 0);
+        if(d.i1 < 0) {
+            //also remove the visibility
+            obj.lvl()->map.VisibilityDecrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
+            return true;
+        }
+        else
+            return false;
     }
 
     void UtilityHandler_Corpse_Render(UtilityObject& obj) {
+        if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
+            return;
+
         //regular corpse animation
         if(obj.LD().i1 >= 0) {
             obj.RenderAt(obj.real_pos(), obj.real_size());

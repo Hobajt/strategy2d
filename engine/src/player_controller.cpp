@@ -1635,7 +1635,7 @@ namespace eng {
                 const TileData& td = map(coords);
 
                 rgba color;
-                switch(td.occlusion) {
+                switch(td.vis.occlusion) {
                     default:
                     case 0:     //unexplored bit
                     case 2:
@@ -1649,12 +1649,12 @@ namespace eng {
                         else
                             color = tileColors[td.tileType];
                         break;
-                    case 1:     //explored, but with fog
+                    case 1:     //explored, but with fog (show only buildings)
                     {
                         rgba tmp[2] = { tileColors[td.tileType], rgba(0,0,0,255) };
-                        if(ObjectID::IsObject(td.info[1].id))
+                        if(ObjectID::IsObject(td.info[1].id) && td.info[1].id.type == ObjectType::BUILDING)
                             color = factionColors[td.info[1].colorIdx % colorCount];
-                        else if(ObjectID::IsObject(td.info[0].id))
+                        else if(ObjectID::IsObject(td.info[0].id) && td.info[1].id.type == ObjectType::BUILDING)
                             color = factionColors[td.info[0].colorIdx % colorCount];
                         else
                             color = tmp[int((x+y) % 2 == 0)];
@@ -1713,6 +1713,7 @@ namespace eng {
     }
 
     void PlayerFactionController::Update(Level& level) {
+
         selection.GroupsUpdate(level);
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
 
@@ -1751,7 +1752,8 @@ namespace eng {
         Resources::CursorIcons::SetIcon(cursor_idx);
 
         //update mapview texture
-        mapview.Update(level.map);
+        mapview.Update(level.map, first_tick);
+        first_tick = false;
 
         //update timing on the message bar
         msg_bar.Update();

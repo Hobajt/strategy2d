@@ -74,6 +74,8 @@ namespace eng {
         static float GameTimeDelay(float delay_s);
 
         void ClampCursorPos(const glm::vec2& min, const glm::vec2& max);
+
+        float CustomAnimationFrame(int seed);
     private:
         Input() = default;
         ~Input();
@@ -98,6 +100,8 @@ namespace eng {
         glm::vec2 mousePos_n;
 
         bool alt, shift, ctrl, space, enter;
+
+        float anim_frame;
     };
 
 }//namespace eng

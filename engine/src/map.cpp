@@ -86,22 +86,26 @@ namespace eng {
 
     void TileData::VisionIncrement() {
         //increment vision counter & disable both unexplored and fog of war bits
-        visionCounter++;
-        occlusion |= 3 & (3*int(visionCounter > 0));
-        ASSERT_MSG(visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
+        vis.visionCounter++;
+        vis.occlusion |= 3 & (3*int(vis.visionCounter > 0));
+        ASSERT_MSG(vis.visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
     }
 
     void TileData::VisionDecrement() {
         //decrement vision counter, enable fog of war if there's no vision
-        if((--visionCounter) <= 0)
-            occlusion &= ~2;
-        ASSERT_MSG(visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
+        if((--vis.visionCounter) <= 0)
+            vis.occlusion &= ~2;
+        ASSERT_MSG(vis.visionCounter >= 0, "TileData::VisionIncrement - vision counter is at a negative value.")
     }
 
     void TileData::UpdateOcclusionIndices(int a, int b, int c, int d) {
         //inner parentheses = get bit corresponding to fog/occlusion; outer parentheses = move it to proper position
-        occ_idx = ((a & 1) << 0) | ((b & 1) << 1) | ((c & 1) << 2) | ((d & 1) << 3);
-        fog_idx = ((a & 2) >> 1) | ((b & 2) << 0) | ((c & 2) << 1) | ((d & 2) << 2);
+        vis.occ_idx = ((a & 1) << 0) | ((b & 1) << 1) | ((c & 1) << 2) | ((d & 1) << 3);
+        vis.fog_idx = ((a & 2) >> 1) | ((b & 2) << 0) | ((c & 2) << 1) | ((d & 2) << 2);
+    }
+
+    bool TileData::IsVisible(bool occlusion_enabled) const {
+        return !occlusion_enabled || (vis.occ_idx != 0 && (!Config::FogOfWar() || vis.fog_idx != 0));
     }
 
     int TileData::TileTraversability() const {
@@ -285,7 +289,7 @@ namespace eng {
                 b = &operator()(y+0, x+1);
                 d = &operator()(y+1, x+1);
 
-                a->UpdateOcclusionIndices(a->occlusion, b->occlusion, c->occlusion, d->occlusion);
+                a->UpdateOcclusionIndices(a->vis.occlusion, b->vis.occlusion, c->vis.occlusion, d->vis.occlusion);
                 
                 a = b;
                 c = d;
@@ -294,36 +298,36 @@ namespace eng {
     }
 
     void MapTiles::RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range) {
-        operator()(m.y  , m.x  ).visionCounter++;
-        operator()(m.y  , M.x-1).visionCounter++;
-        operator()(M.y-1, m.x  ).visionCounter++;
-        operator()(M.y-1, M.x-1).visionCounter++;
+        operator()(m.y  , m.x  ).vis.visionCounter++;
+        operator()(m.y  , M.x-1).vis.visionCounter++;
+        operator()(M.y-1, m.x  ).vis.visionCounter++;
+        operator()(M.y-1, M.x-1).vis.visionCounter++;
         if(range > 4) {
-            operator()(m.y  , m.x+1).visionCounter++;
-            operator()(m.y  , M.x-2).visionCounter++;
-            operator()(m.y+1, m.x  ).visionCounter++;
-            operator()(m.y+1, M.x-1).visionCounter++;
-            operator()(M.y-2, m.x  ).visionCounter++;
-            operator()(M.y-2, M.x-1).visionCounter++;
-            operator()(M.y-1, m.x+1).visionCounter++;
-            operator()(M.y-1, M.x-2).visionCounter++;
+            operator()(m.y  , m.x+1).vis.visionCounter++;
+            operator()(m.y  , M.x-2).vis.visionCounter++;
+            operator()(m.y+1, m.x  ).vis.visionCounter++;
+            operator()(m.y+1, M.x-1).vis.visionCounter++;
+            operator()(M.y-2, m.x  ).vis.visionCounter++;
+            operator()(M.y-2, M.x-1).vis.visionCounter++;
+            operator()(M.y-1, m.x+1).vis.visionCounter++;
+            operator()(M.y-1, M.x-2).vis.visionCounter++;
         }
     }
 
     void MapTiles::RoundCorners_Decrement(const glm::ivec2& m, const glm::ivec2& M, int range) {
-        operator()(m.y  , m.x  ).visionCounter--;
-        operator()(m.y  , M.x-1).visionCounter--;
-        operator()(M.y-1, m.x  ).visionCounter--;
-        operator()(M.y-1, M.x-1).visionCounter--;
+        operator()(m.y  , m.x  ).vis.visionCounter--;
+        operator()(m.y  , M.x-1).vis.visionCounter--;
+        operator()(M.y-1, m.x  ).vis.visionCounter--;
+        operator()(M.y-1, M.x-1).vis.visionCounter--;
         if(range > 4) {
-            operator()(m.y  , m.x+1).visionCounter--;
-            operator()(m.y  , M.x-2).visionCounter--;
-            operator()(m.y+1, m.x  ).visionCounter--;
-            operator()(m.y+1, M.x-1).visionCounter--;
-            operator()(M.y-2, m.x  ).visionCounter--;
-            operator()(M.y-2, M.x-1).visionCounter--;
-            operator()(M.y-1, m.x+1).visionCounter--;
-            operator()(M.y-1, M.x-2).visionCounter--;
+            operator()(m.y  , m.x+1).vis.visionCounter--;
+            operator()(m.y  , M.x-2).vis.visionCounter--;
+            operator()(m.y+1, m.x  ).vis.visionCounter--;
+            operator()(m.y+1, M.x-1).vis.visionCounter--;
+            operator()(M.y-2, m.x  ).vis.visionCounter--;
+            operator()(M.y-2, M.x-1).vis.visionCounter--;
+            operator()(M.y-1, m.x+1).vis.visionCounter--;
+            operator()(M.y-1, M.x-2).vis.visionCounter--;
         }
     }
 
@@ -604,16 +608,11 @@ namespace eng {
                 tileset->Tilemap().Render(glm::uvec4(0), glm::vec3(pos, zIdx_map), cam.Mult(), tiles[i].idx.y, tiles[i].idx.x);
                 
                 //use textures based on occlusion indices
-                //also need to generate the texture in the first place (for all the possible corners and both for fog and occlusion)
                 if(enable_occlusion) {
-                    occlusion.Render(glm::vec3(pos, zIdx_occ), cam.Mult(), 0, tiles[i].occ_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
-                    // if(y == 18 && x == 16) {
-                    //     int n = tiles[i].occ_idx;
-                    //     printf("ALSKJD\n");
-                    // }
+                    occlusion.Render(glm::vec3(pos, zIdx_occ), cam.Mult(), 0, tiles[i].vis.occ_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
 
                     if(Config::FogOfWar()) {
-                        occlusion.Render(glm::vec3(pos, zIdx_occ+1e-3f), cam.Mult(), 1, tiles[i].fog_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
+                        occlusion.Render(glm::vec3(pos, zIdx_occ+1e-3f), cam.Mult(), 1, tiles[i].vis.fog_idx, glm::vec4(0.f, 0.f, 0.f, 1.f));
                     }
                 }
             }
@@ -905,9 +904,7 @@ namespace eng {
             }
         }
 
-        if(factionId == playerFactionId) {
-            VisibilityIncrement(pos, size, sight);
-        }
+        VisibilityIncrement(pos, size, sight, factionId);
     }
 
     void Map::RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building, int factionId, int sight) {
@@ -930,9 +927,7 @@ namespace eng {
             }
         }
 
-        if(factionId == playerFactionId) {
-            VisibilityDecrement(pos, size, sight);
-        }
+        VisibilityDecrement(pos, size, sight, factionId);
     }
 
     void Map::MoveUnit(int unit_navType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight) {
@@ -963,7 +958,7 @@ namespace eng {
         //copy the explored bit from occlusion mask, set fog of war everywhere
         for(int y = 0; y < Size().y; y++) {
             for(int x = 0; x < Size().x; x++) {
-                tiles(y,x).occlusion = occlusion(y,x) & (~2);
+                tiles(y,x).vis.occlusion = occlusion(y,x) & (~2);
             }
         }
     }
@@ -973,17 +968,19 @@ namespace eng {
 
         for(int y = 0; y < Size().y; y++) {
             for(int x = 0; x < Size().x; x++) {
-                occlusion(y,x) = int(tiles(y,x).occlusion & (~2) != 0);
+                occlusion(y,x) = int(tiles(y,x).vis.occlusion & (~2) != 0);
             }
         }
     }
 
-    void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
-        tiles.VisibilityIncrement(pos, size, range);
+    void Map::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID) {
+        if(factionID == playerFactionId)
+            tiles.VisibilityIncrement(pos, size, range);
     }
 
-    void Map::VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& size, int range) {
-        tiles.VisibilityDecrement(pos, size, range);
+    void Map::VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID) {
+        if(factionID == playerFactionId)
+            tiles.VisibilityDecrement(pos, size, range);
     }
     
     void Map::VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range) {
@@ -1293,11 +1290,11 @@ namespace eng {
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, clr3);
                             break;
                         case 10:
-                            ImGui::Text("%d", tiles(y,x).visionCounter);
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, (tiles(y,x).visionCounter != 0) ? clr2 : clr1);
+                            ImGui::Text("%d", tiles(y,x).vis.visionCounter);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, (tiles(y,x).vis.visionCounter != 0) ? clr2 : clr1);
                             break;
                         case 11:
-                            ImGui::Text("%d", tiles(y,x).fog_idx);
+                            ImGui::Text("%d", tiles(y,x).vis.fog_idx);
                             break;
                         default:
                             ImGui::Text("---");

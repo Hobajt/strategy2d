@@ -44,6 +44,7 @@ namespace eng {
         bool Update(int action);
 
         void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, const glm::uvec4& info = glm::uvec4(QuadType::Animator,0,0,0));
+        void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, float frame, const glm::uvec4& info = glm::uvec4(QuadType::Animator,0,0,0));
         void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::vec4& color, bool noTexture, int action, int orientation, const glm::uvec4& info = glm::uvec4(QuadType::Animator,0,0,0));
 
         void SetPaletteIdx(float paletteIdx_) { paletteIdx = paletteIdx_; }

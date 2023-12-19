@@ -490,6 +490,10 @@ namespace eng {
             animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });
             animations.insert({ BuildingAnimationType::BUILD1 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1 + wo, Resources::LoadSprite("misc/buildings/construction1_winter"), false, 1.f)) });
             animations.insert({ BuildingAnimationType::BUILD2 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2 + wo, Resources::LoadSprite("misc/buildings/construction2_winter"), false, 1.f)) });
+
+            //load fire sprites
+            animations.insert({ BuildingAnimationType::FIRE_SMALL, SpriteGroup(SpriteGroupData(BuildingAnimationType::FIRE_SMALL, Resources::LoadSprite("misc/effects/fire_small"), true, 1.f)) });
+            animations.insert({ BuildingAnimationType::FIRE_BIG, SpriteGroup(SpriteGroupData(BuildingAnimationType::FIRE_BIG, Resources::LoadSprite("misc/effects/fire_big"), true, 1.f)) });
         }
         data->animData = std::make_shared<AnimatorData>(building_name, std::move(animations));
     }

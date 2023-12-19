@@ -60,6 +60,7 @@ namespace eng {
         deltaTime_real = UpdateDeltaTime();
         deltaTime = deltaTime_real * Config::GameSpeed();
         fps = data.fps.Update(deltaTime_real);
+        anim_frame += deltaTime;
 
         UpdateKeys();
         UpdateMouse();
@@ -126,6 +127,11 @@ namespace eng {
         }
 
         // ENG_LOG_TRACE("({}, {}), ({}, {})", mousePos.x, mousePos.y, mousePos_n.x, mousePos_n.y);
+    }
+
+    float Input::CustomAnimationFrame(int seed) {
+        float frame = anim_frame + seed / 7.f;
+        return frame - int(frame);
     }
 
     Input::~Input() {

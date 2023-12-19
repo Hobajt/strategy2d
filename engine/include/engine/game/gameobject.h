@@ -36,6 +36,7 @@ namespace eng {
         void RenderAt(const glm::vec2& map_pos);
         void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, float zOffset = 0.f);
         void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, float scaling, bool centered, float zOffset = 0.f);
+        void RenderAt(const glm::vec2& map_pos, const glm::vec2& size, int action, float frame, float zOffset = 0.f);
 
         //Return true when requesting object removal.
         virtual bool Update();
@@ -380,6 +381,8 @@ namespace eng {
             int i2 = 0;
             int i3 = 0;
             int i4 = 0;
+            int i5 = 0;
+            int i6 = 0;
         public:
             glm::vec2 InterpolatePosition(float f);
         };

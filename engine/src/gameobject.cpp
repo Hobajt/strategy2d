@@ -67,6 +67,14 @@ namespace eng {
         animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
     }
 
+    void GameObject::RenderAt(const glm::vec2& pos, const glm::vec2& size, int action, float frame, float zOffset) {
+        ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
+        float zIdx = -0.5f;
+
+        Camera& cam = Camera::Get();
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), action, orientation, frame);
+    }
+
     bool GameObject::Update() {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(ActionIdx());
@@ -301,7 +309,7 @@ namespace eng {
     Unit::~Unit() {}
 
     void Unit::Render() {
-        if(!IsActive())
+        if(!IsActive() || !lvl()->map.IsTileVisible(Position()))
             return;
         bool airborne = (NavigationType() == NavigationBit::AIR);
         RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !airborne, airborne ? (-1e-3f) : 0.f);
@@ -470,6 +478,21 @@ namespace eng {
         }
         
         RenderAt(glm::vec2(Position()) + rendering_offset, rendering_size, 1e-3f);
+
+        //render flame visuals on damaged buildings
+        if(constructed) {
+            glm::vec2 pos = glm::vec2(Position()) + rendering_offset + rendering_size * 0.5f;
+            if(lvl()->map.IsTileVisible(pos)) {
+                float hp = HealthPercentage();
+                float frame = Input::Get().CustomAnimationFrame(OID().idx);
+                if(hp <= 0.5f) {
+                    RenderAt(pos - glm::vec2(1.f, 0.f), glm::vec2(2.f), BuildingAnimationType::FIRE_BIG, frame, -2e-3f);
+                }
+                else if(hp <= 0.75f) {
+                    RenderAt(pos - glm::vec2(0.5f, 0.f), glm::vec2(1.f), BuildingAnimationType::FIRE_SMALL, frame, -2e-3f);
+                }
+            }
+        }
     }
 
     bool Building::Update() {

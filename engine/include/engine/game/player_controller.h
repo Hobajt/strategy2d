@@ -375,6 +375,7 @@ namespace eng {
 
         OcclusionMask occlusion;
         MapView mapview;
+        bool first_tick = true;
     };
 
 }//namespace eng

@@ -132,7 +132,10 @@ namespace eng {
     namespace BuildingActionType { enum { INVALID = -1, IDLE = 0, TRAIN_OR_RESEARCH, CONSTRUCTION_OR_UPGRADE, IDLE_ATTACK, COUNT }; }
 
     //when changing values, also update ResolveBuildingAnimationID() (local fn in object_data.cpp)
-    namespace BuildingAnimationType { enum { IDLE, IDLE2, BUILD1, BUILD2, BUILD3, UPGRADE, COUNT }; }
+    namespace BuildingAnimationType {
+        enum { IDLE, IDLE2, BUILD1, BUILD2, BUILD3, UPGRADE, COUNT };
+        enum { FIRE_SMALL = 101, FIRE_BIG = 102 };
+    }
 
     struct BuildingAction {
         struct Logic {

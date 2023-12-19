@@ -104,6 +104,16 @@ namespace eng {
         int colorIdx = -1;
     };
 
+    struct TileVisibility {
+        //values linked to corners
+        int occlusion = 0;              //defines the visibility state (1st bit enables occlusion; 2nd bit enables fog of war)
+        int visionCounter = 0;          //counts how many player owned objects have vision over this corner
+
+        //values linked to tiles
+        int fog_idx = 0;                //for rendering, identifies the occluding shape (based on neighboring tiles)
+        int occ_idx = 0;                //for rendering, identifies the occluding shape (based on neighboring tiles)
+    };
+
     //Live representation of a tile.
     struct TileData {
         int tileType = 0;                   //tile type identifier (enum value)
@@ -116,11 +126,7 @@ namespace eng {
         NavData nav;                        //navigation variables
 
         ObjectInfo info[2];                 //info for ground & airborne units
-
-        int occlusion = 0;
-        int visionCounter = 0;
-        int fog_idx = 0;
-        int occ_idx = 0;
+        TileVisibility vis;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -140,6 +146,8 @@ namespace eng {
         void UpdateOcclusionIndices(int a, int b, int c, int d);
 
         bool IsTreeTile() const { return tileType == TileType::TREES; }
+
+        bool IsVisible(bool occlusion_enabled) const;
     private:
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
@@ -384,8 +392,8 @@ namespace eng {
 
         void UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId);
         void DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId);
-        void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range);
-        void VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& size, int range);
+        void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID);
+        void VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID);
         void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
         void VisionRangeUpdate(const glm::ivec2& pos, const glm::ivec2& size, int old_range, int new_range);
 
@@ -407,6 +415,7 @@ namespace eng {
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
 
         void EnableOcclusion(bool enabled) { enable_occlusion = enabled; }
+        bool IsTileVisible(const glm::ivec2& position) { return operator()(position).IsVisible(enable_occlusion); }
 
         void DBG_GUI();
     private:
