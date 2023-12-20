@@ -76,6 +76,8 @@ namespace eng {
         void ClampCursorPos(const glm::vec2& min, const glm::vec2& max);
 
         float CustomAnimationFrame(int seed);
+
+        void SetPaused(bool state) { paused = state; }
     private:
         Input() = default;
         ~Input();
@@ -102,6 +104,7 @@ namespace eng {
         bool alt, shift, ctrl, space, enter;
 
         float anim_frame;
+        bool paused = false;
     };
 
 }//namespace eng

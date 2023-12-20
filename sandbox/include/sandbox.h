@@ -5,6 +5,11 @@
 class MockIngameStageController : public eng::PlayerFactionController::GUIRequestHandler {
 public:
     void RegisterKeyCallback();
+
+    virtual void PauseRequest(bool pause) override;
+    virtual void PauseToggleRequest() override;
+private:
+    bool paused = false;
 };
 
 class Sandbox : public eng::App {

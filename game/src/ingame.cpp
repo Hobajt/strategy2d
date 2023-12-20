@@ -72,12 +72,14 @@ void IngameController::PauseRequest(bool pause) {
     if(can_be_paused) {
         paused = pause;
     }
+    Input::Get().SetPaused(paused);
 }
 
 void IngameController::PauseToggleRequest() {
     if(can_be_paused) {
         paused = !paused;
     }
+    Input::Get().SetPaused(paused);
 }
 
 void IngameController::ChangeLevel(const std::string& filename) {

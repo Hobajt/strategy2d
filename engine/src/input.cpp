@@ -61,6 +61,8 @@ namespace eng {
         deltaTime = deltaTime_real * Config::GameSpeed();
         fps = data.fps.Update(deltaTime_real);
         anim_frame += deltaTime;
+        if(paused)
+            deltaTime = 0.f;
 
         UpdateKeys();
         UpdateMouse();

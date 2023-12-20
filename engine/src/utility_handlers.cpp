@@ -101,20 +101,20 @@ namespace eng {
         if(d.i1 < 0) {
             //1st anim has invalid idx -> play explosion animation
             d.i3 = 1;
-            d.f2 = Input::GameTimeDelay(anim->GetGraphics(CorpseAnimID::EXPLOSION).Duration());
+            d.f2 = anim->GetGraphics(CorpseAnimID::EXPLOSION).Duration();
 
             if(!src.IsUnit()) {
                 //src is a building -> display crater animation (along with explosion)
                 int is_wasteland = int(obj.lvl()->map.GetTileset()->GetType() == TilesetType::WASTELAND);
                 d.i1 = (src.NavigationType() == NavigationBit::GROUND) ? (CorpseAnimID::RUINS_GROUND + is_wasteland) : CorpseAnimID::RUINS_WATER;
-                d.f1 = Input::GameTimeDelay(anim->GetGraphics(d.i1).Duration());
+                d.f1 = anim->GetGraphics(d.i1).Duration();
 
                 obj.real_pos() = glm::vec2(src.Position()) + (src.Data()->size - glm::vec2(2.f)) * 0.5f;
                 obj.real_size() = glm::vec2(2.f);
             }
         }
         else {
-            d.f1 = Input::GameTimeDelay(anim->GetGraphics(d.i1).Duration() + 1.f);
+            d.f1 = anim->GetGraphics(d.i1).Duration() + 1.f;
             if(src.IsUnit()) {
                 //2nd animation - transitioned to from the 1st one
                 if(src.NavigationType() == NavigationBit::GROUND) {
@@ -140,12 +140,12 @@ namespace eng {
         UtilityObject::LiveData& d = obj.LD();
         Input& input = Input::Get();
 
-        float t = (float)Input::CurrentTime();
+        d.f1 -= input.deltaTime;
 
         //switch from 1st to 2nd animation when the time runs out
-        if(t >= d.f1) {
+        if(d.f1 <= 0.f) {
             d.i1 = d.i2;
-            d.f1 = t + d.f2;
+            d.f1 += d.f2;
             d.i2 = -1;
 
             //visibility update - from object's original vision range to small circle around the corpse
@@ -158,12 +158,14 @@ namespace eng {
                 d.i2 = CorpseAnimID::CORPSE2;
                 d.f2 = obj.Data()->animData->GetGraphics(d.i2).Duration();
             }
-
         }
 
-        //terminate explosion animation
-        if(d.i3 && t >= d.f2) {
-            d.i3 = 0;
+        //update the explosion animation
+        if(d.i3) {
+            d.f2 -= input.deltaTime;
+            if(d.f2 <= 0.f) {
+                d.i3 = 0;       //hides the explosion visuals
+            }
         }
         
         obj.act() = d.i1;

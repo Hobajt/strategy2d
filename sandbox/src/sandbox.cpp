@@ -25,6 +25,16 @@ void MockIngameStageController::RegisterKeyCallback() {
     }, true, this);
 }
 
+void MockIngameStageController::PauseRequest(bool pause) {
+    paused = pause;
+    Input::Get().SetPaused(paused);
+}
+
+void MockIngameStageController::PauseToggleRequest() {
+    paused = !paused;
+    Input::Get().SetPaused(paused);
+}
+
 void Sandbox::OnInit() {
     Config::Reload();
 
@@ -108,7 +118,8 @@ void Sandbox::OnInit() {
         ObjectID to_kill = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(18.f, 22.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f2, glm::vec2(18.f, 25.f), false);
 
-        // level.objects.GetBuilding(to_kill).Kill();
+        level.objects.GetBuilding(to_kill).Kill();
+        
 
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
@@ -156,6 +167,8 @@ void Sandbox::OnInit() {
         LOG_ERROR("Failed to load resources; Terminating...");
         throw e;
     }
+
+    Camera::Get().Center(glm::vec2(18.f, 22.f));
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
