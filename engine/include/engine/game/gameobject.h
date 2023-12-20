@@ -91,6 +91,8 @@ namespace eng {
         static int PeekNextID() { return idCounter; }
         void IntegrateIntoLevel(const ObjectID& oid_) { oid = oid_; InnerIntegrate(); }
         virtual void InnerIntegrate() {}
+
+        float ZIndex(const glm::vec2& pos, const glm::vec2& size, float zOffset);
     protected:
         Animator animator;
     private:

@@ -44,11 +44,10 @@ namespace eng {
     void GameObject::RenderAt(const glm::vec2& pos, const glm::vec2& size, float zOffset) {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
 
-        //TODO: figure out zIdx from the y-coord
-        float zIdx = -0.5f;
+        float zIdx = ZIndex(pos, size, zOffset);
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), size * cam.Mult(), ActionIdx(), orientation);
     }
 
     void GameObject::RenderAt(const glm::vec2& base_pos, const glm::vec2& base_size, float scaling, bool centered, float zOffset) {
@@ -60,19 +59,18 @@ namespace eng {
             pos = (pos + 0.5f) - size * 0.5f;
         }
 
-        //TODO: figure out zIdx from the y-coord
-        float zIdx = -0.5f;
+        float zIdx = ZIndex(pos, size, zOffset);
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), ActionIdx(), orientation);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), size * cam.Mult(), ActionIdx(), orientation);
     }
 
     void GameObject::RenderAt(const glm::vec2& pos, const glm::vec2& size, int action, float frame, float zOffset) {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
-        float zIdx = -0.5f;
+        float zIdx = ZIndex(pos, size, zOffset);
 
         Camera& cam = Camera::Get();
-        animator.Render(glm::vec3(cam.map2screen(pos), zIdx + zOffset), size * cam.Mult(), action, orientation, frame);
+        animator.Render(glm::vec3(cam.map2screen(pos), zIdx), size * cam.Mult(), action, orientation, frame);
     }
 
     bool GameObject::Update() {
@@ -123,6 +121,10 @@ namespace eng {
     std::ostream& GameObject::DBG_Print(std::ostream& os) const {
         os << "GameObject - " << Name() << " (ID=" << ID() << ")";
         return os;
+    }
+
+    float GameObject::ZIndex(const glm::vec2& pos, const glm::vec2& size, float zOffset) {
+        return -0.5f + 1e-4f * (pos.y + size.y * 0.5f) + zOffset;
     }
 
     //===== FactionObject =====
