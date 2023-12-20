@@ -159,6 +159,7 @@ namespace eng {
         int Health() const { return int(health); }
         float HealthPercentage() const { return float(health) / data_f->health; }
         glm::ivec2 Icon() const { return data_f->icon; }
+        bool IsFullHealth() const { return int(health) == data_f->health; }
 
         //For melee damage application.
         void ApplyDirectDamage(const FactionObject& source);

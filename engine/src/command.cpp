@@ -132,6 +132,8 @@ namespace eng {
 
     void CommandHandler_Build(Unit& src, Level& level, Command& cmd, Action& action);
 
+    void CommandHandler_Repair(Unit& src, Level& level, Command& cmd, Action& action);
+
     //=============================
 
     void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action);
@@ -196,6 +198,19 @@ namespace eng {
 
         action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
         action.data.j = ActionPayloadType::HARVEST;
+
+        return action;
+    }
+
+    Action Action::Repair(const ObjectID& target_id, const glm::ivec2& target_dir) {
+        Action action = {};
+
+        action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
+        action.data.Reset();
+        action.data.target = target_id;
+
+        action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
+        action.data.j = ActionPayloadType::REPAIR;
 
         return action;
     }
@@ -311,7 +326,7 @@ namespace eng {
                 case ActionPayloadType::HARVEST:        //harvest action payload
                 {
                     //harvest could return from here (wood tick - when the tree is felled)
-                    ENG_LOG_INFO("ACTION PAYLOAD - HARVEST");
+                    // ENG_LOG_INFO("ACTION PAYLOAD - HARVEST");
                     Audio::Play(SoundEffect::Wood().Random(), src.Position());
                     if(level.map.HarvestTile(action.data.target_pos)) {
                         src.ChangeCarryStatus(WorkerCarryState::WOOD);
@@ -320,7 +335,7 @@ namespace eng {
                     break;
                 case ActionPayloadType::MELEE_ATTACK:   //melee attack action payload
                 {
-                    ENG_LOG_INFO("ACTION PAYLOAD - MELEE ATTACK");
+                    // ENG_LOG_INFO("ACTION PAYLOAD - MELEE ATTACK");
                     
                     bool attack_happened = ApplyDamage(level, src, action.data.target, action.data.target_pos);
 
@@ -330,9 +345,17 @@ namespace eng {
                     }
                 }
                     break;
+                case ActionPayloadType::REPAIR:
+                {
+                    Building* target = nullptr;
+                    if(level.objects.GetBuilding(action.data.target, target)) {
+                        target->AddHealth(4.f);
+                    }
+                    break;
+                }
                 default:                                //effect action payload (includes ranged attacks)
                 {
-                    ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
+                    // ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
                     //use payload_id to get the prefab from Unit's data
 
                     UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(payload_id));
@@ -467,8 +490,13 @@ namespace eng {
     }
 
     Command Command::Repair(const ObjectID& target_id) {
-        //TODO;
-        return Idle();
+        Command cmd = {};
+
+        cmd.type = CommandType::REPAIR;
+        cmd.handler = CommandHandler_Repair;
+        cmd.target_id = target_id;
+
+        return cmd;
     }
 
     void Command::Update(Unit& src, Level& level) {
@@ -500,6 +528,9 @@ namespace eng {
             break;
         case CommandType::BUILD:
             snprintf(buf, sizeof(buf), "Command: Build '%zd' at (%d, %d)", target_id.id, target_pos.x, target_pos.y);
+            break;
+        case CommandType::REPAIR:
+            snprintf(buf, sizeof(buf), "Command: Repair %s", target_id.to_string().c_str());
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -826,6 +857,48 @@ namespace eng {
         }
     }
 
+    void CommandHandler_Repair(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //validate that it's issued on a worker unit
+        if(!src.IsWorker()) {
+            ENG_LOG_WARN("Repair Command - attempting to invoke on a non worker unit.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        //validate that target still exists (& that it's a building)
+        Building* target = nullptr;
+        if(!level.objects.GetBuilding(cmd.target_id, target) || target->IsFullHealth()) {
+            cmd = Command::Idle();
+            return;
+        }
+        glm::ivec2 min_pos = target->MinPos();
+        glm::ivec2 max_pos = target->MaxPos();
+
+        //distance check & movement
+        int range = get_range(src.Position(), min_pos, max_pos);
+        ENG_LOG_INFO("RANGE: {}", range);
+        if(range > 1) {
+            //move until the worker stands next to the building
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, min_pos, max_pos, 1);
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            else {
+                //destination unreachable
+                cmd = Command::Idle();
+            }
+        }
+        else {
+            //worker within range -> start new repair action
+            action = Action::Repair(cmd.target_id, target->Position() - src.Position());
+        }
+    }
+
     //=======================================
 
     //===== BuildingAction =====
@@ -993,22 +1066,6 @@ namespace eng {
                 attack_tick = (float)input.CurrentTime();
             }
         }
-
-
-        
-
-
-        /* command overview:
-            - keep a state variable - to indicate if building is engaged in attack or not (can be timing variable)
-                - if it's not engaged -> scan tiles within attack range (can do every other frame or so)
-            - otherwise increment timing variable
-            - whenever the timer overflows:
-                - validate that the target still exists
-                - if it doesn't rescan the range to find a new one
-                - if there is a target to attack, spawn a projectile
-                - reset timer (or go to "not engaged" state if there's no target)
-
-        */
     }
 
     void BuildingAction_TrainOrResearch(Building& src, Level& level, BuildingAction& action) {
@@ -1032,29 +1089,6 @@ namespace eng {
         if(progress >= target) {
             src.TrainingOrResearchFinished(is_training, payload_id);
         }
-
-
-        /*how to do this:   
-            - will need access to build time for the object being worked on:
-                - either need to lookup the unit/research that is being worked on every frame
-                - or have it stored in building's refs (seems shitty, as there might be way too many of these)
-                - or retrieve the value only once, during the action initialization and store it in the data struct (probably the best approach)
-    
-        */
-
-        /*how to handle all the references from buildings to the objects that they can train/research
-            - i mean training is pretty straightforward - can just add button definitions to the building
-            - research, however, is more trickier as there might be multiple levels to a reasearch
-            - this also ties into how are researches going to be defined
-                - they could have their own objects - Research or somthing - loadable from JSON
-                - they could also just be plain bool/int values contained within the Techtree
-                - the 2nd approach seems a bit better
-                    - sure is less flexible (probably harder to add new researches) - can still load research values from JSON tho
-                    - can just reference research by a number (enum for Techtree)
-                    - research button can then have checks in GUI to check for conditions:
-                        - already researched, level-disabled upgrade, etc.
-                        - this would be done through yet another method on the Faction class
-        */
     }
 
     void BuildingAction_ConstructOrUpgrade(Building& src, Level& level, BuildingAction& action) {

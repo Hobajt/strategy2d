@@ -1553,9 +1553,13 @@ namespace eng {
         
         int j = 0;
         //when the target destination is unreachable - find new (reachable) location along the way from dst to src position
-        while((tiles(pos_dst).nav.d == std::numeric_limits<float>::infinity() || !tiles(pos_dst).TraversableOrForrest(navType)) && pos_dst != pos_src) {
+        while(tiles.IsWithinBounds(pos_dst) && (tiles(pos_dst).nav.d == std::numeric_limits<float>::infinity() || !tiles(pos_dst).TraversableOrForrest(navType)) && pos_dst != pos_src) {
             pos_dst -= dir * step;
             j++;
+        }
+
+        if(!tiles.IsWithinBounds(pos_dst)) {
+            return pos_src;
         }
 
         glm::ivec2 res = pos_dst;

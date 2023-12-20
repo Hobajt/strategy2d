@@ -44,7 +44,7 @@ namespace eng {
     int get_range(const glm::ivec2& pos, const glm::ivec2& m, const glm::ivec2& M) {
         glm::ivec2 a = glm::abs(pos - m);
         glm::ivec2 b = glm::abs(pos - M);
-        return std::min({ std::max(a.x, a.y), std::max(b.x, b.y) });
+        return std::min({ std::max(a.x, a.y), std::max(b.x, b.y), std::max(a.x, b.y), std::max(b.x, a.y) });
     }
 
     int get_range(const glm::ivec2& m1, const glm::ivec2& M1, const glm::ivec2& m2, const glm::ivec2& M2) {
@@ -79,7 +79,7 @@ namespace eng {
 
     int VectorOrientation(const glm::vec2& v) {
         int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
-        ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
+        // ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
         orientation = (8-orientation+6) % 8;
         return orientation;
     }

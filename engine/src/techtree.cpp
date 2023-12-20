@@ -327,9 +327,52 @@ namespace eng {
             ImGui::EndTable();
         }
 
+        ImGui::Text("Limits:");
+        if (ImGui::BeginTable("table2", ResearchType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < ResearchType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Research");
+            for(int i = 0; i < ResearchType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                int max_value = Resources::LoadResearchLevels(i);
+                int display_value = max_value - research_limits[i];
+                ImGui::Text("%d", display_value);
+            }
+            ImGui::EndTable();
+        }
+        if (ImGui::BeginTable("table3__", BuildingType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < BuildingType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Buildings");
+            for(int i = 0; i < BuildingType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", (int)building_limits[i]);
+            }
+            ImGui::EndTable();
+        }
+        if (ImGui::BeginTable("table4", UnitType::COUNT+1, flags)) {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width*4);
+            for(int x = 0; x < UnitType::COUNT; x++)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Units");
+            for(int i = 0; i < UnitType::COUNT; i++) {
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", (int)unit_limits[i]);
+            }
+            ImGui::EndTable();
+        }
+
         ImGui::Separator();
         ImGui::Text("Unit levels:");
-        if (ImGui::BeginTable("table2", TechtreeLevelCounter::COUNT, flags)) {
+        if (ImGui::BeginTable("table5", TechtreeLevelCounter::COUNT, flags)) {
             for(int x = 0; x < TechtreeLevelCounter::COUNT; x++)
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, cell_width);
 

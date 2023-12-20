@@ -26,7 +26,7 @@ namespace eng {
 
     namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH }; }
 
-    namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, OTHER = 1 }; }
+    namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, REPAIR, OTHER = 1 }; }
 
     namespace WorkerCarryState { enum { NONE = 0, GOLD, WOOD }; }
 
@@ -70,6 +70,7 @@ namespace eng {
         static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
         static Action Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged);
         static Action Harvest(const glm::ivec2& target_pos, const glm::ivec2& target_dir);
+        static Action Repair(const ObjectID& target_id, const glm::ivec2& target_dir);
 
         //========
 
@@ -81,7 +82,7 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
@@ -91,6 +92,7 @@ namespace eng {
         friend void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_ReturnGoods(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Build(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_Repair(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
         Command();

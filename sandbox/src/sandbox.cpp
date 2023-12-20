@@ -63,16 +63,6 @@ void Sandbox::OnInit() {
         FactionControllerRef f1 = level.factions[1];
         FactionControllerRef f2 = level.factions[2];
 
-        //to test the limits
-        f1->Tech().ResearchLimits()[0] = 1;
-        f1->Tech().ResearchLimits()[1] = 2;
-
-        f1->Tech().BuildingLimits()[0] = true;
-        f1->Tech().BuildingLimits()[1] = true;
-
-        f1->Tech().UnitLimits()[0] = true;
-        f1->Tech().UnitLimits()[1] = true;
-
         //TODO: link an actual ingame stage after the level init (sandbox has none tho, so using mock instead)
         ingameStage = {};
         ingameStage.LinkController(level.factions.Player());
