@@ -927,7 +927,7 @@ namespace eng {
             action = BuildingAction::IdleAttack();
         }
 
-        src.act() = BuildingAnimationType::IDLE;
+        src.real_act() = BuildingAnimationType::IDLE;
     }
 
     void BuildingAction_Attack(Building& src, Level& level, BuildingAction& action) {
@@ -935,7 +935,7 @@ namespace eng {
             action = BuildingAction::Idle();
         }
 
-        src.act() = BuildingAnimationType::IDLE;
+        src.real_act() = BuildingAnimationType::IDLE;
         
         //=====
         Input& input = Input::Get();
@@ -1026,7 +1026,7 @@ namespace eng {
         //increment construction tracking as well as building health
         progress += uptick;
 
-        // src.act() = BuildingAnimationType::IDLE;
+        // src.real_act() = BuildingAnimationType::IDLE;
 
         //construction finished condition
         if(progress >= target) {
@@ -1084,10 +1084,10 @@ namespace eng {
 
             //compute animation based on construction percentual progress
             int state = std::min(int((progress / target) * 4.f), 2);
-            src.act() = BuildingAnimationType::BUILD1 + state;
+            src.real_act() = BuildingAnimationType::BUILD1 + state;
         }
         else {
-            src.act() = BuildingAnimationType::UPGRADE;
+            src.real_act() = BuildingAnimationType::UPGRADE;
         }
 
         //construction finished condition

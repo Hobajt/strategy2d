@@ -147,7 +147,7 @@ namespace eng {
 
         bool IsTreeTile() const { return tileType == TileType::TREES; }
 
-        bool IsVisible(bool occlusion_enabled) const;
+        bool IsVisible(bool occlusion_enabled = true) const;
     private:
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
@@ -415,7 +415,8 @@ namespace eng {
         void ModifyTiles(PaintBitmap& paint, int tileType, bool randomVariation, int variationValue, std::vector<TileRecord>* history = nullptr);
 
         void EnableOcclusion(bool enabled) { enable_occlusion = enabled; }
-        bool IsTileVisible(const glm::ivec2& position) { return operator()(position).IsVisible(enable_occlusion); }
+        bool IsTileVisible(const glm::ivec2& position) const;
+        bool IsTileVisible(const glm::ivec2& position, const glm::ivec2& size) const;
 
         void DBG_GUI();
     private:

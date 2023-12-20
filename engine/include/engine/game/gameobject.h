@@ -349,6 +349,8 @@ namespace eng {
 
         glm::ivec2& LastBtnIcon() { return last_btn_icon; }
         const glm::ivec2& LastBtnIcon() const { return last_btn_icon; }
+
+        int& real_act() { return real_actionIdx; }
     protected:
         virtual void Inner_DBG_GUI() override;
         virtual void InnerIntegrate() override;
@@ -363,6 +365,7 @@ namespace eng {
         bool constructed = false;
         int amount_left = 0;
         glm::ivec2 last_btn_icon = glm::ivec2(-1);
+        int real_actionIdx = 0;
     };
 
     //===== UtilityObject =====

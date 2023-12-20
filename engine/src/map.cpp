@@ -298,36 +298,40 @@ namespace eng {
     }
 
     void MapTiles::RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range) {
-        operator()(m.y  , m.x  ).vis.visionCounter++;
-        operator()(m.y  , M.x-1).vis.visionCounter++;
-        operator()(M.y-1, m.x  ).vis.visionCounter++;
-        operator()(M.y-1, M.x-1).vis.visionCounter++;
-        if(range > 4) {
-            operator()(m.y  , m.x+1).vis.visionCounter++;
-            operator()(m.y  , M.x-2).vis.visionCounter++;
-            operator()(m.y+1, m.x  ).vis.visionCounter++;
-            operator()(m.y+1, M.x-1).vis.visionCounter++;
-            operator()(M.y-2, m.x  ).vis.visionCounter++;
-            operator()(M.y-2, M.x-1).vis.visionCounter++;
-            operator()(M.y-1, m.x+1).vis.visionCounter++;
-            operator()(M.y-1, M.x-2).vis.visionCounter++;
+        if(range > 1) {
+            operator()(m.y  , m.x  ).vis.visionCounter++;
+            operator()(m.y  , M.x-1).vis.visionCounter++;
+            operator()(M.y-1, m.x  ).vis.visionCounter++;
+            operator()(M.y-1, M.x-1).vis.visionCounter++;
+            if(range > 4) {
+                operator()(m.y  , m.x+1).vis.visionCounter++;
+                operator()(m.y  , M.x-2).vis.visionCounter++;
+                operator()(m.y+1, m.x  ).vis.visionCounter++;
+                operator()(m.y+1, M.x-1).vis.visionCounter++;
+                operator()(M.y-2, m.x  ).vis.visionCounter++;
+                operator()(M.y-2, M.x-1).vis.visionCounter++;
+                operator()(M.y-1, m.x+1).vis.visionCounter++;
+                operator()(M.y-1, M.x-2).vis.visionCounter++;
+            }
         }
     }
 
     void MapTiles::RoundCorners_Decrement(const glm::ivec2& m, const glm::ivec2& M, int range) {
-        operator()(m.y  , m.x  ).vis.visionCounter--;
-        operator()(m.y  , M.x-1).vis.visionCounter--;
-        operator()(M.y-1, m.x  ).vis.visionCounter--;
-        operator()(M.y-1, M.x-1).vis.visionCounter--;
-        if(range > 4) {
-            operator()(m.y  , m.x+1).vis.visionCounter--;
-            operator()(m.y  , M.x-2).vis.visionCounter--;
-            operator()(m.y+1, m.x  ).vis.visionCounter--;
-            operator()(m.y+1, M.x-1).vis.visionCounter--;
-            operator()(M.y-2, m.x  ).vis.visionCounter--;
-            operator()(M.y-2, M.x-1).vis.visionCounter--;
-            operator()(M.y-1, m.x+1).vis.visionCounter--;
-            operator()(M.y-1, M.x-2).vis.visionCounter--;
+        if(range > 1) {
+            operator()(m.y  , m.x  ).vis.visionCounter--;
+            operator()(m.y  , M.x-1).vis.visionCounter--;
+            operator()(M.y-1, m.x  ).vis.visionCounter--;
+            operator()(M.y-1, M.x-1).vis.visionCounter--;
+            if(range > 4) {
+                operator()(m.y  , m.x+1).vis.visionCounter--;
+                operator()(m.y  , M.x-2).vis.visionCounter--;
+                operator()(m.y+1, m.x  ).vis.visionCounter--;
+                operator()(m.y+1, M.x-1).vis.visionCounter--;
+                operator()(M.y-2, m.x  ).vis.visionCounter--;
+                operator()(M.y-2, M.x-1).vis.visionCounter--;
+                operator()(M.y-1, m.x+1).vis.visionCounter--;
+                operator()(M.y-1, M.x-2).vis.visionCounter--;
+            }
         }
     }
 
@@ -1115,6 +1119,20 @@ namespace eng {
         //         printf("[%d, %d]: t: %d, c: %d, v: %3d\n", tr.pos.y, tr.pos.x, tr.tileType, tr.cornerType, tr.variation);
         //     }
         // }
+    }
+
+    bool Map::IsTileVisible(const glm::ivec2& position) const {
+        return operator()(position).IsVisible(enable_occlusion);
+    }
+
+    bool Map::IsTileVisible(const glm::ivec2& position, const glm::ivec2& size) const {
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                if(operator()(glm::ivec2(position.x + x, position.y + y)).IsVisible(enable_occlusion))
+                    return true;
+            }
+        }
+        return false;
     }
 
     void Map::DBG_GUI() {

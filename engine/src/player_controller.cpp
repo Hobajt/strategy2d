@@ -996,7 +996,7 @@ namespace eng {
                 for(int i = 0; i < 2; i++) {
                     const TileData& td = (i == 0) ? level.map(y, x) : level.map(make_even(glm::ivec2(x, y)));
 
-                    if(!ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id))
+                    if(!td.IsVisible() || !ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id))
                         continue;
                     
                     //under which category does current object belong; reset object counting when more important category is picked

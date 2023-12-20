@@ -3,6 +3,7 @@
 #include "engine/utils/dbg_gui.h"
 #include "engine/core/input.h"
 #include "engine/core/window.h"
+#include "engine/core/audio.h"
 
 #include "engine/game/config.h"
 
@@ -44,6 +45,9 @@ namespace eng {
 
         if(checkForBounds)
             BoundariesCheck();
+
+        
+        Audio::UpdateListenerPosition(position);
     }
 
     void Camera::Move(const glm::vec2& step) {
@@ -63,6 +67,8 @@ namespace eng {
 
         if(checkForBounds)
             BoundariesCheck();
+        
+        Audio::UpdateListenerPosition(position);
     }
 
     void Camera::Center(const glm::vec2& pos) {
@@ -70,6 +76,8 @@ namespace eng {
         
         if(checkForBounds)
             BoundariesCheck();
+        
+        Audio::UpdateListenerPosition(position);
     }
 
     void Camera::ZoomUpdate(bool forced) {

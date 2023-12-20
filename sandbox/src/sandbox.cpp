@@ -91,7 +91,7 @@ void Sandbox::OnInit() {
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/lumber_mill"), f1, glm::vec2(24.f, 25.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/barracks"), f1, glm::vec2(21.f, 25.f), true);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(18.f, 22.f), true);
+        // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(18.f, 22.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f1, glm::vec2(18.f, 25.f), true);
 
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/watch_tower"), f1, glm::vec2(7.f, 5.f), true);
@@ -99,12 +99,16 @@ void Sandbox::OnInit() {
         // Unit& troll = level.objects.GetUnit(id);
         // level.objects.EmplaceUtilityObj(level, Resources::LoadUtilityObj("tst"), glm::ivec2(10, 10), ObjectID(5,0,9), troll);
 
-        ObjectID to_kill = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(5.f, 26.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(5.f, 26.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(6.f, 26.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(9.f, 26.f), false);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/watch_tower"), f2, glm::vec2(6.f, 28.f), true);
 
-        // level.objects.GetUnit(to_kill).Kill();
+
+        ObjectID to_kill = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(18.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f2, glm::vec2(18.f, 25.f), false);
+
+        // level.objects.GetBuilding(to_kill).Kill();
 
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
@@ -182,10 +186,11 @@ void Sandbox::OnUpdate() {
 
     t.Update();
     if(t.down()) {
-        static bool fullscreen = false;
-        fullscreen = !fullscreen;
-        LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
-        window.SetFullscreen(fullscreen);
+        Audio::Play("res/sounds/test_sound.mp3", glm::vec2(10.f, 10.f));
+        // static bool fullscreen = false;
+        // fullscreen = !fullscreen;
+        // LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
+        // window.SetFullscreen(fullscreen);
     }
 
     Renderer::Begin(shader, true);

@@ -476,8 +476,13 @@ namespace eng {
             rendering_offset = (data->size - glm::vec2(2.f)) * 0.5f;
             rendering_size = glm::vec2(2.f);
         }
+
+        //only update displayed animation if the building is visible
+        if(lvl()->map.IsTileVisible(Position(), data->size))
+            act() = real_act();
         
         RenderAt(glm::vec2(Position()) + rendering_offset, rendering_size, 1e-3f);
+
 
         //render flame visuals on damaged buildings
         if(constructed) {

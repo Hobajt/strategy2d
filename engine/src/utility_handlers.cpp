@@ -150,7 +150,7 @@ namespace eng {
 
             //visibility update - from object's original vision range to small circle around the corpse
             obj.lvl()->map.VisibilityDecrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
-            d.i5 = (d.i5 != 2) ? 2 : 0;     //no vision for 3rd animation
+            d.i5 = (d.i5 != 2) ? 1 : 0;     //no vision for 3rd animation
             obj.lvl()->map.VisibilityIncrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
 
             //dying ground unit - queue 3rd animation (generic, decayed corpse)
