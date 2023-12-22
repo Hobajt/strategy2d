@@ -718,7 +718,7 @@ namespace eng {
         if(data->IntegrateInMap())
             FactionObject::InnerIntegrate();
         else {
-            lvl()->map.AddTraversableObject(OID());
+            lvl()->map.AddTraversableObject(OID(), Position(), NumID()[1]);
         }
         
         if(constructed) {

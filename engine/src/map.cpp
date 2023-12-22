@@ -20,6 +20,8 @@
 static constexpr int TRANSITION_TILE_OPTIONS = 6;
 static constexpr int HARVEST_WOOD_HEALTH_TICK = 10;
 
+static constexpr int MIN_OIL_PATCH_DISTANCE = 3;
+
 namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
@@ -822,6 +824,10 @@ namespace eng {
     }
 
     bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal) const {
+        if(coastal && NearestOilPatchDistance(position, building_size) < MIN_OIL_PATCH_DISTANCE) {
+            return false;
+        }
+
         bool has_coastal_tiles = false;
         for(int y = position.y; y < position.y + building_size.y; y++) {
             for(int x = position.x; x < position.x + building_size.x; x++) {
@@ -842,6 +848,9 @@ namespace eng {
         if(!coastal)
             return true;
 
+        if(NearestOilPatchDistance(position, building_size) < MIN_OIL_PATCH_DISTANCE)
+            return false;
+
         bool has_coast = false;
 
         for(int y = position.y; y < position.y + building_size.y; y++) {
@@ -853,6 +862,20 @@ namespace eng {
         }
 
         return has_coast;
+    }
+
+    int Map::NearestOilPatchDistance(const glm::ivec2& pos, const glm::ivec2& size) const {
+        int min_d = std::numeric_limits<int>::max();
+        for(auto& to : traversableObjects) {
+            if(to.type != BuildingType::OIL_PATCH)
+                continue;
+            
+            int distance = get_range(to.pos, pos, pos+size);
+
+            if(distance < min_d)
+                min_d = distance;
+        }
+        return min_d;
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {
@@ -1020,20 +1043,20 @@ namespace eng {
         tiles.VisibilityIncrement(pos, size, new_range);
     }
 
-    void Map::AddTraversableObject(const ObjectID& id) {
+    void Map::AddTraversableObject(const ObjectID& id, const glm::ivec2& position, int type) {
         ENG_LOG_FINE("Map::AddTraversableObject - adding {}", id);
-        traversableObjects.push_back(id);
+        traversableObjects.push_back(TraversableObjectEntry(id, position, type));
     }
 
     void Map::RemoveTraversableObject(const ObjectID& id) {
-        auto pos = std::find(traversableObjects.begin(), traversableObjects.end(), id);
-        if(pos != traversableObjects.end()) {
-            ENG_LOG_FINE("Map::RemoveTraversableObject - removing {}", id);
-            traversableObjects.erase(pos);
+        for(size_t i = 0; i < traversableObjects.size(); i++) {
+            if(traversableObjects[i].id == id) {
+                ENG_LOG_FINE("Map::RemoveTraversableObject - removing {} ({}, type {})", id, traversableObjects[i].pos, traversableObjects[i].type);
+                traversableObjects.erase(traversableObjects.begin() + i);
+                return;
+            }
         }
-        else {
-            ENG_LOG_WARN("Map::RemoveTraversableObject - {} not found", id);
-        }
+        ENG_LOG_WARN("Map::RemoveTraversableObject - {} not found", id);
     }
 
 

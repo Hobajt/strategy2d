@@ -254,6 +254,15 @@ namespace eng {
         glm::ivec2 size = glm::ivec2(0);
         TileData* data = nullptr;
     };
+    
+    struct TraversableObjectEntry {
+        ObjectID id;
+        glm::ivec2 pos;
+        int type;
+    public:
+        TraversableObjectEntry() = default;
+        TraversableObjectEntry(const ObjectID& id_, const glm::ivec2& pos_, int type_) : id(id_), pos(pos_), type(type_) {} 
+    };
 
     //===== Tileset =====
 
@@ -384,6 +393,8 @@ namespace eng {
         bool IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const;
         bool CoastCheck(const glm::ivec2& position, const glm::ivec2& building_size, bool coastal) const;
 
+        int NearestOilPatchDistance(const glm::ivec2& position, const glm::ivec2& size) const;
+
         //Scan neighborhood for tree tiles & pick one. Prioritize tiles in the direction of preferred_pos.
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);
 
@@ -401,10 +412,10 @@ namespace eng {
         void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
         void VisionRangeUpdate(const glm::ivec2& pos, const glm::ivec2& size, int old_range, int new_range);
 
-        void AddTraversableObject(const ObjectID& id);
+        void AddTraversableObject(const ObjectID& id, const glm::ivec2& position, int type);
         void RemoveTraversableObject(const ObjectID& id);
 
-        const std::vector<ObjectID>& TraversableObjects() const { return traversableObjects; }
+        const std::vector<TraversableObjectEntry>& TraversableObjects() const { return traversableObjects; }
 
         ObjectID ObjectIDAt(const glm::ivec2& coords) const;
 
@@ -461,7 +472,7 @@ namespace eng {
         MapTiles tiles;
 
         pathfindingContainer nav_list;
-        std::vector<ObjectID> traversableObjects;
+        std::vector<TraversableObjectEntry> traversableObjects;
         int playerFactionId = -1;
 
         bool enable_occlusion = true;

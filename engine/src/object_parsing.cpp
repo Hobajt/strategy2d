@@ -278,6 +278,7 @@ namespace eng {
         data->gatherable            = config.count("gatherable") ? bool(config.at("gatherable")) : false;
         data->resource              = (config.count("resource") ? bool(config.at("resource")) : false) || data->gatherable;
         data->coastal               = config.count("coastal") ? bool(config.at("coastal")) : false;
+        data->requires_foundation   = config.count("requires_foundation") ? bool(config.at("requires_foundation")) : false;
         data->dropoff_mask          = config.count("dropoff_mask") ? int(config.at("dropoff_mask")) : 0;
         data->attack_speed          = config.count("attack_speed") ? float(config.at("attack_speed")) : 2.f;
 

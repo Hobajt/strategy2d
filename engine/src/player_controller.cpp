@@ -1017,12 +1017,12 @@ namespace eng {
 
         //selection among traversable objects (which are not part of regular map tiles data)
         iM += 1;
-        for(const ObjectID& id : level.map.TraversableObjects()) {
-            if(!ObjectID::IsObject(id) || !ObjectID::IsValid(id))
+        for(auto& to : level.map.TraversableObjects()) {
+            if(!ObjectID::IsObject(to.id) || !ObjectID::IsValid(to.id))
                     continue;
             
             FactionObject* obj;
-            if(!level.objects.GetObject(id, obj))
+            if(!level.objects.GetObject(to.id, obj))
                 continue;
 
             glm::ivec2 pm = glm::ivec2(obj->MinPos());
@@ -1030,7 +1030,7 @@ namespace eng {
             if(!((pm.x <= M.x && pM.x >= m.x) && (pm.y <= M.y && pM.y >= m.y)))
                 continue;
             
-            int object_mode = ObjectSelectionType(id, obj->FactionIdx(), playerFactionID);
+            int object_mode = ObjectSelectionType(to.id, obj->FactionIdx(), playerFactionID);
             if(selection_mode < object_mode) {
                 selection_mode = object_mode;
                 object_count = 0;
@@ -1038,7 +1038,7 @@ namespace eng {
 
             if(object_mode == selection_mode) {
                 if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
-                    selection[object_count++] = id;
+                    selection[object_count++] = to.id;
                 }
             }
         }

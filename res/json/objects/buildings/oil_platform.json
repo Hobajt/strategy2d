@@ -17,6 +17,7 @@
         "pierce_damage": 0,
         "race": 0,
         "gatherable": true,
+        "requires_foundation": true,
         "sounds": { "yes": "bldg/oilplat" }
     }
 ]
