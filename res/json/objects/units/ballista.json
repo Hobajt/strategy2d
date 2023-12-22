@@ -26,6 +26,7 @@
         "scale": 2,
         "icon": [6,1],
         "upgrade_src": [1,1],
+        "siege": true,
         "sounds": {
             "yes": "misc/catyessr",
             "ready": "orc/oready",
@@ -60,6 +61,7 @@
         "scale": 2,
         "icon": [7,1],
         "upgrade_src": [1,1],
+        "siege": true,
         "sounds": {
             "yes": "misc/catyessr",
             "ready": "orc/oready",

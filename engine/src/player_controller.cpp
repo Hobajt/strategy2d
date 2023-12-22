@@ -296,7 +296,7 @@ namespace eng {
                 all_water_units     &= (unit.NavigationType() == NavigationBit::WATER);
                 can_attack          |= unit.CanAttack();
                 carrying_goods      |= unit.IsWorker() && (unit.CarryStatus() != WorkerCarryState::NONE);
-                can_attack_ground   |= false;   //TODO: once there's the command for that
+                can_attack_ground   |= unit.IsSiege();
 
                 if(i == 0) {
                     att_upgrade_src = unit.AttackUpgradeSource();

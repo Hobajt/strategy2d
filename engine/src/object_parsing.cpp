@@ -302,6 +302,7 @@ namespace eng {
 
         if(config.count("worker")) data->worker = config.at("worker");
         if(config.count("caster")) data->caster = config.at("caster");
+        if(config.count("siege"))  data->siege  = config.at("siege");
 
         data->speed = config.count("speed") ? int(config.at("speed")) : 10;
         data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;

@@ -395,7 +395,7 @@ namespace eng {
 
     //===== Command =====
 
-    Command::Command() : type(CommandType::IDLE), handler(CommandHandler_Idle) {}
+    Command::Command() : type(CommandType::IDLE), handler(CommandHandler_Idle), flag(0) {}
 
     Command Command::Idle() {
         return Command();
@@ -423,8 +423,15 @@ namespace eng {
     }
 
     Command Command::AttackGround(const glm::ivec2& target_pos) {
-        //TODO: 
-        return Idle();
+        Command cmd = {};
+
+        cmd.type = CommandType::ATTACK;
+        cmd.handler = CommandHandler_Attack;
+        cmd.target_pos = target_pos;
+        cmd.target_id = ObjectID(ObjectType::MAP_OBJECT, 0, 0);
+        cmd.flag = 1;       //marks as attack ground command
+
+        return cmd;
     }
 
     Command Command::StandGround() {
@@ -597,9 +604,11 @@ namespace eng {
             else {
                 //target is an attackable map object (wall)
 
+                //check for wall existence (or skip if attack ground was issued)
                 const TileData& tile = level.map(cmd.target_pos);
-                if(!IsWallTile(tile.tileType)) {
-                    //existence check failed - target no longer exists
+                bool attacking_ground = cmd.flag == 1 && src.IsSiege();
+                if(!IsWallTile(tile.tileType) && !attacking_ground) {
+                    //existence check failed - target wall no longer exists
                     cmd = Command::Idle();
                     return;
                 }

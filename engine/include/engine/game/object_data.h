@@ -173,6 +173,7 @@ namespace eng {
 
         bool worker = false;
         bool caster = false;
+        bool siege = false;
 
         int deathAnimIdx = -1;
 

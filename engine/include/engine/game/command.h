@@ -125,6 +125,7 @@ namespace eng {
 
         glm::ivec2 target_pos;
         ObjectID target_id;
+        int flag;
     };
 
     //===== BuildingAction =====

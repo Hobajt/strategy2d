@@ -273,6 +273,8 @@ namespace eng {
         int CarryStatus() const { return carry_state; }
         void ChangeCarryStatus(int carry_state);
 
+        bool IsSiege() const { return data->siege; }
+
         SoundEffect& Sound_Attack() const { return data->sound_attack; }
     protected:
         virtual void Inner_DBG_GUI() override;
