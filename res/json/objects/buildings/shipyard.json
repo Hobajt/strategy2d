@@ -1,0 +1,27 @@
+[
+    {
+        "str_id": "human/shipyard",
+        "name": "shipyard",
+        "type": 3,
+        "nav_type": 2,
+        "size": [3,3],
+        "icon": [8,4],
+        "vision_range": 3,
+        "health": 1100,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [800,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "dropoff_mask": 4,
+        "sounds": { "yes": "bldg/shipbell" },
+        "buttons": [
+            [
+
+            ]
+        ]
+    }
+]

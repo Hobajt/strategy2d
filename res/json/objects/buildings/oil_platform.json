@@ -1,0 +1,22 @@
+[
+    {
+        "str_id": "human/oil_platform",
+        "name": "oil platform",
+        "type": 3,
+        "nav_type": 2,
+        "size": [2,2],
+        "icon": [4,5],
+        "vision_range": 3,
+        "health": 650,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [700,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "gatherable": true,
+        "sounds": { "yes": "bldg/oilplat" }
+    }
+]

@@ -262,6 +262,8 @@ namespace eng {
                 return techtree.SetupSpellButton(btn, isOrc);
             case GUI::ActionButton_CommandType::BUILD:
                 return BuildingPreconditionsMet(btn.payload_id) && !techtree.BuildingConstrained(btn.payload_id);
+            case GUI::ActionButton_CommandType::PAGE_CHANGE:
+                return AdvancedStructures_ButtonCheck(btn);
             default:
                 return true;
         }
@@ -315,6 +317,15 @@ namespace eng {
             default:
                 return true;
         }
+    }
+
+    bool FactionController::AdvancedStructures_ButtonCheck(GUI::ActionButtonDescription& btn) const {
+        //identify the "advanced structures" button based on its icon
+        if(btn.icon != glm::ivec2(8,8))
+            return true;
+
+        //check that at least one building from the tab can be built
+        return (stats.buildings[BuildingType::LUMBER_MILL] > 0) || (stats.buildings[BuildingType::SHIPYARD] > 0) || (stats.tier >= 2);
     }
 
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {

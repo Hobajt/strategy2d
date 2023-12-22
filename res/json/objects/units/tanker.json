@@ -32,6 +32,11 @@
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy",
             "attack": "misc/peonatak"
-        }
+        },
+        "buttons": [
+            [
+                { "idx": 3, "cmd": 10, "pid": 9, "hotkey": ["o", 0] }
+            ]
+        ]
     }
 ]

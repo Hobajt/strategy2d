@@ -1,0 +1,26 @@
+[
+    {
+        "str_id": "human/oil_refinery",
+        "name": "oil refinery",
+        "type": 3,
+        "nav_type": 2,
+        "size": [3,3],
+        "icon": [0,5],
+        "vision_range": 3,
+        "health": 600,
+        "mana": 0,
+        "build_time": 225,
+        "cost": [800,350,200],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "sounds": { "yes": "bldg/oilrefin" },
+        "buttons": [
+            [
+                
+            ]
+        ]
+    }
+]

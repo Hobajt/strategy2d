@@ -326,7 +326,8 @@ namespace eng {
 
             //repair & harvest if they're all workers
             if(all_workers) {
-                p[3] = ActionButtonDescription::Repair();
+                if(!all_water_units)
+                    p[3] = ActionButtonDescription::Repair();
                 p[4] = ActionButtonDescription::Harvest(all_water_units);
 
                 //returns goods if one of them is carrying

@@ -27,8 +27,8 @@
     
         ["human/shipyard", "orc/shipyard"],
         ["human/foundry", "orc/foundry"],
-        ["human/refinery", "orc/refinery"],
-        ["human/platform", "orc/platform"],
+        ["human/oil_refinery", "orc/oil_refinery"],
+        ["human/oil_platform", "orc/oil_platform"],
 
         ["human/inventor", "orc/inventor"],
         ["human/stables", "orc/ogre_mound"],

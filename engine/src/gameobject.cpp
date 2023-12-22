@@ -659,6 +659,8 @@ namespace eng {
 
         Audio::Play(SoundEffect::GetPath((Faction()->Race() == 0) ? "peasant/pswrkdon" : "orc/owrkdone"), Position());
 
+        Faction()->SignalGUIUpdate();
+
         action = BuildingAction::Idle(CanAttack());
     }
 

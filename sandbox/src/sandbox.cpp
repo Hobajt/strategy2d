@@ -74,17 +74,17 @@ void Sandbox::OnInit() {
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"), f1, glm::vec2(7.f, 5.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/dragon"), f1, glm::vec2(9.f, 5.f), false);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), f1, glm::vec2(5.f, 0.f));
-        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(16.f, 3.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(16.f, 5.f), false);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"),      f1, glm::vec2(5.f, 4.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"),   f1, glm::vec2(4.f, 4.f), false);
-        ObjectID id = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/berserker"),  f1, glm::vec2(5.f, 5.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/ranger"),   f1, glm::vec2(4.f, 5.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"),      f1, glm::vec2(5.f, 4.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"),   f1, glm::vec2(4.f, 4.f), false);
+        // ObjectID id = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/berserker"),  f1, glm::vec2(5.f, 5.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/ranger"),   f1, glm::vec2(4.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"),   f1, glm::vec2(3.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/ballista"), f1, glm::vec2(3.f, 4.f), false);
 
-        // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(27.f, 22.f), true);
-        // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(27.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/barracks"), f1, glm::vec2(21.f, 22.f), true);
 
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(27.f, 25.f), true);
@@ -109,13 +109,12 @@ void Sandbox::OnInit() {
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f2, glm::vec2(18.f, 25.f), false);
 
         level.objects.GetBuilding(to_kill).Kill();
-        
-
 
         level.objects.Add(Building(level, Resources::LoadBuilding("human/town_hall"), f1, glm::vec2(0.f, 0.f), true));
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f2, glm::vec2(6.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 6.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), f1, glm::vec2(5.f, 5.f), false);
 
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), f1, glm::vec2(5.f, 4.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), f1, glm::vec2(5.f, 3.f), false);
@@ -158,7 +157,7 @@ void Sandbox::OnInit() {
         throw e;
     }
 
-    Camera::Get().Center(glm::vec2(18.f, 22.f));
+    Camera::Get().Center(glm::vec2(16.f, 7.f));
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
