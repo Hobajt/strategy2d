@@ -153,6 +153,7 @@ namespace eng {
                     else {
                         //show additional building info (production/population stats)
                         int production_boost;
+                        glm::ivec2 highlight_idx = glm::ivec2(-1);
                         switch(building->NumID()[1]) {
                             case BuildingType::TOWN_HALL:
                             case BuildingType::KEEP:
@@ -160,22 +161,18 @@ namespace eng {
                                 stats[0]->Setup("Production ");
                                 for(int i = 0; i < 3; i++) {
                                     production_boost = building->Faction()->ProductionBoost(i);
-                                    if(production_boost != 0)
-                                        snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(i), production_boost);
-                                    else
-                                        snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(i));
-                                    stats[1+i]->Setup(buf);
+                                    snprintf(buf_tmp, sizeof(buf_tmp), "%s: 100", GameResourceName(i));
+                                    format_wBonus(buf, sizeof(buf), buf_tmp, production_boost, highlight_idx);
+                                    stats[1+i]->Setup(buf, highlight_idx);
                                 }
                                 break;
                             case BuildingType::OIL_REFINERY:
                             case BuildingType::LUMBER_MILL:
                                 stats[1]->Setup("Production ");
                                 production_boost = building->Faction()->ProductionBoost(1+not_gnd);
-                                if(production_boost != 0)
-                                    snprintf(buf, sizeof(buf), "%s: 100+%d", GameResourceName(1+not_gnd), production_boost);
-                                else
-                                    snprintf(buf, sizeof(buf), "%s: 100", GameResourceName(1+not_gnd));
-                                stats[2]->Setup(buf);
+                                snprintf(buf_tmp, sizeof(buf_tmp), "%s: 100", GameResourceName(1+not_gnd));
+                                format_wBonus(buf, sizeof(buf), buf_tmp, production_boost, highlight_idx);
+                                stats[2]->Setup(buf, highlight_idx);
                                 break;
                             case BuildingType::FARM:        //display population statistics
                                 glm::ivec2 pop = building->Faction()->Population();

@@ -274,14 +274,14 @@ namespace eng {
         //parse general FactionObject parameters
         Parse_FactionObjectData(config, (FactionObjectData&)*data.get());
 
-        ParseAnimations_Building(config, data);
-
         data->traversable           = config.count("traversable") ? bool(config.at("traversable")) : false;
         data->gatherable            = config.count("gatherable") ? bool(config.at("gatherable")) : false;
         data->resource              = (config.count("resource") ? bool(config.at("resource")) : false) || data->gatherable;
         data->coastal               = config.count("coastal") ? bool(config.at("coastal")) : false;
         data->dropoff_mask          = config.count("dropoff_mask") ? int(config.at("dropoff_mask")) : 0;
         data->attack_speed          = config.count("attack_speed") ? float(config.at("attack_speed")) : 2.f;
+
+        ParseAnimations_Building(config, data);
     }
 
     void Parse_UnitData(const nlohmann::json& config, GameObjectDataRef dt) {
@@ -500,11 +500,20 @@ namespace eng {
                 LoadBuildingSprites(animations, BuildingAnimationType::UPGRADE, name_prefix, name_suffix + "_upgrade", false, false);
             }
 
-            //load construction sprites
-            animations.insert({ BuildingAnimationType::BUILD1, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1, Resources::LoadSprite("misc/buildings/construction1"), false, 1.f)) });
-            animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });
-            animations.insert({ BuildingAnimationType::BUILD1 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1 + wo, Resources::LoadSprite("misc/buildings/construction1_winter"), false, 1.f)) });
-            animations.insert({ BuildingAnimationType::BUILD2 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2 + wo, Resources::LoadSprite("misc/buildings/construction2_winter"), false, 1.f)) });
+            if(!data->coastal) {
+                //load construction sprites
+                animations.insert({ BuildingAnimationType::BUILD1, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1, Resources::LoadSprite("misc/buildings/construction1"), false, 1.f)) });
+                animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });
+                animations.insert({ BuildingAnimationType::BUILD1 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1 + wo, Resources::LoadSprite("misc/buildings/construction1_winter"), false, 1.f)) });
+                animations.insert({ BuildingAnimationType::BUILD2 + wo, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2 + wo, Resources::LoadSprite("misc/buildings/construction2_winter"), false, 1.f)) });
+            }
+            else {
+                //water buildings -> don't show the regular construction site
+                animations.insert({ BuildingAnimationType::BUILD1, animations.at(BuildingAnimationType::BUILD3) });
+                animations.insert({ BuildingAnimationType::BUILD2, animations.at(BuildingAnimationType::BUILD3) });
+                animations.insert({ BuildingAnimationType::BUILD1 + wo, animations.at(BuildingAnimationType::BUILD3) });
+                animations.insert({ BuildingAnimationType::BUILD2 + wo, animations.at(BuildingAnimationType::BUILD3) });
+            }
 
             //load fire sprites
             animations.insert({ BuildingAnimationType::FIRE_SMALL, SpriteGroup(SpriteGroupData(BuildingAnimationType::FIRE_SMALL, Resources::LoadSprite("misc/effects/fire_small"), true, 1.f)) });
