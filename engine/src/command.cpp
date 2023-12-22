@@ -633,7 +633,8 @@ namespace eng {
             }
             else {
                 //within range -> iniate new attack action
-                action = Action::Attack(cmd.target_id, glm::ivec2(pos_min), glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
+                glm::ivec2 target_pos = glm::ivec2(pos_max + pos_min) / 2;
+                action = Action::Attack(cmd.target_id, target_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
             }
         }
     }

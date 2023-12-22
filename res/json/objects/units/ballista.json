@@ -67,6 +67,6 @@
             "ready": "orc/oready",
             "attack": "misc/catapult"
         },
-        "refs": ["cannon_ball"]
+        "refs": ["catapult_projectile"]
     }
 ]

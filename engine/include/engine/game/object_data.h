@@ -149,6 +149,8 @@ namespace eng {
         int deathSoundIdx;      //identifies what sound to play on death (from 4 preset sounds)
         int race;
 
+        bool invulnerable;
+
         objectReferences refs;
         ButtonDescriptions gui_btns;
 
@@ -200,7 +202,7 @@ namespace eng {
     //===== UtilityObjectData =====
 
     namespace UtilityObjectType {
-        enum { INVALID = -1, PROJECTILE, CORPSE, COUNT };
+        enum { INVALID = -1, PROJECTILE, CORPSE, VISUALS, COUNT };
     }
 
     class UtilityObject;
@@ -208,7 +210,7 @@ namespace eng {
     class Level;
 
     struct UtilityObjectData : public GameObjectData {
-        typedef void(*InitHandlerFn)(UtilityObject& obj, FactionObject& src);
+        typedef void(*InitHandlerFn)(UtilityObject& obj, FactionObject* src);
         typedef bool(*UpdateHandlerFn)(UtilityObject& obj, Level& level);
         typedef void(*RenderHandlerFn)(UtilityObject& obj);
     public:
@@ -223,6 +225,14 @@ namespace eng {
 
         SoundEffect on_spawn;
         SoundEffect on_done;
+
+        bool spawn_followup = false;
+        std::string followup_name;
+
+        int i1;
+    public:
+        bool Projectile_IsAutoGuided() const { return (i1 == 0); }
+        int Projectile_SplashRadius() const { return i1; }
     };
     using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
 

@@ -315,6 +315,10 @@ namespace eng {
             }
         }
         markedForRemoval.clear();
+
+        for(UtilityObject& obj : to_spawn)
+            Add(std::move(obj));
+        to_spawn.clear();
     }
 
     void ObjectPool::Render() {

@@ -154,6 +154,8 @@ namespace eng {
         int BaseVisionRange() const { return data_f->vision_range; }
         int BonusVisionRange() const { return IsUnit() ? Tech().BonusVision(NumID()[1], IsOrc()) : 0; }
 
+        bool IsInvulnerable() const {return data_f->invulnerable; }
+
         //===============
 
         int BuildTime() const { return data_f->build_time; }
@@ -397,6 +399,7 @@ namespace eng {
     public:
         UtilityObject() = default;
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, bool play_sound = true);
         virtual ~UtilityObject();
 
         //move enabled
@@ -413,6 +416,9 @@ namespace eng {
         LiveData& LD() { return live_data; }
 
         glm::vec2 SizeScaled() const { return data->size * data->scale; }
+
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::ivec2 target_pos, bool play_sound = true, bool call_init = true);
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::ivec2 target_pos, const ObjectID targetID, FactionObject& src, bool play_sound = true, bool call_init = true);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -430,5 +436,6 @@ namespace eng {
     //Apply damage to given target. Works for both regular & map objects. Returns true if the application went through.
     bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos);
     bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
+    int ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius);
 
 }//namespace eng

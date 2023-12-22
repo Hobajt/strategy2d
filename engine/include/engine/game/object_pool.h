@@ -116,6 +116,11 @@ namespace eng {
             return oid;
         }
 
+        template <typename... Args>
+        void QueueUtilityObject(Args&&... args) {
+            to_spawn.emplace_back(std::forward<Args>(args)...);
+        }
+
         void DBG_GUI();
     private:
         UnitsPool units;
@@ -123,6 +128,7 @@ namespace eng {
         UtilityObjsPool utilityObjs;
 
         std::vector<ObjectID::dtype> markedForRemoval;
+        std::vector<UtilityObject> to_spawn;    //objects added from other objects Update() method
 
         EntranceController entranceController;
     };

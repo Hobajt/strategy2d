@@ -191,6 +191,11 @@ namespace eng {
     }
 
     void FactionObject::ApplyDirectDamage(const FactionObject& source) {
+        if(IsInvulnerable()) {
+            ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
+            return;
+        }
+
         //formula from http://classic.battle.net/war2/basic/combat.shtml
         int dmg = std::max(source.BasicDamage() - this->Armor(), 0) + source.PierceDamage();
         dmg = int(dmg * (Random::Uniform() * 0.5f + 0.5f));
@@ -204,6 +209,11 @@ namespace eng {
     }
 
     void FactionObject::ApplyDirectDamage(int src_basicDmg, int src_pierceDmg) {
+        if(IsInvulnerable()) {
+            ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
+            return;
+        }
+
         //formula from http://classic.battle.net/war2/basic/combat.shtml
         int dmg = std::max(src_basicDmg - this->Armor(), 0) + src_pierceDmg;
         dmg = int(dmg * (Random::Uniform() * 0.5f + 0.5f));
@@ -739,18 +749,12 @@ namespace eng {
 
     UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
-        
-        live_data.target_pos = target_pos_;
-        live_data.source_pos = src_.Position();
-        live_data.targetID = targetID_;
-        live_data.sourceID = src_.OID();
+        ChangeType(data_, target_pos_, targetID_, src_, play_sound, true);
+    }
 
-        ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
-        data->Init(*this, src_);
-
-        if(play_sound && data->on_spawn.valid) {
-            Audio::Play(data->on_spawn.Random(), Position());
-        }
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, bool play_sound)
+        : GameObject(level_, data_), data(data_) {
+        ChangeType(data_, target_pos_, play_sound, true);
     }
 
     UtilityObject::~UtilityObject() {}
@@ -769,6 +773,47 @@ namespace eng {
         }
         animator.Update(ActionIdx());
         return res || IsKilled();
+    }
+
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::ivec2 target_pos_, ObjectID targetID_, FactionObject& src_, bool play_sound, bool call_init) {
+        data = new_data;
+        UpdateDataPointer(new_data);
+
+        live_data.target_pos = target_pos_;
+        live_data.source_pos = src_.Position();
+        live_data.targetID = targetID_;
+        live_data.sourceID = src_.OID();
+
+        if(call_init) {
+            //this might throw if invoked with Init() handler, that requires src to not be null
+            ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
+            data->Init(*this, &src_);
+        }
+
+        if(play_sound && data->on_spawn.valid) {
+            Audio::Play(data->on_spawn.Random(), Position());
+        }
+    }
+
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::ivec2 target_pos_, bool play_sound, bool call_init) {
+        data = new_data;
+        UpdateDataPointer(new_data);
+
+        live_data.target_pos = target_pos_;
+        live_data.sourceID = ObjectID();
+
+        live_data.source_pos = glm::ivec2(-1);
+        live_data.targetID = ObjectID();
+
+        if(call_init) {
+            //this might throw if invoked with Init() handler, that requires src to not be null
+            ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
+            data->Init(*this, nullptr);
+        }
+
+        if(play_sound && data->on_spawn.valid) {
+            Audio::Play(data->on_spawn.Random(), Position());
+        }
     }
 
     void UtilityObject::Inner_DBG_GUI() {
@@ -824,6 +869,53 @@ namespace eng {
             }
         }
         return attack_happened;
+    }
+
+    int ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius) {
+        int hit_count = 0;
+
+        //to avoid applying damage to the same object multiple times
+        std::vector<ObjectID> hit_objects = {};
+
+        glm::ivec2 corner = target_pos - (radius-1);
+        int diameter = (radius-1)*2 + 1;
+        for(int y = 0; y < diameter; y++) {
+            for(int x = 0; x < diameter; x++) {
+                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
+
+                if(!level.map.IsWithinBounds(pos))
+                    continue;
+
+                const TileData& td = level.map(pos);
+                float m = (pos == target_pos) ? 1.f : 0.5f;
+                int B = int(basicDamage  * m);
+                int P = int(pierceDamage * m);
+                
+                //apply damage to regular objects (ground & flying)
+                for(int i = 0; i < 2; i++) {
+                    ObjectID id = td.info[i].id;
+                    if(ObjectID::IsObject(id) && (std::find(hit_objects.begin(), hit_objects.end(), id) == hit_objects.end())) {
+                        hit_objects.push_back(id);
+                        FactionObject* target = nullptr;
+                        if(level.objects.GetObject(id, target)) {
+                            target->ApplyDirectDamage(B, P);
+                            hit_count++;
+                        }
+                    }
+                }
+
+                //apply damage to map objects
+                ObjectID wallID = ObjectID(ObjectType::MAP_OBJECT, pos.x, pos.y);
+                if(IsWallTile(td.tileType) && (std::find(hit_objects.begin(), hit_objects.end(), wallID) == hit_objects.end())) {
+                    hit_objects.push_back(wallID);
+                    level.map.DamageTile(pos, B);
+                    hit_count++;
+                }
+
+            }
+        }
+
+        return hit_count;
     }
 
 }//namespace eng

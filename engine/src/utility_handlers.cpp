@@ -3,6 +3,7 @@
 #include "engine/core/input.h"
 #include "engine/game/gameobject.h"
 #include "engine/game/level.h"
+#include "engine/game/resources.h"
 
 #include <tuple>
 
@@ -12,12 +13,15 @@ namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
 
-    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject& src);
+    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level);
 
-    void UtilityHandler_Corpse_Init(UtilityObject& obj, FactionObject& src);
+    void UtilityHandler_Corpse_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Corpse_Update(UtilityObject& obj, Level& level);
     void UtilityHandler_Corpse_Render(UtilityObject& obj);
+
+    void UtilityHandler_Visuals_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Visuals_Update(UtilityObject& obj, Level& level);
 
     //===================================================================
 
@@ -35,6 +39,9 @@ namespace eng {
             case UtilityObjectType::CORPSE:
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Corpse_Init, UtilityHandler_Corpse_Update, UtilityHandler_Corpse_Render };
                 break;
+            case UtilityObjectType::VISUALS:
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                break;
             default:
                 ENG_LOG_ERROR("UtilityObject - invalid utility type ID ({})", id);
                 throw std::runtime_error("");
@@ -49,18 +56,24 @@ namespace eng {
         obj.RenderAt(obj.real_pos(), obj.real_size(), Z_OFFSET);
     }
 
-    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject& src) {
+    void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
+
+        if(src == nullptr) {
+            ENG_LOG_ERROR("UtilityHandler::Init - handler requires a valid pointer to the source object.");
+            throw std::runtime_error("");
+        }
 
         //set projectile orientation, start & end time, starting position and copy unit's damage values
         glm::vec2 target_dir = d.target_pos - d.source_pos;
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
         d.f1 = d.f2 = (float)Input::CurrentTime();
         obj.real_size() = obj.SizeScaled();
-        obj.real_pos() = glm::vec2(src.Position()) + 0.5f - obj.real_size() * 0.5f;
-        d.i2 = src.BasicDamage();
-        d.i3 = src.PierceDamage();
-        // ENG_LOG_INFO("PROJECTILE PTS: {}, {}", d.source_pos, d.target_pos);
+        obj.real_pos() = glm::vec2(src->Position()) + 0.5f - obj.real_size() * 0.5f;
+        d.i2 = src->BasicDamage();
+        d.i3 = src->PierceDamage();
+
+        ENG_LOG_FINE("UtilityObject - Projectile spawned (guided={}, from {} to {})", obj.UData()->Projectile_IsAutoGuided(), d.source_pos, d.target_pos);
     }
 
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
@@ -76,26 +89,47 @@ namespace eng {
         //adding sizes cuz rendering uses Quad::FromCorner
         obj.real_pos() = d.InterpolatePosition(t) + 0.5f - obj.real_size() * 0.5f;
         if(t >= 1.f) {
-            bool attack_happened = ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+            //damage application from the projectile
+            if(obj.UData()->Projectile_IsAutoGuided())
+                ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+            else
+                ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, obj.UData()->Projectile_SplashRadius());
+
+            //optional spawning of followup object
+            if(obj.UData()->spawn_followup) {
+                UtilityObjectDataRef data =  Resources::LoadUtilityObj(obj.UData()->followup_name);
+                if(data != nullptr) {
+                    level.objects.QueueUtilityObject(level, data, d.target_pos);
+                }
+                else {
+                    ENG_LOG_WARN("UtilityHandler_Projectile_Update - invalid followup object ('{}')", obj.UData()->followup_name);
+                }
+            }
+
             return true;
         }
 
         return false;
     }
 
-    void UtilityHandler_Corpse_Init(UtilityObject& obj, FactionObject& src) {
+    void UtilityHandler_Corpse_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
         AnimatorDataRef anim = obj.Data()->animData;
 
+        if(src == nullptr) {
+            ENG_LOG_ERROR("UtilityHandler::Init - handler requires a valid pointer to the source object.");
+            throw std::runtime_error("");
+        }
+
         //store object's orientation
-        d.i4 = src.Orientation();
+        d.i4 = src->Orientation();
         //TODO: maybe round up the orientation, as there are usually only 2 directions for dying animations
 
-        obj.real_pos() = glm::vec2(src.Position());
+        obj.real_pos() = glm::vec2(src->Position());
         obj.real_size() = obj.Data()->size;
 
         //1st & 2nd anim indices
-        d.i1 = src.DeathAnimIdx();
+        d.i1 = src->DeathAnimIdx();
         d.i2 = -1;
 
         if(d.i1 < 0) {
@@ -103,25 +137,25 @@ namespace eng {
             d.i3 = 1;
             d.f2 = anim->GetGraphics(CorpseAnimID::EXPLOSION).Duration();
 
-            if(!src.IsUnit()) {
+            if(!src->IsUnit()) {
                 //src is a building -> display crater animation (along with explosion)
                 int is_wasteland = int(obj.lvl()->map.GetTileset()->GetType() == TilesetType::WASTELAND);
-                d.i1 = (src.NavigationType() == NavigationBit::GROUND) ? (CorpseAnimID::RUINS_GROUND + is_wasteland) : CorpseAnimID::RUINS_WATER;
+                d.i1 = (src->NavigationType() == NavigationBit::GROUND) ? (CorpseAnimID::RUINS_GROUND + is_wasteland) : CorpseAnimID::RUINS_WATER;
                 d.f1 = anim->GetGraphics(d.i1).Duration();
 
-                obj.real_pos() = glm::vec2(src.Position()) + (src.Data()->size - glm::vec2(2.f)) * 0.5f;
+                obj.real_pos() = glm::vec2(src->Position()) + (src->Data()->size - glm::vec2(2.f)) * 0.5f;
                 obj.real_size() = glm::vec2(2.f);
             }
         }
         else {
             d.f1 = anim->GetGraphics(d.i1).Duration() + 1.f;
-            if(src.IsUnit()) {
+            if(src->IsUnit()) {
                 //2nd animation - transitioned to from the 1st one
-                if(src.NavigationType() == NavigationBit::GROUND) {
-                    d.i2 = CorpseAnimID::CORPSE1_HU + src.Race();
+                if(src->NavigationType() == NavigationBit::GROUND) {
+                    d.i2 = CorpseAnimID::CORPSE1_HU + src->Race();
                     d.f2 =  anim->GetGraphics(d.i2).Duration();
                 }
-                else if(src.NavigationType() == NavigationBit::WATER) {
+                else if(src->NavigationType() == NavigationBit::WATER) {
                     d.i2 = CorpseAnimID::CORPSE_WATER;
                     d.f2 = anim->GetGraphics(d.i2).Duration();
                 }
@@ -129,11 +163,12 @@ namespace eng {
         }
 
         //visibility setup (copy object's original vision range)
-        d.i5 = src.VisionRange();
-        d.i6 = src.FactionIdx();
-        src.lvl()->map.VisibilityIncrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
+        d.i5 = src->VisionRange();
+        d.i6 = src->FactionIdx();
+        src->lvl()->map.VisibilityIncrement(obj.real_pos(), obj.real_size(), d.i5, d.i6);
 
         // ENG_LOG_TRACE("CORPSE OBJECT - INIT: {}, {}, {}, {}, {}", d.i1, d.i2, d.i3, d.f1, d.f2);
+        ENG_LOG_FINE("UtilityObject - Corpse spawned at {}", d.target_pos);
     }
 
     bool UtilityHandler_Corpse_Update(UtilityObject& obj, Level& level) {
@@ -197,6 +232,31 @@ namespace eng {
             obj.RenderAt(obj.real_pos(), obj.real_size(), -1e-3f);
             obj.act() = prev_id;
         }
+    }
+
+    void UtilityHandler_Visuals_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        AnimatorDataRef anim = obj.Data()->animData;
+
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = obj.Data()->size;
+
+        d.f1 = 0.f;
+
+        ENG_LOG_FINE("UtilityObject - Visuals spawned at {}", d.target_pos);
+    }
+
+    bool UtilityHandler_Visuals_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        Input& input = Input::Get();
+
+        obj.act() = 0;
+        obj.ori() = 0;
+
+        d.f1 += input.deltaTime;
+        float t = d.f1 / obj.UData()->duration;
+        
+        return (t >= 1.f);
     }
 
 }//namespace eng

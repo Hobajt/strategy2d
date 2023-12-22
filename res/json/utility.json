@@ -57,10 +57,12 @@
         "animations": [ "misc/effects/cannon_ball" ],
         "duration": 0.75,
         "scale": 0.5,
+        "guided": false,
         "sounds": {
             "on_spawn": "misc/fireball",
             "on_done": "misc/explode"
-        }
+        },
+        "followup": "projectile_explosion"
     },
     {
         "str_id": "fiery_cannon_ball",
@@ -72,10 +74,12 @@
         "animations": [ "misc/effects/fiery_cannon_ball" ],
         "duration": 0.75,
         "scale": 0.5,
+        "guided": false,
         "sounds": {
             "on_spawn": "misc/fireball",
             "on_done": "misc/explode"
-        }
+        },
+        "followup": "projectile_explosion"
     },
     {
         "str_id": "ballista_projectile",
@@ -86,10 +90,12 @@
         "utility_id": 0,
         "animations": [ "misc/effects/ballista_projectile" ],
         "duration": 0.75,
+        "guided": false,
         "sounds": {
             "on_spawn": "misc/fireball",
             "on_done": "misc/explode"
-        }
+        },
+        "followup": "projectile_explosion"
     },
     {
         "str_id": "catapult_projectile",
@@ -100,9 +106,21 @@
         "utility_id": 0,
         "animations": [ "misc/effects/catapult_projectile" ],
         "duration": 0.75,
+        "guided": false,
         "sounds": {
             "on_spawn": "misc/fireball",
             "on_done": "misc/explode"
-        }
+        },
+        "followup": "projectile_explosion"
+    },
+    {
+        "str_id": "projectile_explosion",
+        "name": "projectile explosion",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/projectile_explosion" ],
+        "duration": 1.0
     }
 ]

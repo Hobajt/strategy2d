@@ -7,6 +7,8 @@
 #include "engine/game/gameobject.h"
 #include "engine/game/utility_handlers.h"
 
+#define DEFAULT_SPLASH_RADIUS 2
+
 namespace eng {
 
     namespace Resources {
@@ -236,6 +238,8 @@ namespace eng {
         data.deathSoundIdx      = config.count("death_sound") ? int(config.at("death_sound")) : 0;
         data.race               = config.count("race") ? int(config.at("race")) : 0;
 
+        data.invulnerable       = config.count("invulnerable") ? bool(config.at("invulnerable")) : false;
+
         //sounds
         if(config.count("sounds")) {
             auto& sounds = config.at("sounds");
@@ -336,7 +340,16 @@ namespace eng {
         //parse fields specific to different utility object types
         switch(data->utility_id) {
             case UtilityObjectType::PROJECTILE:
-                data->duration = config.at("duration");
+                data->duration  = config.at("duration");
+                //"guided" not defined -> is guided; "guided" defined -> sets default radius; "splas_radius" defined -> custom radius
+                data->i1        = config.count("guided") ? ((!bool(config.at("guided"))) * DEFAULT_SPLASH_RADIUS) : 0;
+                if(config.count("splash_radius"))
+                    data->i1 = config.at("splash_radius");
+
+                if(config.count("followup")) {
+                    data->spawn_followup = true;
+                    data->followup_name = config.at("followup");
+                }
                 break;
         }
     }
