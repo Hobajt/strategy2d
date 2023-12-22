@@ -108,6 +108,10 @@ namespace eng {
         return !occlusion_enabled || (vis.occ_idx != 0 && (!Config::FogOfWar() || vis.fog_idx != 0));
     }
 
+    bool TileData::IsCoastTile() const {
+        return coastal;
+    }
+
     int TileData::TileTraversability() const {
         constexpr static int tile_traversability[TileType::COUNT] = {
             NavigationBit::GROUND,
@@ -424,6 +428,7 @@ namespace eng {
             //not a wall tile -> pick index based on corners
             int borderType = GetBorderType(a->tileType, a->cornerType, b->cornerType, c->cornerType, d->cornerType);
             a->idx = data.tiles[a->tileType].GetTileIdx(borderType, a->variation);
+            a->coastal = (a->tileType == TileType::WATER) && (borderType != 0);
         }
         else {
             //wall tile -> pick index based on neighboring tile types
@@ -816,19 +821,38 @@ namespace eng {
         return -1;
     }
 
-    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos) const {
+    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal) const {
+        bool has_coastal_tiles = false;
         for(int y = position.y; y < position.y + building_size.y; y++) {
             for(int x = position.x; x < position.x + building_size.x; x++) {
                 if(glm::ivec2(x,y) != worker_pos && (!tiles.IsWithinBounds(y,x) || !tiles(y,x).Traversable(nav_type))) {
                     return false;
                 }
+                has_coastal_tiles |= tiles(y,x).IsCoastTile();
             }
         }
-        return true;
+        return has_coastal_tiles || !coastal;
     }
 
     bool Map::IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const {
         return (tiles.IsWithinBounds(position) && tiles(position).Traversable(nav_type)) || (position == worker_pos); 
+    }
+
+    bool Map::CoastCheck(const glm::ivec2& position, const glm::ivec2& building_size, bool coastal) const {
+        if(!coastal)
+            return true;
+
+        bool has_coast = false;
+
+        for(int y = position.y; y < position.y + building_size.y; y++) {
+            for(int x = position.x; x < position.x + building_size.x; x++) {
+                if(!tiles.IsWithinBounds(y,x))
+                    return false;
+                has_coast |= tiles(y,x).IsCoastTile();
+            }
+        }
+
+        return has_coast;
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {
@@ -1171,6 +1195,8 @@ namespace eng {
         ImGui::SameLine();
         if(ImGui::Button("FogOfVar corners", btn_size)) mode = 11;
         ImGui::Separator();
+
+        if(ImGui::Button("Coast tiles", btn_size)) mode = 12;
         
 
         ImGui::Checkbox("render_occlusion", &enable_occlusion);
@@ -1313,6 +1339,10 @@ namespace eng {
                             break;
                         case 11:
                             ImGui::Text("%d", tiles(y,x).vis.fog_idx);
+                            break;
+                        case 12:
+                            ImGui::Text("%d", int(tiles(y,x).IsCoastTile()));
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).IsCoastTile() ? clr2 : clr1);
                             break;
                         default:
                             ImGui::Text("---");

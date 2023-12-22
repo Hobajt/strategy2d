@@ -1213,7 +1213,7 @@ namespace eng {
                 {
                     //build site check
                     BuildingDataRef bd = Resources::LoadBuilding(payload_id, bool(unit.Race()));
-                    if(!level.map.IsAreaBuildable(target_pos, glm::ivec2(bd->size), bd->navigationType, unit.Position())) {
+                    if(!level.map.IsAreaBuildable(target_pos, glm::ivec2(bd->size), bd->navigationType, unit.Position(), bd->coastal)) {
                         ENG_LOG_FINE("Targeted command - '{}' - invalid position - (pos: ({}, {}), payload: {})", cmd_name, target_pos.x, target_pos.y, payload_id);
                         msg_bar.DisplayMessage("You cannot build there");
                         Audio::Play(SoundEffect::Error().Random());
@@ -2108,6 +2108,7 @@ namespace eng {
         glm::ivec2 corner = glm::ivec2(cam.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
         float zIdx = -0.5f;
         int nav_type = building->navigationType;
+        bool coast_check = map.CoastCheck(corner, sz, building->coastal);
 
         //building sprite
         sg.Render(glm::vec3(cam.map2screen(corner), zIdx), building->size * cam.Mult(), glm::ivec4(0), 0, 0);
@@ -2116,7 +2117,7 @@ namespace eng {
         for(int y = 0; y < sz.y; y++) {
             for(int x = 0; x < sz.x; x++) {
                 glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
-                glm::vec4 clr = map.IsBuildable(pos, nav_type, worker_pos) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
+                glm::vec4 clr = (map.IsBuildable(pos, nav_type, worker_pos) && coast_check) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
                 Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
             }
         }

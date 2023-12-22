@@ -16,6 +16,7 @@
         "basic_damage": 0,
         "pierce_damage": 0,
         "race": 0,
+        "coastal": true,
         "sounds": { "yes": "bldg/foundry" },
         "buttons": [
             [

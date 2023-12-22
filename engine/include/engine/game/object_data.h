@@ -192,6 +192,7 @@ namespace eng {
         bool traversable = false;       //detaches building from pathfinding
         bool gatherable = false;        //building is treated as a resource (workers can enter it to mine it)
         bool resource = false;
+        bool coastal = false;           //building must be placed on at least 1 transition tile between ground & water
         int dropoff_mask = 0;
         float attack_speed = 2.f;
     public:

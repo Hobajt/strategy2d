@@ -838,10 +838,11 @@ namespace eng {
         }
 
         glm::ivec2 building_size = buildingData->size;
+        int buildable_distance = int(buildingData->coastal);
 
-        if(get_range(src.Position(), cmd.target_pos, cmd.target_pos + building_size) >= 1) {
+        if(get_range(src.Position(), cmd.target_pos, cmd.target_pos + building_size) >= (1 + buildable_distance)) {
             //move until the worker stands within the rectangle (where the building is to be built)
-            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, cmd.target_pos, cmd.target_pos + building_size, 0);
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, cmd.target_pos, cmd.target_pos + building_size, buildable_distance);
             if(target_pos != src.Position()) {
                 ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
                 action = Action::Move(src.Position(), target_pos);
@@ -854,7 +855,7 @@ namespace eng {
         }
         else {
             //validate that the area is clear & all the building conditions are met
-            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position()) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
+            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position(), buildingData->coastal) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
                 //start the construction
                 src.WithdrawObject();
                 ObjectID buildingID = level.objects.EmplaceBuilding(level, buildingData, src.Faction(), cmd.target_pos, false);
