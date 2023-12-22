@@ -823,8 +823,12 @@ namespace eng {
         return -1;
     }
 
-    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal) const {
+    bool Map::IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal, bool requires_foundation) const {
         if(coastal && NearestOilPatchDistance(position, building_size) < MIN_OIL_PATCH_DISTANCE) {
+            return false;
+        }
+
+        if(requires_foundation && !BuildingFoundationCheck(position, BuildingType::OIL_PATCH)) {
             return false;
         }
 
@@ -876,6 +880,22 @@ namespace eng {
                 min_d = distance;
         }
         return min_d;
+    }
+
+    bool Map::BuildingFoundationCheck(const glm::ivec2& position, int type) const {
+        for(const auto& to : traversableObjects) {
+            if(to.type == type && to.pos == position)
+                return true;
+        }
+        return false;
+    }
+
+    ObjectID Map::GetFoundationObjectAt(const glm::ivec2& position) const {
+        for(const auto& to : traversableObjects) {
+            if(to.pos == position)
+                return to.id;
+        }
+        return ObjectID();
     }
     
     bool Map::FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius) {

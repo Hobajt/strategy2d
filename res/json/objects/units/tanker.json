@@ -35,7 +35,7 @@
         },
         "buttons": [
             [
-                { "idx": 3, "cmd": 10, "pid": 9, "hotkey": ["o", 0] }
+                { "idx": 3, "cmd": 10, "pid": 9, "hotkey": ["b", 0] }
             ]
         ]
     }

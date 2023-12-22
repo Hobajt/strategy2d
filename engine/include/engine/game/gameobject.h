@@ -124,6 +124,7 @@ namespace eng {
         FactionObject& operator=(FactionObject&&) noexcept = default;
 
         void ChangeColor(int colorIdx);
+        void ChangeFaction(const FactionControllerRef& new_faction, bool keep_color = false);
 
         virtual void Kill(bool silent = false) override;
 
@@ -326,6 +327,8 @@ namespace eng {
         void SetAmountLeft(int value) { amount_left = value; }
 
         virtual void WithdrawObject() override;
+
+        void TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction);
 
         //==== Building properties ====
 

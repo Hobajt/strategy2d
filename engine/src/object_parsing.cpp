@@ -71,6 +71,8 @@ namespace eng {
     void GameObjectData_ParseExisting(const nlohmann::json& config, GameObjectDataRef data) {
         int objectType = config.at("type");
 
+        Parse_GameObjectData(config, data);
+
         switch(objectType) {
             case ObjectType::BUILDING:
                 Parse_BuildingData(config, data);
@@ -85,8 +87,6 @@ namespace eng {
                 ENG_LOG_ERROR("Encountered an unrecognized object type when parsing GameObjectData (type = {})", objectType);
                 throw std::runtime_error("");
         }
-
-        Parse_GameObjectData(config, data);
     }
 
     void GameObjectData_FinalizeButtonDescriptions(GameObjectDataRef& dt) {
@@ -501,7 +501,7 @@ namespace eng {
                 LoadBuildingSprites(animations, BuildingAnimationType::UPGRADE, name_prefix, name_suffix + "_upgrade", false, false);
             }
 
-            if(!data->coastal) {
+            if(data->navigationType != NavigationBit::WATER) {
                 //load construction sprites
                 animations.insert({ BuildingAnimationType::BUILD1, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD1, Resources::LoadSprite("misc/buildings/construction1"), false, 1.f)) });
                 animations.insert({ BuildingAnimationType::BUILD2, SpriteGroup(SpriteGroupData(BuildingAnimationType::BUILD2, Resources::LoadSprite("misc/buildings/construction2"), false, 1.f)) });

@@ -157,12 +157,19 @@ namespace eng {
                 faction->ObjectRemoved(data_f);
             }
         }
-        //TODO: maybe establish an observer relationship with faction object (to track numbers of various types of units, etc.)
     }
 
     void FactionObject::ChangeColor(int newColorIdx) {
         colorIdx = ValidColor(newColorIdx) ? newColorIdx : faction->GetColorIdx(Data()->num_id);
         animator.SetPaletteIdx((float)colorIdx);
+    }
+
+    void FactionObject::ChangeFaction(const FactionControllerRef& new_faction, bool keep_color) {
+        ASSERT_MSG((new_faction != nullptr) && (new_faction->ID() >= 0), "FactionObject must be assigned to a valid faction!");
+        faction = new_faction;
+        factionIdx = faction->ID();
+        if(!keep_color)
+            ChangeColor(faction->GetColorIdx(NumID()));
     }
 
     void FactionObject::Kill(bool silent) {
@@ -243,6 +250,10 @@ namespace eng {
         if(active) {
             RemoveFromMap();
             active = false;
+
+            if(finalized) {
+                faction->ObjectRemoved(data_f);
+            }
         }
     }
 
@@ -256,6 +267,9 @@ namespace eng {
             ClearState();
             InnerIntegrate();
             active = true;
+            if(finalized) {
+                faction->ObjectAdded(data_f);
+            }
         }
     }
 
@@ -560,6 +574,33 @@ namespace eng {
             UnregisterDropoffPoint();
             FactionObject::WithdrawObject();
         }
+    }
+
+    void Building::TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction) {
+        ENG_LOG_FINE("Building::TransformFromFoundation - {} -> {} (pos={})", data->name, new_data->name, Position());
+
+        //withdraw object from the map, so that I don't have to modify values in the map struct (will update on reinsert)
+        WithdrawObject();
+
+        lvl()->map.VisibilityDecrement(Position(), data->size, data->vision_range, FactionIdx());
+        lvl()->map.VisibilityIncrement(Position(), new_data->size, new_data->vision_range, new_faction->ID());
+
+        ChangeFaction(new_faction);
+
+        //data pointer & animator updates
+        data = new_data;
+        UpdateDataPointer(new_data);
+        animator = Animator(new_data->animData);
+
+        //start the construction anew
+        Finalized(false);
+        constructed = false;
+        SetHealth(StartingHealth());
+
+        ReinsertObject();
+
+        //calling after reinsert, cuz it resets the action
+        action = BuildingAction();
     }
 
     bool Building::IsTraining() const {

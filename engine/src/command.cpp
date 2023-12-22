@@ -855,11 +855,21 @@ namespace eng {
         }
         else {
             //validate that the area is clear & all the building conditions are met
-            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position(), buildingData->coastal) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
+            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position(), buildingData->coastal, buildingData->requires_foundation) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
                 //start the construction
                 src.WithdrawObject();
-                ObjectID buildingID = level.objects.EmplaceBuilding(level, buildingData, src.Faction(), cmd.target_pos, false);
-                level.objects.IssueEntrance_Construction(buildingID, src.OID());
+                if(!buildingData->requires_foundation) {
+                    //regular building construction
+                    ObjectID buildingID = level.objects.EmplaceBuilding(level, buildingData, src.Faction(), cmd.target_pos, false);
+                    level.objects.IssueEntrance_Construction(buildingID, src.OID());
+                }
+                else {
+                    //construction on existing foundation (oil patch)
+                    ObjectID buildingID = level.map.GetFoundationObjectAt(cmd.target_pos);
+                    ASSERT_MSG(ObjectID::IsValid(buildingID), "Command::Build - foundation not found.");
+                    level.objects.GetBuilding(buildingID).TransformFoundation(buildingData, src.Faction());
+                    level.objects.IssueEntrance_Construction(buildingID, src.OID());
+                }
             }
             else {
                 ENG_LOG_TRACE("Command::Build - cannot build at ({}, {})", cmd.target_pos.x, cmd.target_pos.y);
