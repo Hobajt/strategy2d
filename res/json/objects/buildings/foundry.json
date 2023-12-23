@@ -20,7 +20,34 @@
         "sounds": { "yes": "bldg/foundry" },
         "buttons": [
             [
-                
+                { "idx": 0, "cmd": 12, "pid": 2 },
+                { "idx": 1, "cmd": 12, "pid": 3 }
+            ]
+        ]
+    },
+    {
+        "str_id": "orc/foundry",
+        "name": "foundry",
+        "type": 3,
+        "nav_type": 2,
+        "size": [3,3],
+        "icon": [3,5],
+        "vision_range": 3,
+        "health": 750,
+        "mana": 0,
+        "build_time": 175,
+        "cost": [700,400,400],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "coastal": true,
+        "sounds": { "yes": "bldg/foundry" },
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 2 },
+                { "idx": 1, "cmd": 12, "pid": 3 }
             ]
         ]
     }

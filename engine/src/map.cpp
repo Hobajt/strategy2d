@@ -664,7 +664,7 @@ namespace eng {
         glm::ivec2 dst_pos = target_pos;
 
         //coordinates fix for airborne units
-        if(navType == NavigationBit::AIR) {
+        if(navType != NavigationBit::GROUND) {
             unit_pos = make_even(unit_pos);
             dst_pos = make_even(dst_pos);
         }
@@ -693,8 +693,8 @@ namespace eng {
         int navType = unit.NavigationType();
 
         //target fix for airborne units
-        glm::ivec2 dm = (navType != NavigationBit::AIR) ? m : make_even(m);
-        glm::ivec2 dM = (navType != NavigationBit::AIR) ? M : make_even(M);
+        glm::ivec2 dm = (navType == NavigationBit::GROUND) ? m : make_even(m);
+        glm::ivec2 dM = (navType == NavigationBit::GROUND) ? M : make_even(M);
 
         //fills distance values in the tile data
         glm::ivec2 dst_pos = glm::ivec2(-1);
@@ -718,7 +718,7 @@ namespace eng {
         int navType = unit.NavigationType();
 
         //target fix for airborne units
-        glm::ivec2 dst_pos = (navType != NavigationBit::AIR) ? target_pos : make_even(target_pos);
+        glm::ivec2 dst_pos = (navType == NavigationBit::GROUND) ? target_pos : make_even(target_pos);
 
         //fills distance values in the tile data
         Pathfinding_AStar_Forrest(tiles, nav_list, unit.Position(), dst_pos, navType, &heuristic_euclidean);
@@ -761,7 +761,7 @@ namespace eng {
         return true;
     }
 
-    int Map::NearbySpawnCoords(const glm::ivec2& building_pos, const glm::ivec2& building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range) {
+    int Map::NearbySpawnCoords(glm::ivec2 building_pos, glm::ivec2 building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range) {
         ASSERT_MSG(preferred_dir >= 0 && preferred_dir <= 3, "preferred_dir has to be in range <0,3> (identifies preferred side of the building)");
 
         /*     2
@@ -771,6 +771,12 @@ namespace eng {
             -------
                0
         */
+
+        int step = 1;
+        if(nav_type != NavigationBit::GROUND) {
+            step = 2;
+            building_pos = (building_pos / 2) * 2;
+        }
 
         //cap search at map size in case of unlimited range
         if(max_range < 1) {
@@ -788,10 +794,10 @@ namespace eng {
         // ENG_LOG_INFO("DBG - ({}, {})", start_offset_dir.x, start_offset_dir.y);
 
         //start searching at neighboring tiles & slowly increase the searched radius
-        for(int r = 1; r < max_range; r++) {
+        for(int r = step; r < max_range; r += step) {
             glm::ivec2 size = building_size-1 + 2*r;
             glm::ivec2 pos = building_pos - r + start_offset_dir * size;
-            glm::ivec2 dir = pref_dir;
+            glm::ivec2 dir = pref_dir * step;
             // ENG_LOG_INFO("R={}", r);
 
             bool stillValid = false;
@@ -799,7 +805,7 @@ namespace eng {
             //fillout the coords to visit - square radius around the building
             for(int i = 0; i < 4; i++) {
                 int sz = size[int((preferred_dir+i) % 2 != 0)];
-                for(int j = 0; j < sz; j++) {
+                for(int j = 0; j < sz; j += step) {
                     bool withinBounds = tiles.IsWithinBounds(pos);
                     stillValid |= withinBounds;
                     
@@ -1620,7 +1626,7 @@ namespace eng {
     glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst_, int navType) {
         glm::ivec2 pos_dst = pos_dst_;
         glm::ivec2 dir = glm::sign(pos_dst - pos_src);
-        int step = 1 + int(navType == NavigationBit::AIR);
+        int step = 1 + int(navType != NavigationBit::GROUND);
 
         char buf[256];
         std::stringstream ss;
@@ -1881,8 +1887,8 @@ namespace eng {
 
     bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType == NavigationBit::AIR);
-        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+        int step = 1 + int(navType != NavigationBit::GROUND);
+        glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
         tiles.NavDataCleanup();
@@ -1948,8 +1954,8 @@ namespace eng {
 
     bool Pathfinding_AStar_Range(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, int range, const glm::ivec2& m, const glm::ivec2& M, glm::ivec2* result_pos, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType == NavigationBit::AIR);
-        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+        int step = 1 + int(navType != NavigationBit::GROUND);
+        glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
         tiles.NavDataCleanup();
@@ -2018,8 +2024,8 @@ namespace eng {
 
     bool Pathfinding_AStar_Forrest(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType == NavigationBit::AIR);
-        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+        int step = 1 + int(navType != NavigationBit::GROUND);
+        glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
         tiles.NavDataCleanup();
@@ -2096,8 +2102,8 @@ namespace eng {
 
     bool Pathfinding_Dijkstra_NearestBuilding(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const std::vector<buildingMapCoords>& targets, int unit_resourceType, int navType, glm::ivec2& out_dst_pos) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType == NavigationBit::AIR);
-        glm::ivec2 pos_src = (navType == NavigationBit::AIR) ? make_even(pos_src_) : pos_src_;
+        int step = 1 + int(navType != NavigationBit::GROUND);
+        glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
         tiles.NavDataCleanup();

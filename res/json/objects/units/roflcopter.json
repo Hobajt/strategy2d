@@ -1,0 +1,33 @@
+[
+    {
+        "str_id": "human/machine",
+        "name": "flying machine",
+        "type": 2,
+        "nav_type": 4,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 9,
+        "speed": 17,
+        "health": 150,
+        "mana": 0,
+        "build_time": 65,
+        "cost": [500,100,0],
+        "attack_range": 1,
+        "armor": 2,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 2.0,
+        "race": 0,
+        "death_sound": 5,
+        "scale": 2,
+        "icon": [8,2],
+        "sounds": {
+            "yes": "gnome/gnyessr1",
+            "ready": "gnome/gnready",
+            "pissed": ["gnome/gnpissd", 5]
+        }
+    }
+]

@@ -387,7 +387,7 @@ namespace eng {
         //Searches for valid tile (non-taken & matching navigation type) in the neighborhood of the building.
         //Tiles are searched in squares - from lowest to higher & higher chessboard distance from the building.
         //Search starts at one of the corners of the building (defined by preferred_dir) & continues counter-clockwise around the building (increasing radius on full revolutions).
-        int NearbySpawnCoords(const glm::ivec2& building_pos, const glm::ivec2& building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range = -1);
+        int NearbySpawnCoords(glm::ivec2 building_pos, glm::ivec2 building_size, int preferred_dir, int nav_type, glm::ivec2& out_coords, int max_range = -1);
 
         bool IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal, bool requires_foundation) const;
         bool IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const;

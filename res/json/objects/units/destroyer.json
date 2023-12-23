@@ -1,0 +1,34 @@
+[
+    {
+        "str_id": "human/destroyer",
+        "name": "destroyer",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 8,
+        "health": 100,
+        "mana": 0,
+        "build_time": 90,
+        "cost": [700,350,700],
+        "attack_range": 4,
+        "armor": 10,
+        "basic_damage": 35,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 3,
+        "scale": 2,
+        "icon": [2,2],
+        "upgrade_src": [2, 2],
+        "sounds": {
+            "yes": ["ships/hshpyes", 3],
+            "what": ["ships/hshpwht", 3],
+            "pissed": ["ships/hshppis", 3],
+            "ready": "ships/hshpredy"
+        }
+    }
+]

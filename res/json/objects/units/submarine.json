@@ -1,0 +1,34 @@
+[
+    {
+        "str_id": "human/submarine",
+        "name": "gnomish submarine",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" }
+        },
+        "vision_range": 5,
+        "health": 60,
+        "mana": 0,
+        "speed": 7,
+        "build_time": 100,
+        "cost": [800,150,900],
+        "attack_range": 4,
+        "armor": 0,
+        "basic_damage": 50,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 3,
+        "scale": 2,
+        "icon": [6,2],
+        "upgrade_src": [2, 2],
+        "sounds": {
+            "yes": ["ships/hshpyes", 3],
+            "what": ["ships/hshpwht", 3],
+            "pissed": ["ships/hshppis", 3],
+            "ready": "ships/hshpredy"
+        }
+    }
+]

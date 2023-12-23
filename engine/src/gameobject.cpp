@@ -339,6 +339,13 @@ namespace eng {
     Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool playReadySound)
         : FactionObject(level_, data_, faction_, position_), data(data_) {
         
+        if(data_->navigationType != NavigationBit::GROUND) {
+            if(int(position_.x) % 2 != 0 || int(position_.y) % 2 != 0) {
+                ENG_LOG_ERROR("Unit - cannot spawn naval/air unit on odd coordinates (pathfinding only works on even coords for these).");
+                throw std::runtime_error("");
+            }
+        }
+        
         if(playReadySound && data->sound_ready.valid)
             Audio::Play(data->sound_ready.Random());
     }

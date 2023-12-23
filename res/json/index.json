@@ -9,11 +9,11 @@
         ["human/paladin", "orc/ogre_magi"],
         ["human/tanker", "orc/tanker"],
         ["human/destroyer", "orc/destroyer"],
-        ["human/battleship", "orc/battleship"],
+        ["human/battleship", "orc/juggernaut"],
         ["human/submarine", "orc/submarine"],
         ["human/transport", "orc/transport"],
-        ["human/roflcopter", "orc/roflcopter"],
-        ["human/demosquad", "orc/demosquad"],
+        ["human/machine", "orc/roflcopter"],
+        ["human/demo_squad", "orc/demosquad"],
         ["human/mage", "orc/death_knight"],
         ["human/gryphon", "orc/dragon"]
     ],
@@ -30,7 +30,7 @@
         ["human/oil_refinery", "orc/oil_refinery"],
         ["human/oil_platform", "orc/oil_platform"],
 
-        ["human/inventor", "orc/inventor"],
+        ["human/gnomish_inventor", "orc/inventor"],
         ["human/stables", "orc/ogre_mound"],
         ["human/church", "orc/altar"],
         ["human/wizard_tower", "orc/temple"],
