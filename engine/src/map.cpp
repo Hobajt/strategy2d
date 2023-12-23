@@ -921,8 +921,7 @@ namespace eng {
         return D < (unsigned int)(-1);
     }
 
-    bool Map::SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID) {
-        int range = src.AttackRange();
+    bool Map::SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, int range, ObjectID& out_targetID, glm::ivec2* out_targetPos) {
         glm::ivec2 sz = glm::ivec2(src.Data()->size) - 1;
         glm::ivec2 src_pos = src.Position();
         int src_factionId = src.FactionIdx();
@@ -943,10 +942,14 @@ namespace eng {
                 if(tiles.IsWithinBounds(pos)) {
                     if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId)) {
                         out_targetID = tiles(pos).info[0].id;
+                        if(out_targetPos != nullptr)
+                            *out_targetPos = pos;
                         return true;
                     }
                     else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId)) {
                         out_targetID = tiles(pos).info[1].id;
+                        if(out_targetPos != nullptr)
+                            *out_targetPos = pos;
                         return true;
                     }
                 }

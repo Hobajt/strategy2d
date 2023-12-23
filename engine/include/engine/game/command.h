@@ -24,7 +24,7 @@ namespace eng {
     namespace ActionType { enum { INVALID = -1, IDLE = 0, MOVE, ACTION, ENTER, UNLOAD, COUNT }; }
     namespace UnitAnimationType { enum { IDLE, MOVE, ACTION, DEATH, IDLE2, MOVE2, IDLE3, MOVE3 }; }
 
-    namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH }; }
+    namespace ActionSignal { enum { CUSTOM = 0, COMMAND_SWITCH, INTERRUPT }; }
 
     namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, REPAIR, OTHER = 1 }; }
 
@@ -55,6 +55,7 @@ namespace eng {
             bool b = false;
             bool c = false;
             float t = 0.f;
+            int count = 0;
         public:
             void Reset();
             void DBG_Print();
@@ -82,12 +83,15 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
+        friend void CommandHandler_Idle(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_StandGround(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Move(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Attack(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_Patrol(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Harvest(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_ReturnGoods(Unit& source, Level& level, Command& cmd, Action& action);
@@ -126,6 +130,8 @@ namespace eng {
         glm::ivec2 target_pos;
         ObjectID target_id;
         int flag;
+
+        glm::ivec2 v2;
     };
 
     //===== BuildingAction =====

@@ -401,7 +401,7 @@ namespace eng {
         bool FindTrees(const glm::ivec2& worker_pos, const glm::ivec2& preferred_pos, glm::ivec2& out_pos, int radius);
 
         //Searches tiles around provided object for gameobjects that belong to enemy factions.
-        bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, ObjectID& out_targetID);
+        bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, int range, ObjectID& out_targetID, glm::ivec2* out_targetPos = nullptr);
 
         void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building, int sight);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building, int factionId, int sight);

@@ -147,7 +147,7 @@ namespace eng {
     Action::Logic::Logic(int type_, ActionUpdateHandler update_, ActionSignalHandler signal_) : type(type_), update(update_), signal(signal_) {}
 
     void Action::Data::Reset() {
-        i = j = k = 0;
+        count = i = j = k = 0;
         b = c = false;
         t = 0.f;
     }
@@ -249,6 +249,7 @@ namespace eng {
         //data.i = movement orientation idx, data.t = motion interpolation value between tiles
         int orientation = action.data.i;
         float& t = action.data.t;
+        int& counter = action.data.count;
         float l = lim[orientation % 2];
 
         //animation values update
@@ -261,6 +262,7 @@ namespace eng {
 
         //either action started, or target tile reached (target = next in line, not the final target)
         if(t >= 0.f) {
+            counter++;
             if(pos == action.data.target_pos) {
                 //unit is at the final target
                 t = 0.f;
@@ -435,13 +437,23 @@ namespace eng {
     }
 
     Command Command::StandGround() {
-        //TODO: differs from Stop command (which is just reset to Idle()) in that it doesn't allow any movement for the unit (chasing after enemies)
-        return Idle();
+        Command cmd = {};
+
+        cmd.type = CommandType::STAND_GROUND;
+        cmd.handler = CommandHandler_StandGround;
+
+        return cmd;
     }
 
     Command Command::Patrol(const glm::ivec2& target_pos) {
-        //TODO:
-        return Idle();
+        Command cmd = {};
+
+        cmd.type = CommandType::PATROL;
+        cmd.handler = CommandHandler_Patrol;
+        cmd.target_pos = target_pos;
+        cmd.v2 = glm::ivec2(-1);
+
+        return cmd;
     }
 
     Command Command::Cast(int payload_id) {
@@ -557,6 +569,13 @@ namespace eng {
         }
     }
 
+    void CommandHandler_StandGround(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+
+        //TODO: implement once Idle action is implemented (or auto command)
+        //do the same stuff as in Idle, but nothing that requires movement
+    }
+
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action) {
         int res = action.Update(src, level);
 
@@ -637,6 +656,51 @@ namespace eng {
                 action = Action::Attack(cmd.target_id, target_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
             }
         }
+    }
+
+    void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS) {
+            //periodically break the movement command - allows switching to attack command even when moving on a long straight line
+            if(action.data.count >= 3 && action.data.target_pos != src.Position()) {
+                action.Signal(src, ActionSignal::INTERRUPT, cmd.Type(), cmd.Type());
+            }
+            return;
+        }
+
+        //store the 2nd patroling waypoint if not already set
+        if(cmd.v2 == glm::ivec2(-1))
+            cmd.v2 = src.Position();
+        
+        //scan the unit's vision range for enemy units
+        ObjectID targetID = ObjectID();
+        glm::ivec2 targetPos = glm::ivec2(-1);
+        if(level.map.SearchForTarget(src, level.factions.Diplomacy(), src.VisionRange(), targetID, &targetPos)) {
+            //switch to attack command if enemy detected
+            ENG_LOG_TRACE("Patrol Command - Enemy detected ({}), switching to attack.", targetID.to_string());
+            cmd = Command::Attack(targetID, targetPos);
+            return;
+        }
+
+        //otherwise, continue moving to the target_pos
+        if(cmd.target_pos == src.Position()) {
+            //if target_pos reached, switch target_pos with v2
+            glm::ivec2 tmp = cmd.target_pos;
+            cmd.target_pos = cmd.v2;
+            cmd.v2 = tmp;
+        }
+        
+        //consult navmesh - fetch next target position
+        glm::ivec2 target_pos = level.map.Pathfinding_NextPosition(src, cmd.target_pos);
+        if(target_pos == src.Position()) {
+            //target destination unreachable
+            cmd = Command::Idle();
+        }
+        else {
+            //initiate new move action
+            ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Patrol - target position for next action doesn't respect directions.");
+            action = Action::Move(src.Position(), target_pos);
+        }        
     }
 
     void CommandHandler_Harvest(Unit& src, Level& level, Command& cmd, Action& action) {
@@ -1041,7 +1105,7 @@ namespace eng {
             //periodically rescan the vincinity for possible targets
             if((++scan_counter) > BUILDING_ATTACK_SCAN_INTERVAL) {
                 scan_counter = 0;
-                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
+                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), src.AttackRange(), targetID)) {
                     engaged = true;
                     attack_tick = (float)input.CurrentTime();
                     ENG_LOG_TRACE("BuildingAttack - Found target to attack.");
@@ -1057,7 +1121,7 @@ namespace eng {
             FactionObject* target;
             if(!level.objects.GetObject(targetID, target) || !src.RangeCheck(*target)) {
                 //previous target no longer exists or is out of range, so search for new one
-                if(!level.map.SearchForTarget(src, level.factions.Diplomacy(), targetID)) {
+                if(!level.map.SearchForTarget(src, level.factions.Diplomacy(), src.AttackRange(), targetID)) {
                     engaged = false;
                     scan_counter = 0;
                     ENG_LOG_TRACE("BuildingAttack - Target lost.");
