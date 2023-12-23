@@ -196,6 +196,7 @@ namespace eng {
         bool no_prev_command = (entry.cmd_target.x == -1) && (entry.cmd_target.y == -1);
         switch(entry.cmd_type) {
             case WorkerCarryState::GOLD:        //worker entered with gold -> return to Gather command
+            case WorkerCarryState::OIL:
             {
                 if(!no_prev_command) {
                     ObjectID goldmineID = ObjectID(ObjectType::BUILDING, entry.cmd_target.x, entry.cmd_target.y);
@@ -224,7 +225,7 @@ namespace eng {
 
         building->NearbySpawnCoords(worker->NavigationType(), preferred_direction, respawn_position);
         worker->ReinsertObject(respawn_position);
-        if(set_carry_state) worker->ChangeCarryStatus(WorkerCarryState::GOLD);
+        if(set_carry_state) worker->ChangeCarryStatus((building->NavigationType() != NavigationBit::WATER) ? WorkerCarryState::GOLD : WorkerCarryState::OIL);
         if(!no_prev_command) {
             worker->IssueCommand(cmd);
         }

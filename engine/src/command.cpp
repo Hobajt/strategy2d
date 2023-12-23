@@ -617,7 +617,7 @@ namespace eng {
             }
 
             //range check & action issuing
-            if(!src.RangeCheck(pos_min, pos_max)) {
+            if(src.AttackRange() < get_range(src.Position(), pos_min, pos_max)) {
                 //range check failed -> lookup new possible location to attack from & start moving there
                 glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max);
                 if(move_pos == src.Position()) {
@@ -900,9 +900,7 @@ namespace eng {
         glm::ivec2 max_pos = target->MaxPos();
 
         //distance check & movement
-        int range = get_range(src.Position(), min_pos, max_pos);
-        ENG_LOG_INFO("RANGE: {}", range);
-        if(range > 1) {
+        if(get_range(src.Position(), min_pos, max_pos) > 1) {
             //move until the worker stands next to the building
             glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, min_pos, max_pos, 1);
             if(target_pos != src.Position()) {

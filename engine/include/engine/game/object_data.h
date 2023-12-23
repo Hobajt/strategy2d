@@ -158,6 +158,7 @@ namespace eng {
     public:
         virtual int MaxHealth() const override { return health; }
         virtual bool IntegrateInMap() const { return true; }
+        virtual bool IsNotableObject() const { return false; }
 
         bool CanAttack() const { return basic_damage + pierce_damage > 0; }
     };
@@ -198,6 +199,7 @@ namespace eng {
         float attack_speed = 2.f;
     public:
         virtual bool IntegrateInMap() const override { return !traversable; }
+        virtual bool IsNotableObject() const override { return requires_foundation; }
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

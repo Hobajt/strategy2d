@@ -28,7 +28,7 @@ namespace eng {
 
     namespace ActionPayloadType { enum { HARVEST = -2, MELEE_ATTACK = -1, RANGED_ATTACK = 0, REPAIR, OTHER = 1 }; }
 
-    namespace WorkerCarryState { enum { NONE = 0, GOLD, WOOD }; }
+    namespace WorkerCarryState { enum { NONE = 0, GOLD = 1, WOOD = 2, OIL = 4 }; }
 
     //An atomic unit of work, that a Unit object can do within the game.
     struct Action {

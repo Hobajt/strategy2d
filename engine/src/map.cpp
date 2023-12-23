@@ -733,16 +733,18 @@ namespace eng {
 
         //identify unit's movement type (gnd/water/air)
         int navType = unit.NavigationType();
+        int res_type = unit.CarryStatus();
+        // if(navType == NavigationBit::WATER) res_type = 4;
 
         glm::ivec2 dst_pos;
-        if(!Pathfinding_Dijkstra_NearestBuilding(tiles, nav_list, unit.Position(), buildings, unit.CarryStatus(), navType, dst_pos)) {
+        if(!Pathfinding_Dijkstra_NearestBuilding(tiles, nav_list, unit.Position(), buildings, res_type, navType, dst_pos)) {
             return false;
         }
 
         //resolve which building was selected
         out_id = ObjectID();
         for(auto& [m,M,ID,resType] : buildings) {
-            if(!HAS_FLAG(resType, unit.CarryStatus()))
+            if(!HAS_FLAG(resType, res_type))
                 continue;
 
             if(dst_pos.x >= m.x && dst_pos.x <= M.x && dst_pos.y >= m.y && dst_pos.y <= M.y) {
@@ -871,10 +873,10 @@ namespace eng {
     int Map::NearestOilPatchDistance(const glm::ivec2& pos, const glm::ivec2& size) const {
         int min_d = std::numeric_limits<int>::max();
         for(auto& to : traversableObjects) {
-            if(to.type != BuildingType::OIL_PATCH)
+            if(to.type != BuildingType::OIL_PATCH && to.type != BuildingType::OIL_PLATFORM)
                 continue;
             
-            int distance = get_range(to.pos, pos, pos+size);
+            int distance = get_range(to.pos, to.pos + 2, pos, pos+size);
 
             if(distance < min_d)
                 min_d = distance;

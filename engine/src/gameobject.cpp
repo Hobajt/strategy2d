@@ -197,6 +197,14 @@ namespace eng {
         return (D <= data_f->attack_range);
     }
 
+    int FactionObject::GetRange(GameObject& target) const {
+        return GetRange(target.MinPos(), target.MaxPos());
+    }
+
+    int FactionObject::GetRange(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const {
+        return get_range(MinPos(), MaxPos(), min_pos, max_pos);
+    }
+
     void FactionObject::ApplyDirectDamage(const FactionObject& source) {
         if(IsInvulnerable()) {
             ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
@@ -302,13 +310,14 @@ namespace eng {
     void FactionObject::RemoveFromMap() {
         if(active) {
             if(lvl() != nullptr && Data() != nullptr) {
-                if(data_f->IntegrateInMap()) {
-                    //remove from pathfinding (if it's a part of it to begin with)
+                //remove from pathfinding (if it's a part of it to begin with)
+                if(data_f->IntegrateInMap())
                     lvl()->map.RemoveObject(NavigationType(), Position(), glm::ivec2(Data()->size), Data()->objectType == ObjectType::BUILDING, FactionIdx(), VisionRange());
-                }
-                else {
+                else
                     lvl()->map.RemoveTraversableObject(OID());
-                }
+
+                if(data_f->IsNotableObject())
+                    lvl()->map.RemoveTraversableObject(OID());
             }
             active = false;
         }
@@ -449,7 +458,7 @@ namespace eng {
     }
 
     void Unit::UpdateVariationIdx() {
-        SetVariationIdx((carry_state != WorkerCarryState::NONE) ? (1+(carry_state-1)*2) : 0);
+        SetVariationIdx((carry_state != WorkerCarryState::NONE) ? (1+int(carry_state == WorkerCarryState::WOOD)*2) : 0);
     }
 
     void Unit::ManaIncrement() {
@@ -758,9 +767,11 @@ namespace eng {
     void Building::InnerIntegrate() {
         if(data->IntegrateInMap())
             FactionObject::InnerIntegrate();
-        else {
+        else
             lvl()->map.AddTraversableObject(OID(), Position(), NumID()[1]);
-        }
+        
+        if(data->IsNotableObject())
+            lvl()->map.AddTraversableObject(OID(), Position(), NumID()[1]);
         
         if(constructed) {
             if(data->dropoff_mask != 0) {

@@ -132,6 +132,9 @@ namespace eng {
         bool RangeCheck(GameObject& target) const;
         bool RangeCheck(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
 
+        int GetRange(GameObject& target) const;
+        int GetRange(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
+
         bool CanAttack() const { return data_f->CanAttack(); }
         float Cooldown() const { return data_f->cooldown; }
 
@@ -325,6 +328,8 @@ namespace eng {
         bool IsResource() const { return data->resource || data->gatherable; }
         int AmountLeft() const { return IsResource() ? amount_left : 0; }
         void SetAmountLeft(int value) { amount_left = value; }
+
+        bool IsCoastal() const { return data->coastal; }
 
         virtual void WithdrawObject() override;
 
