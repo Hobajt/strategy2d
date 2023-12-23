@@ -216,6 +216,21 @@ namespace eng {
         ENG_LOG_FINE("FactionController::RefundResources - {} returned (val={})", refund, resources);
     }
 
+    void FactionController::ResourcesUptick(int resource_type) {
+        int idx = -1;
+
+        switch(resource_type) {
+            case WorkerCarryState::GOLD:    idx = 0; break;
+            case WorkerCarryState::WOOD:    idx = 1; break;
+            case WorkerCarryState::OIL:     idx = 2; break;
+            default:
+                ENG_LOG_ERROR("FactionController::ResourcesUptick - invalid resource type ({})", resource_type);
+                throw std::runtime_error("");
+        }
+
+        resources[idx] += 100 + ProductionBoost(idx);
+    }
+
     BuildingDataRef FactionController::FetchBuildingData(int buildingID, bool orcBuildings) {
         if(CanBeBuilt(buildingID, orcBuildings))
             return Resources::LoadBuilding(buildingID, orcBuildings);

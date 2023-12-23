@@ -198,7 +198,7 @@ namespace eng {
         bool IsActive() const { return active; }
 
         //Deactivates the object & removes it from pathfinding
-        virtual void WithdrawObject();
+        virtual void WithdrawObject(bool inform_faction = false);
         //Reactivates the object & adds it back to pathfinding.
         void ReinsertObject();
         void ReinsertObject(const glm::ivec2& position);
@@ -230,6 +230,7 @@ namespace eng {
 
         bool active = true;
         bool finalized = true;
+        bool faction_informed = true;
     };
 
     //===== Unit =====
@@ -331,7 +332,7 @@ namespace eng {
 
         bool IsCoastal() const { return data->coastal; }
 
-        virtual void WithdrawObject() override;
+        virtual void WithdrawObject(bool inform_faction = false) override;
 
         void TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction);
 

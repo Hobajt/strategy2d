@@ -810,9 +810,8 @@ namespace eng {
         }
         else {
             //worker is next to the building -> inform entrance controller and terminate the command
+            src.Faction()->ResourcesUptick(src.CarryStatus());
             level.objects.IssueEntrance_Work(cmd.target_id, src.OID(), cmd.target_pos, src.CarryStatus());
-            ENG_LOG_INFO("ReturnGoods - resource uptick");
-            //TODO: faction -> resource uptick
             cmd = Command::Idle();
         }
     }

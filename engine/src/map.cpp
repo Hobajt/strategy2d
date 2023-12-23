@@ -734,7 +734,6 @@ namespace eng {
         //identify unit's movement type (gnd/water/air)
         int navType = unit.NavigationType();
         int res_type = unit.CarryStatus();
-        // if(navType == NavigationBit::WATER) res_type = 4;
 
         glm::ivec2 dst_pos;
         if(!Pathfinding_Dijkstra_NearestBuilding(tiles, nav_list, unit.Position(), buildings, res_type, navType, dst_pos)) {

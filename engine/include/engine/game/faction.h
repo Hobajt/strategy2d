@@ -105,6 +105,7 @@ namespace eng {
         const std::vector<buildingMapCoords>& DropoffPoints() const { return dropoff_points; }
 
         void RefundResources(const glm::ivec3& refund);
+        void ResourcesUptick(int resource_type);
 
         //Returns true if all the conditions for given building are met (including resources check).
         bool CanBeBuilt(int buildingID, bool orcBuildings) const;

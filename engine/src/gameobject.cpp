@@ -254,14 +254,15 @@ namespace eng {
     Techtree& FactionObject::Tech() { return faction->Tech(); }
     const Techtree& FactionObject::Tech() const { return faction->Tech(); }
 
-    void FactionObject::WithdrawObject() {
+    void FactionObject::WithdrawObject(bool inform_faction) {
         if(active) {
             RemoveFromMap();
             active = false;
 
-            if(finalized) {
+            if(finalized && inform_faction) {
                 faction->ObjectRemoved(data_f);
             }
+            faction_informed = inform_faction;
         }
     }
 
@@ -275,10 +276,11 @@ namespace eng {
             ClearState();
             InnerIntegrate();
             active = true;
-            if(finalized) {
+            if(finalized && faction_informed) {
                 faction->ObjectAdded(data_f);
             }
         }
+        faction_informed = true;
     }
 
     void FactionObject::Inner_DBG_GUI() {
@@ -288,7 +290,7 @@ namespace eng {
         const char* btn_labels[2] { "Reinsert object", "Withdraw object" };
         if(ImGui::Button(btn_labels[(int)active])) {
             if(active)
-                WithdrawObject();
+                WithdrawObject(true);
             else
                 ReinsertObject();
         }
@@ -578,10 +580,10 @@ namespace eng {
         return data->gatherable && NavigationType() == unitNavType;
     }
 
-    void Building::WithdrawObject() {
+    void Building::WithdrawObject(bool inform_faction) {
         if(IsActive()) {
             UnregisterDropoffPoint();
-            FactionObject::WithdrawObject();
+            FactionObject::WithdrawObject(inform_faction);
         }
     }
 
@@ -589,7 +591,7 @@ namespace eng {
         ENG_LOG_FINE("Building::TransformFromFoundation - {} -> {} (pos={})", data->name, new_data->name, Position());
 
         //withdraw object from the map, so that I don't have to modify values in the map struct (will update on reinsert)
-        WithdrawObject();
+        WithdrawObject(true);
 
         lvl()->map.VisibilityDecrement(Position(), data->size, data->vision_range, FactionIdx());
         lvl()->map.VisibilityIncrement(Position(), new_data->size, new_data->vision_range, new_faction->ID());
