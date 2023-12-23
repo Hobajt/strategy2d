@@ -229,6 +229,8 @@ namespace eng {
 
         void CancelBuildingAction(Level& level);
 
+        void ConditionalUpdate(const FactionObject& obj);
+
         void DBG_GUI();
     private:
         bool AlreadySelected(const ObjectID& target_id, int currentSelectionSize);
@@ -318,6 +320,7 @@ namespace eng {
         virtual void Update(Level& level) override;
 
         virtual void SignalGUIUpdate() override;
+        virtual void SignalGUIUpdate(const FactionObject& obj) override;
 
         void Update_Paused(Level& level);
 

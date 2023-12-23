@@ -225,7 +225,10 @@ namespace eng {
 
         building->NearbySpawnCoords(worker->NavigationType(), preferred_direction, respawn_position);
         worker->ReinsertObject(respawn_position);
-        if(set_carry_state) worker->ChangeCarryStatus((building->NavigationType() != NavigationBit::WATER) ? WorkerCarryState::GOLD : WorkerCarryState::OIL);
+        if(set_carry_state) {
+            worker->ChangeCarryStatus((building->NavigationType() != NavigationBit::WATER) ? WorkerCarryState::GOLD : WorkerCarryState::OIL);
+            building->DecrementResource();
+        }
         if(!no_prev_command) {
             worker->IssueCommand(cmd);
         }

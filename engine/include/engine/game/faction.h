@@ -120,6 +120,7 @@ namespace eng {
 
         //Only for player controller, signals that GUI panel needs to be updated.
         virtual void SignalGUIUpdate() {}
+        virtual void SignalGUIUpdate(const FactionObject& obj) {}
 
         glm::ivec3 Resources() const { return resources; }
         glm::ivec2 Population() const { return population; }

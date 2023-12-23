@@ -11,6 +11,7 @@
 #include "engine/core/audio.h"
 #include "engine/core/input.h"
 
+#include "engine/game/player_controller.h"
 
 namespace eng {
 
@@ -585,6 +586,17 @@ namespace eng {
 
     bool Building::IsGatherable(int unitNavType) const {
         return data->gatherable && NavigationType() == unitNavType;
+    }
+
+    void Building::DecrementResource() {
+        ASSERT_MSG(IsResource(), "Building::DecrementResource - invoked on a non resource building.");
+
+        amount_left -= 100;
+        if(amount_left <= 0) {
+            ENG_LOG_TRACE("Building::DecrementResource - resource depleted ({})", OID());
+            Kill();
+        }
+        lvl()->factions.Player()->SignalGUIUpdate(*this);
     }
 
     void Building::WithdrawObject(bool inform_faction) {

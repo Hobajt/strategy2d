@@ -329,6 +329,7 @@ namespace eng {
         bool IsResource() const { return data->resource || data->gatherable; }
         int AmountLeft() const { return IsResource() ? amount_left : 0; }
         void SetAmountLeft(int value) { amount_left = value; }
+        void DecrementResource();
 
         bool IsCoastal() const { return data->coastal; }
 

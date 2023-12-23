@@ -1458,6 +1458,10 @@ namespace eng {
         building.CancelAction();
     }
 
+    void PlayerSelection::ConditionalUpdate(const FactionObject& obj) {
+        update_flag |= (selection[0] == obj.OID());
+    }
+
     void PlayerSelection::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         if(ImGui::CollapsingHeader("PlayerSelection")) {
@@ -1761,6 +1765,10 @@ namespace eng {
         selection.update_flag = true;
     }
 
+    void PlayerFactionController::SignalGUIUpdate(const FactionObject& obj) {
+        selection.ConditionalUpdate(obj);
+    }
+    
     void PlayerFactionController::Update_Paused(Level& level) {
         if(!is_menu_active) {
             selectionTab->Interactable(false);

@@ -232,6 +232,16 @@ namespace eng {
         return IsWithinBounds(coords.y, coords.x);
     }
 
+    bool MapTiles::IsWithinBounds(const glm::ivec2& coords, int size) const {
+        for(int y = 0; y < size; y++) {
+            for(int x = 0; x < size; x++) {
+                if(!IsWithinBounds(coords.y + y, coords.x + x))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     bool MapTiles::IsWithinBounds(int y, int x) const {
         return ((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x)));
     }
@@ -774,8 +784,9 @@ namespace eng {
 
         int step = 1;
         if(nav_type != NavigationBit::GROUND) {
-            step = 2;
             building_pos = (building_pos / 2) * 2;
+            building_size = ((building_size + 1) / 2) * 2;
+            step = 2;
         }
 
         //cap search at map size in case of unlimited range
@@ -795,8 +806,9 @@ namespace eng {
 
         //start searching at neighboring tiles & slowly increase the searched radius
         for(int r = step; r < max_range; r += step) {
-            glm::ivec2 size = building_size-1 + 2*r;
+            glm::ivec2 size = building_size-step + 2*r;
             glm::ivec2 pos = building_pos - r + start_offset_dir * size;
+            // if(nav_type != NavigationBit::GROUND) pos = (pos / 2) * 2;
             glm::ivec2 dir = pref_dir * step;
             // ENG_LOG_INFO("R={}", r);
 
@@ -806,7 +818,7 @@ namespace eng {
             for(int i = 0; i < 4; i++) {
                 int sz = size[int((preferred_dir+i) % 2 != 0)];
                 for(int j = 0; j < sz; j += step) {
-                    bool withinBounds = tiles.IsWithinBounds(pos);
+                    bool withinBounds = tiles.IsWithinBounds(pos, step);
                     stillValid |= withinBounds;
                     
                     // ENG_LOG_INFO("   - ({}, {})", pos.x, pos.y);
