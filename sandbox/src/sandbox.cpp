@@ -138,7 +138,7 @@ void Sandbox::OnInit() {
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), dummy_faction, glm::vec2(5.f, 5.f), false);
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/oil_platform"), f2, glm::vec2(20.f, 6.f), true);
+        ObjectID ol2 = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/oil_platform"), f2, glm::vec2(20.f, 6.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/shipyard"), f1, glm::vec2(14.f, 1.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/foundry"), f1, glm::vec2(14.f, 4.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/oil_refinery"), f1, glm::vec2(14.f, 7.f), true);
@@ -147,6 +147,8 @@ void Sandbox::OnInit() {
         ObjectID gm = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), f_n, glm::vec2(7.f, 7.f), true);
         level.objects.GetBuilding(ol).SetAmountLeft(123456);
         level.objects.GetBuilding(gm).SetAmountLeft(654321);
+
+        level.objects.GetBuilding(ol2).SetAmountLeft(100);
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);

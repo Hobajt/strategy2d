@@ -41,7 +41,8 @@ namespace eng {
         //Return true when requesting object removal.
         virtual bool Update();
 
-        virtual void Kill(bool silent = false) { killed = true; }
+        //Returns false to signal that the object is being reused & shouldn't be removed (for the use in ObjectPool).
+        virtual bool Kill(bool silent = false) { killed = true; return true; }
 
         //Check if this object covers given map coordinates.
         bool CheckPosition(const glm::ivec2& map_coords);
@@ -86,6 +87,7 @@ namespace eng {
         bool IsKilled() const { return killed; }
 
         void UpdateDataPointer(const GameObjectDataRef& data_) { data = data_; }
+        void UnsetKilledFlag() { killed = false; }
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
@@ -126,7 +128,7 @@ namespace eng {
         void ChangeColor(int colorIdx);
         void ChangeFaction(const FactionControllerRef& new_faction, bool keep_color = false);
 
-        virtual void Kill(bool silent = false) override;
+        virtual bool Kill(bool silent = false) override;
 
         //Return true if given object is within this object's attack range.
         bool RangeCheck(GameObject& target) const;
@@ -335,7 +337,9 @@ namespace eng {
 
         virtual void WithdrawObject(bool inform_faction = false) override;
 
-        void TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction);
+        void TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed = false);
+
+        virtual bool Kill(bool silent = false) override;
 
         //==== Building properties ====
 

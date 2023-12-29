@@ -173,9 +173,9 @@ namespace eng {
             ChangeColor(faction->GetColorIdx(NumID()));
     }
 
-    void FactionObject::Kill(bool silent) {
+    bool FactionObject::Kill(bool silent) {
         if(IsKilled())
-            return;
+            return true;
         GameObject::Kill(silent);
         
         if(!silent) {
@@ -187,6 +187,8 @@ namespace eng {
             static constexpr std::array<const char*, 6> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode", "misc/firehit" };
             Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
         }
+
+        return true;
     }
 
     bool FactionObject::RangeCheck(GameObject& target) const {
@@ -613,8 +615,8 @@ namespace eng {
         }
     }
 
-    void Building::TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction) {
-        ENG_LOG_FINE("Building::TransformFromFoundation - {} -> {} (pos={})", data->name, new_data->name, Position());
+    void Building::TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed) {
+        ENG_LOG_FINE("Building::TransformFoundation - {} -> {} (pos={})", data->name, new_data->name, Position());
 
         //withdraw object from the map, so that I don't have to modify values in the map struct (will update on reinsert)
         WithdrawObject(true);
@@ -629,15 +631,46 @@ namespace eng {
         UpdateDataPointer(new_data);
         animator = Animator(new_data->animData);
 
-        //start the construction anew
-        Finalized(false);
+        UnsetKilledFlag();
+        Finalized(is_constructed);
         constructed = false;
-        SetHealth(StartingHealth());
+
+        if(is_constructed) {
+            OnConstructionFinished(true, false);
+            SetHealth(MaxHealth());
+        }
+        else {
+            SetHealth(StartingHealth());
+        }
 
         ReinsertObject();
 
         //calling after reinsert, cuz it resets the action
-        action = BuildingAction();
+        if(is_constructed) {
+            action = BuildingAction::Idle();
+        }
+        else {
+            action = BuildingAction();
+        }
+    }
+
+    bool Building::Kill(bool silent) {
+        if(IsKilled())
+            return true;
+
+        bool res = FactionObject::Kill(silent);
+
+        //non-depleted oil platform -> respawn oil patch in
+        if(NumID()[1] == BuildingType::OIL_PLATFORM && amount_left > 0) {
+            BuildingDataRef new_data = Resources::LoadBuilding("misc/oil");
+            TransformFoundation(new_data, lvl()->factions.Nature(), true);
+            res = false;
+
+            //trigger this, as it's normally triggered from destructor (which doesn't get called here)
+            lvl()->objects.KillObjectsInside(OID());
+        }
+
+        return res;
     }
 
     bool Building::IsTraining() const {

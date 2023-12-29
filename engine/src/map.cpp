@@ -717,6 +717,9 @@ namespace eng {
             return unit.Position();
         }
         // DBG_PrintDistances();
+
+        if(navType != NavigationBit::GROUND)
+            dst_pos = make_even(dst_pos);
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
@@ -771,6 +774,10 @@ namespace eng {
         ENG_LOG_FINER("    Map::Pathfinding::Result | Building ID: {}, destination = ({}, {})", out_id, dst_pos.x, dst_pos.y);
         ASSERT_MSG(ObjectID::IsValid(out_id), "Pathfinding_NextPosition_NearestBuilding - there should always be valid building at this point.");
 
+        //round up, so that destination still lies within the building
+        if(navType != NavigationBit::GROUND)
+            dst_pos = make_even(dst_pos + 1);
+ 
         out_nextPos = Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
         return true;
     }
@@ -2010,7 +2017,7 @@ namespace eng {
 
     bool Pathfinding_AStar_Range(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, int range, const glm::ivec2& m, const glm::ivec2& M, glm::ivec2* result_pos, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType != NavigationBit::GROUND);
+        int step = 1;// + int(navType != NavigationBit::GROUND);
         glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
@@ -2080,7 +2087,7 @@ namespace eng {
 
     bool Pathfinding_AStar_Forrest(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType != NavigationBit::GROUND);
+        int step = 1;// + int(navType != NavigationBit::GROUND);
         glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
@@ -2158,7 +2165,7 @@ namespace eng {
 
     bool Pathfinding_Dijkstra_NearestBuilding(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const std::vector<buildingMapCoords>& targets, int unit_resourceType, int navType, glm::ivec2& out_dst_pos) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType != NavigationBit::GROUND);
+        int step = 1;// + int(navType != NavigationBit::GROUND);
         glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values

@@ -214,6 +214,7 @@ namespace eng {
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
 
         PlayerFactionControllerRef Player() { return player; }
+        FactionControllerRef Nature() { return nature; }
 
         FactionControllerRef operator[](int i);
         const FactionControllerRef operator[](int i) const;
@@ -238,6 +239,7 @@ namespace eng {
         bool initialized = false;
 
         PlayerFactionControllerRef player = nullptr;
+        FactionControllerRef nature = nullptr;
     };
     
 }//namespace eng

@@ -796,7 +796,8 @@ namespace eng {
         }
 
         //distance check & movement
-        if(get_range(src.Position(), resource->MinPos(), resource->MaxPos()) > 1) {
+        int entrance_range = 1 + int(src.NavigationType() != NavigationBit::GROUND);
+        if(get_range(src.Position(), resource->MinPos(), resource->MaxPos()) > entrance_range) {
             //move until the worker stands next to the building
             glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, resource->MinPos(), resource->MaxPos(), 1);
             if(target_pos != src.Position()) {
@@ -860,7 +861,8 @@ namespace eng {
         ASSERT_MSG(dropoff != nullptr, "ReturnGoods command - dropoff building should always be set here.");
 
         //distance check & movement
-        if(get_range(src.Position(), dropoff->MinPos(), dropoff->MaxPos()) > 1) {
+        int entrance_range = 1 + int(src.NavigationType() != NavigationBit::GROUND);
+        if(get_range(src.Position(), dropoff->MinPos(), dropoff->MaxPos()) > entrance_range) {
             //move until the worker stands next to the building
             glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, dropoff->MinPos(), dropoff->MaxPos(), 1);
             if(target_pos != src.Position()) {

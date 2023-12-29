@@ -610,6 +610,11 @@ namespace eng {
                 ASSERT_MSG(player == nullptr, "There can never be more than 1 local player owned factions!");
                 player = std::static_pointer_cast<PlayerFactionController>(factions.back());
             }
+
+            if(entry.controllerID == FactionControllerID::NATURE) {
+                ASSERT_MSG(nature == nullptr, "There can never be more than 1 nature factions!");
+                nature = factions.back();
+            }
         }
 
         if(player == nullptr) {

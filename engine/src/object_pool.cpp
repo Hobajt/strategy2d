@@ -284,24 +284,27 @@ namespace eng {
 
         for(Unit& u : units) {
             if(u.Update()) {
-                u.Kill();
-                markedForRemoval.push_back(u.OID().idx);
+                if(u.Kill()) {
+                    markedForRemoval.push_back(u.OID().idx);
+                }
             }
         }
         markedForRemoval.push_back((ObjectID::dtype)-1);
         
         for(Building& b : buildings) {
             if(b.Update()) {
-                b.Kill();
-                markedForRemoval.push_back(b.OID().idx);
+                if(b.Kill()) {
+                    markedForRemoval.push_back(b.OID().idx);
+                }
             }
         }
         markedForRemoval.push_back((ObjectID::dtype)-1);
         
         for(UtilityObject& u : utilityObjs) {
             if(u.Update()) {
-                u.Kill();
-                markedForRemoval.push_back(u.OID().idx);
+                if(u.Kill()) {
+                    markedForRemoval.push_back(u.OID().idx);
+                }
             }
         }
 
