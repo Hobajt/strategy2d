@@ -270,9 +270,10 @@ namespace eng {
                 return ACTION_FINISHED_SUCCESS;
             }
             else {
-                glm::ivec2 next_pos = pos + action.data.move_dir;
-                const TileData& td = level.map(next_pos);
                 int navType = src.NavigationType();
+                int step = 1 + int(navType != NavigationBit::GROUND);
+                glm::ivec2 next_pos = pos + action.data.move_dir * step;
+                const TileData& td = level.map(next_pos);
 
                 if(!td.Traversable(navType)) {
                     //next tile is untraversable
@@ -290,7 +291,7 @@ namespace eng {
 
                     //update position & animation offset & keep moving
                     pos = next_pos;
-                    t = -l;
+                    t = -l * step;
                 }
             }
         }

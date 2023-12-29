@@ -668,6 +668,7 @@ namespace eng {
 
             //trigger this, as it's normally triggered from destructor (which doesn't get called here)
             lvl()->objects.KillObjectsInside(OID());
+            lvl()->factions.Player()->SignalGUIUpdate(*this);
         }
 
         return res;

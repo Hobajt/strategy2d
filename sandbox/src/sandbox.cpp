@@ -74,7 +74,6 @@ void Sandbox::OnInit() {
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"), f1, glm::vec2(7.f, 5.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/dragon"), f1, glm::vec2(9.f, 5.f), false);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/farm"), f1, glm::vec2(5.f, 0.f));
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(18.f, 4.f), false);
 
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"),      f1, glm::vec2(5.f, 4.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"),   f1, glm::vec2(4.f, 4.f), false);
@@ -147,8 +146,11 @@ void Sandbox::OnInit() {
         ObjectID gm = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), f_n, glm::vec2(7.f, 7.f), true);
         level.objects.GetBuilding(ol).SetAmountLeft(123456);
         level.objects.GetBuilding(gm).SetAmountLeft(654321);
-
         level.objects.GetBuilding(ol2).SetAmountLeft(100);
+
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(18.f, 4.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
+
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);

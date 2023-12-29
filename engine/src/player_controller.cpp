@@ -138,6 +138,17 @@ namespace eng {
                     //resource -> amount of resource left
                     snprintf(buf, sizeof(buf), "%s left: %d", GameResourceName(2*not_gnd), building->AmountLeft());
                     stats[1]->Setup(buf);
+
+                    if(building->ProgressableAction()) {
+                        //progressable action (construction, upgrade, research, training) -> display progress bar
+                        production_bar->Setup(building->ActionProgress(), "% Complete");
+                        progress_bar_flag = true;
+                        if(building->Constructed()) {
+                            //not construction -> show icon of the target & label
+                            stats[1]->Setup(building->IsTraining() ? "Training:" : "Upgrading:");
+                            production_icon->Setup("icon", -1, building->LastBtnIcon(), glm::ivec4(0));
+                        }
+                    }
                 }
                 else if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                     if(building->ProgressableAction()) {
