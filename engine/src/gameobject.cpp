@@ -356,8 +356,8 @@ namespace eng {
     void Unit::Render() {
         if(!IsActive() || !lvl()->map.IsTileVisible(Position()))
             return;
-        bool airborne = (NavigationType() == NavigationBit::AIR);
-        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !airborne, airborne ? (-1e-3f) : 0.f);
+        bool render_centered = (NavigationType() != NavigationBit::GROUND);
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, render_centered ? (-1e-3f) : 0.f);
     }
 
     bool Unit::Update() {
@@ -423,7 +423,7 @@ namespace eng {
 
     glm::vec2 Unit::RenderPosition() const {
         glm::vec2 pos = glm::vec2(Position()) + move_offset;
-        if(NavigationType() != NavigationBit::AIR) {
+        if(NavigationType() == NavigationBit::GROUND) {
             pos = (pos + 0.5f) - RenderSize() * 0.5f;
         }
         return pos;
@@ -489,6 +489,13 @@ namespace eng {
 
     Building::Building(Level& level_, const BuildingDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool constructed)
         : FactionObject(level_, data_, faction_, position_, false), data(data_) {
+
+        if(data_->navigationType == NavigationBit::WATER && data_->num_id[1] == BuildingType::OIL_PLATFORM) {
+            if(int(position_.x) % 2 != 0 || int(position_.y) % 2 != 0) {
+                ENG_LOG_ERROR("Building - cannot spawn oil platform on odd coordinates (pathfinding only works on even coords for these).");
+                throw std::runtime_error("");
+            }
+        }
         
         if(constructed) {
             //can't register dropoff point from constructor - ID isn't setup properly yet (called from IntegrateIntoLevel() instead)

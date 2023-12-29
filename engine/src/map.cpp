@@ -78,6 +78,10 @@ namespace eng {
         return Traversable(unitNavType) || nav.part_of_forrest;
     }
 
+    bool TileData::IsEmptyWaterTile() const {
+        return (TileTraversability() == NavigationBit::WATER) && !(ObjectID::IsObject(info[0].id) && ObjectID::IsValid(info[0].id));
+    }
+
     bool TileData::PermanentlyTaken(int unitNavType) const {
         return bool(unitNavType & nav.taken & nav.permanent) || bool(unitNavType & ~(TileTraversability() + NavigationBit::AIR)) || nav.building;
     }
@@ -1635,6 +1639,46 @@ namespace eng {
         return idx;
     }
 
+    glm::ivec2 Map::MinDistanceNeighbor(const glm::ivec2& center, int nav_type, int step) {
+        glm::ivec2 idx = center - step;
+        float min_d = std::numeric_limits<float>::infinity();
+        
+        glm::ivec2 size = tiles.Size();
+        for(int sy = -1; sy <= 1; sy++) {
+            int y = center.y + sy*step;
+            if(y < 0 || y >= size.y)
+                continue;
+            
+            for(int sx = -1; sx <= 1; sx++) {
+                int x = center.x + sx*step;
+                if(x < 0 || x >= size.x)
+                    continue;
+
+                glm::ivec2 pos = glm::ivec2(x, y);
+                float d = tiles(pos).nav.d;
+                if(d <= min_d) {
+                    bool path_valid = true;
+                    if(step > 1) {
+                        for(int i = 1; i < step; i++) {
+                            if(!tiles(glm::ivec2(center.x + sx*i, center.y + sy*i)).Traversable(nav_type)) {
+                                path_valid = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(path_valid) {
+                        idx = glm::ivec2(pos);
+                        min_d = d;
+                    }
+                }
+            }
+        }
+
+        ASSERT_MSG(IsWithinBounds(idx), "Map::MinDistanceNeighbor - out-of-bounds coordinates aren't allowed ({})", idx);
+        return idx;
+    }
+
     glm::ivec2 Map::Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst_, int navType) {
         glm::ivec2 pos_dst = pos_dst_;
         glm::ivec2 dir = glm::sign(pos_dst - pos_src);
@@ -1667,7 +1711,7 @@ namespace eng {
             tiles(pos_prev).nav.pathtile = true;
             
             //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
-            pos = MinDistanceNeighbor(pos, step);
+            pos = MinDistanceNeighbor(pos, navType, step);
             ASSERT_MSG(pos_prev != pos, "Map::Pathfinding - path retrieval is stuck.");
             ASSERT_MSG(tiles(pos).TraversableOrForrest(navType) || pos == pos_src, "Map::Pathfinding - path leads through untraversable tiles ({}).", pos);
 
@@ -1899,7 +1943,7 @@ namespace eng {
 
     bool Pathfinding_AStar(MapTiles& tiles, pathfindingContainer& open, const glm::ivec2& pos_src_, const glm::ivec2& pos_dst, int navType, heuristic_fn H) {
         //airborne units only move on even tiles
-        int step = 1 + int(navType != NavigationBit::GROUND);
+        int step = 1;// + int(navType != NavigationBit::GROUND);
         glm::ivec2 pos_src = (navType != NavigationBit::GROUND) ? make_even(pos_src_) : pos_src_;
 
         //prep distance values
