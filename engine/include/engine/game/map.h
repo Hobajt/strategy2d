@@ -461,7 +461,7 @@ namespace eng {
         int ResolveCornerType(int paintedTileType) const;
 
         glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int step = 1);
-        glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int nav_type, int step = 1);
+        glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int nav_type, int step);
         //Retrieves next position for movement. Call after pathfinding is done (uses filled out distance values in the map data).
         glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType);
 

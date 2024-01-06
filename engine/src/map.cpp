@@ -1718,7 +1718,7 @@ namespace eng {
             tiles(pos_prev).nav.pathtile = true;
             
             //find neighboring tile in the direct neighborhood, that has the lowest distance from the starting location
-            pos = MinDistanceNeighbor(pos, navType, step);
+            pos = MinDistanceNeighbor(pos, step);
             ASSERT_MSG(pos_prev != pos, "Map::Pathfinding - path retrieval is stuck.");
             ASSERT_MSG(tiles(pos).TraversableOrForrest(navType) || pos == pos_src, "Map::Pathfinding - path leads through untraversable tiles ({}).", pos);
 
