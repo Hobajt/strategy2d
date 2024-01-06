@@ -86,6 +86,9 @@ namespace eng {
         bool GetBuilding(const ObjectID& id, Building*& ref_building, bool exclude_inactive = true);
         bool GetObject(const ObjectID& id, FactionObject*& ref_object, bool exclude_inactive = true);
 
+        //Updates building's identifier within the pool. Provided object_id will no longer be valid after this call.
+        void UpdateBuildingID(const ObjectID& object_id);
+
         //===== insert =====
 
         ObjectID Add(Unit&& unit);

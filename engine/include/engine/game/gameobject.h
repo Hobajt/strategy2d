@@ -91,6 +91,7 @@ namespace eng {
     private:
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
+        static int GetNextID() { return idCounter++; }
         void IntegrateIntoLevel(const ObjectID& oid_) { oid = oid_; InnerIntegrate(); }
         virtual void InnerIntegrate() {}
 
@@ -284,6 +285,7 @@ namespace eng {
         void ChangeCarryStatus(int carry_state);
 
         bool IsSiege() const { return data->siege; }
+        bool RotateWhenAttacking() const { return data->attack_rotated; }
 
         SoundEffect& Sound_Attack() const { return data->sound_attack; }
     protected:

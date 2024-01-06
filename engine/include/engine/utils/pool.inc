@@ -111,6 +111,14 @@ namespace eng {
         return (idxType)-1;
     }
 
+    template <typename T, typename K, typename I>
+    T& pool<T, K, I>::update_key(const key& k, const keyType& new_id) {
+        if (!exists(k))
+            throw POOL_KEY_NOT_FOUND_EXCEPTION;
+        m_data[k.idx].info.id = new_id;
+        return m_data[k.idx].data;
+    }
+
     //===== Insert/Remove =====
 
     template <typename T, typename K, typename I>

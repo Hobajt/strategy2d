@@ -306,9 +306,10 @@ namespace eng {
         if(sounds.count("what"))    data->sound_what    = ParseSoundEffect(sounds.at("what"));
         if(sounds.count("pissed"))  data->sound_pissed  = ParseSoundEffect(sounds.at("pissed"));
 
-        if(config.count("worker")) data->worker = config.at("worker");
-        if(config.count("caster")) data->caster = config.at("caster");
-        if(config.count("siege"))  data->siege  = config.at("siege");
+        if(config.count("worker"))          data->worker = config.at("worker");
+        if(config.count("caster"))          data->caster = config.at("caster");
+        if(config.count("siege"))           data->siege  = config.at("siege");
+        if(config.count("attack_rotated"))  data->attack_rotated  = config.at("attack_rotated");
 
         data->speed = config.count("speed") ? int(config.at("speed")) : 10;
         data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;
@@ -536,7 +537,7 @@ namespace eng {
             
             float duration = anim_data.at("duration");
             bool repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : true;
-            float keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 1.f;
+            float keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 0.f;
             animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe)) });
         }
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));

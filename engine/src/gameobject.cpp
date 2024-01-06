@@ -641,9 +641,14 @@ namespace eng {
         }
         else {
             SetHealth(StartingHealth());
+
         }
 
+        //update buildings's ID - in order to cancel any commands issued on the previous building type
+        lvl()->objects.UpdateBuildingID(OID());
+
         ReinsertObject();
+
 
         //calling after reinsert, cuz it resets the action
         if(is_constructed) {

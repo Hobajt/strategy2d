@@ -449,6 +449,17 @@ namespace eng {
         }
     }
 
+    void ObjectPool::UpdateBuildingID(const ObjectID& object_id) {
+        if(object_id.type != ObjectType::BUILDING) {
+            ENG_LOG_ERROR("ObjectPool::UpdateBuildingID - provided ID doesn't belong to a building (type={})", object_id.type);
+            throw std::invalid_argument("Attempting to fetch building with ID that doesn't belong to building.");
+        }
+        int new_id = GameObject::GetNextID();
+        Building& building = buildings.update_key(BuildingsPool::key(object_id.idx, object_id.id), new_id);
+        building.oid.id = building.id = GameObject::GetNextID();
+        ENG_LOG_TRACE("ObjectPool::UpdateBuildingID - {} is now {}", object_id, building.oid);
+    }
+
     //===== insert =====
 
     ObjectID ObjectPool::Add(Unit&& unit) {

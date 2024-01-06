@@ -13,16 +13,17 @@
         "health": 150,
         "mana": 0,
         "speed": 6,
+        "attack_rotated": true,
         "build_time": 140,
         "cost": [1000,500,1000],
         "attack_range": 6,
         "armor": 15,
         "basic_damage": 130,
         "pierce_damage": 0,
-        "cooldown": 1.0,
+        "cooldown": 2.0,
         "race": 0,
         "death_sound": 3,
-        "scale": 2,
+        "scale": 2.25,
         "icon": [4,2],
         "upgrade_src": [2, 2],
         "sounds": {
@@ -30,6 +31,7 @@
             "what": ["ships/hshpwht", 3],
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
-        }
+        },
+        "refs": ["fiery_cannon_ball"]
     }
 ]

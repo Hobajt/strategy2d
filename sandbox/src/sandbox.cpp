@@ -148,7 +148,7 @@ void Sandbox::OnInit() {
         level.objects.GetBuilding(gm).SetAmountLeft(654321);
         level.objects.GetBuilding(ol2).SetAmountLeft(100);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(18.f, 4.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/battleship"), f1, glm::vec2(18.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
 
 

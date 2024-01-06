@@ -140,6 +140,9 @@ namespace eng {
         //Lookup index of an object with specific identifier. Returns -1 when not found. Iterates through the entire pool - O(n).
         idxType find(const keyType& id);
 
+        //Looks up given entry within the pool & updates its identifier. Throws if the object is not within the pool. Returns reference to the object.
+        T& update_key(const key& k, const keyType& new_id);
+
         //========
 
         //Adds given element into the pool & returns it's key.

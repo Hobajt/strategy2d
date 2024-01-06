@@ -312,7 +312,7 @@ namespace eng {
 
     int ActionAction_Update(Unit& src, Level& level, Action& action) {
         Input& input = Input::Get();
-        int orientation = action.data.i;
+        int& orientation = action.data.i;
         int payload_id = action.data.j;
         bool& delivered = action.data.b;
         bool& anim_ended = action.data.c;
@@ -327,6 +327,9 @@ namespace eng {
         if(src.AnimKeyframeSignal() && !delivered) {
             delivered = true;
             // ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
+
+            if(src.RotateWhenAttacking())
+                orientation = (orientation + 2) % 8;
 
             switch(payload_id) {
                 case ActionPayloadType::HARVEST:        //harvest action payload
@@ -361,7 +364,7 @@ namespace eng {
                 }
                 default:                                //effect action payload (includes ranged attacks)
                 {
-                    // ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
+                    ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
                     //use payload_id to get the prefab from Unit's data
 
                     UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(payload_id));

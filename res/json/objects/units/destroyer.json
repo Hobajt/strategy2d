@@ -13,6 +13,7 @@
         "health": 100,
         "mana": 0,
         "build_time": 90,
+        "attack_rotated": true,
         "cost": [700,350,700],
         "attack_range": 4,
         "armor": 10,
@@ -29,6 +30,7 @@
             "what": ["ships/hshpwht", 3],
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
-        }
+        },
+        "refs": ["fiery_cannon_ball"]
     }
 ]
