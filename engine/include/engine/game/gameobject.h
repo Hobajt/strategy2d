@@ -180,8 +180,8 @@ namespace eng {
 
         bool IsUnit() const { return NumID()[0] == ObjectType::UNIT; }
 
-        virtual bool IsGatherable(int unitNavType) const { return false; }
         virtual bool IsGatherable() const { return false; }
+        virtual bool IsGatherable(int unitNavType) const { return false; }
         bool IsRepairable() const { return !IsUnit(); }
         virtual int DeathAnimIdx() const { return -1; }
         int Race() const { return data_f->race; }
@@ -192,6 +192,7 @@ namespace eng {
         void SetVariationIdx(int idx) { variationIdx = idx; }
 
         FactionControllerRef Faction() { return faction; }
+        const FactionControllerRef Faction() const { return faction; }
         int FactionIdx() const { return factionIdx; }
 
         Techtree& Tech();
@@ -326,8 +327,8 @@ namespace eng {
         void CancelAction();
 
         virtual int ActionIdx() const override;
-        virtual bool IsGatherable(int unitNavType) const override;
         virtual bool IsGatherable() const override { return data->gatherable; }
+        virtual bool IsGatherable(int unitNavType) const override;
         bool IsResource() const { return data->resource || data->gatherable; }
         int AmountLeft() const { return IsResource() ? amount_left : 0; }
         void SetAmountLeft(int value) { amount_left = value; }

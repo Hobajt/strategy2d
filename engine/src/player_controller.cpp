@@ -1361,7 +1361,7 @@ namespace eng {
 
         for(size_t i = 0; i < selected_count; i++) {
             Unit& unit = level.objects.GetUnit(selection[i]);
-            bool gatherable = (ObjectID::IsObject(target_id) && level.objects.GetObject(target_id).IsGatherable(unit.NavigationType()));
+            bool gatherable = (ObjectID::IsObject(target_id) && target_object->IsGatherable(unit.NavigationType()));
 
             //command resolution based on unit type & target type
             if(unit.IsWorker() && gatherable) {

@@ -793,8 +793,8 @@ namespace eng {
         }
         ASSERT_MSG(resource != nullptr, "Gather command - resource point should always be set here.");
 
-        if(!resource->IsGatherable(src.NavigationType())) {
-            ENG_LOG_WARN("Gather Command - target is not a gatherable resource ({}).", *resource);
+        if(!resource->IsGatherable(src.NavigationType()) || !(resource->Faction()->ControllerID() == FactionControllerID::NATURE || resource->Faction()->ID() == src.Faction()->ID())) {
+            ENG_LOG_TRACE("Gather Command - target not a gatherable resource or faction mismatch ({}).", *resource);
             cmd = Command::Idle();
             return;
         }
