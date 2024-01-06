@@ -70,15 +70,15 @@ namespace eng {
     }
 
     int VectorOrientation(const glm::ivec2& v) {
-        //TODO: solve this for linux - gives wrong results when using std::atan2, but std::atan2f is undefined on linux)
-        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
+        //note - would use std::atan2f, but it's apparently not defined on linux, std::atan2 returns double, which results in invalid rounding -> invalid direction
+        int orientation = int(4.f * (1.f + (float(std::atan2(v.y, v.x)) * glm::one_over_pi<float>())));
         ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
         orientation = (8-orientation+6) % 8;
         return orientation;
     }
 
     int VectorOrientation(const glm::vec2& v) {
-        int orientation = int(4.f * (1.f + (std::atan2f(v.y, v.x) * glm::one_over_pi<float>())));
+        int orientation = int(4.f * (1.f + (float(std::atan2(v.y, v.x)) * glm::one_over_pi<float>())));
         // ASSERT_MSG(orientation >= 1 && orientation <= 8, "VectorOrientation - invalid conversion.");
         orientation = (8-orientation+6) % 8;
         return orientation;

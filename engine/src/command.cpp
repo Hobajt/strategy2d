@@ -134,6 +134,9 @@ namespace eng {
 
     void CommandHandler_Repair(Unit& src, Level& level, Command& cmd, Action& action);
 
+    void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action);
+    void CommandHandler_StandGround(Unit& src, Level& level, Command& cmd, Action& action);
+
     //=============================
 
     void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action);

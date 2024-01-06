@@ -166,7 +166,7 @@ namespace eng {
             else {
                 data.price[0] = data.price[1] = glm::ivec4(json::parse_ivec3(entry.at("price")), 0);
             }
-            data.value = entry.count("value") ? entry.at("value") : 0;
+            data.value = entry.count("value") ? int(entry.at("value")) : 0;
             level_entries.push_back(data);
         }
         else {
@@ -211,7 +211,7 @@ namespace eng {
         data->size              = config.count("size") ? eng::json::parse_vec2(config.at("size")) : glm::vec2(1.f);
         data->navigationType    = config.at("nav_type");
 
-        data->anim_speed        = config.count("anim_speed") ? config.at("anim_speed") : 1.f;
+        data->anim_speed        = config.count("anim_speed") ? float(config.at("anim_speed")) : 1.f;
 
         data->icon              = config.count("icon") ? json::parse_ivec2(config.at("icon")) : glm::ivec2(0);
         data->cost              = config.count("cost") ? ParseCost(config.at("cost")) : glm::ivec4(0);
@@ -228,9 +228,9 @@ namespace eng {
         data.upgrade_time   = config.count("upgrade_time") ? int(config.at("upgrade_time")) : 0;
 
         //ingame object statistics
-        data.basic_damage       = config.count("basic_damage") ? config.at("basic_damage") : 0;
-        data.pierce_damage      = config.count("pierce_damage") ? config.at("pierce_damage") : 0;
-        data.attack_range       = config.count("attack_range") ? config.at("attack_range") : 0;
+        data.basic_damage       = config.count("basic_damage")  ? int(config.at("basic_damage")) : 0;
+        data.pierce_damage      = config.count("pierce_damage") ? int(config.at("pierce_damage")) : 0;
+        data.attack_range       = config.count("attack_range")  ? int(config.at("attack_range")) : 0;
         data.armor              = config.at("armor");
         data.vision_range       = config.at("vision_range");
         data.cooldown           = config.count("cooldown") ? float(config.at("cooldown")) : 0.f;
