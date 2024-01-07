@@ -134,6 +134,10 @@ namespace eng {
 
     void CommandHandler_Repair(Unit& src, Level& level, Command& cmd, Action& action);
 
+    void CommandHandler_EnterTransport(Unit& source, Level& level, Command& cmd, Action& action);
+
+    void CommandHandler_UnloadUnits(Unit& source, Level& level, Command& cmd, Action& action);
+
     void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action);
     void CommandHandler_StandGround(Unit& src, Level& level, Command& cmd, Action& action);
 
@@ -988,6 +992,40 @@ namespace eng {
             //worker within range -> start new repair action
             action = Action::Repair(cmd.target_id, target->Position() - src.Position());
         }
+    }
+
+    void CommandHandler_EnterTransport(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //validate that unit is ground unit
+
+        //validate the target (is transport ship, isn't full)
+
+        //check distance to the ship
+        //  - if far away -> pathfinding & movement action
+        //  - if close enough -> issue enterance & terminate the command 
+    }
+
+    void CommandHandler_UnloadUnits(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //command target: could be issued to unload all or to unload a single (selected) unit -> gotta distinguish between those options
+
+        //TODO: also need to check how the unload works ingame (ie. when unloading all - does it all happen in one tick or one-by-one?)
+            //if they get unloaded one-by-one, then it might be easier to create Unload action as well & keep issuing it until there's nothing to unload
+            //the action would handle notifying the EntranceController as well as cooldown between individual exits
+
+        //validate that it's issued onto a transport ship
+
+        //validate that it isn't empty
+
+        //validate it's docked
+
+        //issue exits on the units
     }
 
     //=======================================

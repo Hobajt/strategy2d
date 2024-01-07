@@ -24,6 +24,7 @@
         "icon": [0,2],
         "upgrade_src": [2, 2],
         "scale": 2,
+        "transport": true,
         "sounds": {
             "yes": ["ships/hshpyes", 3],
             "what": ["ships/hshpwht", 3],

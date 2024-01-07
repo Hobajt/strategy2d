@@ -83,7 +83,7 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, ENTER_TRANSPORT, UNLOAD_UNITS, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
@@ -97,6 +97,8 @@ namespace eng {
         friend void CommandHandler_ReturnGoods(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Build(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Repair(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_EnterTransport(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_UnloadUnits(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
         Command();

@@ -309,6 +309,7 @@ namespace eng {
         if(config.count("worker"))          data->worker = config.at("worker");
         if(config.count("caster"))          data->caster = config.at("caster");
         if(config.count("siege"))           data->siege  = config.at("siege");
+        if(config.count("transport"))       data->transport  = config.at("transport");
         if(config.count("attack_rotated"))  data->attack_rotated  = config.at("attack_rotated");
 
         data->speed = config.count("speed") ? int(config.at("speed")) : 10;
