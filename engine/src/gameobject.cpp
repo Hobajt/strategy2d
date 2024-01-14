@@ -446,6 +446,12 @@ namespace eng {
         }
     }
 
+    glm::vec2 Unit::Transport_DockingLocation(const glm::ivec2& unitPosition) {
+        ASSERT_MSG(data->transport, "Unit::Transport_DockingLocation - can only invoke on transport ships!");
+
+        return glm::ivec2(-1);
+    }
+
     void Unit::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();

@@ -472,6 +472,17 @@ namespace eng {
         return Idle();
     }
 
+    Command Command::EnterTransport(const ObjectID& target_id) {
+        Command cmd = {};
+
+        cmd.type = CommandType::ENTER_TRANSPORT;
+        cmd.handler = CommandHandler_EnterTransport;
+        cmd.target_id = target_id;
+        cmd.flag = 1;
+
+        return cmd;
+    }
+
     Command Command::Harvest(const glm::ivec2& target_pos) {
         Command cmd = {};
 
@@ -1000,12 +1011,76 @@ namespace eng {
             return;
 
         //validate that unit is ground unit
+        if(src.NavigationType() != NavigationBit::GROUND) {
+            ENG_LOG_TRACE("Enter Transport Command - Non-ground unit cannot enter a transport.");
+            cmd = Command::Idle();
+            return;
+        }
 
-        //validate the target (is transport ship, isn't full)
+        //retrieve the target & validate that it's a transport ship
+        Unit* target = nullptr;
+        if(!level.objects.GetUnit(cmd.target_id, target) || !target->IsTransport()) {
+            ENG_LOG_TRACE("Enter Transport Command - target is invalid.");
+            cmd = Command::Idle();
+            return;
+        }
 
-        //check distance to the ship
-        //  - if far away -> pathfinding & movement action
-        //  - if close enough -> issue enterance & terminate the command 
+        //check that the transport ship isn't full
+        if(target->Transport_IsFull()) {
+            ENG_LOG_TRACE("Enter Transport Command - target transport ship is full.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        //first command tick -> retrieve docking location of the transport
+        if(cmd.flag) {
+            //docking location retrieval might issue a move command onto the transport ship
+            cmd.target_pos = target->Transport_DockingLocation(src.Position());
+            cmd.flag = 0;
+        }
+
+        //TODO: account for the fact that docking location will be water tile 
+        //TODO: docking on odd tile coordinates (when the coast is at odd coords)
+
+        //check distance to the docking location
+        // if(get_range(src.Position(), cmd.target_pos) > 1) {
+        //     //move until the worker stands next to the building
+        //     glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, min_pos, max_pos, 1);
+        //     if(target_pos != src.Position()) {
+        //         ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+        //         action = Action::Move(src.Position(), target_pos);
+        //     }
+        //     else {
+        //         //destination unreachable
+        //         cmd = Command::Idle();
+        //     }
+        // }
+        // else {
+        //     //worker within range -> start new repair action
+        //     action = Action::Repair(cmd.target_id, target->Position() - src.Position());
+        // }
+
+
+        //when far away -> do pathfinding & movement actions
+        //      - terminate if unreachable
+        //when nearby (1 tile away)
+        //  check that ship is in the docking location
+        //      - if it is -> enter & terminate the command
+        //      - if it isn't:
+        //          can maybe view the ship command & do some idling actions whilst waiting for it to move in position
+        //          if it's no longer moving, to the previously stated docking location -> terminate this command
+    }
+
+    void CommandHandler_Dock(Unit& src, Level& level, Command& cmd, Action& action) {
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        //validate that unit is transport ship
+
+        //validate that target tile is a coast tile
+
+        //handle movement towards it
     }
 
     void CommandHandler_UnloadUnits(Unit& src, Level& level, Command& cmd, Action& action) {

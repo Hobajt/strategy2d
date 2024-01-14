@@ -163,6 +163,8 @@ namespace eng {
 
         bool IsInvulnerable() const {return data_f->invulnerable; }
 
+        virtual bool IsTransport() const { return false; }
+
         //===============
 
         int BuildTime() const { return data_f->build_time; }
@@ -286,8 +288,17 @@ namespace eng {
 
         bool IsSiege() const { return data->siege; }
         bool RotateWhenAttacking() const { return data->attack_rotated; }
+        virtual bool IsTransport() const override { return data->transport; }
 
         SoundEffect& Sound_Attack() const { return data->sound_attack; }
+
+        bool Transport_IsFull() const { return carry_state >= 6; }
+        int Transport_CurrentLoad() const { return carry_state; }
+
+        //Check transport ships command.
+        //If it's stationary or is moving onto a coast tile, it returns it's target position.
+        //In any other case, a new move command is issued and the target position is returned. 
+        glm::vec2 Transport_DockingLocation(const glm::ivec2& unitPosition);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

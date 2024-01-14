@@ -111,6 +111,8 @@ namespace eng {
         static Command Patrol(const glm::ivec2& target_pos);
         static Command Cast(int payload_id);
 
+        static Command EnterTransport(const ObjectID& target_id);
+
         //worker-only commands
         static Command Harvest(const glm::ivec2& target_pos);
         static Command Gather(const ObjectID& target_id);

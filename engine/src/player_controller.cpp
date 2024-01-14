@@ -1362,6 +1362,7 @@ namespace eng {
         for(size_t i = 0; i < selected_count; i++) {
             Unit& unit = level.objects.GetUnit(selection[i]);
             bool gatherable = (ObjectID::IsObject(target_id) && target_object->IsGatherable(unit.NavigationType()));
+            bool transport = (ObjectID::IsObject(target_id) && target_object->IsTransport());
 
             //command resolution based on unit type & target type
             if(unit.IsWorker() && gatherable) {
@@ -1379,6 +1380,10 @@ namespace eng {
             else if(attackable && enemy) {
                 ENG_LOG_FINE("Adaptive command - Unit[{}] - Attack", i);
                 unit.IssueCommand(Command::Attack(target_id, target_pos));
+            }
+            else if(transport && !enemy) {
+                ENG_LOG_FINE("Adaptive command - Unit[{}] - Enter transport", i);
+                unit.IssueCommand(Command::EnterTransport(target_id));
             }
             else if(level.map.IsWithinBounds(target_pos)) {
                 ENG_LOG_FINE("Adaptive command - Unit[{}] - Move", i);
