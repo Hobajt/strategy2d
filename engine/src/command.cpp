@@ -573,6 +573,9 @@ namespace eng {
         case CommandType::REPAIR:
             snprintf(buf, sizeof(buf), "Command: Repair %s", target_id.to_string().c_str());
             break;
+        case CommandType::ENTER_TRANSPORT:
+            snprintf(buf, sizeof(buf), "Command: Enter Transport %s", target_id.to_string().c_str());
+            break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
             break;
@@ -1042,23 +1045,22 @@ namespace eng {
         //TODO: account for the fact that docking location will be water tile 
         //TODO: docking on odd tile coordinates (when the coast is at odd coords)
 
-        //check distance to the docking location
-        // if(get_range(src.Position(), cmd.target_pos) > 1) {
-        //     //move until the worker stands next to the building
-        //     glm::ivec2 target_pos = level.map.Pathfinding_NextPosition_Range(src, min_pos, max_pos, 1);
-        //     if(target_pos != src.Position()) {
-        //         ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
-        //         action = Action::Move(src.Position(), target_pos);
-        //     }
-        //     else {
-        //         //destination unreachable
-        //         cmd = Command::Idle();
-        //     }
-        // }
-        // else {
-        //     //worker within range -> start new repair action
-        //     action = Action::Repair(cmd.target_id, target->Position() - src.Position());
-        // }
+        //check distance to the docking location (thresh=2, bcs boats move on even tiles)
+        if(chessboard_distance(src.Position(), cmd.target_pos) > 2) {
+            glm::ivec2 target_pos = level.map.Pathfinding_NextPosition(src, cmd.target_pos);
+            if(target_pos != src.Position()) {
+                ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), target_pos);
+            }
+            else {
+                //destination unreachable
+                cmd = Command::Idle();
+            }
+        }
+        else {
+            //TODO: enter the transport
+            cmd = Command::Idle();
+        }
 
 
         //when far away -> do pathfinding & movement actions
