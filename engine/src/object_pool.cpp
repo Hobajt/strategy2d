@@ -83,8 +83,32 @@ namespace eng {
     }
 
     bool EntranceController::IssueEntrance_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID) {
-        //TODO:
-        throw std::runtime_error("not implemented yet");
+        Unit* unit = nullptr;
+        Unit* transport = nullptr;
+        if(!objects.GetUnit(transportID, transport) || !objects.GetUnit(unitID, unit)) {
+            ENG_LOG_WARN("EntranceController::TransportEntrance - object not found.");
+            return false;
+        }
+
+        if(!transport->IsTransport()) {
+            ENG_LOG_WARN("EntranceController::TransportEntrance - provided object doesn't have transport capabilities.");
+            return false;
+        }
+
+        if(!transport->IsActive() || !unit->IsActive()) {
+            ENG_LOG_WARN("EntranceController::TransportEntrance - object is not active.");
+            return false;
+        }
+
+        if(transport->Transport_IsFull()) {
+            return false;
+        }
+
+        unit->WithdrawObject();
+        transport->Transport_UnitAdded();
+        entries.push_back({ transportID, unitID, false, unit->CarryStatus() });
+        ENG_LOG_TRACE("EntranceController::TransportEntrance - Unit '{}' entered '{}'.", *unit, *transport);
+        return true;
     }
 
     bool EntranceController::IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID) {

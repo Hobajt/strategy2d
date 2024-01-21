@@ -9,6 +9,8 @@
 
 #include <ostream>
 
+#define TRANSPORT_MAX_LOAD 6
+
 namespace eng {
 
     class Level;
@@ -292,8 +294,11 @@ namespace eng {
 
         SoundEffect& Sound_Attack() const { return data->sound_attack; }
 
-        bool Transport_IsFull() const { return carry_state >= 6; }
+        bool Transport_IsFull() const { return carry_state >= TRANSPORT_MAX_LOAD; }
         int Transport_CurrentLoad() const { return carry_state; }
+
+        void Transport_UnitAdded();
+        void Transport_UnitRemoved();
 
         //Check transport ships command.
         //If it's stationary or is moving onto a coast tile, it returns it's target position.

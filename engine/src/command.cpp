@@ -1041,12 +1041,15 @@ namespace eng {
             cmd.target_pos = target->Transport_DockingLocation(src.Position());
             cmd.flag = 0;
         }
+        ASSERT_MSG(cmd.target_pos != glm::ivec2(-1), "Command::EnterTransport - invalid target position.");;
 
-        //TODO: account for the fact that docking location will be water tile 
+        //TODO: account for the fact that docking location will be water tile
         //TODO: docking on odd tile coordinates (when the coast is at odd coords)
+        //          - both problems might be solved by distance to enter=2
 
         //check distance to the docking location (thresh=2, bcs boats move on even tiles)
-        if(chessboard_distance(src.Position(), cmd.target_pos) > 2) {
+        int fu = chessboard_distance(src.Position(), cmd.target_pos);
+        if(fu > 2) {
             glm::ivec2 target_pos = level.map.Pathfinding_NextPosition(src, cmd.target_pos);
             if(target_pos != src.Position()) {
                 ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
@@ -1058,10 +1061,9 @@ namespace eng {
             }
         }
         else {
-            //TODO: enter the transport
             cmd = Command::Idle();
+            level.objects.IssueEntrance_Transport(cmd.target_id, src.OID());
         }
-
 
         //when far away -> do pathfinding & movement actions
         //      - terminate if unreachable

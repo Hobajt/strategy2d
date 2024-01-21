@@ -446,8 +446,61 @@ namespace eng {
         }
     }
 
+    void Unit::Transport_UnitAdded() {
+        carry_state++;
+        if(carry_state > TRANSPORT_MAX_LOAD) {
+            ENG_LOG_WARN("Unit::Transport_UnitAdded - transport ship overloaded ({}/{})", carry_state, TRANSPORT_MAX_LOAD);
+        }
+    }
+    
+    void Unit::Transport_UnitRemoved() {
+        carry_state--;
+        if(carry_state <= 0) {
+            ENG_LOG_WARN("Unit::Transport_UnitRemoved - unit removal from empty transport!");
+            carry_state = 0;
+        }
+    }
+
     glm::vec2 Unit::Transport_DockingLocation(const glm::ivec2& unitPosition) {
         ASSERT_MSG(data->transport, "Unit::Transport_DockingLocation - can only invoke on transport ships!");
+
+        //check the state of this transport ship:
+
+
+        /* two possible approaches:
+            1) don't distinguish between ship not moving & moving
+                - will always lookup new location
+                - less complicated
+                - to avoid multiple lookups in one frame, will need to add variable to the command (marking that it was issued in this frame)
+
+            2) distiguish between the two states
+                - will only check if the ship is moving to a coast tile and do a lookup only if it isn't
+        */
+
+        //TODO: check how it works irl
+        
+        if(command.Type() != CommandType::MOVE) {
+            //ship not moving
+
+            //locate fitting coast tile, issue movement there & return it's location
+
+            //do the lookup even if ship is already docked (there might be better location)
+        }
+        else {
+            //hships
+        }
+
+        //if not moving anywhere -> locate fitting coast tile, issue movement there & return this location
+            //do a coast lookup even if the ship is currently docking (there might be better one)
+        //if already moving:
+            //check the final destination, if it's not coast tile, proceed as if the ship isn't moving
+
+        //check how it works ingame - when unit1 issues entrance, ship starts moving, what happens when unit2 issues entrance
+            //will keep moving towards unit1 or will it change direction and move towards unit2
+        
+        //might want to add some flag to the movement command -> so that if it was issued in this frame, it doesn't immediately get overriden
+        //cuz that would just waste pathfinding queries (when issuing entrance command for a group of units)
+        
 
         return glm::ivec2(-1);
     }
