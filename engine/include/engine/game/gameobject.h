@@ -69,6 +69,7 @@ namespace eng {
         int& ori() { return orientation; }
         int& act() { return actionIdx; }
         Level* lvl();
+        const Level* lvl() const;
 
         float AnimationProgress() const { return animator.GetCurrentFrame(); }
         bool AnimKeyframeSignal() const { return animator.KeyframeSignal(); }
@@ -300,10 +301,15 @@ namespace eng {
         void Transport_UnitAdded();
         void Transport_UnitRemoved();
 
-        //Check transport ships command.
-        //If it's stationary or is moving onto a coast tile, it returns it's target position.
-        //In any other case, a new move command is issued and the target position is returned. 
-        glm::vec2 Transport_DockingLocation(const glm::ivec2& unitPosition);
+        //Conditionally issues a move command onto the ship to go to an accessible coast tile.
+        //Movement is issued only if the ship already isn't on its way to dock (on any coast tile).
+        void Transport_DockingRequest(const glm::ivec2& unitPosition);
+
+        //Returns true if the transport is currently under move command to a coast tile.
+        bool Transport_GoingDocking() const;
+        glm::ivec2 Transport_GetDockingLocation() const;
+
+        bool InMotion() const;
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

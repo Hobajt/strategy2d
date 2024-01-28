@@ -388,6 +388,9 @@ namespace eng {
         //Searches for path to a nearest building (buildings defined in argument). Returns false if no path is found. On success, building's ObjectID and next position for movement is returned via arguments.
         bool Pathfinding_NextPosition_NearestBuilding(const Unit& unit, const std::vector<buildingMapCoords>& buildings, ObjectID& out_id, glm::ivec2& out_nextPos);
 
+        //Searches for an optimal location where should the ship dock.
+        glm::ivec2 Pathfinding_DockingLocation(const glm::ivec2& transport_pos, const glm::ivec2& unit_pos);
+
         //Searches for valid tile (non-taken & matching navigation type) in the neighborhood of the building.
         //Tiles are searched in squares - from lowest to higher & higher chessboard distance from the building.
         //Search starts at one of the corners of the building (defined by preferred_dir) & continues counter-clockwise around the building (increasing radius on full revolutions).
@@ -462,8 +465,11 @@ namespace eng {
 
         glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int step = 1);
         glm::ivec2 MinDistanceNeighbor(const glm::ivec2& center, int nav_type, int step);
+
         //Retrieves next position for movement. Call after pathfinding is done (uses filled out distance values in the map data).
         glm::ivec2 Pathfinding_RetrieveNextPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType);
+        //Retrieves the final position for movement - where does the path end if true destination is inaccessible.
+        glm::ivec2 Pathfinding_RetrieveFinalPos(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int navType);
 
         TileData& at(int y, int x);
         const TileData& at(int y, int x) const;

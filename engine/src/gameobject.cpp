@@ -93,6 +93,11 @@ namespace eng {
         return level;
     }
 
+    const Level* GameObject::lvl() const {
+        ASSERT_MSG(level != nullptr, "GameObject isn't properly initialized!");
+        return level;
+    }
+
     void GameObject::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::PushID(this);
@@ -461,48 +466,33 @@ namespace eng {
         }
     }
 
-    glm::vec2 Unit::Transport_DockingLocation(const glm::ivec2& unitPosition) {
+    void Unit::Transport_DockingRequest(const glm::ivec2& unitPosition) {
         ASSERT_MSG(data->transport, "Unit::Transport_DockingLocation - can only invoke on transport ships!");
 
-        //check the state of this transport ship:
-
-
-        /* two possible approaches:
-            1) don't distinguish between ship not moving & moving
-                - will always lookup new location
-                - less complicated
-                - to avoid multiple lookups in one frame, will need to add variable to the command (marking that it was issued in this frame)
-
-            2) distiguish between the two states
-                - will only check if the ship is moving to a coast tile and do a lookup only if it isn't
-        */
-
-        //TODO: check how it works irl
-        
-        if(command.Type() != CommandType::MOVE) {
-            //ship not moving
-
-            //locate fitting coast tile, issue movement there & return it's location
-
-            //do the lookup even if ship is already docked (there might be better location)
-        }
-        else {
-            //hships
+        //move command issued in this frame or the ship is moving to dock
+        if(command.Type() == CommandType::MOVE && (command.Flag() != 0 || lvl()->map(command.TargetPos()).IsCoastTile())) {
+            if(command.Flag() == 0) {
+                ENG_LOG_TRACE("Unit::Transport_DockingRequest - docking refused as ship is already handling different docking request");
+            }
+            return;
         }
 
-        //if not moving anywhere -> locate fitting coast tile, issue movement there & return this location
-            //do a coast lookup even if the ship is currently docking (there might be better one)
-        //if already moving:
-            //check the final destination, if it's not coast tile, proceed as if the ship isn't moving
+        glm::ivec2 docking_pos = lvl()->map.Pathfinding_DockingLocation(Position(), unitPosition);
+        IssueCommand(Command::Move(docking_pos));
+        ENG_LOG_TRACE("Unit::Transport_DockingRequest - docking issued at ({}, {})", docking_pos.x, docking_pos.y);
+    }
 
-        //check how it works ingame - when unit1 issues entrance, ship starts moving, what happens when unit2 issues entrance
-            //will keep moving towards unit1 or will it change direction and move towards unit2
-        
-        //might want to add some flag to the movement command -> so that if it was issued in this frame, it doesn't immediately get overriden
-        //cuz that would just waste pathfinding queries (when issuing entrance command for a group of units)
-        
+    bool Unit::Transport_GoingDocking() const {
+        return command.Type() == CommandType::MOVE && lvl()->map(command.TargetPos()).IsCoastTile();
+    }
 
-        return glm::ivec2(-1);
+    glm::ivec2 Unit::Transport_GetDockingLocation() const {
+        ASSERT_MSG(Transport_GoingDocking(), "Docking location is valid only if the transport is going docking.");
+        return command.TargetPos();
+    }
+
+    bool Unit::InMotion() const {
+        return command.Type() == CommandType::MOVE;
     }
 
     void Unit::Inner_DBG_GUI() {

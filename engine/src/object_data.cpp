@@ -63,4 +63,9 @@ namespace eng {
         return sound;
     }
 
+    SoundEffect& SoundEffect::Dock() {
+        static SoundEffect sound = SoundEffect("misc/dock");
+        return sound;
+    }
+
 }//namespace eng

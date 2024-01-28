@@ -90,6 +90,7 @@ namespace eng {
         
         static SoundEffect& Wood();
         static SoundEffect& Error();
+        static SoundEffect& Dock();
     };
 
     //===== GameObjectData =====

@@ -150,7 +150,7 @@ void Sandbox::OnInit() {
 
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/battleship"), f1, glm::vec2(18.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f1, glm::vec2(20.f, 4.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f1, glm::vec2(18.f, 2.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f1, glm::vec2(18.f, 6.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;

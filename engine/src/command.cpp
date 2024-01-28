@@ -169,7 +169,7 @@ namespace eng {
         return Action();
     }
 
-    Action Action::Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst) {
+    Action Action::Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int is_transport) {
         Action action = {};
 
         action.logic = Action::Logic(ActionType::MOVE, MoveAction_Update, MoveAction_Signal);
@@ -178,6 +178,7 @@ namespace eng {
         action.data.target_pos = pos_dst;
         action.data.move_dir = glm::sign(pos_dst - pos_src);
         action.data.i = VectorOrientation(action.data.move_dir);
+        action.data.j = is_transport;
 
         return action;
     }
@@ -258,6 +259,7 @@ namespace eng {
         float& t = action.data.t;
         int& counter = action.data.count;
         float l = lim[orientation % 2];
+        bool is_transport = bool(action.data.j);
 
         //animation values update
         src.act() = action.logic.type;
@@ -295,6 +297,11 @@ namespace eng {
 
                     //map update - claim the next tile as taken by this unit & free the previous one
                     level.map.MoveUnit(navType, pos, next_pos, next_pos == action.data.target_pos, src.VisionRange());
+
+                    //docking sound for transport ships
+                    if(is_transport && (level.map(next_pos).IsCoastTile() ^ level.map(pos).IsCoastTile())) {
+                        Audio::Play(SoundEffect::Dock().Random(), next_pos);
+                    }
 
                     //update position & animation offset & keep moving
                     pos = next_pos;
@@ -420,6 +427,7 @@ namespace eng {
         cmd.type = CommandType::MOVE;
         cmd.handler = CommandHandler_Move;
         cmd.target_pos = target_pos;
+        cmd.flag = 1;       //marks first command update
 
         return cmd;
     }
@@ -478,6 +486,7 @@ namespace eng {
         cmd.type = CommandType::ENTER_TRANSPORT;
         cmd.handler = CommandHandler_EnterTransport;
         cmd.target_id = target_id;
+        cmd.target_pos = glm::ivec2(-1);
         cmd.flag = 1;
 
         return cmd;
@@ -619,10 +628,12 @@ namespace eng {
                 else {
                     //initiate new move action
                     ASSERT_MSG(has_valid_direction(target_pos - src.Position()), "Command::Move - target position for next action doesn't respect directions.");
-                    action = Action::Move(src.Position(), target_pos);
+                    action = Action::Move(src.Position(), target_pos, src.IsTransport());
                 }
             }
         }
+
+        cmd.flag = 0;
     }
 
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action) {
@@ -1035,13 +1046,23 @@ namespace eng {
             return;
         }
 
-        //first command tick -> retrieve docking location of the transport
+        //first command tick -> do a docking request onto the transport
         if(cmd.flag) {
-            //docking location retrieval might issue a move command onto the transport ship
-            cmd.target_pos = target->Transport_DockingLocation(src.Position());
+            target->Transport_DockingRequest(src.Position());
             cmd.flag = 0;
         }
-        ASSERT_MSG(cmd.target_pos != glm::ivec2(-1), "Command::EnterTransport - invalid target position.");;
+
+        //if the ship is still moving, update target position
+        bool still_in_motion = target->Transport_GoingDocking();
+        if(still_in_motion) {
+            cmd.target_pos = target->Transport_GetDockingLocation();
+        }
+
+        //when no target position was ever set (should at least make the unit move to the shore)
+        if(cmd.target_pos == glm::ivec2(-1)) {
+            ENG_LOG_TRACE("Command::EnterTransport - no docking was issued.");
+            cmd.target_pos = target->Position();
+        }
 
         //TODO: account for the fact that docking location will be water tile
         //TODO: docking on odd tile coordinates (when the coast is at odd coords)
@@ -1057,34 +1078,24 @@ namespace eng {
             }
             else {
                 //destination unreachable
-                cmd = Command::Idle();
+                if (still_in_motion)
+                    action = Action::Idle();
+                else
+                    cmd = Command::Idle();
             }
         }
         else {
-            cmd = Command::Idle();
-            level.objects.IssueEntrance_Transport(cmd.target_id, src.OID());
+            //wait for both units to finish the movement action
+            if(target->InMotion()) {
+                action = Action::Idle();
+            }
+            else {
+                //enter the ship & terminate the command
+                ObjectID transport_id = cmd.target_id;
+                cmd = Command::Idle();
+                level.objects.IssueEntrance_Transport(transport_id, src.OID());
+            }
         }
-
-        //when far away -> do pathfinding & movement actions
-        //      - terminate if unreachable
-        //when nearby (1 tile away)
-        //  check that ship is in the docking location
-        //      - if it is -> enter & terminate the command
-        //      - if it isn't:
-        //          can maybe view the ship command & do some idling actions whilst waiting for it to move in position
-        //          if it's no longer moving, to the previously stated docking location -> terminate this command
-    }
-
-    void CommandHandler_Dock(Unit& src, Level& level, Command& cmd, Action& action) {
-        int res = action.Update(src, level);
-        if(res == ACTION_INPROGRESS)
-            return;
-
-        //validate that unit is transport ship
-
-        //validate that target tile is a coast tile
-
-        //handle movement towards it
     }
 
     void CommandHandler_UnloadUnits(Unit& src, Level& level, Command& cmd, Action& action) {

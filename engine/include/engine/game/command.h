@@ -68,7 +68,7 @@ namespace eng {
         Action();
 
         static Action Idle();
-        static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst);
+        static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int is_transport = 0);
         static Action Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged);
         static Action Harvest(const glm::ivec2& target_pos, const glm::ivec2& target_dir);
         static Action Repair(const ObjectID& target_id, const glm::ivec2& target_dir);
@@ -124,6 +124,8 @@ namespace eng {
         void Update(Unit& src, Level& level);
 
         int Type() const { return type; }
+        glm::ivec2 TargetPos() const { return target_pos; }
+        int Flag() const { return flag; }
 
         //only use for debug msgs
         std::string to_string() const;
