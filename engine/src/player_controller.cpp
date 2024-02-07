@@ -41,7 +41,12 @@ namespace eng {
         : Element(offset_, size_, zOffset_, Style::Default(), nullptr) {
         
         //icon button grid, when there's multiple objects selected
-        btns = static_cast<ImageButtonGrid*>(AddChild(new ImageButtonGrid(glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.f, btn_style_, bar_style_, bar_borders_size_, sprite_, 3, 3, glm::vec2(0.975f / 3.f, 0.9f / 3.f), handler_, callback_), true));
+        btns = static_cast<ImageButtonGrid*>(AddChild(
+            new ImageButtonGrid(
+                glm::vec2(0.f, 0.f), glm::vec2(1.f, 1.f), 0.f, btn_style_, bar_style_, bar_borders_size_, sprite_, 
+                3, 3, glm::vec2(0.975f / 3.f, 0.9f / 3.f), handler_, callback_), 
+            true
+        ));
 
         //unit name & current level fields; next to the image
         name = static_cast<TextLabel*>(AddChild(new TextLabel(glm::vec2(0.3f, -0.8f), glm::vec2(0.625f, 0.1f), 2.f, text_style, "Unit Name"), true));
@@ -95,41 +100,64 @@ namespace eng {
             }
 
             bool is_upgraded_tower = object->NumID()[1] == BuildingType::GUARD_TOWER || object->NumID()[1] == BuildingType::CANNON_TOWER;
+            if(selection.selection_type >= SelectionType::PLAYER_BUILDING && object->IsTransport()) {
+                transport_load = static_cast<Unit*>(object)->Transport_CurrentLoad();
+            }
+
             if(selection.selection_type >= SelectionType::PLAYER_BUILDING && (object->IsUnit() || is_upgraded_tower)) {
                 glm::ivec2 highlight_idx = glm::ivec2(-1);
 
-                snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", object->BaseArmor());
-                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusArmor(), highlight_idx);
-                stats[0]->Setup(buf, highlight_idx);
-
-                snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", object->BaseMinDamage(), object->BaseMaxDamage());
-                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusDamage(), highlight_idx);
-                stats[1]->Setup(buf, highlight_idx);
-
-                snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", object->BaseAttackRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusAttackRange(), highlight_idx);
-                stats[2]->Setup(buf, highlight_idx);
-
-                snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", object->BaseVisionRange());
-                format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusVisionRange(), highlight_idx);
-                stats[3]->Setup(buf, highlight_idx);
-
-                if(object->IsUnit()) {
+                if(transport_load != 0) {
                     Unit* unit = static_cast<Unit*>(object);
+                    health->Enable(false);
 
                     snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
                     level_text->Setup(std::string(buf));
 
-                    snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
-                    stats[4]->Setup(buf);
+                    //fetch the IDs of units inside
+                    level.objects.GetUnitsInsideObject(unit->OID(), transport_ids);
+                    ASSERT_MSG(transport_ids.size() == transport_load, "GUI::SelectionTab::Update - transport ship load doesn't match the number of detected units onboard.");
 
-                    if(unit->IsCaster()) {
-                        stats[5]->Setup("Magic:");
-                        snprintf(buf, sizeof(buf), "%d", unit->Mana());
-                        mana_bar->Setup(unit->Mana(), buf);
+                    //update the buttons to reflect each unit
+                    int obj_count = std::min((int)transport_ids.size(), TRANSPORT_MAX_LOAD);
+                    for(int i = 0; i < obj_count; i++) {
+                        FactionObject* object = &level.objects.GetObject(transport_ids[i]);
+                        btns->GetButton(3+i)->Setup(object->Name(), -1, object->Icon(), object->HealthPercentage());
                     }
                 }
+                else {
+                    snprintf(buf_tmp, sizeof(buf_tmp), "Armor: %d", object->BaseArmor());
+                    format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusArmor(), highlight_idx);
+                    stats[0]->Setup(buf, highlight_idx);
 
+                    snprintf(buf_tmp, sizeof(buf_tmp), "Damage: %d-%d", object->BaseMinDamage(), object->BaseMaxDamage());
+                    format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusDamage(), highlight_idx);
+                    stats[1]->Setup(buf, highlight_idx);
+
+                    snprintf(buf_tmp, sizeof(buf_tmp), "Range: %d", object->BaseAttackRange());
+                    format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusAttackRange(), highlight_idx);
+                    stats[2]->Setup(buf, highlight_idx);
+
+                    snprintf(buf_tmp, sizeof(buf_tmp), "Sight: %d", object->BaseVisionRange());
+                    format_wBonus(buf, sizeof(buf), buf_tmp, object->BonusVisionRange(), highlight_idx);
+                    stats[3]->Setup(buf, highlight_idx);
+
+                    if(object->IsUnit()) {
+                        Unit* unit = static_cast<Unit*>(object);
+
+                        snprintf(buf, sizeof(buf), "Level %d", unit->UnitLevel());
+                        level_text->Setup(std::string(buf));
+
+                        snprintf(buf, sizeof(buf), "Speed: %d", (int)unit->MoveSpeed());
+                        stats[4]->Setup(buf);
+
+                        if(unit->IsCaster()) {
+                            stats[5]->Setup("Magic:");
+                            snprintf(buf, sizeof(buf), "%d", unit->Mana());
+                            mana_bar->Setup(unit->Mana(), buf);
+                        }
+                    }
+                }
             }
             else {
                 Building* building = static_cast<Building*>(object);
@@ -217,7 +245,8 @@ namespace eng {
 
             if(selection.selection_type >= SelectionType::PLAYER_BUILDING) {
                 snprintf(buf, sizeof(buf), "%d/%d", object->Health(), object->MaxHealth());
-                health->Setup(std::string(buf));
+                if(transport_load == 0)
+                    health->Setup(std::string(buf));
 
                 if(!object->IsUnit() && progress_bar_flag) {
                     Building* building = static_cast<Building*>(object);
@@ -238,6 +267,12 @@ namespace eng {
                 btns->GetButton(i)->SetValue(object->HealthPercentage());
             }
         }
+    }
+
+    ObjectID GUI::SelectionTab::GetTransportID(int btnID) const {
+        int id = btnID-3;
+        ASSERT_MSG(((unsigned)id < transport_ids.size()), "SelectionTab::GetTransportID - id {} out of bounds (max {})", id, (int)transport_ids.size());
+        return transport_ids.at(id);
     }
 
     void GUI::SelectionTab::Reset() {
@@ -263,6 +298,8 @@ namespace eng {
         }
 
         progress_bar_flag = false;
+        transport_load = 0;
+        transport_ids.clear();
     }
 
     //===== GUI::ActionButtons =====
@@ -1397,7 +1434,7 @@ namespace eng {
         }
     }
 
-    void PlayerSelection::IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data) {
+    void PlayerSelection::IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target) {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
         ASSERT_MSG(GUI::ActionButton_CommandType::IsTargetless(command_id), "Attempting to issue command that requires targets using a wrong function.");
@@ -1429,21 +1466,32 @@ namespace eng {
             }
         }
         else {
-            static const char* cmd_names[4] = { "Stop", "StandGround", "ReturnGoods", "???" };
-            const char* cmd_name = cmd_names[3];
+            static const char* cmd_names[5] = { "Stop", "StandGround", "ReturnGoods", "TransportUnload", "???" };
+            const char* cmd_name = cmd_names[4];
             Command cmd;
             switch(command_id) {
                 case GUI::ActionButton_CommandType::STOP:
+                    ENG_LOG_FINE("Targetless command - Stop");
                     cmd = Command::Idle();
                     cmd_name = cmd_names[0];
                     break;
                 case GUI::ActionButton_CommandType::STAND_GROUND:
+                    ENG_LOG_FINE("Targetless command - StandGround");
                     cmd = Command::StandGround();
                     cmd_name = cmd_names[1];
                     break;
                 case GUI::ActionButton_CommandType::RETURN_GOODS:
+                    ENG_LOG_FINE("Targetless command - ReturnGoods");
                     cmd = Command::ReturnGoods();
                     cmd_name = cmd_names[2];              
+                    break;
+                case GUI::ActionButton_CommandType::TRANSPORT_UNLOAD:
+                    ENG_LOG_FINE("Targetless command - TransportUnload ({}, {})", payload_id, command_target);
+                    if(payload_id != 0)
+                        cmd = Command::TransportUnload(command_target);
+                    else
+                        cmd = Command::TransportUnload();
+                    cmd_name = cmd_names[3];
                     break;
             }
             for(size_t i = 0; i < selected_count; i++) {
@@ -1919,12 +1967,18 @@ namespace eng {
                     cursor_idx = CursorIconName::MAGNIFYING_GLASS;
                 }
 
-                if(actionButtons.ClickIdx() != -1) {
+                if (nontarget_cmd_issued) {
+                    selection.IssueTargetlessCommand(level, command_data, command_target);
+                    command_data = glm::ivec2(-1);
+                    command_target = ObjectID();
+                }
+                else if(actionButtons.ClickIdx() != -1) {
                     ResolveActionButtonClick();
 
                     if(nontarget_cmd_issued) {
-                        selection.IssueTargetlessCommand(level, command_data);
+                        selection.IssueTargetlessCommand(level, command_data, command_target);
                         command_data = glm::ivec2(-1);
+                        command_target = ObjectID();
                     }
                     else if(actionButtons.BuildingActionCancelled()) {
                         selection.CancelBuildingAction(level);
@@ -2061,6 +2115,7 @@ namespace eng {
             case GUI::ActionButton_CommandType::RETURN_GOODS:
                 //commands without target, issue immediately on current selection
                 command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                command_target = ObjectID();
                 nontarget_cmd_issued = true;
                 break;
             default:
@@ -2070,6 +2125,7 @@ namespace eng {
                 state = PlayerControllerState::COMMAND_TARGET_SELECTION;
                 actionButtons.ShowCancelPage();
                 command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                command_target = ObjectID();
                 break;
         }
     }
@@ -2094,6 +2150,7 @@ namespace eng {
     void PlayerFactionController::BackToIdle() {
         state = PlayerControllerState::IDLE;
         command_data = glm::ivec2(-1);
+        command_target = ObjectID();
         actionButtons.ChangePage(0);
     }
 
@@ -2285,7 +2342,15 @@ namespace eng {
             mana_bar_style, mana_bar_borders_size, progress_bar_style, progress_bar_borders_size, icon_btn_style,
             icon_btn_style, bar_style, bar_border_size, icon, this, [](GUI::ButtonCallbackHandler* handler, int id){
             // ENG_LOG_TRACE("SelectionTab - Button [{}, {}] clicked", id % 3, id / 3);
-            static_cast<PlayerFactionController*>(handler)->selection.SelectFromSelection(id);
+            PlayerFactionController* ctrl = static_cast<PlayerFactionController*>(handler);
+            if(ctrl->selectionTab->DefaultButtonMode())
+                ctrl->selection.SelectFromSelection(id);
+            else {
+                //issue the transport unload command
+                ctrl->command_data = glm::ivec2(GUI::ActionButton_CommandType::TRANSPORT_UNLOAD, 1);
+                ctrl->command_target = ctrl->selectionTab->GetTransportID(id);
+                ctrl->nontarget_cmd_issued = true;
+            }
         });
 
         game_panel = GUI::Menu(glm::vec2(-1.f, 0.f), glm::vec2(GUI_WIDTH*2.f, 1.f), 0.f, std::vector<GUI::Element*>{

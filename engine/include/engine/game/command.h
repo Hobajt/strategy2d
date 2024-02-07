@@ -83,7 +83,7 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, ENTER_TRANSPORT, UNLOAD_UNITS, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, ENTER_TRANSPORT, TRANSPORT_UNLOAD, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
@@ -98,7 +98,7 @@ namespace eng {
         friend void CommandHandler_Build(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Repair(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_EnterTransport(Unit& source, Level& level, Command& cmd, Action& action);
-        friend void CommandHandler_UnloadUnits(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_TransportUnload(Unit& source, Level& level, Command& cmd, Action& action);
     public:
         //Creates idle command
         Command();
@@ -112,6 +112,8 @@ namespace eng {
         static Command Cast(int payload_id);
 
         static Command EnterTransport(const ObjectID& target_id);
+        static Command TransportUnload();
+        static Command TransportUnload(const ObjectID& target_id);
 
         //worker-only commands
         static Command Harvest(const glm::ivec2& target_pos);

@@ -12,7 +12,8 @@ namespace eng::GUI {
                 DISABLED = -2, PAGE_CHANGE = -1, 
                 MOVE, STOP, STAND_GROUND, PATROL, ATTACK, ATTACK_GROUND, CAST,
                 HARVEST, RETURN_GOODS, REPAIR, BUILD,
-                TRAIN, RESEARCH, UPGRADE
+                TRAIN, RESEARCH, UPGRADE,
+                TRANSPORT_UNLOAD,
             };
 
             bool IsTargetless(int cmd);

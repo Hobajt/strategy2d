@@ -10,12 +10,13 @@ namespace eng::GUI {
             cmd == ActionButton_CommandType::RETURN_GOODS ||
             cmd == ActionButton_CommandType::TRAIN ||
             cmd == ActionButton_CommandType::RESEARCH ||
-            cmd == ActionButton_CommandType::UPGRADE
+            cmd == ActionButton_CommandType::UPGRADE ||
+            cmd == ActionButton_CommandType::TRANSPORT_UNLOAD
         ;
     }
 
     bool ActionButton_CommandType::IsBuildingCommand(int cmd) {
-        return cmd >= ActionButton_CommandType::TRAIN;
+        return cmd == ActionButton_CommandType::TRAIN || cmd == ActionButton_CommandType::RESEARCH || cmd == ActionButton_CommandType::UPGRADE;
     }
 
     bool ActionButton_CommandType::IsSingleUser(int cmd) {

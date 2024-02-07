@@ -21,7 +21,8 @@ namespace eng {
 
         //===== GUI::SelectionTab =====
 
-        class SelectionTab : public Element {
+        //The middle GUI element in the sidebar. Displays info about the selected unit/building or unit icons if there's more units selected.
+        class SelectionTab : public Element, public ButtonCallbackHandler {
         public:
             SelectionTab(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
                 const StyleRef& borders_style, const StyleRef& text_style, const StyleRef& text_style_small,
@@ -32,6 +33,10 @@ namespace eng {
             void Update(Level& level, const PlayerSelection& selection);
             //Values update, no real GUI changes tho.
             void ValuesUpdate(Level& level, const PlayerSelection& selection);
+
+            bool DefaultButtonMode() const { return (transport_load == 0); }
+
+            ObjectID GetTransportID(int btnID) const;
         private:
             //Reverts elements into their default state (as if nothing is selected).
             void Reset();
@@ -50,10 +55,13 @@ namespace eng {
             ImageButton* production_icon;
             
             bool progress_bar_flag = false;
+            int transport_load = 0;
+            std::vector<ObjectID> transport_ids;
         };
 
         //===== GUI::ActionButtons =====
 
+        //The bottom GUI element in the sidebar. Displays the 3x3 action button grid.
         class ActionButtons {
             using PageData = std::array<ActionButtonDescription, 9>;
         public:
@@ -225,7 +233,7 @@ namespace eng {
 
         bool IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id);
-        void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data);
+        void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target);
 
         void CancelBuildingAction(Level& level);
 
@@ -375,6 +383,7 @@ namespace eng {
         glm::vec2 coords_end;
         glm::ivec2 command_data;
         bool nontarget_cmd_issued = false;
+        ObjectID command_target;
 
         OcclusionMask occlusion;
         MapView mapview;

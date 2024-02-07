@@ -172,6 +172,15 @@ namespace eng {
         return (num_workers > 0);
     }
 
+    void EntranceController::GetUnitsInside(const ObjectID& container_unit, std::vector<ObjectID>& out_ids) {
+        out_ids.clear();
+
+        for(auto& entry : entries) {
+            if(entry.entered == container_unit)
+                out_ids.push_back(entry.enteree);
+        }
+    }
+
     int EntranceController::KillObjectsInside(ObjectPool& objects, const ObjectID& id) {
         int count = 0;
         Unit* unit;

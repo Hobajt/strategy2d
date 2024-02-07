@@ -5,6 +5,8 @@
 #include "engine/core/audio.h"
 #include "engine/game/config.h"
 
+#include "engine/game/player_controller.h"
+
 namespace eng {
 
 #define ACTION_INPROGRESS               0
@@ -136,7 +138,7 @@ namespace eng {
 
     void CommandHandler_EnterTransport(Unit& source, Level& level, Command& cmd, Action& action);
 
-    void CommandHandler_UnloadUnits(Unit& source, Level& level, Command& cmd, Action& action);
+    void CommandHandler_TransportUnload(Unit& source, Level& level, Command& cmd, Action& action);
 
     void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action);
     void CommandHandler_StandGround(Unit& src, Level& level, Command& cmd, Action& action);
@@ -492,6 +494,28 @@ namespace eng {
         return cmd;
     }
 
+    Command Command::TransportUnload() {
+        Command cmd = {};
+
+        cmd.type = CommandType::TRANSPORT_UNLOAD;
+        cmd.handler = CommandHandler_TransportUnload;
+        cmd.target_id = ObjectID();
+        cmd.flag = 1;       //distinguishes between targeted & untargeted unload
+
+        return cmd;
+    }
+
+    Command Command::TransportUnload(const ObjectID& target_id) {
+        Command cmd = {};
+
+        cmd.type = CommandType::TRANSPORT_UNLOAD;
+        cmd.handler = CommandHandler_TransportUnload;
+        cmd.target_id = target_id;
+        cmd.flag = 0;       //distinguishes between targeted & untargeted unload
+
+        return cmd;
+    }
+
     Command Command::Harvest(const glm::ivec2& target_pos) {
         Command cmd = {};
 
@@ -584,6 +608,9 @@ namespace eng {
             break;
         case CommandType::ENTER_TRANSPORT:
             snprintf(buf, sizeof(buf), "Command: Enter Transport %s", target_id.to_string().c_str());
+            break;
+        case CommandType::TRANSPORT_UNLOAD:
+            snprintf(buf, sizeof(buf), "Command: Transport Unload %s", target_id.to_string().c_str());
             break;
         default:
             snprintf(buf, sizeof(buf), "Command: Unknown type (%d)", type);
@@ -1094,14 +1121,17 @@ namespace eng {
                 ObjectID transport_id = cmd.target_id;
                 cmd = Command::Idle();
                 level.objects.IssueEntrance_Transport(transport_id, src.OID());
+                level.factions.Player()->SignalGUIUpdate(*target);
             }
         }
     }
 
-    void CommandHandler_UnloadUnits(Unit& src, Level& level, Command& cmd, Action& action) {
+    void CommandHandler_TransportUnload(Unit& src, Level& level, Command& cmd, Action& action) {
         int res = action.Update(src, level);
         if(res == ACTION_INPROGRESS)
             return;
+
+        cmd = Command::Idle();
 
         //command target: could be issued to unload all or to unload a single (selected) unit -> gotta distinguish between those options
 

@@ -797,7 +797,7 @@ namespace eng {
 
         //fills distance values in the tile data
         Pathfinding_AStar(tiles, nav_list, src_pos, dst_pos, navType, &heuristic_euclidean);
-        DBG_PrintDistances();
+        // DBG_PrintDistances();
         
         //assembles the path, returns the next tile coord, that can be reached via a straight line travel
         return Pathfinding_RetrieveFinalPos(src_pos, dst_pos, navType);
