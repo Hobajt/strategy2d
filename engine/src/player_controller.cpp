@@ -115,6 +115,7 @@ namespace eng {
                     level_text->Setup(std::string(buf));
 
                     //fetch the IDs of units inside
+                    transport_ids.clear();
                     level.objects.GetUnitsInsideObject(unit->OID(), transport_ids);
                     ASSERT_MSG(transport_ids.size() == transport_load, "GUI::SelectionTab::Update - transport ship load doesn't match the number of detected units onboard.");
 
@@ -345,7 +346,7 @@ namespace eng {
                 carrying_goods      |= unit.IsWorker() && (unit.CarryStatus() != WorkerCarryState::NONE);
                 can_attack_ground   |= unit.IsSiege();
                 all_transports      &= unit.IsTransport();
-                transport_has_load  |= unit.Transport_CurrentLoad() > 0;
+                transport_has_load  |= !unit.Transport_IsEmpty();
 
                 if(i == 0) {
                     att_upgrade_src = unit.AttackUpgradeSource();

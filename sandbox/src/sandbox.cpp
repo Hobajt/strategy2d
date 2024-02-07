@@ -100,6 +100,12 @@ void Sandbox::OnInit() {
         // level.objects.EmplaceUtilityObj(level, Resources::LoadUtilityObj("tst"), glm::ivec2(10, 10), ObjectID(5,0,9), troll);
 
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(15.f, 15.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(16.f, 15.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(15.f, 16.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(16.f, 16.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(15.f, 17.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(16.f, 17.f), false);
+
         ObjectID un = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(6.f, 26.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(9.f, 25.f), false);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/watch_tower"), f2, glm::vec2(6.f, 28.f), true);

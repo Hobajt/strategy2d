@@ -500,7 +500,7 @@ namespace eng {
         cmd.type = CommandType::TRANSPORT_UNLOAD;
         cmd.handler = CommandHandler_TransportUnload;
         cmd.target_id = ObjectID();
-        cmd.flag = 1;       //distinguishes between targeted & untargeted unload
+        cmd.flag = 0;       //distinguishes between targeted & untargeted unload
 
         return cmd;
     }
@@ -511,7 +511,7 @@ namespace eng {
         cmd.type = CommandType::TRANSPORT_UNLOAD;
         cmd.handler = CommandHandler_TransportUnload;
         cmd.target_id = target_id;
-        cmd.flag = 0;       //distinguishes between targeted & untargeted unload
+        cmd.flag = 1;       //distinguishes between targeted & untargeted unload
 
         return cmd;
     }
@@ -1131,8 +1131,6 @@ namespace eng {
         if(res == ACTION_INPROGRESS)
             return;
 
-        cmd = Command::Idle();
-
         //command target: could be issued to unload all or to unload a single (selected) unit -> gotta distinguish between those options
 
         //TODO: also need to check how the unload works ingame (ie. when unloading all - does it all happen in one tick or one-by-one?)
@@ -1140,12 +1138,40 @@ namespace eng {
             //the action would handle notifying the EntranceController as well as cooldown between individual exits
 
         //validate that it's issued onto a transport ship
+        if(!src.IsTransport()) {
+            ENG_LOG_TRACE("TransportUnload Command - needs to be issued on a transport ship.");
+            cmd = Command::Idle();
+            return;
+        }
 
         //validate that it isn't empty
+        if(src.Transport_IsEmpty()) {
+            ENG_LOG_TRACE("TransportUnload Command - transport ship is empty.");
+            cmd = Command::Idle();
+            return;
+        }
 
-        //validate it's docked
+        //validate that it's docked
+        if(!level.map.IsDockingLocation(src.Position())) {
+            ENG_LOG_TRACE("TransportUnload Command - transport ship needs to be docked in order to unload.");
+            cmd = Command::Idle();
+            return;
+        }
 
-        //issue exits on the units
+        if(cmd.flag == 1) {
+            //issue exit on single (handpicked) unit
+            if(!level.objects.IssueExit_Transport(src.OID(), cmd.target_id)) {
+                ENG_LOG_TRACE("TransportUnload Command - failed to unload unit {}.", cmd.target_id);
+            }
+        }
+        else {
+            //issue exits on all units in the transport
+            auto [unloaded, total] = level.objects.IssueExit_Transport(src.OID());
+            ENG_LOG_TRACE("TransportUnload Command - unloaded {}/{} units from the transport.", unloaded, total);
+        }
+
+        level.factions.Player()->SignalGUIUpdate(src);
+        cmd = Command::Idle();
     }
 
     //=======================================

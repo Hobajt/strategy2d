@@ -8,6 +8,8 @@
 
 #define WORKER_ENTRY_DURATION 1.f
 
+#define MAX_UNLOAD_RANGE 3
+
 namespace eng {
 
     int GetPreferredDirection(const glm::ivec2& target, const glm::ivec2& building);
@@ -112,8 +114,83 @@ namespace eng {
     }
 
     bool EntranceController::IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID) {
-        //TODO:
-        throw std::runtime_error("not implemented yet");
+        Unit* transport;
+        if(transportID.type != ObjectType::UNIT || !objects.GetUnit(transportID, transport)) {
+            ENG_LOG_WARN("EntranceController::TransportExit - transport not found.");
+            return false;
+        }
+
+        Unit* unit;
+        glm::ivec2 respawn_position;
+        for(int i = (int)entries.size()-1; i >= 0; i--) {
+            if(entries[i].entered == transportID && entries[i].enteree == unitID) {
+                if(objects.GetUnit(entries[i].enteree, unit, false)) {
+                    int carry_state = entries[i].carry_state;
+                    entries.erase(entries.begin() + i);
+                    if(transport->NearbySpawnCoords(unit->NavigationType(), 3, respawn_position, MAX_UNLOAD_RANGE) > 0) {
+                        ASSERT_MSG(!unit->IsActive(), "EntranceController::TransportExit - unit cannot be active whilst inside a transport.");
+                        unit->ReinsertObject(respawn_position);
+                        if(unit->IsWorker())
+                            unit->ChangeCarryStatus(carry_state);
+                        transport->Transport_UnitRemoved();
+                        return true;
+                    }
+                    else {
+                        ENG_LOG_WARN("EntranceController::TransportExit - no place to spawn the unit.");
+                        return false;
+                    }
+                }
+                else {
+                    ENG_LOG_WARN("EntranceController::TransportExit - entry located, but unit object not found ({}).", *transport);
+                    entries.erase(entries.begin() + i);
+                    return false;
+                }
+            }
+        }
+
+        ENG_LOG_WARN("EntranceController::TransportExit - entry {} not found ({}).", unitID, *transport);
+        return false;
+    }
+
+    std::pair<int,int> EntranceController::IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID) {
+        Unit* transport;
+        if(transportID.type != ObjectType::UNIT || !objects.GetUnit(transportID, transport)) {
+            ENG_LOG_WARN("EntranceController::TransportExit - transport not found.");
+            return { -1, -1 };
+        }
+
+        int unloaded = 0;
+        int total = 0;
+        bool cant_unload = false;
+
+        Unit* unit;
+        glm::ivec2 respawn_position;
+        for(int i = (int)entries.size()-1; i >= 0; i--) {
+            if(entries[i].entered == transportID) {
+                total++;
+                if(objects.GetUnit(entries[i].enteree, unit, false)) {
+                    int carry_state = entries[i].carry_state;
+                    if(!cant_unload && transport->NearbySpawnCoords(unit->NavigationType(), 3, respawn_position, MAX_UNLOAD_RANGE) > 0) {
+                        ASSERT_MSG(!unit->IsActive(), "EntranceController::TransportExit - unit cannot be active whilst inside a transport.");
+                        unit->ReinsertObject(respawn_position);
+                        if(unit->IsWorker())
+                            unit->ChangeCarryStatus(carry_state);
+                        transport->Transport_UnitRemoved();
+                        unloaded++;
+                        entries.erase(entries.begin() + i);
+                    }
+                    else {
+                        ENG_LOG_WARN("EntranceController::TransportExit - no place to spawn the unit.");
+                        cant_unload = true;
+                    }
+                }
+                else {
+                    ENG_LOG_WARN("EntranceController::TransportExit - entry located, but unit object not found ({}).", *transport);
+                    entries.erase(entries.begin() + i);
+                }
+            }
+        }
+        return { unloaded, total };
     }
 
     bool EntranceController::IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID) {
@@ -174,7 +251,6 @@ namespace eng {
 
     void EntranceController::GetUnitsInside(const ObjectID& container_unit, std::vector<ObjectID>& out_ids) {
         out_ids.clear();
-
         for(auto& entry : entries) {
             if(entry.entered == container_unit)
                 out_ids.push_back(entry.enteree);

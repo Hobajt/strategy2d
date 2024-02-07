@@ -1256,6 +1256,14 @@ namespace eng {
         return false;
     }
 
+    bool Map::IsDockingLocation(const glm::ivec2& bot_left) const {
+        return 
+            operator()(bot_left.y+0, bot_left.x+0).IsCoastTile() || 
+            operator()(bot_left.y+0, bot_left.x+1).IsCoastTile() || 
+            operator()(bot_left.y+1, bot_left.x+0).IsCoastTile() || 
+            operator()(bot_left.y+1, bot_left.x+1).IsCoastTile();
+    }
+
     void Map::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("Map");

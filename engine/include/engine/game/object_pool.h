@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "engine/game/gameobject.h"
 #include "engine/game/object_data.h"
 
@@ -33,6 +35,7 @@ namespace eng {
         bool IssueEntrance_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID);
         //exit can fail if there's nowhere to spawn the unit
         bool IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID, const ObjectID& unitID);
+        std::pair<int,int> IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID);
 
         bool IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
         bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID);
@@ -69,7 +72,8 @@ namespace eng {
         bool IssueEntrance_Work(const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmdType) { return entranceController.IssueEntrance_Work(*this, buildingID, workerID, cmd_target, cmdType); }
 
         bool IssueEntrance_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueEntrance_Transport(*this, transportID, unitID); }
-        bool IssueExit_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueEntrance_Transport(*this, transportID, unitID); }
+        bool IssueExit_Transport(const ObjectID& transportID, const ObjectID& unitID) { return entranceController.IssueExit_Transport(*this, transportID, unitID); }
+        std::pair<int,int> IssueExit_Transport(const ObjectID& transportID) { return entranceController.IssueExit_Transport(*this, transportID); }
 
         bool IssueEntrance_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueEntrance_Construction(*this, buildingID, workerID); }
         bool IssueExit_Construction(const ObjectID& buildingID) { return entranceController.IssueExit_Construction(*this, buildingID); }

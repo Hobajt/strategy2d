@@ -460,7 +460,7 @@ namespace eng {
     
     void Unit::Transport_UnitRemoved() {
         carry_state--;
-        if(carry_state <= 0) {
+        if(carry_state < 0) {
             ENG_LOG_WARN("Unit::Transport_UnitRemoved - unit removal from empty transport!");
             carry_state = 0;
         }

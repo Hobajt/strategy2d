@@ -442,6 +442,9 @@ namespace eng {
         bool IsTileVisible(const glm::ivec2& position) const;
         bool IsTileVisible(const glm::ivec2& position, const glm::ivec2& size) const;
 
+        //Returns true if any of the tiles in 2x2 area is a coast tile
+        bool IsDockingLocation(const glm::ivec2& bot_left) const;
+
         void DBG_GUI();
     private:
         //Flood-fill; Adds all tiles that are marked for painting or are neighboring with a marked tile (starting at the specified location (y,x)).

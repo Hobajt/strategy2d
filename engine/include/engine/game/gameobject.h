@@ -296,6 +296,7 @@ namespace eng {
         SoundEffect& Sound_Attack() const { return data->sound_attack; }
 
         bool Transport_IsFull() const { return carry_state >= TRANSPORT_MAX_LOAD; }
+        bool Transport_IsEmpty() const { return carry_state == 0; }
         int Transport_CurrentLoad() const { return carry_state; }
 
         void Transport_UnitAdded();
