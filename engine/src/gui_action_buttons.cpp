@@ -77,6 +77,11 @@ namespace eng::GUI {
         return ActionButtonDescription(ActionButton_CommandType::RETURN_GOODS, -1, true, 'g', 12, "RETURN WITH GOODS", icon);
     }
 
+    GUI::ActionButtonDescription GUI::ActionButtonDescription::TransportUnload(bool isOrc) {
+        glm::ivec2 icon = isOrc ? glm::ivec2(3,16) : glm::ivec2(2,16);
+        return ActionButtonDescription(ActionButton_CommandType::TRANSPORT_UNLOAD, 0, true, 'u', 0, "UNLOAD TRANSPORT", icon);
+    }
+
     GUI::ActionButtonDescription GUI::ActionButtonDescription::CancelButton() {
         return ActionButtonDescription(ActionButton_CommandType::PAGE_CHANGE, 0, true, char(255), -1, "Cancel", glm::ivec2(1, 9));
     }

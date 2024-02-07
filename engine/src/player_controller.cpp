@@ -329,6 +329,8 @@ namespace eng {
             bool carrying_goods = false;
             bool can_attack_ground = false;
             bool all_water_units = true;
+            bool all_transports = true;
+            bool transport_has_load = false;
             int att_upgrade_src = UnitUpgradeSource::NONE;
             int def_upgrade_src = UnitUpgradeSource::NONE;
             FactionControllerRef faction = nullptr;
@@ -342,6 +344,8 @@ namespace eng {
                 can_attack          |= unit.CanAttack();
                 carrying_goods      |= unit.IsWorker() && (unit.CarryStatus() != WorkerCarryState::NONE);
                 can_attack_ground   |= unit.IsSiege();
+                all_transports      &= unit.IsTransport();
+                transport_has_load  |= unit.Transport_CurrentLoad() > 0;
 
                 if(i == 0) {
                     att_upgrade_src = unit.AttackUpgradeSource();
@@ -361,8 +365,13 @@ namespace eng {
             //add default unit commands for unit selection
             p[0] = ActionButtonDescription::Move(isOrc, all_water_units);
             p[1] = ActionButtonDescription::Stop(isOrc, def_upgrade_src, faction->UnitUpgradeTier(false, def_upgrade_src, isOrc));
-            p[3] = ActionButtonDescription::Patrol(isOrc, all_water_units);
-            p[4] = ActionButtonDescription::StandGround(isOrc);
+            if(!all_transports) {
+                p[3] = ActionButtonDescription::Patrol(isOrc, all_water_units);
+                p[4] = ActionButtonDescription::StandGround(isOrc);
+            }
+            else if(transport_has_load && selection.selected_count == 1) {
+                p[2] = ActionButtonDescription::TransportUnload(isOrc);
+            }
 
             //attack command only if there's at least one unit that can attack
             if(can_attack) {
@@ -2113,6 +2122,7 @@ namespace eng {
             case GUI::ActionButton_CommandType::STOP:
             case GUI::ActionButton_CommandType::STAND_GROUND:
             case GUI::ActionButton_CommandType::RETURN_GOODS:
+            case GUI::ActionButton_CommandType::TRANSPORT_UNLOAD:
                 //commands without target, issue immediately on current selection
                 command_data = glm::ivec2(btn.command_id, btn.payload_id);
                 command_target = ObjectID();

@@ -47,6 +47,8 @@ namespace eng::GUI {
             static ActionButtonDescription Harvest(bool water_units);
             static ActionButtonDescription ReturnGoods(bool isOrc, bool water_units);
 
+            static ActionButtonDescription TransportUnload(bool isOrc);
+
             static ActionButtonDescription CancelButton();
 
             static int GetIconIdx(bool attack, int ugprade_type, int upgrade_tier, bool isOrc);
