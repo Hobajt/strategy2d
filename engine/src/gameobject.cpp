@@ -673,7 +673,7 @@ namespace eng {
         }
     }
 
-    void Building::TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed) {
+    ObjectID Building::TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed) {
         ENG_LOG_FINE("Building::TransformFoundation - {} -> {} (pos={})", data->name, new_data->name, Position());
 
         //withdraw object from the map, so that I don't have to modify values in the map struct (will update on reinsert)
@@ -715,6 +715,8 @@ namespace eng {
         else {
             action = BuildingAction();
         }
+
+        return OID();
     }
 
     bool Building::Kill(bool silent) {

@@ -565,7 +565,7 @@ namespace eng {
         }
         int new_id = GameObject::GetNextID();
         Building& building = buildings.update_key(BuildingsPool::key(object_id.idx, object_id.id), new_id);
-        building.oid.id = building.id = GameObject::GetNextID();
+        building.oid.id = building.id = new_id;
         ENG_LOG_TRACE("ObjectPool::UpdateBuildingID - {} is now {}", object_id, building.oid);
     }
 

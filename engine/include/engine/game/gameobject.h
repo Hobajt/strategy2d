@@ -368,7 +368,7 @@ namespace eng {
 
         virtual void WithdrawObject(bool inform_faction = false) override;
 
-        void TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed = false);
+        ObjectID TransformFoundation(const BuildingDataRef& new_data, const FactionControllerRef& new_faction, bool is_constructed = false);
 
         virtual bool Kill(bool silent = false) override;
 

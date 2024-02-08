@@ -999,7 +999,7 @@ namespace eng {
                     //construction on existing foundation (oil patch)
                     ObjectID buildingID = level.map.GetFoundationObjectAt(cmd.target_pos);
                     ASSERT_MSG(ObjectID::IsValid(buildingID), "Command::Build - foundation not found.");
-                    level.objects.GetBuilding(buildingID).TransformFoundation(buildingData, src.Faction());
+                    buildingID = level.objects.GetBuilding(buildingID).TransformFoundation(buildingData, src.Faction());
                     level.objects.IssueEntrance_Construction(buildingID, src.OID());
                 }
             }
