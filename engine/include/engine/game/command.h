@@ -69,7 +69,7 @@ namespace eng {
 
         static Action Idle();
         static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int is_transport = 0);
-        static Action Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged);
+        static Action Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged, bool add_tile_offset);
         static Action Harvest(const glm::ivec2& target_pos, const glm::ivec2& target_dir);
         static Action Repair(const ObjectID& target_id, const glm::ivec2& target_dir);
 

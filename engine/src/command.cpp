@@ -185,7 +185,7 @@ namespace eng {
         return action;
     }
 
-    Action Action::Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged) {
+    Action Action::Attack(const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool is_ranged, bool add_tile_offset) {
         Action action = {};
 
         action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
@@ -195,6 +195,7 @@ namespace eng {
 
         action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
         action.data.j = is_ranged ? ActionPayloadType::RANGED_ATTACK : ActionPayloadType::MELEE_ATTACK; //payload type identifier
+        action.data.k = int(add_tile_offset);
 
         return action;
     }
@@ -383,7 +384,8 @@ namespace eng {
                     UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(payload_id));
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
-                        level.objects.EmplaceUtilityObj(level, obj, action.data.target_pos, action.data.target, src);
+                        glm::vec2 target_pos = glm::vec2(action.data.target_pos) + (action.data.k * 0.5f);
+                        level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src);
                     }
                     else {
                         ENG_LOG_ERROR("ActionAction - action payload not delivered - invalid object.");
@@ -715,8 +717,10 @@ namespace eng {
             }
             else {
                 //within range -> iniate new attack action
-                glm::ivec2 target_pos = glm::ivec2(pos_max + pos_min) / 2;
-                action = Action::Attack(cmd.target_id, target_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1);
+                glm::vec2 target_pos = (pos_max + pos_min) * 0.5f;
+                glm::ivec2 itarget_pos = glm::ivec2(target_pos);
+                bool leftover = (itarget_pos.x + itarget_pos.y) > 0.9f;
+                action = Action::Attack(cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
             }
         }
     }

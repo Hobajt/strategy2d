@@ -141,6 +141,9 @@ namespace eng {
         int GetRange(GameObject& target) const;
         int GetRange(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
 
+        //Accounting for upscaled visuals (ie. ships take 2x2 tiles).
+        virtual glm::vec2 EffectivePosition() const;
+
         bool CanAttack() const { return data_f->CanAttack(); }
         float Cooldown() const { return data_f->cooldown; }
 
@@ -263,6 +266,8 @@ namespace eng {
         void IssueCommand(const Command& cmd);
 
         virtual int ActionIdx() const override;
+
+        virtual glm::vec2 EffectivePosition() const override;
 
         bool UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
 
@@ -420,8 +425,8 @@ namespace eng {
     class UtilityObject : public GameObject {
     public:
         struct LiveData {
-            glm::ivec2 source_pos;
-            glm::ivec2 target_pos;
+            glm::vec2 source_pos;
+            glm::vec2 target_pos;
             ObjectID targetID;
             ObjectID sourceID;
 
@@ -438,8 +443,8 @@ namespace eng {
         };
     public:
         UtilityObject() = default;
-        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
-        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::ivec2& target_pos, bool play_sound = true);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, bool play_sound = true);
         virtual ~UtilityObject();
 
         //move enabled
@@ -457,8 +462,8 @@ namespace eng {
 
         glm::vec2 SizeScaled() const { return data->size * data->scale; }
 
-        void ChangeType(const UtilityObjectDataRef& new_data, const glm::ivec2 target_pos, bool play_sound = true, bool call_init = true);
-        void ChangeType(const UtilityObjectDataRef& new_data, const glm::ivec2 target_pos, const ObjectID targetID, FactionObject& src, bool play_sound = true, bool call_init = true);
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, bool play_sound = true, bool call_init = true);
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, FactionObject& src, bool play_sound = true, bool call_init = true);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

@@ -213,6 +213,11 @@ namespace eng {
         return get_range(MinPos(), MaxPos(), min_pos, max_pos);
     }
 
+    glm::vec2 FactionObject::EffectivePosition() const {
+        // return glm::vec2(Position()) + (float(NavigationType() == NavigationBit::WATER) * 0.5f);
+        return glm::vec2(Position()) + (data_f->size * 0.5f - 0.5f);
+    }
+
     void FactionObject::ApplyDirectDamage(const FactionObject& source) {
         if(IsInvulnerable()) {
             ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
@@ -364,7 +369,7 @@ namespace eng {
         if(!IsActive() || !lvl()->map.IsTileVisible(Position()))
             return;
         bool render_centered = (NavigationType() != NavigationBit::GROUND);
-        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, render_centered ? (-1e-3f) : 0.f);
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, (NavigationType() == NavigationBit::AIR) ? (-1e-3f) : 0.f);
     }
 
     bool Unit::Update() {
@@ -392,6 +397,10 @@ namespace eng {
         if(idx < ActionType::ACTION && VariationIdx() != 0)
             idx = idx + (UnitAnimationType::DEATH + VariationIdx());
         return idx;
+    }
+
+    glm::vec2 Unit::EffectivePosition() const {
+        return glm::vec2(Position()) + (data->size * data->scale * 0.5f - 0.5f);
     }
 
     bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
@@ -917,12 +926,12 @@ namespace eng {
         return glm::vec2(source_pos) + f * glm::vec2(target_pos - source_pos);
     }
 
-    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
         ChangeType(data_, target_pos_, targetID_, src_, play_sound, true);
     }
 
-    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::ivec2& target_pos_, bool play_sound)
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
         ChangeType(data_, target_pos_, play_sound, true);
     }
@@ -945,12 +954,12 @@ namespace eng {
         return res || IsKilled();
     }
 
-    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::ivec2 target_pos_, ObjectID targetID_, FactionObject& src_, bool play_sound, bool call_init) {
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, FactionObject& src_, bool play_sound, bool call_init) {
         data = new_data;
         UpdateDataPointer(new_data);
 
         live_data.target_pos = target_pos_;
-        live_data.source_pos = src_.Position();
+        live_data.source_pos = src_.EffectivePosition();
         live_data.targetID = targetID_;
         live_data.sourceID = src_.OID();
 
@@ -965,7 +974,7 @@ namespace eng {
         }
     }
 
-    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::ivec2 target_pos_, bool play_sound, bool call_init) {
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, bool play_sound, bool call_init) {
         data = new_data;
         UpdateDataPointer(new_data);
 

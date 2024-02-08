@@ -69,7 +69,7 @@ namespace eng {
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
         d.f1 = d.f2 = (float)Input::CurrentTime();
         obj.real_size() = obj.SizeScaled();
-        obj.real_pos() = glm::vec2(src->Position()) + 0.5f - obj.real_size() * 0.5f;
+        obj.real_pos() = src->EffectivePosition() + 0.5f - obj.real_size() * 0.5f;
         d.i2 = src->BasicDamage();
         d.i3 = src->PierceDamage();
 
