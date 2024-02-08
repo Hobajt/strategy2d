@@ -217,12 +217,13 @@ namespace eng {
         return true;
     }
 
-    bool EntranceController::IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID) {
+    bool EntranceController::IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID, bool auto_commands) {
         Building* building;
         if(buildingID.type != ObjectType::BUILDING || !objects.GetBuilding(buildingID, building)) {
             ENG_LOG_WARN("EntranceController::ConstructionExit - building not found.");
             return false;
         }
+        int building_type = building->NumID()[1];
 
         Unit* worker;
         int num_workers = 0;
@@ -235,6 +236,18 @@ namespace eng {
                     ASSERT_MSG(!worker->IsActive(), "EntranceController::ConstructionExit - construction worker cannot be active.");
                     worker->ReinsertObject(respawn_position);
                     worker->ChangeCarryStatus(entries[i].carry_state);
+
+                    //auto issue new command when workers finish construction of specific buildings
+                    if(auto_commands) {
+                        switch(building_type) {
+                            case BuildingType::LUMBER_MILL:
+                                worker->IssueCommand(Command::Harvest(respawn_position));
+                                break;
+                            case BuildingType::OIL_PLATFORM:
+                                IssueEntrance_Work(objects, buildingID, entries[i].enteree, glm::ivec2(buildingID.idx, buildingID.id), worker->CarryStatus());
+                                break;
+                        }
+                    }
                 }
                 else {
                     ENG_LOG_WARN("EntranceController::ConstructionExit - entry located, but worker object not found ({}).", *building);

@@ -125,7 +125,7 @@ void Sandbox::OnInit() {
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 5.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f2, glm::vec2(6.f, 5.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/peon"), f1, glm::vec2(5.f, 6.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), f2, glm::vec2(5.f, 5.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/peasant"), f1, glm::vec2(5.f, 5.f), false);
 
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/troll"), f1, glm::vec2(5.f, 4.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"), f1, glm::vec2(5.f, 3.f), false);
@@ -148,6 +148,7 @@ void Sandbox::OnInit() {
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/foundry"), f1, glm::vec2(14.f, 4.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/oil_refinery"), f1, glm::vec2(14.f, 7.f), true);
 
+        // ObjectID ol = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/oil_platform"), f1, glm::vec2(22.f, 8.f), true);
         ObjectID ol = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/oil"), f_n, glm::vec2(22.f, 8.f), true);
         ObjectID gm = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("misc/gold_mine"), f_n, glm::vec2(7.f, 7.f), true);
         level.objects.GetBuilding(ol).SetAmountLeft(123456);
@@ -158,6 +159,7 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f1, glm::vec2(20.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f1, glm::vec2(18.f, 6.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 0.f), false);
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);

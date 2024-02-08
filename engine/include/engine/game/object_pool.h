@@ -38,7 +38,7 @@ namespace eng {
         std::pair<int,int> IssueExit_Transport(ObjectPool& objects, const ObjectID& transportID);
 
         bool IssueEntrance_Construction(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID);
-        bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID);
+        bool IssueExit_Construction(ObjectPool& objects, const ObjectID& buildingID, bool auto_commands = true);
 
         void GetUnitsInside(const ObjectID& container_unit, std::vector<ObjectID>& out_ids);
 
@@ -76,7 +76,7 @@ namespace eng {
         std::pair<int,int> IssueExit_Transport(const ObjectID& transportID) { return entranceController.IssueExit_Transport(*this, transportID); }
 
         bool IssueEntrance_Construction(const ObjectID& buildingID, const ObjectID& workerID) { return entranceController.IssueEntrance_Construction(*this, buildingID, workerID); }
-        bool IssueExit_Construction(const ObjectID& buildingID) { return entranceController.IssueExit_Construction(*this, buildingID); }
+        bool IssueExit_Construction(const ObjectID& buildingID, bool auto_commands = true) { return entranceController.IssueExit_Construction(*this, buildingID, auto_commands); }
 
         void GetUnitsInsideObject(const ObjectID& container_unit, std::vector<ObjectID>& out_ids) { entranceController.GetUnitsInside(container_unit, out_ids); }
 

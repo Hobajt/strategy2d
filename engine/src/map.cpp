@@ -707,8 +707,8 @@ namespace eng {
         int navType = unit.NavigationType();
 
         //target fix for airborne units
-        glm::ivec2 dm = (navType == NavigationBit::GROUND) ? m : make_even(m);
-        glm::ivec2 dM = (navType == NavigationBit::GROUND) ? M : make_even(M);
+        glm::ivec2 dm = m;
+        glm::ivec2 dM = M;
 
         //fills distance values in the tile data
         glm::ivec2 dst_pos = glm::ivec2(-1);

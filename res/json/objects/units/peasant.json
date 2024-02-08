@@ -43,7 +43,10 @@
             [
                 { "idx": 0, "cmd": 10, "pid": 2, "hotkey": ["f", 6] },
                 { "idx": 1, "cmd": 10, "pid": 1, "hotkey": ["b", 6] },
-                { "idx": 2, "cmd": 10, "pid": 0, "hotkey": ["h", 6] }
+                { "idx": 2, "cmd": 10, "pid": 0, "hotkey": ["h", 6] },
+                { "idx": 3, "cmd": 10, "pid": 3, "hotkey": ["l", 0] },
+                { "idx": 4, "cmd": 10, "pid": 4, "hotkey": ["s", 5] },
+                { "idx": 6, "cmd": 10, "pid": 5, "hotkey": ["t", 0] }
             ],
             [
                 { "idx": 0, "cmd": 10, "pid": 6, "hotkey": ["s", 0] },

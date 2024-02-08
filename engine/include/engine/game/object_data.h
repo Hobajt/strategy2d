@@ -103,8 +103,8 @@ namespace eng {
         using referencesMapping = std::vector<std::pair<std::string, referencesRecord>>;
         using objectReferences = std::array<GameObjectDataRef, MAX_OBJECT_REFS>;
     public:
-        std::string str_id;
-        glm::ivec3  num_id;
+        std::string str_id;         //string identifier  ... format usually smth like "human/town_hall"
+        glm::ivec3  num_id;         //numeric identifier ... format {UNIT|BUILDING|UTILITY, type, race}
         int objectType;
         bool initialized = false;
 
