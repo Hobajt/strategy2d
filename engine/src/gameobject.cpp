@@ -369,7 +369,8 @@ namespace eng {
         if(!IsActive() || !lvl()->map.IsTileVisible(Position()))
             return;
         bool render_centered = (NavigationType() != NavigationBit::GROUND);
-        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, (NavigationType() == NavigationBit::AIR) ? (-1e-3f) : 0.f);
+        float zOffset        = (NavigationType() == NavigationBit::AIR) ? (-1e-3f) : 0.f;
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, zOffset);
     }
 
     bool Unit::Update() {

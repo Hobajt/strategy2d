@@ -536,10 +536,11 @@ namespace eng {
             std::string sprite_path = anim_data.count("sprite_path") ? std::string(anim_data.at("sprite_path")) : unit_name;
             std::string sprite_name = anim_data.count("sprite_name") ? std::string(anim_data.at("sprite_name")) : anim_name;
             
-            float duration = anim_data.at("duration");
-            bool repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : true;
-            float keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 0.f;
-            animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe)) });
+            float duration  = anim_data.at("duration");
+            bool repeat     = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : true;
+            float keyframe  = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 0.f;
+            bool wobble     = anim_data.count("wobble") ? bool(anim_data.at("wobble")) : false;
+            animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_path + "/" + sprite_name), repeat, duration, keyframe, wobble)) });
         }
         data->animData = std::make_shared<AnimatorData>(unit_name, std::move(animations));
     }

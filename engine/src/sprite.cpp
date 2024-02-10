@@ -216,15 +216,15 @@ namespace eng {
 
     //===== SpriteGroup =====
 
-    SpriteGroupData::SpriteGroupData(int id_, const std::string& name_, bool repeat_, float duration_, int frameCount_, int firstFrame_)
-        : id(id_), name(name_), repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_) {}
+    SpriteGroupData::SpriteGroupData(int id_, const std::string& name_, bool repeat_, float duration_, int frameCount_, int firstFrame_, bool wobble_)
+        : id(id_), name(name_), repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_), wobble(wobble_) {}
 
     SpriteGroupData::SpriteGroupData(bool repeat_, float duration_, int frameCount_, int firstFrame_) 
         : repeat(repeat_), duration(duration_), frameCount(frameCount_), firstFrame(firstFrame_) {}
 
-    SpriteGroupData::SpriteGroupData(int id_, const Sprite& sprite_, bool repeat_, float duration_, float keyframe_)
+    SpriteGroupData::SpriteGroupData(int id_, const Sprite& sprite_, bool repeat_, float duration_, float keyframe_, bool wobble_)
         : id(id_), repeat(repeat_), duration(duration_), sprites({sprite_}), name(sprite_.Name()),
-        frameCount(sprite_.AnimFrameCount()), firstFrame(sprite_.FirstFrame()), keyframe(keyframe_) {}
+        frameCount(sprite_.AnimFrameCount()), firstFrame(sprite_.FirstFrame()), keyframe(keyframe_), wobble(wobble_) {}
 
 
     SpriteGroup::SpriteGroup(const Sprite& sprite, int id_) {

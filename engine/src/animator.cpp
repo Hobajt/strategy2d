@@ -1,6 +1,9 @@
 #include "engine/core/animator.h"
 
 #include "engine/core/input.h"
+#include "engine/utils/randomness.h"
+
+#define WOBBLING_OFFSET 5e-3f
 
 namespace eng {
 
@@ -24,7 +27,7 @@ namespace eng {
 
     //===== Animator =====
 
-    Animator::Animator(const AnimatorDataRef& data_, float anim_speed_) : data(data_), anim_speed(anim_speed_) {}
+    Animator::Animator(const AnimatorDataRef& data_, float anim_speed_) : data(data_), anim_speed(anim_speed_), frame(Random::Uniform()) {}
 
     bool Animator::Update(int action) {
         SpriteGroup& graphics = data->GetGraphics(action);
@@ -46,13 +49,15 @@ namespace eng {
     void Animator::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, const glm::uvec4& info) {
         SpriteGroup& graphics = data->GetGraphics(action);
         int frameIdx = graphics.FrameIdx(frame);
-        graphics.RenderAnim(screen_pos, screen_size, info, frameIdx, orientation, paletteIdx);
+        glm::vec3 wobble = (graphics.Wobble() && (frame > graphics.Duration() * 0.5f)) ? glm::vec3(0.f, WOBBLING_OFFSET, 0.f) : glm::vec3(0.f);
+        graphics.RenderAnim(screen_pos + wobble, screen_size, info, frameIdx, orientation, paletteIdx);
     }
 
     void Animator::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, int action, int orientation, float frame, const glm::uvec4& info) {
         SpriteGroup& graphics = data->GetGraphics(action);
         int frameIdx = graphics.FrameIdx(frame);
-        graphics.RenderAnim(screen_pos, screen_size, info, frameIdx, orientation, paletteIdx);
+        glm::vec3 wobble = (graphics.Wobble() && (frame > graphics.Duration() * 0.5f)) ? glm::vec3(0.f, WOBBLING_OFFSET, 0.f) : glm::vec3(0.f);
+        graphics.RenderAnim(screen_pos + wobble, screen_size, info, frameIdx, orientation, paletteIdx);
     }
 
     void Animator::RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::vec4& color, bool noTexture, int action, int orientation, const glm::uvec4& info) {

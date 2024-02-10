@@ -153,11 +153,13 @@ namespace eng {
         int firstFrame = 0;
 
         float keyframe = 1.f;
+
+        bool wobble = false;
     public:
         SpriteGroupData() = default;
-        SpriteGroupData(int id, const std::string& name, bool repeat, float duration, int frameCount, int firstFrame);
+        SpriteGroupData(int id, const std::string& name, bool repeat, float duration, int frameCount, int firstFrame, bool wobble = false);
         SpriteGroupData(bool repeat, float duration, int frameCount, int firstFrame);
-        SpriteGroupData(int id, const Sprite& sprite, bool repeat, float duration, float keyframe = 1.f);
+        SpriteGroupData(int id, const Sprite& sprite, bool repeat, float duration, float keyframe = 1.f, bool wobble = false);
     };
 
     //===== SpriteGroup =====
@@ -180,6 +182,7 @@ namespace eng {
         float Duration() const { return data.duration; }
         int FrameCount() const { return data.frameCount; }
         int FirstFrame() const { return data.firstFrame; }
+        bool Wobble() const { return data.wobble; }
 
         int FrameIdx(float f) const { return int(data.frameCount * (f / data.duration)); }
         float FirstFrameF() const { return data.firstFrame / (float)data.frameCount;}

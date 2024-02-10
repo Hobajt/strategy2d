@@ -5,7 +5,7 @@
         "type": 2,
         "nav_type": 2,
         "animations": {
-            "idle": { "duration": 1.0 },
+            "idle": { "duration": 3.0, "wobble": true },
             "walk": { "duration": 1.0, "sprite_name": "idle" }
         },
         "vision_range": 5,
