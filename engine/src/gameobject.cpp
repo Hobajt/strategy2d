@@ -214,8 +214,10 @@ namespace eng {
     }
 
     glm::vec2 FactionObject::EffectivePosition() const {
-        // return glm::vec2(Position()) + (float(NavigationType() == NavigationBit::WATER) * 0.5f);
-        return glm::vec2(Position()) + (data_f->size * 0.5f - 0.5f);
+        glm::vec2 pos = glm::vec2(Position());
+        if(NavigationType() != NavigationBit::GROUND)
+            pos += (data_f->size * 0.5f - 0.5f);
+        return pos;
     }
 
     void FactionObject::ApplyDirectDamage(const FactionObject& source) {
@@ -368,9 +370,9 @@ namespace eng {
     void Unit::Render() {
         if(!IsActive() || !lvl()->map.IsTileVisible(Position()) || lvl()->map.IsUntouchable(Position(), NavigationType() == NavigationBit::AIR))
             return;
-        bool render_centered = (NavigationType() != NavigationBit::GROUND);
+        bool render_centered = (NavigationType() == NavigationBit::GROUND);
         float zOffset        = (NavigationType() == NavigationBit::AIR) ? (-1e-3f) : 0.f;
-        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, !render_centered, zOffset);
+        RenderAt(glm::vec2(Position()) + move_offset, data->size, data->scale, render_centered, zOffset);
     }
 
     bool Unit::Update() {
@@ -401,7 +403,10 @@ namespace eng {
     }
 
     glm::vec2 Unit::EffectivePosition() const {
-        return glm::vec2(Position()) + (data->size * data->scale * 0.5f - 0.5f);
+        glm::vec2 pos = glm::vec2(Position());
+        if(NavigationType() != NavigationBit::GROUND)
+            pos += (data->size * data->scale * 0.5f - 0.5f);
+        return pos;
     }
 
     bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
@@ -971,7 +976,7 @@ namespace eng {
         UpdateDataPointer(new_data);
 
         live_data.target_pos = target_pos_;
-        live_data.source_pos = src_.EffectivePosition();
+        live_data.source_pos = src_.EffectivePosition(); 
         live_data.targetID = targetID_;
         live_data.sourceID = src_.OID();
 
