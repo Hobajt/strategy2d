@@ -6,7 +6,8 @@
         "nav_type": 2,
         "animations": {
             "idle": { "duration": 3.0, "wobble": true },
-            "walk": { "duration": 1.0, "sprite_name": "idle" }
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "action": { "duration": 2.0, "sprite_name": "attack", "keyframe": 0.5 }
         },
         "vision_range": 5,
         "health": 60,
@@ -29,6 +30,7 @@
             "what": ["ships/hshpwht", 3],
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
-        }
+        },
+        "refs": ["submarine_projectile"]
     }
 ]

@@ -82,6 +82,22 @@
         "followup": "projectile_explosion"
     },
     {
+        "str_id": "submarine_projectile",
+        "name": "submarine projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/submarine_projectile" ],
+        "duration": 0.5,
+        "scale": 1.0,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        },
+        "followup": "explosion_long"
+    },
+    {
         "str_id": "ballista_projectile",
         "name": "ballista projectile",
         "type": 4,
@@ -122,5 +138,15 @@
         "utility_id": 2,
         "animations": [ "misc/effects/projectile_explosion" ],
         "duration": 1.0
+    },
+    {
+        "str_id": "explosion_long",
+        "name": "explosion long",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/explosion_big" ],
+        "duration": 3.0
     }
 ]

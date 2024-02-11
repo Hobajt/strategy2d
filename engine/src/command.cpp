@@ -337,8 +337,13 @@ namespace eng {
 
         // action.data.DBG_Print();
 
+        //forcefully switch action to update actionID in the animator (to use the right action's values to compute keyframe)
+        if(!anim_ended) src.SwitchAnimatorAction(action.logic.type);
+
         //payload delivery check
         if(src.AnimKeyframeSignal() && !delivered) {
+            // src.Anim_DBG_Print();
+            // src.Anim_DBG_Print(action.logic.type);
             delivered = true;
             // ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
 

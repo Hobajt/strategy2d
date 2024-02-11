@@ -40,6 +40,8 @@ namespace eng {
         Animator() = default;
         Animator(const AnimatorDataRef& data, float anim_speed = 1.f);
 
+        void SwitchAction(int action);
+
         //Updates animation switching logic
         bool Update(int action);
 
@@ -61,6 +63,9 @@ namespace eng {
         void SetAnimSpeed(float value) { anim_speed = value; }
 
         bool KeyframeSignal() const;
+        bool KeyframeSignal(int actionIdx) const;
+
+        void DBG_Print(int actionIdx = -1) const;
     private:
         AnimatorDataRef data = nullptr;
         float frame = 0;

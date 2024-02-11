@@ -73,6 +73,8 @@ namespace eng {
 
         float AnimationProgress() const { return animator.GetCurrentFrame(); }
         bool AnimKeyframeSignal() const { return animator.KeyframeSignal(); }
+        bool AnimKeyframeSignal(int actionIdx) const { return animator.KeyframeSignal(actionIdx); }
+        void SwitchAnimatorAction(int actionIdx) { animator.SwitchAction(actionIdx); }
 
         int ID() const { return id; }
         ObjectID OID() const { return oid; }
@@ -82,6 +84,8 @@ namespace eng {
 
         GameObjectDataRef Data() const { return data; }
         int NavigationType() const { return data->navigationType; }
+
+        void Anim_DBG_Print(int actionIdx = -1) const { animator.DBG_Print(actionIdx); }
 
         void DBG_GUI();
         friend std::ostream& operator<<(std::ostream& os, const GameObject& go);

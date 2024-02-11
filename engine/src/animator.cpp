@@ -29,13 +29,17 @@ namespace eng {
 
     Animator::Animator(const AnimatorDataRef& data_, float anim_speed_) : data(data_), anim_speed(anim_speed_), frame(Random::Uniform()) {}
 
+    void Animator::SwitchAction(int action) {
+        if(lastAction != action) {
+            frame = data->GetGraphics(action).FirstFrameF();
+        }
+        lastAction = action;
+    }
+
     bool Animator::Update(int action) {
         SpriteGroup& graphics = data->GetGraphics(action);
 
-        if(lastAction != action) {
-            frame = graphics.FirstFrameF();
-        }
-        lastAction = action;
+        SwitchAction(action);
 
         frame += Input::Get().deltaTime * anim_speed;
         bool res = false;
@@ -81,7 +85,19 @@ namespace eng {
 
     bool Animator::KeyframeSignal() const {
         SpriteGroup& graphics = data->GetGraphics(lastAction);
-        return frame >= graphics.Keyframe() * graphics.Duration();
+        return frame >= (graphics.Keyframe() * graphics.Duration());
+    }
+
+    bool Animator::KeyframeSignal(int actionIdx) const {
+        ASSERT_MSG(((unsigned int)actionIdx < data->ActionCount()), "Animator::KeyframeSignal - actionIdx out of bounds ({}, max {})", actionIdx, data->ActionCount());
+        SpriteGroup& graphics = data->GetGraphics(actionIdx);
+        return frame >= (graphics.Keyframe() * graphics.Duration());
+    }
+
+    void Animator::DBG_Print(int actionIdx) const {
+        if(actionIdx == -1) actionIdx = lastAction;
+        SpriteGroup& graphics = data->GetGraphics(actionIdx);
+        ENG_LOG_INFO("FRAME: {}, DURATION: {}, KEYFRAME: {}, ACTION: {} (LAST: {})", frame, graphics.Duration(), graphics.Keyframe(), actionIdx, actionIdx == lastAction);
     }
 
 }//namespace eng

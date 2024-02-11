@@ -110,7 +110,7 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(9.f, 25.f), false);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/watch_tower"), f2, glm::vec2(6.f, 28.f), true);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/dragon"),   f1, glm::vec2(4.f, 4.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"),   f1, glm::vec2(4.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/dragon"),   f1, glm::vec2(6.f, 4.f), false);
 
         // level.objects.GetUnit(un).IssueCommand(Command::Patrol(glm::ivec2(15, 26)));
@@ -144,7 +144,7 @@ void Sandbox::OnInit() {
         // trollID = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), dummy_faction, glm::vec2(16.f, 3.f), false);
 
         ObjectID ol2 = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/oil_platform"), f2, glm::vec2(20.f, 6.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/shipyard"), f1, glm::vec2(14.f, 1.f), true);
+        ObjectID shipyard = level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/shipyard"), f1, glm::vec2(14.f, 1.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/foundry"), f1, glm::vec2(14.f, 4.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/oil_refinery"), f1, glm::vec2(14.f, 7.f), true);
 
@@ -157,14 +157,16 @@ void Sandbox::OnInit() {
 
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/battleship"), f1, glm::vec2(18.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f1, glm::vec2(18.f, 4.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f1, glm::vec2(18.f, 2.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(20.f, 4.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f1, glm::vec2(20.f, 4.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f1, glm::vec2(18.f, 6.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
         // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 0.f), false);
 
-        ObjectID en = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
+        ObjectID sub = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 2.f), false);
+        ObjectID en  = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
         // level.objects.GetUnit(en).SetInvisible(true);
+        level.objects.GetUnit(sub).IssueCommand(Command::Attack(shipyard, level.objects.GetBuilding(shipyard).Position()));
+
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);
