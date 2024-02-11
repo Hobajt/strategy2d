@@ -676,7 +676,7 @@ namespace eng {
                 //target is regular object
 
                 FactionObject* target;
-                if(!level.objects.GetObject(cmd.target_id, target)) {
+                if(!level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
                     //existence check failed - target no longer exists
                     cmd = Command::Idle();
                     return;

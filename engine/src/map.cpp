@@ -22,6 +22,8 @@ static constexpr int HARVEST_WOOD_HEALTH_TICK = 10;
 
 static constexpr int MIN_OIL_PATCH_DISTANCE = 3;
 
+static constexpr int INVIS_DETECTION_RADIUS = 4;
+
 namespace eng {
 
     Tileset::Data ParseConfig_Tileset(const std::string& config_filepath, int flags);
@@ -668,6 +670,67 @@ namespace eng {
         }
     }
 
+    void Map::UntouchabilityUpdate(const std::vector<int>& faction_bits) {
+        for(int y = 0; y < tiles.Size().y; y++) {
+            for(int x = 0; x < tiles.Size().x; x++) {
+                TileData& td = tiles(y,x);
+                for(int i = 0; i < 2; i++) {
+                    ObjectInfo& info = td.info[i];
+                    info.untouchable = 0;
+
+                    if(info.factionId != -1) {
+                        if(info.invisible)
+                            info.untouchable = faction_bits[info.factionId];
+                        
+                        if(info.num_id[0] == ObjectType::UNIT && info.num_id[1] == UnitType::SUBMARINE) {
+                            info.untouchable = InvisibilityDetection(y, x, faction_bits[info.factionId]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int Map::InvisibilityDetection(int ys, int xs, int untouchable) {
+        int ym = std::max(0, ys - INVIS_DETECTION_RADIUS);
+        int xm = std::max(0, xs - INVIS_DETECTION_RADIUS);
+        int yM = std::min(tiles.Size().y, ys + INVIS_DETECTION_RADIUS);
+        int xM = std::min(tiles.Size().x, xs + INVIS_DETECTION_RADIUS);
+
+        for(int y = ym; y < yM; y++) {
+            for(int x = xm; x < xM; x++) {
+                if(tiles(y,x).info[1].factionId != -1) {
+                    untouchable &= ~(1 << tiles(y,x).info[1].factionId);
+                }
+            }
+        }
+
+        return untouchable;
+    }
+
+    void Map::SetObjectInvisibility(const glm::ivec2& position, bool state, bool airborne) {
+        ASSERT_MSG(IsWithinBounds(position), "Map::SetObjectInvisibility - Invalid position provided ({}, {})", position.x, position.y);
+        ObjectInfo& info = tiles(position).info[int(airborne)];
+        if(info.factionId >= 0) {
+            info.invisible = state;
+        }
+        else {
+            ENG_LOG_ERROR("Map::SetObjectInvisibility - location (({},{}), airborne={}) doesn't contain a valid object.", position.x, position.y, airborne);
+            throw std::runtime_error("");
+        }
+    }
+
+    bool Map::IsUntouchable(const glm::ivec2& position, bool airborne) const {
+        return IsUntouchable(position, airborne, playerFactionId);
+    }
+
+    bool Map::IsUntouchable(const glm::ivec2& position, bool airborne, int factionIdx) const {
+        ASSERT_MSG(IsWithinBounds(position), "Map::IsUntouchable - Invalid position provided ({}, {})", position.x, position.y);
+        const ObjectInfo& info = tiles(position).info[int(airborne)];
+        ASSERT_MSG(ObjectID::IsValid(info.id), "Map::IsUntouchable - location (({},{}), airborne={}) doesn't contain a valid object.", position.x, position.y, airborne);
+        return info.IsUntouchable(factionIdx);
+    }
+
     glm::ivec2 Map::Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos) {
         ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to ({},{}) (unit {})", unit.Position().x, unit.Position().y, target_pos.x, target_pos.y, unit.ID());
 
@@ -1009,7 +1072,7 @@ namespace eng {
         return false;
     }
 
-    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building, int sight) {
+    void Map::AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, const glm::ivec3& num_id, bool is_building, int sight) {
         ENG_LOG_FINE("Map::AddObject - adding at [{},{}], size [{},{}]", pos.x, pos.y, size.x, size.y);
 
         if(size.x == 0 || size.y == 0)
@@ -1026,6 +1089,7 @@ namespace eng {
                 tiles(idx).info[i].id = id;
                 tiles(idx).info[i].factionId = factionId;
                 tiles(idx).info[i].colorIdx = colorIdx;
+                tiles(idx).info[i].num_id = glm::ivec2(num_id);
             }
         }
 
@@ -1046,9 +1110,7 @@ namespace eng {
                 if(tiles(idx).Traversable(navType))
                     ENG_LOG_WARN("Map::RemoveObject - location {} already marked as free (navType={})", idx, navType);
                 tiles(idx).nav.Unclaim(navType, is_building);
-                tiles(idx).info[i].id = ObjectID();
-                tiles(idx).info[i].factionId = -1;
-                tiles(idx).info[i].colorIdx = -1;
+                tiles(idx).info[i] = {};
             }
         }
 
@@ -1060,15 +1122,11 @@ namespace eng {
         tiles(pos_next).nav.Claim(unit_navType, permanently, false);
         
         int i = int(unit_navType == NavigationBit::AIR);
-        tiles(pos_next).info[i].id = tiles(pos_prev).info[i].id;
-        tiles(pos_prev).info[i].id = ObjectID();
+        
+        tiles(pos_next).info[i] = tiles(pos_prev).info[i];
+        tiles(pos_prev).info[i] = ObjectInfo{};
 
-        tiles(pos_next).info[i].factionId = tiles(pos_prev).info[i].factionId;
-        tiles(pos_prev).info[i].factionId = -1;
         int factionId = tiles(pos_next).info[i].factionId;
-
-        tiles(pos_next).info[i].colorIdx = tiles(pos_prev).info[i].colorIdx;
-        tiles(pos_prev).info[i].colorIdx = -1;
 
         if(factionId == playerFactionId) {
             VisibilityUpdate(pos_prev, pos_next, sight);
@@ -1134,8 +1192,31 @@ namespace eng {
     }
 
 
-    ObjectID Map::ObjectIDAt(const glm::ivec2& coords) const {
-        return IsWithinBounds(coords) ? (ObjectID::IsValid(tiles(coords).info[0].id) ? tiles(coords).info[0].id : tiles(coords).info[1].id) : ObjectID();
+    ObjectID Map::ObjectIDAt(glm::ivec2& out_coords) const {
+        bool out_airborne = false;
+        return ObjectIDAt(out_coords, out_airborne);
+        // return IsWithinBounds(coords) ? (ObjectID::IsValid(tiles(coords).info[0].id) ? tiles(coords).info[0].id : tiles(coords).info[1].id) : ObjectID();
+    }
+
+    ObjectID Map::ObjectIDAt(glm::ivec2& out_coords, bool& out_isAirborne) const {
+        out_isAirborne = false;
+        if(!IsWithinBounds(out_coords))
+            return ObjectID();
+        
+        //regular ground unit
+        if(ObjectID::IsValid(tiles(out_coords).info[0].id))
+            return tiles(out_coords).info[0].id;
+        
+        glm::ivec2 orig_coords = out_coords;
+        out_coords = make_even(out_coords);
+        //water check
+        if(tiles(orig_coords).IsEmptyWaterTile() && ObjectID::IsValid(tiles(out_coords).info[0].id)) {
+            return tiles(out_coords).info[0].id;
+        }
+        
+        //airborne check
+        out_isAirborne = true;
+        return tiles(out_coords).info[1].id;
     }
 
     void Map::UndoChanges(std::vector<TileRecord>& history, bool rewrite_history) {
@@ -1302,6 +1383,10 @@ namespace eng {
         ImGui::Separator();
 
         if(ImGui::Button("Coast tiles", btn_size)) mode = 12;
+        ImGui::SameLine();
+        if(ImGui::Button("Untouchable", btn_size)) mode = 13;
+        ImGui::SameLine();
+        if(ImGui::Button("Invisible", btn_size)) mode = 14;
         
 
         ImGui::Checkbox("render_occlusion", &enable_occlusion);
@@ -1448,6 +1533,24 @@ namespace eng {
                         case 12:
                             ImGui::Text("%d", int(tiles(y,x).IsCoastTile()));
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).IsCoastTile() ? clr2 : clr1);
+                            break;
+                        case 13:
+                            ImGui::Text("%d", tiles(y,x).info[0].untouchable);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bool(tiles(y,x).info[0].untouchable) ? clr2 : clr3);
+                            break;
+                        case 14:
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
+                            if(ImGui::BeginTable("table2", 2, ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+                                ImGui::TableNextRow();
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).info[0].invisible);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).info[0].invisible ? clr2 : clr1);
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).info[1].invisible);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).info[1].invisible ? clr2 : clr1);
+                                ImGui::EndTable();
+                            }
+                            ImGui::PopStyleVar();
                             break;
                         default:
                             ImGui::Text("---");

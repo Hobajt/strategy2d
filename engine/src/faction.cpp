@@ -399,7 +399,7 @@ namespace eng {
 
     //===== DiplomacyMatrix =====
 
-    DiplomacyMatrix::DiplomacyMatrix(int factionCount_) : factionCount(factionCount_) {
+    DiplomacyMatrix::DiplomacyMatrix(int factionCount_) : factionCount(factionCount_), relations_bitmap(std::vector<int>(32)) {
         relation = new int[factionCount * factionCount];
         for(int i = 0; i < factionCount * factionCount; i++)
             relation[i] = 0;
@@ -410,6 +410,9 @@ namespace eng {
         for(auto& entry : relations) {
             operator()(entry.x, entry.y) = entry.z;
             operator()(entry.y, entry.x) = entry.z;
+
+            relations_bitmap.at(entry.x) |= (1 << entry.y);
+            relations_bitmap.at(entry.y) |= (1 << entry.x);
         }
     }
 
@@ -587,9 +590,11 @@ namespace eng {
 
     void DiplomacyMatrix::Move(DiplomacyMatrix&& d) noexcept {
         relation = d.relation;
+        relations_bitmap = d.relations_bitmap;
         factionCount = d.factionCount;
         d.factionCount = 0;
         d.relation = nullptr;
+        d.relations_bitmap.clear();
     }
 
     void DiplomacyMatrix::Release() noexcept {

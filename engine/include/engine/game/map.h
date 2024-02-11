@@ -102,6 +102,12 @@ namespace eng {
         ObjectID id = {};                   //id of an object located on this tile (invalid means empty)
         int factionId = -1;
         int colorIdx = -1;
+        glm::ivec2 num_id = glm::ivec2(-1);
+
+        int untouchable = 0;                //bitmap; bit indicates that given faction cannot see or interact with this object
+        bool invisible = false;
+    public:
+        bool IsUntouchable(int factionIdx) const { return (untouchable & (1 << factionIdx)) != 0; }
     };
 
     struct TileVisibility {
@@ -378,6 +384,18 @@ namespace eng {
 
         TilesetRef GetTileset() const { return tileset; }
 
+        //Updates untouchability flags on all tiles.
+        void UntouchabilityUpdate(const std::vector<int>& faction_bits);
+
+        //Scan the area around (y,x) and update the untouchability based on flying units in the area.
+        //Flying unit owned by specific faction flips off corresponding bit in the untouchable bitmap.
+        int InvisibilityDetection(int y, int x, int starting_untouchability);
+
+        void SetObjectInvisibility(const glm::ivec2& position, bool state, bool airborne);
+
+        bool IsUntouchable(const glm::ivec2& position, bool airborne) const;
+        bool IsUntouchable(const glm::ivec2& position, bool airborne, int factionIdx) const;
+
         //Uses pathfinding algs to find the next position for given unit to travel to (in order to reach provided destination).
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
         //Searches for path that moves object to specified distance from given block of tiles (distance < 0 -> use unit's attack range).
@@ -410,7 +428,7 @@ namespace eng {
         //Searches tiles around provided object for gameobjects that belong to enemy factions.
         bool SearchForTarget(const FactionObject& src, const DiplomacyMatrix& diplomacy, int range, ObjectID& out_targetID, glm::ivec2* out_targetPos = nullptr);
 
-        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, bool is_building, int sight);
+        void AddObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, const ObjectID& id, int factionId, int colorIdx, const glm::ivec3& num_id, bool is_building, int sight);
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building, int factionId, int sight);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight);
 
@@ -426,7 +444,8 @@ namespace eng {
 
         const std::vector<TraversableObjectEntry>& TraversableObjects() const { return traversableObjects; }
 
-        ObjectID ObjectIDAt(const glm::ivec2& coords) const;
+        ObjectID ObjectIDAt(glm::ivec2& out_coords) const;
+        ObjectID ObjectIDAt(glm::ivec2& out_coords, bool& out_isAirborne) const;
 
         //==== Methods for editor ====
 
@@ -444,6 +463,8 @@ namespace eng {
 
         //Returns true if any of the tiles in 2x2 area is a coast tile
         bool IsDockingLocation(const glm::ivec2& bot_left) const;
+
+        int PlayerFactionID() const { return playerFactionId; }
 
         void DBG_GUI();
     private:

@@ -185,6 +185,11 @@ namespace eng {
 
         bool AreHostile(int f1, int f2) const;
 
+        //Relations in the form of bitmap.
+        //Index in the list identifies faction A, individual bit positions in the value then identify faction B.
+        //Bit=1 means hostile relationship.
+        const std::vector<int>& Bitmap() const { return relations_bitmap; }
+
         std::vector<glm::ivec3> Export() const;
         
         void DBG_GUI();
@@ -198,6 +203,8 @@ namespace eng {
     private:
         int* relation = nullptr;
         int factionCount = 0;
+
+        std::vector<int> relations_bitmap = std::vector<int>(32);
     };
 
     //===== Factions =====

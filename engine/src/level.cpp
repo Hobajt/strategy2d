@@ -77,6 +77,7 @@ namespace eng {
     }
 
     void Level::Update() {
+        map.UntouchabilityUpdate(factions.Diplomacy().Bitmap());
         factions.Update(*this);
         objects.Update();
     }

@@ -139,7 +139,7 @@ namespace eng {
         UtilityObjsPool utilityObjs;
 
         std::vector<ObjectID::dtype> markedForRemoval;
-        std::vector<UtilityObject> to_spawn;    //objects added from other objects Update() method
+        std::vector<UtilityObject> to_spawn;                //objects added from other objects Update() method
 
         EntranceController entranceController;
     };

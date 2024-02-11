@@ -147,6 +147,8 @@ namespace eng {
         bool CanAttack() const { return data_f->CanAttack(); }
         float Cooldown() const { return data_f->cooldown; }
 
+        virtual bool DetectablyInvisible() const { return false; }
+
         //====== object stats getters - anything Base/Bonus prefix returns partial value (mostly for GUI), the rest returns final stat value ======
 
         int BasicDamage() const { return data_f->basic_damage; }
@@ -245,6 +247,12 @@ namespace eng {
         bool faction_informed = true;
     };
 
+    struct UnitEffects {
+        bool invisibility;      //TODO: technically invis flag here is redundant, as it is stored in the map data
+        bool slow;
+        bool haste;
+    };
+
     //===== Unit =====
 
     class Unit : public FactionObject {
@@ -285,6 +293,8 @@ namespace eng {
         virtual glm::vec2 RenderPosition() const override;
         virtual glm::vec2 RenderSize() const override;
 
+        virtual bool DetectablyInvisible() const override;
+
         bool AnimationFinished() const { return animation_ended; }
 
         UnitDataRef UData() const { return data; }
@@ -316,6 +326,8 @@ namespace eng {
         glm::ivec2 Transport_GetDockingLocation() const;
 
         bool InMotion() const;
+
+        void SetInvisible(bool state);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -336,6 +348,8 @@ namespace eng {
 
         int carry_state = WorkerCarryState::NONE;        //worker load indicator
         float mana = 0;
+
+        UnitEffects effects;
     };
 
     //===== Building =====

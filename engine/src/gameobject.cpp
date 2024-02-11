@@ -319,7 +319,7 @@ namespace eng {
 
     void FactionObject::InnerIntegrate() {
         //register the object with the map
-        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), FactionIdx(), colorIdx, Data()->objectType == ObjectType::BUILDING, VisionRange());
+        lvl()->map.AddObject(NavigationType(), Position(), glm::ivec2(Data()->size), OID(), FactionIdx(), colorIdx, NumID(), Data()->objectType == ObjectType::BUILDING, VisionRange());
     }
 
     void FactionObject::RemoveFromMap() {
@@ -366,7 +366,7 @@ namespace eng {
     Unit::~Unit() {}
 
     void Unit::Render() {
-        if(!IsActive() || !lvl()->map.IsTileVisible(Position()))
+        if(!IsActive() || !lvl()->map.IsTileVisible(Position()) || lvl()->map.IsUntouchable(Position(), NavigationType() == NavigationBit::AIR))
             return;
         bool render_centered = (NavigationType() != NavigationBit::GROUND);
         float zOffset        = (NavigationType() == NavigationBit::AIR) ? (-1e-3f) : 0.f;
@@ -450,6 +450,10 @@ namespace eng {
         return glm::vec2(data->size) * data->scale;
     }
 
+    bool Unit::DetectablyInvisible() const {
+        return (NumID()[1] == UnitType::SUBMARINE) && !effects.invisibility;
+    }
+
     void Unit::ChangeCarryStatus(int new_state) {
         if(IsWorker()) {
             ASSERT_MSG(new_state == WorkerCarryState::NONE || carry_state == WorkerCarryState::NONE, "Unit::ChangeCarryStatus - resource override, worker is already carrying something.");
@@ -503,6 +507,11 @@ namespace eng {
 
     bool Unit::InMotion() const {
         return command.Type() == CommandType::MOVE;
+    }
+
+    void Unit::SetInvisible(bool state) {
+        effects.invisibility = state;
+        lvl()->map.SetObjectInvisibility(Position(), state, NavigationType() == NavigationBit::AIR);
     }
 
     void Unit::Inner_DBG_GUI() {

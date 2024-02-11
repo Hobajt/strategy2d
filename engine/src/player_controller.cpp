@@ -1055,7 +1055,7 @@ namespace eng {
                         coords = make_even(coords);
                     const TileData& td = level.map(coords);
 
-                    if(!td.IsVisible() || !ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id))
+                    if(!td.IsVisible() || !ObjectID::IsObject(td.info[i].id) || !ObjectID::IsValid(td.info[i].id) || td.info[i].IsUntouchable(playerFactionID))
                         continue;
                     
                     //under which category does current object belong; reset object counting when more important category is picked
@@ -1239,9 +1239,10 @@ namespace eng {
         return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
-    bool PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar) {
+    bool PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id_, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar) {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
+        ObjectID target_id = target_id_;
 
         //targeted commands can only be issued on player owned units (player buildings have no targeted commands)
         if(selection_type != SelectionType::PLAYER_UNIT)
@@ -1305,6 +1306,12 @@ namespace eng {
             if(ObjectID::IsObject(target_id)) {
                 level.objects.GetObject(target_id, target);
                 target_friendly = !level.factions.Diplomacy().AreHostile(target->FactionIdx(), level.factions.Player()->ID());
+
+                if(level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
+                    target = nullptr;
+                    target_friendly = false;
+                    target_id = ObjectID();
+                }
             }
             
             //resolve command type & check command preconditions
@@ -1392,15 +1399,22 @@ namespace eng {
         return true;
     }
 
-    void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id) {
+    void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id_) {
         //adaptive commands can only be issued on player owned units
         if(selection_type != SelectionType::PLAYER_UNIT)
             return;
+        ObjectID target_id = target_id_;
         ENG_LOG_FINE("Adaptive command - pos: ({}, {}), ID: {}", target_pos.x, target_pos.y, target_id);
 
         FactionObject* target_object = nullptr;
-        if(ObjectID::IsObject(target_id))
+        if(ObjectID::IsObject(target_id)) {
             level.objects.GetObject(target_id, target_object);
+            if(level.map.IsUntouchable(target_object->Position(), target_object->NavigationType() == NavigationBit::AIR)) {
+                target_object = nullptr;
+                target_id = ObjectID();
+            }
+        }
+
         bool harvestable = ObjectID::IsHarvestable(target_id);
         bool attackable = ObjectID::IsAttackable(target_id);
         bool enemy = (target_object == nullptr || level.factions.Diplomacy().AreHostile(target_object->FactionIdx(), level.factions.Player()->ID()));
@@ -1721,9 +1735,9 @@ namespace eng {
                         color = rgba(0,0,0,255);
                         break;
                     case 3:     //explored & no fog
-                        if(ObjectID::IsObject(td.info[1].id))
+                        if(ObjectID::IsObject(td.info[1].id) && !td.info[1].IsUntouchable(map.PlayerFactionID()))
                             color = factionColors[td.info[1].colorIdx % colorCount];
-                        else if(ObjectID::IsObject(td.info[0].id))
+                        else if(ObjectID::IsObject(td.info[0].id) && !td.info[0].IsUntouchable(map.PlayerFactionID()))
                             color = factionColors[td.info[0].colorIdx % colorCount];
                         else
                             color = tileColors[td.tileType];
@@ -1959,9 +1973,11 @@ namespace eng {
         Camera& camera = Camera::Get();
         Input& input = Input::Get();
 
-        glm::vec2 hover_coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        ObjectID hover_id = level.map.ObjectIDAt(hover_coords);
-        bool hovering_over_object = ObjectID::IsValid(hover_id) && !ObjectID::IsHarvestable(hover_id);
+        //hovering over an object decisionmaking
+        bool hover_airborne = false;
+        glm::ivec2 hover_coords = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        ObjectID hover_id = level.map.ObjectIDAt(hover_coords, hover_airborne);
+        bool hovering_over_object = ObjectID::IsValid(hover_id) && !ObjectID::IsHarvestable(hover_id) && !level.map.IsUntouchable(hover_coords, hover_airborne);
 
         glm::vec2 pos = input.mousePos_n;
         bool cursor_in_game_view = CursorInGameView(pos);
@@ -2003,7 +2019,7 @@ namespace eng {
                     }
                     else if (input.rmb.down()) {
                         //issue adaptive command to current selection (target coords from game view click)
-                        glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+                        glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                         ObjectID target_id = level.map.ObjectIDAt(target_pos);
                         selection.IssueAdaptiveCommand(level, target_pos, target_id);
                     }
@@ -2059,7 +2075,7 @@ namespace eng {
                     else if(cursor_in_game_view) {
                         if(input.lmb.down()) {
                             //issue the command & go back to idle state
-                            glm::vec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+                            glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
                             ObjectID target_id = level.map.ObjectIDAt(target_pos);
                             if(selection.IssueTargetedCommand(level, target_pos, target_id, command_data, msg_bar)) {
                                 BackToIdle();
