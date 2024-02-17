@@ -400,7 +400,9 @@ namespace eng {
     }
 
     glm::vec2 Unit::PositionCentered() const {
-        return glm::vec2(Position()) + (data->size * data->scale * 0.5f);
+        //apply scale only for non grounded units, since those are rendered centered
+        float scale_modifier = (NavigationType() == NavigationBit::GROUND) ? 1.f : data->scale;
+        return glm::vec2(Position()) + (data->size * scale_modifier * 0.5f);
     }
 
     bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {

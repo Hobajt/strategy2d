@@ -1239,7 +1239,7 @@ namespace eng {
         return 1*int(id.type == ObjectType::UNIT) + 2*int(factionID == playerFactionID);
     }
 
-    bool PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id_, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar) {
+    bool PlayerSelection::IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const glm::ivec2& target_pos_sharpened, const ObjectID& target_id_, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar) {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
         ObjectID target_id = target_id_;
@@ -1332,9 +1332,9 @@ namespace eng {
                     cmd_name = cmd_names[3];
                     break;
                 case GUI::ActionButton_CommandType::ATTACK:
-                    if(!ObjectID::IsAttackable(target_id) || !level.map.IsWithinBounds(target_pos))
+                    if(!ObjectID::IsAttackable(target_id) || !level.map.IsWithinBounds(target_pos_sharpened))
                         valid_target = false;
-                    cmd = Command::Attack(target_id, target_pos);
+                    cmd = Command::Attack(target_id, target_pos_sharpened);
                     cmd_name = cmd_names[4];
                     break;
                 case GUI::ActionButton_CommandType::ATTACK_GROUND:
@@ -1399,7 +1399,7 @@ namespace eng {
         return true;
     }
 
-    void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const ObjectID& target_id_) {
+    void PlayerSelection::IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const glm::ivec2& target_pos_sharpened, const ObjectID& target_id_) {
         //adaptive commands can only be issued on player owned units
         if(selection_type != SelectionType::PLAYER_UNIT)
             return;
@@ -1440,7 +1440,7 @@ namespace eng {
             }
             else if(attackable && enemy) {
                 ENG_LOG_FINE("Adaptive command - Unit[{}] - Attack", i);
-                unit.IssueCommand(Command::Attack(target_id, target_pos));
+                unit.IssueCommand(Command::Attack(target_id, target_pos_sharpened));
             }
             else if(transport && !enemy) {
                 ENG_LOG_FINE("Adaptive command - Unit[{}] - Enter transport", i);
@@ -2020,8 +2020,9 @@ namespace eng {
                     else if (input.rmb.down()) {
                         //issue adaptive command to current selection (target coords from game view click)
                         glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-                        ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                        selection.IssueAdaptiveCommand(level, target_pos, target_id);
+                        glm::ivec2 target_pos_sharpened  = target_pos;
+                        ObjectID target_id = level.map.ObjectIDAt(target_pos_sharpened);
+                        selection.IssueAdaptiveCommand(level, target_pos, target_pos_sharpened, target_id);
                     }
                 }
                 else if(cursor_in_map_view) {
@@ -2032,8 +2033,9 @@ namespace eng {
                     else if (input.rmb.down()) {
                         //issue adaptive command to current selection (target coords from map click)
                         glm::ivec2 target_pos = MapView2MapCoords(input.mousePos_n, level.map.Size());
-                        ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                        selection.IssueAdaptiveCommand(level, target_pos, target_id);
+                        glm::ivec2 target_pos_sharpened  = target_pos;
+                        ObjectID target_id = level.map.ObjectIDAt(target_pos_sharpened);
+                        selection.IssueAdaptiveCommand(level, target_pos, target_pos_sharpened, target_id);
                     }
                 }
                 else {
@@ -2076,8 +2078,9 @@ namespace eng {
                         if(input.lmb.down()) {
                             //issue the command & go back to idle state
                             glm::ivec2 target_pos = glm::ivec2(camera.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-                            ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                            if(selection.IssueTargetedCommand(level, target_pos, target_id, command_data, msg_bar)) {
+                            glm::ivec2 target_pos_sharpened  = target_pos;
+                            ObjectID target_id = level.map.ObjectIDAt(target_pos_sharpened);
+                            if(selection.IssueTargetedCommand(level, target_pos, target_pos_sharpened, target_id, command_data, msg_bar)) {
                                 BackToIdle();
                             }
                         }
@@ -2101,8 +2104,9 @@ namespace eng {
                         if(input.lmb.down()) {
                             //issue the command
                             glm::ivec2 target_pos = MapView2MapCoords(input.mousePos_n, level.map.Size());
-                            ObjectID target_id = level.map.ObjectIDAt(target_pos);
-                            if(selection.IssueTargetedCommand(level, target_pos, target_id, command_data, msg_bar)) {
+                            glm::ivec2 target_pos_sharpened  = target_pos;
+                            ObjectID target_id = level.map.ObjectIDAt(target_pos_sharpened);
+                            if(selection.IssueTargetedCommand(level, target_pos, target_pos_sharpened, target_id, command_data, msg_bar)) {
                                 BackToIdle();
                             }
                         }

@@ -726,6 +726,7 @@ namespace eng {
                 //within range -> iniate new attack action
                 glm::ivec2 itarget_pos = glm::ivec2(target_pos);
                 bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
+                // ENG_LOG_INFO("TP: ({}, {}), MIN: ({}, {}), {}", target_pos.x, target_pos.y, pos_min.x, pos_min.y, leftover);
                 action = Action::Attack(cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
             }
         }
