@@ -543,7 +543,7 @@ namespace eng {
     }
 
     void Unit::ManaIncrement() {
-        if(IsCaster()) {
+        if(IsCaster() || NumID()[1] == UnitType::KNIGHT) {
             mana += Input::Get().deltaTime * UNIT_MANA_REGEN_SPEED;
             if(mana > 255.f)
                 mana = 255.f;

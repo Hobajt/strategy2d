@@ -221,7 +221,6 @@ namespace eng {
 
     void Parse_FactionObjectData(const nlohmann::json& config, FactionObjectData& data) {
         data.health         = config.at("health");
-        data.mana           = config.at("mana");
 
         //construction related fields
         data.build_time     = config.count("build_time") ? int(config.at("build_time")) : 0;

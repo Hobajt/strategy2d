@@ -287,6 +287,7 @@ namespace eng {
         int UnitLevel() const { return Tech().UnitLevel(NumID()[1], IsOrc()); }
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
+        float ManaPercentage() const { return mana / 255.f; }
         
         float MoveSpeed_Real() const { return data->speed * 0.1f; }
 

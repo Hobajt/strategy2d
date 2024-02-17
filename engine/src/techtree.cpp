@@ -144,7 +144,7 @@ namespace eng {
         }
         else if(btn.payload_id == UnitType::KNIGHT && data[race].research[ResearchType::PALA_UPGRADE]) {
             btn.payload_id  = UnitType::PALADIN;
-            btn.icon        = glm::ivec2(btn.icon.x + 2, btn.icon.y);
+            btn.icon        = glm::ivec2(int(isOrc), 1);
             btn.has_hotkey  = true;
             if(isOrc) {
                 btn.name        = "ogre-mage";

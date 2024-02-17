@@ -134,7 +134,6 @@ namespace eng {
 
     struct FactionObjectData : public GameObjectData {
         int health;
-        int mana;
 
         int build_time;
         int upgrade_time;

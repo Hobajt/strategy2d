@@ -155,7 +155,7 @@ namespace eng {
                         if(unit->IsCaster()) {
                             stats[5]->Setup("Magic:");
                             snprintf(buf, sizeof(buf), "%d", unit->Mana());
-                            mana_bar->Setup(unit->Mana(), buf);
+                            mana_bar->Setup(unit->ManaPercentage(), buf);
                         }
                     }
                 }
@@ -249,14 +249,23 @@ namespace eng {
                 if(transport_load == 0)
                     health->Setup(std::string(buf));
 
-                if(!object->IsUnit() && progress_bar_flag) {
-                    Building* building = static_cast<Building*>(object);
-                    if(building->ProgressableAction()) {
-                        production_bar->SetValue(building->ActionProgress());
+                if(!object->IsUnit()) {
+                    if(progress_bar_flag) {
+                        Building* building = static_cast<Building*>(object);
+                        if(building->ProgressableAction()) {
+                            production_bar->SetValue(building->ActionProgress());
+                        }
+                        else {
+                            //refresh the entire gui if the action is finished
+                            Update(level, selection);
+                        }
                     }
-                    else {
-                        //refresh the entire gui if the action is finished
-                        Update(level, selection);
+                }
+                else {
+                    Unit* unit = static_cast<Unit*>(object);
+                    if(unit->IsCaster()) {
+                        snprintf(buf, sizeof(buf), "%d", unit->Mana());
+                        mana_bar->Setup(unit->ManaPercentage(), buf);
                     }
                 }
             }
@@ -332,6 +341,7 @@ namespace eng {
             bool all_water_units = true;
             bool all_transports = true;
             bool transport_has_load = false;
+            bool all_casters = true;
             int att_upgrade_src = UnitUpgradeSource::NONE;
             int def_upgrade_src = UnitUpgradeSource::NONE;
             FactionControllerRef faction = nullptr;
@@ -347,6 +357,7 @@ namespace eng {
                 can_attack_ground   |= unit.IsSiege();
                 all_transports      &= unit.IsTransport();
                 transport_has_load  |= !unit.Transport_IsEmpty();
+                all_casters         &= unit.IsCaster() && (unit.AttackUpgradeSource() == UnitUpgradeSource::CASTER);
 
                 if(i == 0) {
                     att_upgrade_src = unit.AttackUpgradeSource();
@@ -366,7 +377,7 @@ namespace eng {
             //add default unit commands for unit selection
             p[0] = ActionButtonDescription::Move(isOrc, all_water_units);
             p[1] = ActionButtonDescription::Stop(isOrc, def_upgrade_src, faction->UnitUpgradeTier(false, def_upgrade_src, isOrc));
-            if(!all_transports) {
+            if(!all_transports && !all_casters) {
                 p[3] = ActionButtonDescription::Patrol(isOrc, all_water_units);
                 p[4] = ActionButtonDescription::StandGround(isOrc);
             }
