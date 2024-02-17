@@ -32,7 +32,7 @@
             "ready": "orc/oready",
             "attack": "misc/catapult"
         },
-        "refs": ["ballista_projectile"]
+        "projectile": "ballista_projectile"
     },
     {
         "str_id": "orc/catapult",
@@ -67,6 +67,6 @@
             "ready": "orc/oready",
             "attack": "misc/catapult"
         },
-        "refs": ["catapult_projectile"]
+        "projectile": "catapult_projectile"
     }
 ]

@@ -95,6 +95,25 @@ void Sandbox::OnInit() {
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(21.f, 16.f), true);
         level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f1, glm::vec2(24.f, 16.f), true);
 
+        Techtree& t = level.factions.Player()->Tech();
+        for(int i = ResearchType::PALA_UPGRADE; i < ResearchType::COUNT; i++) {
+            t.IncrementResearch(i, false);
+            t.IncrementResearch(i, true);
+        }
+        t.RecalculateBoth();
+
+        ObjectID id_mg = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/mage"), f1, glm::vec2(20.f, 27.f), false);
+        ObjectID id_dk = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f1, glm::vec2(20.f, 23.f), false);
+        ObjectID id_pl = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/paladin"), f1, glm::vec2(20.f, 26.f), false);
+        ObjectID id_om = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/ogre_magi"), f1, glm::vec2(20.f, 24.f), false);
+
+        level.objects.GetUnit(id_mg).Mana(255);
+        level.objects.GetUnit(id_dk).Mana(255);
+        level.objects.GetUnit(id_pl).Mana(255);
+        level.objects.GetUnit(id_om).Mana(255);
+
+        
+
 
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/gnomish_inventor"), f1, glm::vec2(21.f, 22.f), true);

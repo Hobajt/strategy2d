@@ -32,7 +32,17 @@
             "pissed": ["wizard/wzpissd", 3],
             "ready": "wizard/wzready"
         },
-        "refs": ["lightning"]
+        "projectile": "lightning",
+        "buttons": [
+            [
+                { "idx": 3, "cmd": 6, "pid": 16, "hotkey": ["f", 0] },
+                { "idx": 4, "cmd": 6, "pid": 2, "hotkey": ["o", 0] },
+                { "idx": 5, "cmd": 6, "pid": 3, "hotkey": ["l", 0] },
+                { "idx": 6, "cmd": 6, "pid": 4, "hotkey": ["i", 0] },
+                { "idx": 7, "cmd": 6, "pid": 5, "hotkey": ["p", 0] },
+                { "idx": 8, "cmd": 6, "pid": 6, "hotkey": ["b", 0] }
+            ]
+        ]
     },
     {
         "str_id": "orc/death_knight",
@@ -68,6 +78,16 @@
             "pissed": ["deathknt/dkpissd", 3],
             "ready": "deathknt/dkready"
         },
-        "refs": ["ToD"]
+        "projectile": "ToD",
+        "buttons": [
+            [
+                { "idx": 3, "cmd": 6, "pid": 17, "hotkey": ["c", 0] },
+                { "idx": 4, "cmd": 6, "pid": 9, "hotkey": ["h", 0] },
+                { "idx": 5, "cmd": 6, "pid": 10, "hotkey": ["r", 0] },
+                { "idx": 6, "cmd": 6, "pid": 11, "hotkey": ["w", 0] },
+                { "idx": 7, "cmd": 6, "pid": 12, "hotkey": ["u", 0] },
+                { "idx": 8, "cmd": 6, "pid": 13, "hotkey": ["d", 0] }
+            ]
+        ]
     }
 ]

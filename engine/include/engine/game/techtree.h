@@ -11,12 +11,28 @@ namespace eng {
 
     struct ObjectID;
 
+
+
     namespace ResearchType {
         enum {
             MELEE_ATTACK, MELEE_DEFENSE, NAVAL_ATTACK, NAVAL_DEFENSE, RANGED_ATTACK, SIEGE_ATTACK,
             LM_RANGER_UPGRADE, LM_SIGHT, LM_RANGE, LM_UNIQUE,
             PALA_UPGRADE, PALA_HEAL, PALA_EXORCISM,
             MAGE_SLOW, MAGE_SHIELD, MAGE_INVIS, MAGE_POLY, MAGE_BLIZZARD,
+            COUNT
+        };
+
+        //NOTE: dependency when updating this enum -> SpellID depends on the fact, that last N entries are all spells -> Techtree::SetupSpellButton
+    }
+
+    namespace SpellID {
+        enum {
+            //research required
+            HEAL, EXORCISM, SLOW, FLAME_SHIELD, INVISIBILITY, POLYMORPH, BLIZZARD, 
+            BLOODLUST, RUNES, HASTE, RAISE_DEAD, TORNADO, UNHOLY_ARMOR, DEATH_AND_DECAY,
+
+            //researchless
+            HOLY_VISION, EYE, FIREBALL, DEATH_COIL,
             COUNT
         };
     }

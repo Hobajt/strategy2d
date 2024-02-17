@@ -30,7 +30,7 @@
             "pissed": ["elves/epissed", 3],
             "ready": "elves/eready"
         },
-        "refs": ["arrow"]
+        "projectile": "arrow"
     },
     {
         "str_id": "human/ranger",
@@ -63,7 +63,7 @@
             "pissed": ["elves/epissed", 3],
             "ready": "elves/eready"
         },
-        "refs": ["arrow"]
+        "projectile": "arrow"
     },
     {
         "str_id": "orc/troll",
@@ -97,7 +97,7 @@
             "ready": "troll/trready",
             "attack": "misc/axe"
         },
-        "refs": ["axe"]
+        "projectile": "axe"
     },
     {
         "str_id": "orc/berserker",
@@ -131,6 +131,6 @@
             "ready": "troll/trready",
             "attack": "misc/axe"
         },
-        "refs": ["axe"]
+        "projectile": "axe"
     }
 ]

@@ -31,6 +31,6 @@
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
         },
-        "refs": ["submarine_projectile"]
+        "projectile": "submarine_projectile"
     }
 ]

@@ -30,6 +30,6 @@
             "ready": "dragon/drready",
             "what": "dragon/drwhat"
         },
-        "refs": ["arrow"]
+        "projectile": "arrow"
     }
 ]

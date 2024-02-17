@@ -1276,7 +1276,7 @@ namespace eng {
                         msg_bar.DisplayMessage("You cannot cast that");
                         return false;
                     }
-                    cmd = Command::Cast(payload_id);
+                    cmd = Command::Cast(payload_id, target_id, target_pos);
                     cmd_name = cmd_names[0];
                     break;
                 case GUI::ActionButton_CommandType::BUILD:

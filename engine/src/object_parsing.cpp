@@ -15,6 +15,7 @@ namespace eng {
         //defined in resources.cpp
         GameObjectDataRef LinkObject(const std::string& name);
         GameObjectDataRef LinkObject(const glm::ivec3& num_id, bool initialized_only);
+        UtilityObjectDataRef LinkSpell(int spellID, bool initialized_only);
     }
 
     //=======
@@ -97,19 +98,38 @@ namespace eng {
         for(auto& page : data->gui_btns.pages) {
             for(auto& [idx, btn] : page) {
                 if(btn.price == GUI::ActionButtonDescription::MissingVisuals()) {
+                    switch(btn.command_id) {
+                        case GUI::ActionButton_CommandType::RESEARCH:
+                            //only temporary values for research buttons
+                            btn.name = "research btn";
+                            btn.price = glm::ivec4(0,0,0,btn.payload_id);
+                            btn.icon = glm::ivec2(3,18);
+                            break;
+                        case GUI::ActionButton_CommandType::CAST:
+                        {
+                            UtilityObjectDataRef obj = Resources::LinkSpell(btn.payload_id, true);
+                            btn.name    = obj->name;
+                            SetupActionButtonText(btn, obj->name);
+                            btn.price   = obj->cost;
+                            btn.icon    = obj->icon;
+                            break;
+                        }
+                        default:
+                        {
+                            int id = ObjectTypeFromCommandID(btn.command_id);
+                            GameObjectDataRef obj = Resources::LinkObject(glm::ivec3(id, btn.payload_id, data->race), true);
+                            btn.name    = obj->name;
+                            SetupActionButtonText(btn, obj->name);
+                            btn.price   = obj->cost;
+                            btn.icon    = obj->icon;
+                            break;
+                        }
+
+                    }
                     if(btn.command_id != GUI::ActionButton_CommandType::RESEARCH) {
-                        int id = ObjectTypeFromCommandID(btn.command_id);
-                        GameObjectDataRef obj = Resources::LinkObject(glm::ivec3(id, btn.payload_id, data->race), true);
-                        btn.name    = obj->name;
-                        SetupActionButtonText(btn, obj->name);
-                        btn.price   = obj->cost;
-                        btn.icon    = obj->icon;
                     }
                     else {
-                        //only temporary values for research buttons
-                        btn.name = "research btn";
-                        btn.price = glm::ivec4(0,0,0,btn.payload_id);
-                        btn.icon = glm::ivec2(3,18);
+                        
                     }
                 }
             }
@@ -246,15 +266,12 @@ namespace eng {
         }
 
         //table of references to other object prefabs
-        if(config.count("refs")) {
-            auto& refs_json = config.at("refs");
-            size_t count = std::min(data.refs.size(), refs_json.size());
-            for(size_t i = 0; i < count; i++) {
-                data.refs[i] = Resources::LinkObject(refs_json.at(i));
-            }
-
-            if(refs_json.size() > data.refs.size()) {
-                ENG_LOG_WARN("Parse_FactionObjectData - too many references to other objects (some will be discarded).");
+        data.projectile = nullptr;
+        if(config.count("projectile")) {
+            std::string name = std::string(config.at("projectile"));
+            data.projectile = std::dynamic_pointer_cast<UtilityObjectData>(Resources::LinkObject(name));
+            if(data.projectile == nullptr) {
+                ENG_LOG_WARN("Failed to link projectile '{}' (unit '{}')", name, data.name);
             }
         }
 

@@ -11,8 +11,6 @@
 #include <vector>
 #include <array>
 
-#define MAX_OBJECT_REFS 6
-
 namespace eng {
 
     namespace BuildingType {
@@ -99,9 +97,6 @@ namespace eng {
     using GameObjectDataRef = std::shared_ptr<GameObjectData>;
 
     struct GameObjectData {
-        using referencesRecord = std::pair<std::array<std::string, MAX_OBJECT_REFS>, int>;
-        using referencesMapping = std::vector<std::pair<std::string, referencesRecord>>;
-        using objectReferences = std::array<GameObjectDataRef, MAX_OBJECT_REFS>;
     public:
         std::string str_id;         //string identifier  ... format usually smth like "human/town_hall"
         glm::ivec3  num_id;         //numeric identifier ... format {UNIT|BUILDING|UTILITY, type, race}
@@ -132,6 +127,9 @@ namespace eng {
 
     //===== FactionObjectData =====
 
+    struct UtilityObjectData;
+    using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
+
     struct FactionObjectData : public GameObjectData {
         int health;
 
@@ -151,7 +149,7 @@ namespace eng {
 
         bool invulnerable;
 
-        objectReferences refs;
+        UtilityObjectDataRef projectile = nullptr;
         ButtonDescriptions gui_btns;
 
         SoundEffect sound_yes;
@@ -208,7 +206,7 @@ namespace eng {
     //===== UtilityObjectData =====
 
     namespace UtilityObjectType {
-        enum { INVALID = -1, PROJECTILE, CORPSE, VISUALS, COUNT };
+        enum { INVALID = -1, PROJECTILE, CORPSE, VISUALS, SPELL, COUNT };
     }
 
     class UtilityObject;

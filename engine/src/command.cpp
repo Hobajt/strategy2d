@@ -6,6 +6,7 @@
 #include "engine/game/config.h"
 
 #include "engine/game/player_controller.h"
+#include "engine/game/resources.h"
 
 namespace eng {
 
@@ -97,6 +98,8 @@ namespace eng {
     */ 
 
     void CommandHandler_Attack(Unit& src, Level& level, Command& cmd, Action& action);
+
+    void CommandHandler_Cast(Unit& src, Level& level, Command& cmd, Action& action);
 
     /* HARVEST COMMAND DESCRIPTION:
         - auto-cancels for non worker units
@@ -386,7 +389,7 @@ namespace eng {
                     ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
                     //use payload_id to get the prefab from Unit's data
 
-                    UtilityObjectDataRef obj = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(payload_id));
+                    UtilityObjectDataRef obj = (payload_id == ActionPayloadType::RANGED_ATTACK) ? src.FetchProjectileRef() : Resources::LoadSpell(payload_id-2);
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
                         glm::vec2 target_pos = glm::vec2(action.data.target_pos) + (action.data.k * 0.5f);
@@ -484,9 +487,16 @@ namespace eng {
         return cmd;
     }
 
-    Command Command::Cast(int payload_id) {
-        //TODO:
-        return Idle();
+    Command Command::Cast(int payload_id, const ObjectID& target_id, const glm::ivec2& target_pos) {
+        Command cmd = {};
+
+        cmd.type = CommandType::CAST;
+        cmd.handler = CommandHandler_Cast;
+        cmd.target_id = target_id;
+        cmd.target_pos = target_pos;
+        cmd.flag = payload_id;
+
+        return cmd;
     }
 
     Command Command::EnterTransport(const ObjectID& target_id) {
@@ -597,6 +607,9 @@ namespace eng {
             break;
         case CommandType::ATTACK:
             snprintf(buf, sizeof(buf), "Command: Attack %s", target_id.to_string().c_str());
+            break;
+        case CommandType::CAST:
+            snprintf(buf, sizeof(buf), "Command: Cast (spell: %d, target: %s/(%d, %d))", flag, target_id.to_string().c_str(), target_pos.x, target_pos.y);
             break;
         case CommandType::HARVEST_WOOD:
             snprintf(buf, sizeof(buf), "Command: Harvest wood at (%d, %d)", target_pos.x, target_pos.y);
@@ -730,6 +743,23 @@ namespace eng {
                 action = Action::Attack(cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
             }
         }
+    }
+
+    void CommandHandler_Cast(Unit& src, Level& level, Command& cmd, Action& action) {
+        //TODO:
+        cmd = Command::Idle();
+
+        //get caster within the casting range
+        //  - different spells have different casting ranges (fireball, slow = 10tiles, flame shield = 6tiles, ...)
+        //  - either make a hardcoded lookup table, add some spell description struct (json) or maybe store as part of utility object
+
+        //when range is OK, do some other sanity checks (enough mana for example)
+
+        //then perform an action and terminate the command (add Action::Cast() method)
+        //  - no utility object management is done in the command code itself
+
+        //payload_id+2 -> because first 0,1 mean ranged attack and repair in the Action::Action handler
+        // action = Action::Cast(payload_id + 2, cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
     }
 
     void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action) {
@@ -1339,7 +1369,7 @@ namespace eng {
             //target still valid (or found new one)
             if(engaged) {
                 //spawn a projectile
-                UtilityObjectDataRef projectile_data = std::dynamic_pointer_cast<UtilityObjectData>(src.FetchRef(ActionPayloadType::RANGED_ATTACK));
+                UtilityObjectDataRef projectile_data = src.FetchProjectileRef();
                 if(projectile_data != nullptr) {
                     level.objects.EmplaceUtilityObj(level, projectile_data, target->Position(), targetID, src);
                     ENG_LOG_TRACE("BuildingAttack - Projectile spawned (target = {}).", *target);

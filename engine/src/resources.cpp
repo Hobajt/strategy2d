@@ -35,6 +35,7 @@ namespace eng::Resources {
         std::unordered_map<std::string, GameObjectDataRef> objects;
         std::array<std::array<BuildingDataRef, 2>, BuildingType::COUNT> buildings;
         std::array<std::array<UnitDataRef, 2>, UnitType::COUNT> units;
+        std::array<UtilityObjectDataRef, SpellID::COUNT> spells;
         std::vector<UtilityObjectDataRef> utilities;
 
         std::array<ResearchVisuals, ResearchType::COUNT> research_viz;
@@ -65,6 +66,7 @@ namespace eng::Resources {
 
     GameObjectDataRef LinkObject(const std::string& name);
     GameObjectDataRef LinkObject(const glm::ivec3& num_id, bool initialized_only);
+    UtilityObjectDataRef LinkSpell(int spellID, bool initialized_only);
 
     //============
 
@@ -331,6 +333,26 @@ namespace eng::Resources {
         return obj;
     }
 
+    UtilityObjectDataRef LinkSpell(int spellID, bool initialized_only) {
+        if(!data.linkable) {
+            ENG_LOG_ERROR("Resources::LinkObject - index needs to be processed before linking is allowed!");
+            throw std::runtime_error("");
+        }
+
+        if((unsigned int)(spellID) >= data.spells.size()) {
+            ENG_LOG_ERROR("Resources::LinkObject - spell - invalid ID (id = {}, max legit value = {})!", spellID, data.spells.size());
+            throw std::runtime_error("");
+        }
+        UtilityObjectDataRef obj = data.spells[spellID];
+
+        if(obj == nullptr || (initialized_only && !obj->initialized)) {
+            ENG_LOG_ERROR("Resources::LinkObject - attempting to link object that is not yet initialized (spell - {}))", spellID);
+            throw std::runtime_error("");
+        }
+
+        return obj;
+    }
+
     GameObjectDataRef LoadObject(const glm::ivec3& num_id) {
         switch(num_id[0]) {
             case ObjectType::BUILDING:
@@ -355,6 +377,18 @@ namespace eng::Resources {
             throw std::runtime_error("");
         }
         return data.utilities[num_id];
+    }
+
+    UtilityObjectDataRef LoadSpell(int num_id) {
+        if(!data.preloaded) {
+            ENG_LOG_ERROR("Resources::LoadSpell - objects need to be preloaded!");
+            throw std::runtime_error("");
+        }
+        if((unsigned int)(num_id) >= data.spells.size()) {
+            ENG_LOG_ERROR("Resources::LoadSpell - invalid ID (id = {}, max legit value = {})!", num_id, data.spells.size());
+            throw std::runtime_error("");
+        }
+        return data.spells[num_id];
     }
 
     BuildingDataRef LoadBuilding(int num_id, bool isOrc) {
@@ -456,11 +490,7 @@ namespace eng::Resources {
     }
     
     void PreloadObjects() {
-        using json = nlohmann::json;
-
-        GameObjectData::referencesMapping referenceMapping;
         Timer t = {};
-
         t.Reset();
 
         //load & process index file
@@ -522,6 +552,22 @@ namespace eng::Resources {
         }
 
         i = 0;
+        for(const std::string& entry : config.at("spells")) {
+            if(i >= data.spells.size()) {
+                ENG_LOG_ERROR("Resources::ProcessIndexFile - invalid spell count.");
+                throw std::runtime_error("");
+            }
+            if(data.objects.count(entry)) {
+                ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry);
+                throw std::runtime_error("");
+            }
+            data.spells[i] = std::make_shared<UtilityObjectData>();
+            data.spells[i]->SetupID(entry, glm::ivec3(ObjectType::UTILITY, i, 0));
+            data.objects.insert({ entry, data.spells[i] });
+            i++;
+        }
+
+        i = 0;
         for(auto& entry : config.at("utility")) {
             if(data.objects.count(entry)) {
                 ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry);
@@ -540,6 +586,15 @@ namespace eng::Resources {
         using json = nlohmann::json;
 
         json config = json::parse(ReadFile("res/json/utility.json"));
+        for(auto& entry : config) {
+            std::string str_id = entry.at("str_id");
+            if(!data.objects.count(str_id))
+                data.objects.insert({ str_id, GameObjectData_ParseNew(entry) });
+            else
+                GameObjectData_ParseExisting(entry, data.objects.at(str_id));
+        }
+
+        config = json::parse(ReadFile("res/json/spells.json"));
         for(auto& entry : config) {
             std::string str_id = entry.at("str_id");
             if(!data.objects.count(str_id))

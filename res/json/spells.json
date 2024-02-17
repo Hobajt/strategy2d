@@ -1,0 +1,182 @@
+[
+    {
+        "str_id": "heal",
+        "name": "heal",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,6],
+        "icon": [7,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "exorcism",
+        "name": "exorcism",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,4],
+        "icon": [0,11],
+        "utility_id": 3
+    },
+    {
+        "str_id": "slow",
+        "name": "slow",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,50],
+        "icon": [4,9],
+        "utility_id": 3
+    },
+    {
+        "str_id": "flame_shield",
+        "name": "flame shield",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,80],
+        "icon": [0,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "invisibility",
+        "name": "invisibility",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,200],
+        "icon": [5,9],
+        "utility_id": 3
+    },
+    {
+        "str_id": "polymorph",
+        "name": "polymorph",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,200],
+        "icon": [5,11],
+        "utility_id": 3
+    },
+    {
+        "str_id": "blizzard",
+        "name": "blizzard",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,25],
+        "icon": [5,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "bloodlust",
+        "name": "bloodlust",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,50],
+        "icon": [2,11],
+        "utility_id": 3
+    },
+    {
+        "str_id": "runes",
+        "name": "runes",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,200],
+        "icon": [7,9],
+        "utility_id": 3
+    },
+    {
+        "str_id": "haste",
+        "name": "haste",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,50],
+        "icon": [6,9],
+        "utility_id": 3
+    },
+    {
+        "str_id": "raise_dead",
+        "name": "raise dead",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,50],
+        "icon": [4,11],
+        "utility_id": 3
+    },
+    {
+        "str_id": "tornado",
+        "name": "whirlwind",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,100],
+        "icon": [4,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "unholy_armor",
+        "name": "unholy armor",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,100],
+        "icon": [8,9],
+        "utility_id": 3
+    },
+    {
+        "str_id": "death_and_decay",
+        "name": "death and decay",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,25],
+        "icon": [3,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "holy_vision",
+        "name": "holy vision",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,70],
+        "icon": [6,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "eye",
+        "name": "eye of killrog",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,70],
+        "icon": [1,11],
+        "utility_id": 3
+    },
+    {
+        "str_id": "fireball",
+        "name": "fireball",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,100],
+        "icon": [1,10],
+        "utility_id": 3
+    },
+    {
+        "str_id": "death_coil",
+        "name": "death coil",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,100],
+        "icon": [8,10],
+        "utility_id": 3
+    }
+]

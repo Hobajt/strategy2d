@@ -83,7 +83,7 @@ namespace eng {
 
     typedef void(*CommandHandler)(Unit& source, Level& level, Command& cmd, Action& action);
 
-    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, ENTER_TRANSPORT, TRANSPORT_UNLOAD, COUNT }; }
+    namespace CommandType { enum { IDLE = 0, MOVE, ATTACK, CAST, STAND_GROUND, PATROL, HARVEST_WOOD, GATHER_RESOURCES, RETURN_GOODS, BUILD, REPAIR, ENTER_TRANSPORT, TRANSPORT_UNLOAD, COUNT }; }
 
     //Describes a more complex work, that Unit objects are tasked with.
     class Command {
@@ -91,6 +91,7 @@ namespace eng {
         friend void CommandHandler_StandGround(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Move(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Attack(Unit& source, Level& level, Command& cmd, Action& action);
+        friend void CommandHandler_Cast(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Patrol(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Harvest(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_Gather(Unit& source, Level& level, Command& cmd, Action& action);
@@ -109,7 +110,7 @@ namespace eng {
         static Command AttackGround(const glm::ivec2& target_pos);
         static Command StandGround();
         static Command Patrol(const glm::ivec2& target_pos);
-        static Command Cast(int payload_id);
+        static Command Cast(int payload_id, const ObjectID& target_id, const glm::ivec2& target_pos);
 
         static Command EnterTransport(const ObjectID& target_id);
         static Command TransportUnload();

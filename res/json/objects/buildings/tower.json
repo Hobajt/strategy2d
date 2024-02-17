@@ -40,7 +40,7 @@
         "pierce_damage": 12,
         "race": 0,
         "attack_speed": 2.0,
-        "refs": ["arrow"]
+        "projectile": "arrow"
     },
     {
         "str_id": "human/cannon_tower",
@@ -60,7 +60,7 @@
         "pierce_damage": 20,
         "race": 0,
         "attack_speed": 2.0,
-        "refs": ["cannon_ball"]
+        "projectile": "cannon_ball"
     },
     {
         "str_id": "orc/scout_tower",
@@ -102,7 +102,7 @@
         "pierce_damage": 12,
         "race": 1,
         "attack_speed": 2.0,
-        "refs": ["arrow"]
+        "projectile": "arrow"
     },
     {
         "str_id": "orc/cannon_tower",
@@ -122,6 +122,6 @@
         "pierce_damage": 20,
         "race": 1,
         "attack_speed": 2.0,
-        "refs": ["cannon_ball"]
+        "projectile": "cannon_ball"
     }
 ]

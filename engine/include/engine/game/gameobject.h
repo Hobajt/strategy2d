@@ -221,7 +221,7 @@ namespace eng {
         void ReinsertObject();
         void ReinsertObject(const glm::ivec2& position);
 
-        GameObjectDataRef FetchRef(int idx) const { return data_f->refs[idx]; }
+        UtilityObjectDataRef FetchProjectileRef() const { return data_f->projectile; }
 
         SoundEffect& Sound_Yes() const { return data_f->sound_yes; }
     protected:
@@ -287,6 +287,7 @@ namespace eng {
         int UnitLevel() const { return Tech().UnitLevel(NumID()[1], IsOrc()); }
         bool IsCaster() const { return data->caster; }
         int Mana() const { return int(mana); }
+        void Mana(int value) { mana = value; }
         float ManaPercentage() const { return mana / 255.f; }
         
         float MoveSpeed_Real() const { return data->speed * 0.1f; }

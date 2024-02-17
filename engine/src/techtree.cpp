@@ -8,6 +8,7 @@
 //represents column count in the icons spritesheet
 #define ICON_MAX_X 10
 #define MARKSMANSHIP_BOOST 3
+#define SPELL_RESEARCH_OFFSET 11
 
 namespace eng {
 
@@ -72,6 +73,7 @@ namespace eng {
         glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //destroyer
         glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //battleship
         glm::ivec3{ TechtreeAttackBonusType::NAVAL,     TechtreeArmorBonusType::NAVAL,  TechtreeLevelCounter::NAVAL },     //submarine
+        glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //transport
         glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //roflcopter
         glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::NONE },      //demosquad
         glm::ivec3{ TechtreeAttackBonusType::NONE,      TechtreeArmorBonusType::NONE,   TechtreeLevelCounter::MAGE },      //mage
@@ -163,10 +165,11 @@ namespace eng {
 
     bool Techtree::SetupSpellButton(GUI::ActionButtonDescription& btn, bool isOrc) const {
         ASSERT_MSG(btn.command_id == GUI::ActionButton_CommandType::CAST, "Techtree::ButtonSetup - invalid command type detected ({})", btn.command_id);
-        // ASSERT_MSG(((unsigned)btn.payload_id) < ((unsigned)ResearchType::COUNT), "Techtree::ButtonSetup - invalid research type.");
-        // btn.payload_id
-        //TODO: 
-        return true;
+        
+        if(btn.payload_id <= SpellID::DEATH_AND_DECAY)
+            return (data[btn.payload_id / SpellID::BLOODLUST].research[SPELL_RESEARCH_OFFSET + (btn.payload_id % SpellID::BLOODLUST)] > 0);
+        else
+            return true;
     }
 
     bool Techtree::ResearchDependenciesMet(int research_type, bool isOrc) const {

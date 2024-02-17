@@ -66,7 +66,14 @@
             "pissed": ["paladin/pkpissd", 3],
             "ready": "paladin/pkready",
             "attack": ["misc/sword", 3]
-        }
+        },
+        "buttons": [
+            [
+                { "idx": 6, "cmd": 6, "pid": 14, "hotkey": ["v", 0] },
+                { "idx": 7, "cmd": 6, "pid": 0, "hotkey": ["h", 0] },
+                { "idx": 8, "cmd": 6, "pid": 1, "hotkey": ["e", 0] }
+            ]
+        ]
     },
     {
         "str_id": "orc/ogre",
@@ -135,6 +142,13 @@
             "pissed": ["ogremage/ompissd", 3],
             "ready": "ogremage/omready",
             "attack": "misc/punch"
-        }
+        },
+        "buttons": [
+            [
+                { "idx": 6, "cmd": 6, "pid": 15, "hotkey": ["e", 0] },
+                { "idx": 7, "cmd": 6, "pid": 7, "hotkey": ["b", 0] },
+                { "idx": 8, "cmd": 6, "pid": 8, "hotkey": ["r", 0] }
+            ]
+        ]
     }
 ]

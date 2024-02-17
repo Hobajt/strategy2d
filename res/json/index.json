@@ -42,6 +42,11 @@
         ["human/keep", "orc/stronghold"],
         ["human/castle", "orc/fortress"]
     ],
+    "spells": [
+        "heal","exorcism","slow","flame_shield","invisibility","polymorph","blizzard",
+        "bloodlust","runes","haste","raise_dead","tornado","unholy_armor","death_and_decay",
+        "holy_vision","eye","fireball","death_coil"
+    ],
     "utility": [],
     "other": [
         { "name": "misc/gold_mine", "id": [101, 0]},

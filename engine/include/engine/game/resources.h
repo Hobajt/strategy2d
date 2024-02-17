@@ -63,6 +63,7 @@ namespace eng::Resources {
     //lookup in the index
     GameObjectDataRef LoadObject(const glm::ivec3& num_id);
     UtilityObjectDataRef LoadUtilityObj(int num_id);
+    UtilityObjectDataRef LoadSpell(int num_id);
     BuildingDataRef LoadBuilding(int num_id, bool isOrc);
     UnitDataRef LoadUnit(int num_id, bool isOrc);
 

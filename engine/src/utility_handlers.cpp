@@ -42,8 +42,11 @@ namespace eng {
             case UtilityObjectType::VISUALS:
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
                 break;
+            case UtilityObjectType::SPELL:
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                break;
             default:
-                ENG_LOG_ERROR("UtilityObject - invalid utility type ID ({})", id);
+                ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid utility type ID ({})", id);
                 throw std::runtime_error("");
         }
     }

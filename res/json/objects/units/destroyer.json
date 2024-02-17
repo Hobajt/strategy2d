@@ -31,6 +31,6 @@
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
         },
-        "refs": ["fiery_cannon_ball"]
+        "projectile": "fiery_cannon_ball"
     }
 ]
