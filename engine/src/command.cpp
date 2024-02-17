@@ -676,7 +676,7 @@ namespace eng {
         if(res != ACTION_INPROGRESS) {
 
             //target existence check & value retrieval
-            glm::vec2 pos_min, pos_max;
+            glm::vec2 pos_min, pos_max, target_pos;
             if(cmd.target_id.type != ObjectType::MAP_OBJECT) {
                 //target is regular object
 
@@ -689,6 +689,7 @@ namespace eng {
 
                 pos_min = target->MinPos();
                 pos_max = target->MaxPos();
+                target_pos = target->PositionCentered();
             }
             else {
                 //target is an attackable map object (wall)
@@ -703,6 +704,7 @@ namespace eng {
                 }
 
                 pos_min = pos_max = glm::vec2(cmd.target_pos);
+                target_pos = (pos_max + pos_min) * 0.5f;
             }
 
             //range check & action issuing
@@ -722,9 +724,8 @@ namespace eng {
             }
             else {
                 //within range -> iniate new attack action
-                glm::vec2 target_pos = (pos_max + pos_min) * 0.5f;
                 glm::ivec2 itarget_pos = glm::ivec2(target_pos);
-                bool leftover = (itarget_pos.x + itarget_pos.y) > 0.9f;
+                bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
                 action = Action::Attack(cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
             }
         }

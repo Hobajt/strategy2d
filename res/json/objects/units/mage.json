@@ -1,0 +1,70 @@
+[
+    {
+        "str_id": "human/mage",
+        "name": "mage",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 9,
+        "speed": 8,
+        "health": 60,
+        "mana": 1,
+        "build_time": 120,
+        "cost": [1200,0,0],
+        "attack_range": 2,
+        "armor": 4,
+        "basic_damage": 0,
+        "pierce_damage": 9,
+        "cooldown": 1.0,
+        "race": 0,
+        "death_sound": 1,
+        "icon": [4,1],
+        "upgrade_src": [0,0],
+        "sounds": {
+            "yes": ["wizard/wzyessr", 3],
+            "what": ["wizard/wzwhat", 3],
+            "pissed": ["wizard/wzpissd", 3],
+            "ready": "wizard/wzready"
+        },
+        "refs": ["lightning"]
+    },
+    {
+        "str_id": "orc/death_knight",
+        "name": "death knight",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 9,
+        "speed": 8,
+        "health": 60,
+        "mana": 1,
+        "build_time": 120,
+        "cost": [1200,0,0],
+        "attack_range": 3,
+        "armor": 4,
+        "basic_damage": 0,
+        "pierce_damage": 9,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 2,
+        "icon": [5,1],
+        "upgrade_src": [0,0],
+        "sounds": {
+            "yes": ["deathknt/dkyessr", 3],
+            "what": ["deathknt/dkwhat", 2],
+            "pissed": ["deathknt/dkpissd", 3],
+            "ready": "deathknt/dkready"
+        },
+        "refs": ["ToD"]
+    }
+]

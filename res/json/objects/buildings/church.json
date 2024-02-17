@@ -1,0 +1,54 @@
+[
+    {
+        "str_id": "human/church",
+        "name": "Church",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,4],
+        "vision_range": 3,
+        "health": 700,
+        "mana": 0,
+        "build_time": 175,
+        "cost": [900,500,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 11 },
+                { "idx": 1, "cmd": 12, "pid": 12 },
+                { "idx": 0, "cmd": 12, "pid": 10 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/hchant" }
+    },
+    {
+        "str_id": "orc/altar",
+        "name": "Altar of Storms",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,4],
+        "vision_range": 3,
+        "health": 700,
+        "mana": 0,
+        "build_time": 175,
+        "cost": [900,500,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 12, "pid": 11 },
+                { "idx": 1, "cmd": 12, "pid": 12 },
+                { "idx": 0, "cmd": 12, "pid": 10 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/ochant" }
+    }
+]

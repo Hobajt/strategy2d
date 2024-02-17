@@ -146,7 +146,7 @@ namespace eng {
         int GetRange(const glm::ivec2& min_pos, const glm::ivec2& max_pos) const;
 
         //Accounting for upscaled visuals (ie. ships take 2x2 tiles).
-        virtual glm::vec2 EffectivePosition() const;
+        virtual glm::vec2 PositionCentered() const;
 
         bool CanAttack() const { return data_f->CanAttack(); }
         float Cooldown() const { return data_f->cooldown; }
@@ -279,7 +279,7 @@ namespace eng {
 
         virtual int ActionIdx() const override;
 
-        virtual glm::vec2 EffectivePosition() const override;
+        virtual glm::vec2 PositionCentered() const override;
 
         bool UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
 

@@ -53,7 +53,7 @@ namespace eng {
     void UtilityHandler_Default_Render(UtilityObject& obj) {
         if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
             return;
-        obj.RenderAt(obj.real_pos(), obj.real_size(), Z_OFFSET);
+        obj.RenderAt(obj.real_pos() - obj.real_size() * 0.5f, obj.real_size(), Z_OFFSET);
     }
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src) {
@@ -69,7 +69,7 @@ namespace eng {
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
         d.f1 = d.f2 = (float)Input::CurrentTime();
         obj.real_size() = obj.SizeScaled();
-        obj.real_pos() = src->EffectivePosition() + 0.5f - obj.real_size() * 0.5f;
+        obj.real_pos() = src->PositionCentered();
         d.i2 = src->BasicDamage();
         d.i3 = src->PierceDamage();
 
@@ -87,7 +87,7 @@ namespace eng {
         float t = (d.f2 - d.f1) / obj.UData()->duration;
 
         //adding sizes cuz rendering uses Quad::FromCorner
-        obj.real_pos() = d.InterpolatePosition(t) + 0.5f - obj.real_size() * 0.5f;
+        obj.real_pos() = d.InterpolatePosition(t);
         if(t >= 1.f) {
             //damage application from the projectile
             if(obj.UData()->Projectile_IsAutoGuided())

@@ -213,11 +213,8 @@ namespace eng {
         return get_range(MinPos(), MaxPos(), min_pos, max_pos);
     }
 
-    glm::vec2 FactionObject::EffectivePosition() const {
-        glm::vec2 pos = glm::vec2(Position());
-        if(NavigationType() != NavigationBit::GROUND)
-            pos += (data_f->size * 0.5f - 0.5f);
-        return pos;
+    glm::vec2 FactionObject::PositionCentered() const {
+        return glm::vec2(Position()) + (data_f->size * 0.5f);
     }
 
     void FactionObject::ApplyDirectDamage(const FactionObject& source) {
@@ -402,11 +399,8 @@ namespace eng {
         return idx;
     }
 
-    glm::vec2 Unit::EffectivePosition() const {
-        glm::vec2 pos = glm::vec2(Position());
-        if(NavigationType() != NavigationBit::GROUND)
-            pos += (data->size * data->scale * 0.5f - 0.5f);
-        return pos;
+    glm::vec2 Unit::PositionCentered() const {
+        return glm::vec2(Position()) + (data->size * data->scale * 0.5f);
     }
 
     bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
@@ -940,7 +934,7 @@ namespace eng {
     //===== UtilityObject =====
 
     glm::vec2 UtilityObject::LiveData::InterpolatePosition(float f) {
-        return glm::vec2(source_pos) + f * glm::vec2(target_pos - source_pos);
+        return source_pos + f * (target_pos - source_pos);
     }
 
     UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
@@ -976,7 +970,7 @@ namespace eng {
         UpdateDataPointer(new_data);
 
         live_data.target_pos = target_pos_;
-        live_data.source_pos = src_.EffectivePosition(); 
+        live_data.source_pos = src_.PositionCentered(); 
         live_data.targetID = targetID_;
         live_data.sourceID = src_.OID();
 

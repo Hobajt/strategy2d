@@ -33,7 +33,7 @@
         ["human/gnomish_inventor", "orc/inventor"],
         ["human/stables", "orc/ogre_mound"],
         ["human/church", "orc/altar"],
-        ["human/wizard_tower", "orc/temple"],
+        ["human/mage_tower", "orc/temple"],
         ["human/aviary", "orc/dragon_roost"],
 
         ["human/guard_tower", "orc/guard_tower"],

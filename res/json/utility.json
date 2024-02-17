@@ -148,5 +148,54 @@
         "utility_id": 2,
         "animations": [ "misc/effects/explosion_big" ],
         "duration": 3.0
+    },
+    {
+        "str_id": "lightning",
+        "name": "lightning",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/lightning_projectile" ],
+        "duration": 0.4,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/firehit"
+        },
+        "followup": "lightning_explosion"
+    },
+    {
+        "str_id": "lightning_explosion",
+        "name": "lightning explosion",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/lightning_explosion" ],
+        "duration": 1.0
+    },
+    {
+        "str_id": "ToD",
+        "name": "touch of darkness",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/death_coil_projectile" ],
+        "duration": 0.4,
+        "sounds": {
+            "on_spawn": "spells/touchdrk"
+        },
+        "followup": "death_coil_explosion"
+    },
+    {
+        "str_id": "death_coil_explosion",
+        "name": "death coil explosion",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/death_coil_explosion" ],
+        "duration": 1.0
     }
 ]

@@ -1,0 +1,60 @@
+[
+    {
+        "str_id": "human/mage_tower",
+        "name": "mage tower",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,4],
+        "vision_range": 3,
+        "health": 500,
+        "mana": 0,
+        "build_time": 125,
+        "cost": [1000,200,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 0,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 14, "hotkey": ["m", 0] },
+                { "idx": 1, "cmd": 12, "pid": 13 },
+                { "idx": 2, "cmd": 12, "pid": 14 },
+                { "idx": 3, "cmd": 12, "pid": 15 },
+                { "idx": 4, "cmd": 12, "pid": 16 },
+                { "idx": 5, "cmd": 12, "pid": 17 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/wzrdtowr" }
+    },
+    {
+        "str_id": "orc/temple",
+        "name": "temple of damned",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [6,4],
+        "vision_range": 3,
+        "health": 500,
+        "mana": 0,
+        "build_time": 125,
+        "cost": [1000,200,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 14, "hotkey": ["m", 0] },
+                { "idx": 1, "cmd": 12, "pid": 13 },
+                { "idx": 2, "cmd": 12, "pid": 14 },
+                { "idx": 3, "cmd": 12, "pid": 15 },
+                { "idx": 4, "cmd": 12, "pid": 16 },
+                { "idx": 5, "cmd": 12, "pid": 17 }
+            ]
+        ],
+        "sounds": { "yes": "bldg/dthtower" }
+    }
+]

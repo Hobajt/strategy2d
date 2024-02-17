@@ -82,10 +82,22 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"),   f1, glm::vec2(3.f, 5.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/ballista"), f1, glm::vec2(3.f, 4.f), false);
 
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(27.f, 22.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/gnomish_inventor"), f1, glm::vec2(21.f, 22.f), true);
-        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/barracks"), f1, glm::vec2(21.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/church"), f1, glm::vec2(27.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/barracks"), f1, glm::vec2(24.f, 25.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/mage_tower"), f1, glm::vec2(21.f, 25.f), true);
+
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/altar"), f1, glm::vec2(27.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/barracks"), f1, glm::vec2(24.f, 22.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/temple"), f1, glm::vec2(21.f, 22.f), true);
+
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/blacksmith"), f1, glm::vec2(21.f, 19.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(24.f, 19.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/stables"), f1, glm::vec2(21.f, 16.f), true);
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/ogre_mound"), f1, glm::vec2(24.f, 16.f), true);
+
+
+        // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
+        // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/gnomish_inventor"), f1, glm::vec2(21.f, 22.f), true);
 
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/blacksmith"), f1, glm::vec2(27.f, 25.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("orc/lumber_mill"), f1, glm::vec2(24.f, 25.f), true);
@@ -165,7 +177,7 @@ void Sandbox::OnInit() {
         ObjectID sub = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 2.f), false);
         ObjectID en  = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
         // level.objects.GetUnit(en).SetInvisible(true);
-        level.objects.GetUnit(sub).IssueCommand(Command::Attack(shipyard, level.objects.GetBuilding(shipyard).Position()));
+        // level.objects.GetUnit(sub).IssueCommand(Command::Attack(shipyard, level.objects.GetBuilding(shipyard).Position()));
 
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
