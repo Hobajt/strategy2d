@@ -112,9 +112,6 @@ void Sandbox::OnInit() {
         level.objects.GetUnit(id_pl).Mana(255);
         level.objects.GetUnit(id_om).Mana(255);
 
-        
-
-
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/lumber_mill"), f1, glm::vec2(24.f, 22.f), true);
         // level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/gnomish_inventor"), f1, glm::vec2(21.f, 22.f), true);
 

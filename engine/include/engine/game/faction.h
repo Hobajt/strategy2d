@@ -136,6 +136,7 @@ namespace eng {
         bool UpgradePreconditionsMet(int building_type) const;
         bool AdvancedStructures_ButtonCheck(GUI::ActionButtonDescription& btn) const;
 
+        //Check for both the spell availability and price, returns true if both acceptable.
         bool CastConditionCheck(const Unit& src, int payload_id) const;
 
         Techtree& Tech() { return techtree; }

@@ -43,6 +43,7 @@ namespace eng {
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
                 break;
             case UtilityObjectType::SPELL:
+                //TODO: gonna have to further distinguish among the various spells
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
                 break;
             default:

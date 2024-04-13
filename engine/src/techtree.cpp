@@ -17,6 +17,50 @@ namespace eng {
         return glm::ivec2(x % ICON_MAX_X, icon.y + (x / ICON_MAX_X));
     }
 
+    namespace SpellID {
+
+        static std::array<int, SpellID::COUNT> spell_price = {};
+
+        static std::array<bool, SpellID::COUNT> is_targeted = {
+            true, true, true, true, true, true, false,
+            true, false, true, false, false, true, false,
+            false, false, false, true
+        };
+
+        static std::array<int, SpellID::COUNT> casting_range = {
+            6,10,10,6,6,10,12,
+            6,10,6,6,12,6,12,
+            9999,9999,10,10
+        };
+
+        std::pair<int,int> SpellID::TechtreeInfo(int spellID) {
+            int race = spellID / SpellID::BLOODLUST;
+            int researchType = SPELL_RESEARCH_OFFSET + (spellID % SpellID::BLOODLUST);
+            return { race, researchType };
+        }
+
+        bool IsResearchless(int spellID) {
+            return spellID >= SpellID::HOLY_VISION;
+        }
+
+        int Price(int spellID) {
+            return spell_price.at(spellID);
+        }
+
+        void SetPrice(int spellID, int price) {
+            spell_price.at(spellID) = price;
+        }
+
+        bool RequiresTarget(int spellID) {
+            return is_targeted.at(spellID);
+        }
+
+        int CastingRange(int spellID) {
+            return casting_range[spellID];
+        }
+
+    }//namespace SpellID
+
     //===== TechtreeData =====
 
     void TechtreeData::RecomputeUnitLevels() {
@@ -166,8 +210,10 @@ namespace eng {
     bool Techtree::SetupSpellButton(GUI::ActionButtonDescription& btn, bool isOrc) const {
         ASSERT_MSG(btn.command_id == GUI::ActionButton_CommandType::CAST, "Techtree::ButtonSetup - invalid command type detected ({})", btn.command_id);
         
+        auto[race, research] = SpellID::TechtreeInfo(btn.payload_id);
+
         if(btn.payload_id <= SpellID::DEATH_AND_DECAY)
-            return (data[btn.payload_id / SpellID::BLOODLUST].research[SPELL_RESEARCH_OFFSET + (btn.payload_id % SpellID::BLOODLUST)] > 0);
+            return (data[race].research[research] > 0);
         else
             return true;
     }
@@ -197,6 +243,11 @@ namespace eng {
 
     bool Techtree::BuildingConstrained(int building_type) const {
         return building_limits[building_type];
+    }
+
+    bool Techtree::CastConditionCheck(int spellID, int unitMana) const {
+        auto [race, research] = SpellID::TechtreeInfo(spellID);
+        return (SpellID::IsResearchless(spellID) || data[race].research[research] > 0) && unitMana >= SpellID::Price(spellID);
     }
 
     bool Techtree::ApplyUnitUpgrade(int& unit_type, bool isOrc) const {

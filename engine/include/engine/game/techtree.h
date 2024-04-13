@@ -35,6 +35,17 @@ namespace eng {
             HOLY_VISION, EYE, FIREBALL, DEATH_COIL,
             COUNT
         };
+
+        //converts spellID to race and ResearchType.
+        std::pair<int,int> TechtreeInfo(int spellID);
+        bool IsResearchless(int spellID);
+
+        int Price(int spellID);
+        void SetPrice(int spellID, int price);
+
+        bool RequiresTarget(int spellID);
+
+        int CastingRange(int spellID);
     }
 
     namespace TechtreeLevelCounter { enum { NONE, MELEE, NAVAL, SIEGE, RANGED, PALA, MAGE, COUNT }; }
@@ -101,6 +112,8 @@ namespace eng {
         bool TrainingConstrained(int unit_type) const;
         bool BuildingConstrained(int building_type) const;
 
+        bool CastConditionCheck(int spellID, int unitMana) const;
+
         //Changes provided unit_type if the upgarde was researched.
         bool ApplyUnitUpgrade(int& unit_type, bool isOrc) const;
 
@@ -132,7 +145,7 @@ namespace eng {
         void DBG_GUI();
         void EditableGUI();
     private:
-        TechtreeData data[2];
+        std::array<TechtreeData, 2> data;
         std::array<uint8_t, ResearchType::COUNT> research_limits;
         std::array<bool, BuildingType::COUNT> building_limits;
         std::array<bool, UnitType::COUNT> unit_limits;

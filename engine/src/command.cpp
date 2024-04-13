@@ -203,6 +203,21 @@ namespace eng {
         return action;
     }
 
+    Action Action::Cast(int spellID, const ObjectID& target_id, const glm::ivec2& target_pos, const glm::ivec2& target_dir, bool add_tile_offset) {
+        Action action = {};
+
+        action.logic = Action::Logic(ActionType::ACTION, ActionAction_Update, ActionAction_Signal);
+        action.data.Reset();
+        action.data.target = target_id;
+        action.data.target_pos = target_pos;
+
+        action.data.i = VectorOrientation(glm::vec2(target_dir) / glm::length(glm::vec2(target_dir)));  //animation orientation
+        action.data.j = spellID + 2;        //adding 2, because 0,1 mean ranged attack and repair in the Action::Action handler
+        action.data.k = int(add_tile_offset);
+
+        return action;
+    }
+
     Action Action::Harvest(const glm::ivec2& target_pos, const glm::ivec2& target_dir) {
         Action action = {};
 
@@ -746,20 +761,70 @@ namespace eng {
     }
 
     void CommandHandler_Cast(Unit& src, Level& level, Command& cmd, Action& action) {
-        //TODO:
+        int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS)
+            return;
+
+        int spellID = cmd.flag;
+
+        //techtree and resources check
+        if(!src.Faction()->CastConditionCheck(src, spellID)) {
+            ENG_LOG_TRACE("Command::Cast - resource check failed.");
+            cmd = Command::Idle();
+            return;
+        }
+
+        //target verification & retrieval
+        glm::vec2 pos_min, pos_max, target_pos;
+        if(SpellID::RequiresTarget(spellID)) {
+            FactionObject* target;
+            //spells with target requirement only work on units
+            if((cmd.target_id.type != ObjectType::UNIT)|| !level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
+                //existence check failed - target no longer exists
+                cmd = Command::Idle();
+                return;
+            }
+
+            pos_min = target->MinPos();
+            pos_max = target->MaxPos();
+            target_pos = target->PositionCentered();
+        }
+        else {
+            target_pos = pos_min = pos_max = glm::vec2(cmd.target_pos);
+        }
+
+        //range check
+        if(SpellID::CastingRange(spellID) < get_range(src.Position(), pos_min, pos_max)) {
+            //range check failed -> lookup new possible location for casting & start moving there
+            glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max);
+            if(move_pos == src.Position()) {
+                //no reachable destination found
+                cmd = Command::Idle();
+            }
+            else {
+                //initiate new move action
+                ASSERT_MSG(has_valid_direction(move_pos - src.Position()), "Command::Cast - target position for next action doesn't respect directions.");
+                action = Action::Move(src.Position(), move_pos);
+            }
+            return;
+        }
+
+        //TODO: think through how to handle continuous cast (blizzard, DnD) - keep the command going or cancel command and just cycle the action
+        //seems cleaner to keep the command going, but gonna have to investigate
+
+        //game notes:
+        // - when target is out of range, caster tries to get within range (obviously, dunno why i bothered to check that)
+        // - when target moves away, caster follows until it's within range or until it's impossible to reach the range
+
+        //TODO: should also think about when exactly to subtract the resources
+        //  - probably in the action - whenever spell object is spawned
+
+        //perform an action and terminate the command
+        glm::ivec2 itarget_pos = glm::ivec2(target_pos);
+        bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
+
+        action = Action::Cast(spellID, cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), leftover);
         cmd = Command::Idle();
-
-        //get caster within the casting range
-        //  - different spells have different casting ranges (fireball, slow = 10tiles, flame shield = 6tiles, ...)
-        //  - either make a hardcoded lookup table, add some spell description struct (json) or maybe store as part of utility object
-
-        //when range is OK, do some other sanity checks (enough mana for example)
-
-        //then perform an action and terminate the command (add Action::Cast() method)
-        //  - no utility object management is done in the command code itself
-
-        //payload_id+2 -> because first 0,1 mean ranged attack and repair in the Action::Action handler
-        // action = Action::Cast(payload_id + 2, cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
     }
 
     void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action) {

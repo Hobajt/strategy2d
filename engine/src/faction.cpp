@@ -344,9 +344,7 @@ namespace eng {
     }
 
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {
-        //TODO:
-        //also do resource check here
-        return true;
+        return techtree.CastConditionCheck(payload_id, src.Mana());
     }
 
     void FactionController::DBG_GUI() {
