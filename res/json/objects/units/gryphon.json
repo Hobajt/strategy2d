@@ -30,6 +30,6 @@
             "ready": "dragon/drready",
             "what": "dragon/drwhat"
         },
-        "projectile": "arrow"
+        "projectile": "dragon_fireball"
     }
 ]

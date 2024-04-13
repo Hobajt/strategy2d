@@ -794,9 +794,10 @@ namespace eng {
         }
 
         //range check
-        if(SpellID::CastingRange(spellID) < get_range(src.Position(), pos_min, pos_max)) {
+        int spell_range = SpellID::CastingRange(spellID);
+        if(spell_range < get_range(src.Position(), pos_min, pos_max)) {
             //range check failed -> lookup new possible location for casting & start moving there
-            glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max);
+            glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max, spell_range);
             if(move_pos == src.Position()) {
                 //no reachable destination found
                 cmd = Command::Idle();

@@ -452,6 +452,7 @@ namespace eng {
 
             float f1 = 0.f;
             float f2 = 0.f;
+            float f3 = 0.f;
             int i1 = 0;
             int i2 = 0;
             int i3 = 0;

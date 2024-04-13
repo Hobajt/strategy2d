@@ -233,7 +233,9 @@ namespace eng {
         bool spawn_followup = false;
         std::string followup_name;
 
-        int i1;
+        //generic fields - content is specific to individual UtilityObject types (look in object_parsing.cpp for details)
+        bool b1;
+        int i1, i2;
     public:
         bool Projectile_IsAutoGuided() const { return (i1 == 0); }
         int Projectile_SplashRadius() const { return i1; }

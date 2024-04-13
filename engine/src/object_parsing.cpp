@@ -370,6 +370,11 @@ namespace eng {
                     data->spawn_followup = true;
                     data->followup_name = config.at("followup");
                 }
+                
+                if(config.count("bounces")) {
+                    data->i2 = config.at("bounces");
+                    data->b1 = (data->i2 != 0);
+                }
                 break;
         }
     }

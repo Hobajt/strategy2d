@@ -197,5 +197,22 @@
         "utility_id": 2,
         "animations": [ "misc/effects/death_coil_explosion" ],
         "duration": 1.0
+    },
+    {
+        "str_id": "dragon_fireball",
+        "name": "dragon fireball",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/fireball" ],
+        "duration": 1.0,
+        "guided": false,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        },
+        "followup": "explosion_long",
+        "bounces": 2
     }
 ]

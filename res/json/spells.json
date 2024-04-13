@@ -167,7 +167,16 @@
         "size": [1, 1],
         "cost": [0,0,0,100],
         "icon": [1,10],
-        "utility_id": 3
+        "utility_id": 0,
+        "animations": [ "misc/effects/fireball" ],
+        "duration": 1.0,
+        "guided": false,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        },
+        "followup": "explosion_long",
+        "bounces": 3
     },
     {
         "str_id": "death_coil",

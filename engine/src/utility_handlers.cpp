@@ -4,6 +4,7 @@
 #include "engine/game/gameobject.h"
 #include "engine/game/level.h"
 #include "engine/game/resources.h"
+#include "engine/core/audio.h"
 
 #include <tuple>
 
@@ -77,8 +78,15 @@ namespace eng {
         d.i2 = src->BasicDamage();
         d.i3 = src->PierceDamage();
 
+        //bounce count for bouncing projectiles
+        d.i4 = obj.UData()->b1 ? obj.UData()->i2 : 0;
+        //store duration in separate variable, so that it can be changed for bouncing
+        d.f3 = 1.f / obj.UData()->duration;
+
         ENG_LOG_FINE("UtilityObject - Projectile spawned (guided={}, from {} to {})", obj.UData()->Projectile_IsAutoGuided(), d.source_pos, d.target_pos);
     }
+
+    glm::vec2 NextBouncePos(const glm::vec2& source, const glm::vec2& target);
 
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
         UtilityObject::LiveData& d = obj.LD();
@@ -88,7 +96,7 @@ namespace eng {
         obj.ori() = d.i1;
 
         d.f2 += input.deltaTime;
-        float t = (d.f2 - d.f1) / obj.UData()->duration;
+        float t = (d.f2 - d.f1) * d.f3;
 
         //adding sizes cuz rendering uses Quad::FromCorner
         obj.real_pos() = d.InterpolatePosition(t);
@@ -110,6 +118,22 @@ namespace eng {
                 }
             }
 
+            //projectile "bouncing"
+            if(obj.UData()->b1 && d.i4 > 0) {
+                //start next bounce instead of terminating
+                d.i4--;                             //decrease the bounce counter
+                glm::vec2 dir = glm::normalize(d.target_pos - d.source_pos);
+                d.source_pos = d.target_pos;        //setup new target position
+                d.target_pos = d.target_pos + dir;
+                d.f1 = d.f2 = (float)Input::CurrentTime();
+                d.f3 = 1.f / 0.25f;    //update duration for the bounces
+
+                //manually play the on done sound, since it normally only spawns when object dies
+                if(obj.UData()->on_done.valid)
+                    Audio::Play(obj.UData()->on_done.Random(), d.source_pos);
+
+                return false;
+            }
             return true;
         }
 
