@@ -289,6 +289,7 @@ namespace eng {
         int Mana() const { return int(mana); }
         void Mana(int value) { mana = value; }
         float ManaPercentage() const { return mana / 255.f; }
+        void DecreaseMana(int value);
         
         float MoveSpeed_Real() const { return data->speed * 0.1f; }
 

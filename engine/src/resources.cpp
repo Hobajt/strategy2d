@@ -657,6 +657,14 @@ namespace eng::Resources {
             GameObjectDataRef obj = data.objects.at(name);
             obj->SetupID(name, glm::ivec3(obj->objectType, id.x, id.y));
         }
+
+        for(const auto& spell : data.spells) {
+            SpellID::SetPrice(spell->num_id[1], spell->cost[3]);
+        }
+        for(int i = 0; i < SpellID::COUNT; i++) {
+            if(SpellID::Price(i) == SpellID::INVALID_PRICE)
+                ENG_LOG_WARN("Spell (id={}) data were not found.", i);
+        }
     }
 
     void ValidateIndexEntries() {

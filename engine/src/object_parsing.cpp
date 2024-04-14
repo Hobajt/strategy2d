@@ -375,6 +375,11 @@ namespace eng {
                     data->i2 = config.at("bounces");
                     data->b1 = (data->i2 != 0);
                 }
+
+                if(config.count("damage")) {
+                    data->i3 = config.at("damage").at(0);
+                    data->i4 = config.at("damage").at(1);
+                }
                 break;
         }
     }

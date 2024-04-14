@@ -33,7 +33,9 @@ namespace eng {
 
             //researchless
             HOLY_VISION, EYE, FIREBALL, DEATH_COIL,
-            COUNT
+            COUNT,
+
+            INVALID_PRICE = 9999
         };
 
         //converts spellID to race and ResearchType.
@@ -44,6 +46,7 @@ namespace eng {
         void SetPrice(int spellID, int price);
 
         bool RequiresTarget(int spellID);
+        bool IsContinuous(int spellID);
 
         int CastingRange(int spellID);
     }

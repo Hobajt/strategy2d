@@ -404,14 +404,32 @@ namespace eng {
                     ENG_LOG_INFO("ACTION PAYLOAD - EFFECT/PROJECTILE");
                     //use payload_id to get the prefab from Unit's data
 
-                    UtilityObjectDataRef obj = (payload_id == ActionPayloadType::RANGED_ATTACK) ? src.FetchProjectileRef() : Resources::LoadSpell(payload_id-2);
+                    bool oom = false;
+                    int spellID = -1;
+                    UtilityObjectDataRef obj = nullptr;
+                    if(payload_id == ActionPayloadType::RANGED_ATTACK) {
+                        obj = src.FetchProjectileRef();
+                    }
+                    else {
+                        spellID = payload_id-2;
+                        int price = SpellID::Price(spellID);
+                        oom = price > src.Mana();
+                        if(!oom) {
+                            obj = Resources::LoadSpell(spellID);
+                            src.DecreaseMana(price);
+                        }
+                    }
+                    
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
                         glm::vec2 target_pos = glm::vec2(action.data.target_pos) + (action.data.k * 0.5f);
                         level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src);
                     }
                     else {
-                        ENG_LOG_ERROR("ActionAction - action payload not delivered - invalid object.");
+                        if(oom)
+                            ENG_LOG_TRACE("ActionAction - action payload not delivered - out of mana (spellID={}).", spellID);
+                        else
+                            ENG_LOG_ERROR("ActionAction - action payload not delivered - invalid object.");
                     }
                 }
                     break;
@@ -731,7 +749,8 @@ namespace eng {
                     return;
                 }
 
-                pos_min = pos_max = glm::vec2(cmd.target_pos);
+                pos_min = glm::vec2(cmd.target_pos);
+                pos_max = cmd.target_pos+1;
                 target_pos = (pos_max + pos_min) * 0.5f;
             }
 
@@ -790,7 +809,9 @@ namespace eng {
             target_pos = target->PositionCentered();
         }
         else {
-            target_pos = pos_min = pos_max = glm::vec2(cmd.target_pos);
+            pos_min = glm::vec2(cmd.target_pos);
+            pos_max = pos_min + 1.f;
+            target_pos = pos_min + 0.5f;
         }
 
         //range check
@@ -810,22 +831,22 @@ namespace eng {
             return;
         }
 
-        //TODO: think through how to handle continuous cast (blizzard, DnD) - keep the command going or cancel command and just cycle the action
-        //seems cleaner to keep the command going, but gonna have to investigate
-
         //game notes:
         // - when target is out of range, caster tries to get within range (obviously, dunno why i bothered to check that)
         // - when target moves away, caster follows until it's within range or until it's impossible to reach the range
 
         //TODO: should also think about when exactly to subtract the resources
         //  - probably in the action - whenever spell object is spawned
+        //  - also works better with the continuous casting implementation
 
-        //perform an action and terminate the command
+        //perform the cast action
         glm::ivec2 itarget_pos = glm::ivec2(target_pos);
         bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
-
         action = Action::Cast(spellID, cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), leftover);
-        cmd = Command::Idle();
+
+        //terminate the command (unless it's a continuous cast)
+        if(!SpellID::IsContinuous(spellID))
+            cmd = Command::Idle();
     }
 
     void CommandHandler_Patrol(Unit& src, Level& level, Command& cmd, Action& action) {

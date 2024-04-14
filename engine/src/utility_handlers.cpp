@@ -63,6 +63,7 @@ namespace eng {
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
 
         if(src == nullptr) {
             ENG_LOG_ERROR("UtilityHandler::Init - handler requires a valid pointer to the source object.");
@@ -75,8 +76,16 @@ namespace eng {
         d.f1 = d.f2 = (float)Input::CurrentTime();
         obj.real_size() = obj.SizeScaled();
         obj.real_pos() = src->PositionCentered();
-        d.i2 = src->BasicDamage();
-        d.i3 = src->PierceDamage();
+
+        //projectile damage setup (use caster's stats if not set in object data)
+        if(ud.i3 + ud.i4 == 0) {
+            d.i2 = src->BasicDamage();
+            d.i3 = src->PierceDamage();
+        }
+        else {
+            d.i2 = ud.i3;
+            d.i3 = ud.i4;
+        }
 
         //bounce count for bouncing projectiles
         d.i4 = obj.UData()->b1 ? obj.UData()->i2 : 0;

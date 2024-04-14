@@ -176,7 +176,8 @@
             "on_done": "misc/explode"
         },
         "followup": "explosion_long",
-        "bounces": 3
+        "bounces": 3,
+        "damage": [15,20]
     },
     {
         "str_id": "death_coil",

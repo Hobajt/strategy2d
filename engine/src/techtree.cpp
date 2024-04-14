@@ -19,7 +19,13 @@ namespace eng {
 
     namespace SpellID {
 
-        static std::array<int, SpellID::COUNT> spell_price = {};
+        static std::array<int, SpellID::COUNT> init_spell_prices() {
+            std::array<int, SpellID::COUNT> arr = {};
+            for(int& v : arr) v = INVALID_PRICE;
+            return arr;
+        }
+
+        static std::array<int, SpellID::COUNT> spell_price = init_spell_prices();
 
         static std::array<bool, SpellID::COUNT> is_targeted = {
             true, true, true, true, true, true, false,
@@ -53,6 +59,10 @@ namespace eng {
 
         bool RequiresTarget(int spellID) {
             return is_targeted.at(spellID);
+        }
+
+        bool IsContinuous(int spellID) {
+            return spellID == SpellID::BLIZZARD || spellID == SpellID::DEATH_AND_DECAY;
         }
 
         int CastingRange(int spellID) {

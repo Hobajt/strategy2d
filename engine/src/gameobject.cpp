@@ -439,6 +439,11 @@ namespace eng {
         return true;
     }
 
+    void Unit::DecreaseMana(int value) {
+        ENG_LOG_FINER("Unit::DecreaseMana - {}-{} ({})", mana, value, *this);
+        mana = std::max(0.f, mana - value);
+    }
+
     glm::vec2 Unit::RenderPosition() const {
         glm::vec2 pos = glm::vec2(Position()) + move_offset;
         if(NavigationType() == NavigationBit::GROUND) {
