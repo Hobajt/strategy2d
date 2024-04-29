@@ -62,6 +62,8 @@ namespace eng {
 
         void SetAnimSpeed(float value) { anim_speed = value; }
 
+        float GetAnimationDuration(int actionIdx) const;
+
         bool KeyframeSignal() const;
         bool KeyframeSignal(int actionIdx) const;
 

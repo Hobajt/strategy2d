@@ -7,7 +7,8 @@
         "size": [1, 1],
         "cost": [0,0,0,6],
         "icon": [7,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 0
     },
     {
         "str_id": "exorcism",
@@ -17,7 +18,8 @@
         "size": [1, 1],
         "cost": [0,0,0,4],
         "icon": [0,11],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 1
     },
     {
         "str_id": "slow",
@@ -27,7 +29,11 @@
         "size": [1, 1],
         "cost": [0,0,0,50],
         "icon": [4,9],
-        "utility_id": 3
+        "utility_id": 4,
+        "spell_id": 2,
+        "duration": 10.0,
+        "animations": [ "misc/effects/icon_buff_slow", "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/slow" }
     },
     {
         "str_id": "flame_shield",
@@ -37,7 +43,8 @@
         "size": [1, 1],
         "cost": [0,0,0,80],
         "icon": [0,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 3
     },
     {
         "str_id": "invisibility",
@@ -47,7 +54,11 @@
         "size": [1, 1],
         "cost": [0,0,0,200],
         "icon": [5,9],
-        "utility_id": 3
+        "utility_id": 4,
+        "spell_id": 4,
+        "duration": 10.0,
+        "animations": [ "misc/effects/icon_buff_invisibility", "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/invisibl" }
     },
     {
         "str_id": "polymorph",
@@ -57,7 +68,8 @@
         "size": [1, 1],
         "cost": [0,0,0,200],
         "icon": [5,11],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 5
     },
     {
         "str_id": "blizzard",
@@ -67,7 +79,8 @@
         "size": [1, 1],
         "cost": [0,0,0,25],
         "icon": [5,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 6
     },
     {
         "str_id": "bloodlust",
@@ -77,7 +90,10 @@
         "size": [1, 1],
         "cost": [0,0,0,50],
         "icon": [2,11],
-        "utility_id": 3
+        "utility_id": 4,
+        "spell_id": 7,
+        "animations": [ "misc/effects/icon_buff_bloodlust", "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/blodlust" }
     },
     {
         "str_id": "runes",
@@ -87,7 +103,8 @@
         "size": [1, 1],
         "cost": [0,0,0,200],
         "icon": [7,9],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 8
     },
     {
         "str_id": "haste",
@@ -97,7 +114,11 @@
         "size": [1, 1],
         "cost": [0,0,0,50],
         "icon": [6,9],
-        "utility_id": 3
+        "utility_id": 4,
+        "spell_id": 9,
+        "duration": 10.0,
+        "animations": [ "misc/effects/icon_buff_haste", "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/haste" }
     },
     {
         "str_id": "raise_dead",
@@ -107,7 +128,8 @@
         "size": [1, 1],
         "cost": [0,0,0,50],
         "icon": [4,11],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 10
     },
     {
         "str_id": "tornado",
@@ -117,7 +139,8 @@
         "size": [1, 1],
         "cost": [0,0,0,100],
         "icon": [4,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 11
     },
     {
         "str_id": "unholy_armor",
@@ -127,7 +150,11 @@
         "size": [1, 1],
         "cost": [0,0,0,100],
         "icon": [8,9],
-        "utility_id": 3
+        "utility_id": 4,
+        "spell_id": 12,
+        "duration": 10.0,
+        "animations": [ "misc/effects/icon_buff_flame_shield", "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/unhlyarm" }
     },
     {
         "str_id": "death_and_decay",
@@ -137,7 +164,8 @@
         "size": [1, 1],
         "cost": [0,0,0,25],
         "icon": [3,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 13
     },
     {
         "str_id": "holy_vision",
@@ -147,7 +175,8 @@
         "size": [1, 1],
         "cost": [0,0,0,70],
         "icon": [6,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 14
     },
     {
         "str_id": "eye",
@@ -157,7 +186,8 @@
         "size": [1, 1],
         "cost": [0,0,0,70],
         "icon": [1,11],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 15
     },
     {
         "str_id": "fireball",
@@ -187,6 +217,7 @@
         "size": [1, 1],
         "cost": [0,0,0,100],
         "icon": [8,10],
-        "utility_id": 3
+        "utility_id": 3,
+        "spell_id": 17
     }
 ]

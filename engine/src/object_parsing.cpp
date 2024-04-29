@@ -381,6 +381,13 @@ namespace eng {
                     data->i4 = config.at("damage").at(1);
                 }
                 break;
+            case UtilityObjectType::SPELL:
+                data->i1 = config.at("spell_id");
+                break;
+            case UtilityObjectType::BUFF:
+                data->i1 = config.at("spell_id");
+                data->duration = config.count("duration") ? config.at("duration") : 1.0;
+                break;
         }
     }
 

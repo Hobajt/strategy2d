@@ -10,6 +10,9 @@
 
 #define Z_OFFSET -0.1f
 
+static constexpr glm::vec2 BUFF_ICON_SIZE = glm::vec2(4.f / 9.f);
+static constexpr int BUFF_ROW_LENGTH = 4;
+
 namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
@@ -23,6 +26,10 @@ namespace eng {
 
     void UtilityHandler_Visuals_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Visuals_Update(UtilityObject& obj, Level& level);
+
+    void UtilityHandler_Buff_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Buff_Update(UtilityObject& obj, Level& level);
+    void UtilityHandler_Buff_Render(UtilityObject& obj);
 
     //===================================================================
 
@@ -46,6 +53,10 @@ namespace eng {
             case UtilityObjectType::SPELL:
                 //TODO: gonna have to further distinguish among the various spells
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                break;
+            case UtilityObjectType::BUFF:
+                //TODO: gonna have to further distinguish among the various spells
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Buff_Init, UtilityHandler_Buff_Update, UtilityHandler_Buff_Render };
                 break;
             default:
                 ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid utility type ID ({})", id);
@@ -294,6 +305,83 @@ namespace eng {
         float t = d.f1 / obj.UData()->duration;
         
         return (t >= 1.f);
+    }
+
+    void UtilityHandler_Buff_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        AnimatorDataRef anim = obj.Data()->animData;
+
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = obj.Data()->size;
+
+        d.f1 = 0.f;
+        int spellID = d.i1 = obj.UData()->i1;
+        int buffIdx = SpellID::Spell2Buff(spellID);
+
+        //duration of the initial (cast) animation
+        d.f2 = (obj.AnimationCount() > 1) ? obj.AnimationDuration(1) : 0.f;
+
+        //cast animation rendering pos
+        d.source_pos = d.target_pos;
+        
+        //position offset for the icon rendering
+        d.target_pos = glm::vec2(0.f, -1.f) + BUFF_ICON_SIZE * glm::vec2(-(buffIdx % BUFF_ROW_LENGTH), 1+(buffIdx / BUFF_ROW_LENGTH));
+
+        //buff flag setup
+        Unit* target = nullptr;
+        if(d.targetID.type != ObjectType::UNIT || !obj.lvl()->objects.GetUnit(d.targetID, target)) {
+            ENG_LOG_ERROR("UtilityObject::Buff - invalid target, buffs only work on units! ({})", d.targetID);
+            throw std::runtime_error("UtilityObject::Buff - invalid target, buffs only work on units!");
+        }
+        target->SetEffectFlag(buffIdx, true);
+
+        ENG_LOG_FINE("UtilityObject - Buff ({}) spawned at ({})", obj, *target);
+    }
+
+    bool UtilityHandler_Buff_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        Input& input = Input::Get();
+
+        obj.act() = 0;
+        obj.ori() = 0;
+
+        d.f1 += input.deltaTime;
+        float t = d.f1 / obj.UData()->duration;
+
+        Unit* target = nullptr;
+        if(d.targetID.type != ObjectType::UNIT || !obj.lvl()->objects.GetUnit(d.targetID, target)) {
+            ENG_LOG_TRACE("UtilityObject::Buff - target lost ({}, {})", obj, d.targetID);
+            return true;
+        }
+
+        obj.real_pos() = target->RenderPosition();
+        
+        if(t >= 1.f) {
+            //remove the buff flag from the target            
+            target->SetEffectFlag(SpellID::Spell2Buff(d.i1), false);
+            return true;
+        }
+        return false;
+    }
+
+    void UtilityHandler_Buff_Render(UtilityObject& obj) {
+        UtilityObject::LiveData& d = obj.LD();
+
+        obj.act() = 0;
+        obj.ori() = 0;
+
+        if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
+            return;
+
+        //render the buff icon
+        obj.RenderAt(obj.real_pos() - d.target_pos, BUFF_ICON_SIZE, Z_OFFSET);
+
+        //render on spawn visuals (stop once the anim is over)
+        if(d.f1 < d.f2) {
+            obj.act() = 1;
+            obj.RenderAt(d.source_pos - obj.real_size() * 0.5f, obj.real_size(), Z_OFFSET - 1e-3f);
+            obj.act() = 0;
+        }
     }
 
 }//namespace eng

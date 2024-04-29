@@ -49,6 +49,10 @@ namespace eng {
         bool IsContinuous(int spellID);
 
         int CastingRange(int spellID);
+
+        const char* SpellName(int spellID);
+
+        int Spell2Buff(int spellID);
     }
 
     namespace TechtreeLevelCounter { enum { NONE, MELEE, NAVAL, SIEGE, RANGED, PALA, MAGE, COUNT }; }

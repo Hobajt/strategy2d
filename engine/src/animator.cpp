@@ -83,6 +83,10 @@ namespace eng {
         return data->GetGraphics(lastAction).FrameCount();
     }
 
+    float Animator::GetAnimationDuration(int actionIdx) const {
+        return data->GetGraphics(actionIdx).Duration();
+    }
+
     bool Animator::KeyframeSignal() const {
         SpriteGroup& graphics = data->GetGraphics(lastAction);
         return frame >= (graphics.Keyframe() * graphics.Duration());

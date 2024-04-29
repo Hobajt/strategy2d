@@ -457,7 +457,7 @@ namespace eng {
     }
 
     bool Unit::DetectablyInvisible() const {
-        return (NumID()[1] == UnitType::SUBMARINE) && !effects.invisibility;
+        return (NumID()[1] == UnitType::SUBMARINE) && !effects.flags[UnitEffectType::INVISIBILITY];
     }
 
     void Unit::ChangeCarryStatus(int new_state) {
@@ -516,8 +516,16 @@ namespace eng {
     }
 
     void Unit::SetInvisible(bool state) {
-        effects.invisibility = state;
+        effects.flags[UnitEffectType::INVISIBILITY] = state;
         lvl()->map.SetObjectInvisibility(Position(), state, NavigationType() == NavigationBit::AIR);
+    }
+
+    void Unit::SetEffectFlag(int idx, bool state) {
+        ASSERT_MSG((((unsigned int)idx) < UnitEffectType::COUNT), "Unit::SetEffectFlag - invalid effect index ({}, max {})", idx, UnitEffectType::COUNT);
+        effects.flags[idx] = state;
+        if(idx == UnitEffectType::INVISIBILITY) {
+            lvl()->map.SetObjectInvisibility(Position(), state, NavigationType() == NavigationBit::AIR);
+        }
     }
 
     void Unit::Inner_DBG_GUI() {

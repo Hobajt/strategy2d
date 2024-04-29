@@ -206,7 +206,7 @@ namespace eng {
     //===== UtilityObjectData =====
 
     namespace UtilityObjectType {
-        enum { INVALID = -1, PROJECTILE, CORPSE, VISUALS, SPELL, COUNT };
+        enum { INVALID = -1, PROJECTILE, CORPSE, VISUALS, SPELL, BUFF, COUNT };
     }
 
     class UtilityObject;

@@ -831,14 +831,6 @@ namespace eng {
             return;
         }
 
-        //game notes:
-        // - when target is out of range, caster tries to get within range (obviously, dunno why i bothered to check that)
-        // - when target moves away, caster follows until it's within range or until it's impossible to reach the range
-
-        //TODO: should also think about when exactly to subtract the resources
-        //  - probably in the action - whenever spell object is spawned
-        //  - also works better with the continuous casting implementation
-
         //perform the cast action
         glm::ivec2 itarget_pos = glm::ivec2(target_pos);
         bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;

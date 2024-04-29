@@ -76,6 +76,9 @@ namespace eng {
         bool AnimKeyframeSignal(int actionIdx) const { return animator.KeyframeSignal(actionIdx); }
         void SwitchAnimatorAction(int actionIdx) { animator.SwitchAction(actionIdx); }
 
+        int AnimationCount() const { return animator.ActionCount(); }
+        float AnimationDuration(int actionIdx) const { return animator.GetAnimationDuration(actionIdx); }
+
         int ID() const { return id; }
         ObjectID OID() const { return oid; }
         glm::ivec3 NumID() const { return data->num_id; }
@@ -251,10 +254,15 @@ namespace eng {
         bool faction_informed = true;
     };
 
+    namespace UnitEffectType {
+        enum {
+            SLOW, HASTE, INVISIBILITY, BLOODLUST, UNHOLY_ARMOR,
+            COUNT
+        };
+    }//namespace UnitEffectType
+
     struct UnitEffects {
-        bool invisibility;      //TODO: technically invis flag here is redundant, as it is stored in the map data
-        bool slow;
-        bool haste;
+        std::array<bool, UnitEffectType::COUNT> flags;
     };
 
     //===== Unit =====
@@ -335,6 +343,7 @@ namespace eng {
         bool InMotion() const;
 
         void SetInvisible(bool state);
+        void SetEffectFlag(int idx, bool state);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

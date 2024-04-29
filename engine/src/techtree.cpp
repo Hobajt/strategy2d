@@ -69,6 +69,24 @@ namespace eng {
             return casting_range[spellID];
         }
 
+        const char* SpellName(int spellID) {
+            static std::array<const char*, SpellID::COUNT> spell_names = {
+                "HEAL", "EXORCISM", "SLOW", "FLAME_SHIELD", "INVISIBILITY", "POLYMORPH", "BLIZZARD",
+                "BLOODLUST", "RUNES", "HASTE", "RAISE_DEAD", "TORNADO", "UNHOLY_ARMOR", "DEATH_AND_DECAY",
+                "HOLY_VISION", "EYE", "FIREBALL", "DEATH_COIL"
+            };
+            return spell_names.at(spellID);
+        }
+
+        int Spell2Buff(int spellID) {
+            static std::array<int, SpellID::COUNT> tab = {
+                -1, -1, UnitEffectType::SLOW, -1, UnitEffectType::INVISIBILITY, -1, -1, 
+                UnitEffectType::BLOODLUST, -1, UnitEffectType::HASTE, -1, -1, UnitEffectType::UNHOLY_ARMOR, -1,
+                -1, -1, -1, -1
+            };
+            return tab.at(spellID);
+        }
+
     }//namespace SpellID
 
     //===== TechtreeData =====
