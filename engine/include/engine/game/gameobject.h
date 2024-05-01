@@ -262,7 +262,13 @@ namespace eng {
     }//namespace UnitEffectType
 
     struct UnitEffects {
-        std::array<bool, UnitEffectType::COUNT> flags;
+        std::array<bool, UnitEffectType::COUNT> flags = {};
+    public:
+        bool& operator[](int idx);
+        const bool& operator[](int idx) const;
+
+        std::string to_string() const;
+        friend std::ostream& operator<<(std::ostream& os, const UnitEffects& eff);
     };
 
     //===== Unit =====
@@ -299,7 +305,8 @@ namespace eng {
         float ManaPercentage() const { return mana / 255.f; }
         void DecreaseMana(int value);
         
-        float MoveSpeed_Real() const { return data->speed * 0.1f; }
+        float MoveSpeed_Real() const;
+        float SpeedBuffValue() const;
 
         int AttackUpgradeSource() const { return data->upgrade_src[0]; }
         int DefenseUpgradeSource() const { return data->upgrade_src[1]; }
@@ -365,7 +372,7 @@ namespace eng {
         int carry_state = WorkerCarryState::NONE;        //worker load indicator
         float mana = 0;
 
-        UnitEffects effects;
+        UnitEffects effects = {};
     };
 
     //===== Building =====

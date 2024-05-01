@@ -439,7 +439,8 @@ namespace eng {
         //logic for transition from the action to idling (action cooldown)
         if(!anim_ended && src.AnimationFinished()) {
             anim_ended = true;
-            action_stop_time = input.GameTimeDelay(src.Cooldown());
+            //cooldown influenced by haste/slow buff
+            action_stop_time = input.GameTimeDelay((2.f - src.SpeedBuffValue()) * src.Cooldown());
         }
 
         //animation values update

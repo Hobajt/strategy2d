@@ -346,6 +346,23 @@ namespace eng {
         return (unsigned int)idx < (unsigned int)ColorPalette::FactionColorCount();
     }
 
+    //===== UnitEffects =====
+
+    bool& UnitEffects::operator[](int idx) { return flags.at(idx); }
+
+    const bool& UnitEffects::operator[](int idx) const { return flags.at(idx); }
+
+    std::string UnitEffects::to_string() const {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "[%d,%d,%d,%d,%d]", int(flags[0]), int(flags[1]), int(flags[2]), int(flags[3]), int(flags[4]));
+        return std::string(buf);
+    }
+
+    std::ostream& operator<<(std::ostream& os, const UnitEffects& eff) {
+        os << eff.to_string();
+        return os;
+    }
+
     //===== Unit =====
 
     Unit::Unit(Level& level_, const UnitDataRef& data_, const FactionControllerRef& faction_, const glm::vec2& position_, bool playReadySound)
@@ -444,6 +461,14 @@ namespace eng {
         mana = std::max(0.f, mana - value);
     }
 
+    float Unit::MoveSpeed_Real() const {
+        return data->speed * 0.1f * SpeedBuffValue();
+    }
+
+    float Unit::SpeedBuffValue() const {
+        return (1 + 0.5f * (int(effects[UnitEffectType::HASTE]) - int(effects[UnitEffectType::SLOW])));
+    }
+
     glm::vec2 Unit::RenderPosition() const {
         glm::vec2 pos = glm::vec2(Position()) + move_offset;
         if(NavigationType() == NavigationBit::GROUND) {
@@ -526,6 +551,8 @@ namespace eng {
         if(idx == UnitEffectType::INVISIBILITY) {
             lvl()->map.SetObjectInvisibility(Position(), state, NavigationType() == NavigationBit::AIR);
         }
+
+        animator.SetAnimSpeed(SpeedBuffValue());
     }
 
     void Unit::Inner_DBG_GUI() {
@@ -535,6 +562,7 @@ namespace eng {
         ImGui::Text("%s", command.to_string().c_str());
         ImGui::Text("Action type: %d", action.logic.type);
         ImGui::Text("Carry state: %d", carry_state);
+        ImGui::Text("Effects: %s", effects.to_string().c_str());
 #endif
     }
 
@@ -996,7 +1024,8 @@ namespace eng {
         }
 
         if(play_sound && data->on_spawn.valid) {
-            Audio::Play(data->on_spawn.Random(), Position());
+            //TODO: add once sound positioning works properly (is way too much attenuated currently)
+            Audio::Play(data->on_spawn.Random());//, Position());
         }
     }
 
