@@ -567,6 +567,11 @@ namespace eng {
         animator.SetAnimSpeed(SpeedBuffValue());
     }
 
+    bool Unit::GetEffectFlag(int idx) {
+        ASSERT_MSG((((unsigned int)idx) < UnitEffectType::COUNT), "Unit::SetEffectFlag - invalid effect index ({}, max {})", idx, UnitEffectType::COUNT);
+        return effects[idx];
+    }
+
     void Unit::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         FactionObject::Inner_DBG_GUI();

@@ -106,6 +106,7 @@ void Sandbox::OnInit() {
         ObjectID id_dk = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f1, glm::vec2(20.f, 23.f), false);
         ObjectID id_pl = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/paladin"), f1, glm::vec2(20.f, 26.f), false);
         ObjectID id_om = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/ogre_magi"), f1, glm::vec2(20.f, 24.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f2, glm::vec2(20.f, 22.f), false);
 
         level.objects.GetUnit(id_mg).Mana(255);
         level.objects.GetUnit(id_dk).Mana(255);
@@ -193,6 +194,8 @@ void Sandbox::OnInit() {
         ObjectID sub = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 2.f), false);
         ObjectID en  = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
         // level.objects.GetUnit(en).SetInvisible(true);
+
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 12.f), false);
         // level.objects.GetUnit(sub).IssueCommand(Command::Attack(shipyard, level.objects.GetBuilding(shipyard).Position()));
 
 

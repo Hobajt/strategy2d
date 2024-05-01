@@ -365,6 +365,9 @@ namespace eng {
             delivered = true;
             // ENG_LOG_INFO("ATTACK ACTION PAYLOAD");
 
+            //break invisibility
+            src.SetInvisible(false);
+
             if(src.RotateWhenAttacking())
                 orientation = (orientation + 2) % 8;
 

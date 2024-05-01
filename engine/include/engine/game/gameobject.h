@@ -355,6 +355,7 @@ namespace eng {
 
         void SetInvisible(bool state);
         void SetEffectFlag(int idx, bool state);
+        bool GetEffectFlag(int idx);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:

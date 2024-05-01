@@ -681,8 +681,7 @@ namespace eng {
                     if(info.factionId != -1) {
                         if(info.invisible)
                             info.untouchable = faction_bits[info.factionId];
-                        
-                        if(info.num_id[0] == ObjectType::UNIT && info.num_id[1] == UnitType::SUBMARINE) {
+                        else if(info.num_id[0] == ObjectType::UNIT && info.num_id[1] == UnitType::SUBMARINE) {
                             info.untouchable = InvisibilityDetection(y, x, faction_bits[info.factionId]);
                         }
                     }

@@ -318,6 +318,9 @@ namespace eng {
         int spellID = d.i1 = obj.UData()->i1;
         int buffIdx = SpellID::Spell2Buff(spellID);
 
+        //store info about the target being airborne or not (used for visibility check during rendering)
+        d.i2 = obj.NavigationType() == NavigationBit::AIR;
+
         //duration of the initial (cast) animation
         d.f2 = (obj.AnimationCount() > 1) ? obj.AnimationDuration(1) : 0.f;
 
@@ -351,6 +354,7 @@ namespace eng {
 
         d.f1 += input.deltaTime;
         float t = d.f1 / obj.UData()->duration;
+        int buffIdx = SpellID::Spell2Buff(d.i1);
 
         Unit* target = nullptr;
         if(d.targetID.type != ObjectType::UNIT || !obj.lvl()->objects.GetUnit(d.targetID, target)) {
@@ -359,10 +363,17 @@ namespace eng {
         }
 
         obj.real_pos() = target->RenderPosition();
+        obj.pos() = target->Position();
+
+        //terminate prematurely if the flag was unset from some other source (ie. invisibility canceled by an action)
+        if(!target->GetEffectFlag(buffIdx)) {
+            ENG_LOG_FINE("UtilityObject - Buff ({}) forcefully removed from ({})", obj, *target);
+            return true;
+        }
         
+        //remove the buff flag from the target once expired            
         if(t >= 1.f) {
-            //remove the buff flag from the target            
-            target->SetEffectFlag(SpellID::Spell2Buff(d.i1), false);
+            target->SetEffectFlag(buffIdx, false);
             return true;
         }
         return false;
@@ -374,7 +385,8 @@ namespace eng {
         obj.act() = 0;
         obj.ori() = 0;
 
-        if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
+        bool target_airborne = bool(d.i2);
+        if(!obj.lvl()->map.IsTileVisible(obj.Position()) || obj.lvl()->map.IsUntouchable(obj.Position(), target_airborne))
             return;
 
         //render the buff icon
