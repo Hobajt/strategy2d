@@ -422,6 +422,18 @@ namespace eng {
         return glm::vec2(Position()) + (data->size * scale_modifier * 0.5f);
     }
 
+    bool Unit::IsInvulnerable() const {
+        return FactionObject::IsInvulnerable() || effects[UnitEffectType::UNHOLY_ARMOR];
+    }
+
+    int Unit::BasicDamage() const {
+        return FactionObject::BasicDamage() * (1 + effects[UnitEffectType::BLOODLUST]);
+    }
+
+    int Unit::PierceDamage() const { 
+        return FactionObject::PierceDamage() * (1 + effects[UnitEffectType::BLOODLUST]);
+    }
+
     bool Unit::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
         if(factionID != FactionIdx() || old_type != NumID()[1] || isOrcUnit != IsOrc()) {
             return false;

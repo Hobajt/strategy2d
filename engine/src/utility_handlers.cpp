@@ -335,6 +335,10 @@ namespace eng {
         }
         target->SetEffectFlag(buffIdx, true);
 
+        //unholy armor specific - health halving
+        if(buffIdx == UnitEffectType::UNHOLY_ARMOR)
+            target->SetHealth(target->Health() / 2);
+
         ENG_LOG_FINE("UtilityObject - Buff ({}) spawned at ({})", obj, *target);
     }
 

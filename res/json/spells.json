@@ -92,6 +92,7 @@
         "icon": [2,11],
         "utility_id": 4,
         "spell_id": 7,
+        "duration": 10.0,
         "animations": [ "misc/effects/icon_buff_bloodlust", "misc/effects/spell_buzz" ],
         "sounds": { "on_spawn": "spells/blodlust" }
     },

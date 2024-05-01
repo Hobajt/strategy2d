@@ -158,8 +158,8 @@ namespace eng {
 
         //====== object stats getters - anything Base/Bonus prefix returns partial value (mostly for GUI), the rest returns final stat value ======
 
-        int BasicDamage() const { return data_f->basic_damage; }
-        int PierceDamage() const { return data_f->pierce_damage + BonusDamage(); }
+        virtual int BasicDamage() const { return data_f->basic_damage; }
+        virtual int PierceDamage() const { return data_f->pierce_damage + BonusDamage(); }
         int BonusDamage() const { return IsUnit() ? Tech().BonusDamage(NumID()[1], IsOrc()) : 0; }
         int BaseMinDamage() const { return int(roundf(data_f->pierce_damage * 0.5f)); }
         int BaseMaxDamage() const { return data_f->basic_damage + data_f->pierce_damage; }
@@ -176,7 +176,7 @@ namespace eng {
         int BaseVisionRange() const { return data_f->vision_range; }
         int BonusVisionRange() const { return IsUnit() ? Tech().BonusVision(NumID()[1], IsOrc()) : 0; }
 
-        bool IsInvulnerable() const {return data_f->invulnerable; }
+        virtual bool IsInvulnerable() const {return data_f->invulnerable; }
 
         virtual bool IsTransport() const { return false; }
 
@@ -294,6 +294,10 @@ namespace eng {
         virtual int ActionIdx() const override;
 
         virtual glm::vec2 PositionCentered() const override;
+
+        virtual bool IsInvulnerable() const override;
+        virtual int BasicDamage() const override;
+        virtual int PierceDamage() const override;
 
         bool UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
 
