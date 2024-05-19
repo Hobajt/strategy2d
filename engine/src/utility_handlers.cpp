@@ -26,10 +26,13 @@ namespace eng {
 
     void UtilityHandler_Visuals_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Visuals_Update(UtilityObject& obj, Level& level);
+    bool UtilityHandler_Visuals_Update2(UtilityObject& obj, Level& level);
 
     void UtilityHandler_Buff_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Buff_Update(UtilityObject& obj, Level& level);
     void UtilityHandler_Buff_Render(UtilityObject& obj);
+
+    void UtilityHandler_Heal_Init(UtilityObject& obj, FactionObject* src);
 
     //===================================================================
 
@@ -51,11 +54,20 @@ namespace eng {
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
                 break;
             case UtilityObjectType::SPELL:
-                //TODO: gonna have to further distinguish among the various spells
-                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                //pick handler based on spellID
+                switch(data->i1) {
+                    case SpellID::HEAL:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
+                        break;
+                    case SpellID::HOLY_VISION:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                        break;
+                    default:
+                        ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
+                        throw std::runtime_error("");
+                }
                 break;
             case UtilityObjectType::BUFF:
-                //TODO: gonna have to further distinguish among the various spells
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Buff_Init, UtilityHandler_Buff_Update, UtilityHandler_Buff_Render };
                 break;
             default:
@@ -307,6 +319,19 @@ namespace eng {
         return (t >= 1.f);
     }
 
+    bool UtilityHandler_Visuals_Update2(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        Input& input = Input::Get();
+
+        obj.act() = 0;
+        obj.ori() = 0;
+
+        d.f1 += input.deltaTime;
+        float t = d.f1 / d.f2;
+        
+        return (t >= 1.f);
+    }
+
     void UtilityHandler_Buff_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
         AnimatorDataRef anim = obj.Data()->animData;
@@ -398,6 +423,53 @@ namespace eng {
             obj.RenderAt(d.source_pos - obj.real_size() * 0.5f, obj.real_size(), Z_OFFSET - 1e-3f);
             obj.act() = 0;
         }
+    }
+
+    void UtilityHandler_Heal_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        AnimatorDataRef anim = obj.Data()->animData;
+
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = obj.Data()->size;
+
+        d.f1 = d.f2 = 0.f;
+
+        //target unit retrieval
+        Unit* target = nullptr;
+        Unit* source = dynamic_cast<Unit*>(src);
+        if(d.targetID.type != ObjectType::UNIT || !obj.lvl()->objects.GetUnit(d.targetID, target) || source == nullptr) {
+            ENG_LOG_ERROR("UtilityObject::Heal - invalid target, buffs only work on units! ({})", d.targetID);
+            throw std::runtime_error("UtilityObject::Heal - invalid target, buffs only work on units!");
+        }
+
+        //do target check - terminate if unfriendly or orc
+        if(src->lvl()->factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx())) {
+            ENG_LOG_TRACE("UtilityObject::Heal - attempting to heal an unfriendly unit ({})", *target);
+            return;
+        }
+
+        //consumption computation
+        int to_heal = target->MissingHealth();
+        int max_heal = source->Mana() / obj.UData()->cost[3];
+        to_heal = (to_heal > max_heal) ? max_heal : to_heal;
+
+        if(to_heal == 0) {
+            ENG_LOG_FINE("UtilityObject - nothing to heal (target={})", *target);
+            return;
+        }
+
+        //subtract resources, increase target health
+        int cost = to_heal * obj.UData()->cost[3];
+        source->DecreaseMana(cost);
+        target->AddHealth(to_heal);
+        ENG_LOG_FINE("UtilityObject - Heal '{}' hitpoints for '{}' mana (target={})", to_heal, cost, *target);
+
+        //lifespan timing (use animation duration)
+        d.f2 = (obj.AnimationCount() > 1) ? obj.AnimationDuration(1) : 1.f;
+
+        //play sound
+        if(obj.UData()->on_spawn.valid)
+            Audio::Play(obj.UData()->on_spawn.Random());
     }
 
 }//namespace eng

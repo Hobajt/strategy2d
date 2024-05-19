@@ -8,7 +8,9 @@
         "cost": [0,0,0,6],
         "icon": [7,10],
         "utility_id": 3,
-        "spell_id": 0
+        "spell_id": 0,
+        "animations": [ "misc/effects/healing_buzz" ],
+        "sounds": { "on_spawn": "spells/heal" }
     },
     {
         "str_id": "exorcism",
@@ -177,7 +179,8 @@
         "cost": [0,0,0,70],
         "icon": [6,10],
         "utility_id": 3,
-        "spell_id": 14
+        "spell_id": 14,
+        "sounds": { "on_spawn": "spells/holyvisn" }
     },
     {
         "str_id": "eye",

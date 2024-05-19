@@ -185,6 +185,7 @@ namespace eng {
         int BuildTime() const { return data_f->build_time; }
         int MaxHealth() const { return data_f->health; }
         int Health() const { return int(health); }
+        int MissingHealth() const { return int(data_f->health - health); }
         float HealthPercentage() const { return float(health) / data_f->health; }
         glm::ivec2 Icon() const { return data_f->icon; }
         bool IsFullHealth() const { return int(health) == data_f->health; }

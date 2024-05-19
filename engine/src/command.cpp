@@ -419,14 +419,17 @@ namespace eng {
                         oom = price > src.Mana();
                         if(!oom) {
                             obj = Resources::LoadSpell(spellID);
-                            src.DecreaseMana(price);
+
+                            //subtract spell resources (heal has special handling and subtracts from the spell handler instead)
+                            if(spellID != SpellID::HEAL)
+                                src.DecreaseMana(price);
                         }
                     }
                     
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
                         glm::vec2 target_pos = glm::vec2(action.data.target_pos) + (action.data.k * 0.5f);
-                        level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src);
+                        level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src, spellID != SpellID::HEAL);
                     }
                     else {
                         if(oom)
