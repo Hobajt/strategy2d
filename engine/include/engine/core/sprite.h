@@ -171,6 +171,8 @@ namespace eng {
         SpriteGroup(const Sprite& sprite, int id);
         SpriteGroup(const SpriteGroupData& data);
 
+        static SpriteGroup CreateDefault();
+
         void Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY = 0, int idxX = 0);
         void RenderAlt(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, const glm::vec4& color, bool noTexture, int idxY = 0, int idxX = 0);
 

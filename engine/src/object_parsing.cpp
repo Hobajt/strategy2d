@@ -342,9 +342,8 @@ namespace eng {
         }
         ASSERT_MSG(data->str_id == config.at("str_id"), "Parse_UtilityData - provided data object was not initialized for this data entry.");
 
-        //utility object type ID + handlers
+        //utility object type ID
         data->utility_id = config.at("utility_id");
-        ResolveUtilityHandlers(data, data->utility_id);
 
         //animation parsing
         ParseAnimations_Utility(config, data);
@@ -383,12 +382,19 @@ namespace eng {
                 break;
             case UtilityObjectType::SPELL:
                 data->i1 = config.at("spell_id");
+                data->duration = config.count("duration") ? config.at("duration") : 1.0;
+                data->i2 = 0;
+                if(config.count("radius"))
+                    data->i2 = config.at("radius");
                 break;
             case UtilityObjectType::BUFF:
                 data->i1 = config.at("spell_id");
                 data->duration = config.count("duration") ? config.at("duration") : 1.0;
                 break;
         }
+
+        //setup utility handlers (requires both utility_id and spell_id to be loaded)
+        ResolveUtilityHandlers(data, data->utility_id);
     }
 
     //=======================================================================

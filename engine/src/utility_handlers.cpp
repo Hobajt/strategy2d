@@ -16,6 +16,7 @@ static constexpr int BUFF_ROW_LENGTH = 4;
 namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
+    void UtilityHandler_No_Render(UtilityObject& obj);
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level);
@@ -34,6 +35,9 @@ namespace eng {
 
     void UtilityHandler_Heal_Init(UtilityObject& obj, FactionObject* src);
 
+    void UtilityHandler_Vision_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Vision_Update(UtilityObject& obj, Level& level);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -51,7 +55,7 @@ namespace eng {
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Corpse_Init, UtilityHandler_Corpse_Update, UtilityHandler_Corpse_Render };
                 break;
             case UtilityObjectType::VISUALS:
-                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_No_Render };
                 break;
             case UtilityObjectType::SPELL:
                 //pick handler based on spellID
@@ -60,11 +64,13 @@ namespace eng {
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
                         break;
                     case SpellID::HOLY_VISION:
-                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Vision_Init, UtilityHandler_Vision_Update, UtilityHandler_Default_Render };
                         break;
                     default:
-                        ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
-                        throw std::runtime_error("");
+                        //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
+                        // ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
+                        // throw std::runtime_error("");
                 }
                 break;
             case UtilityObjectType::BUFF:
@@ -79,10 +85,12 @@ namespace eng {
     //===================================================================
 
     void UtilityHandler_Default_Render(UtilityObject& obj) {
-        if(!obj.lvl()->map.IsTileVisible(obj.real_pos()))
+        if(!obj.lvl()->map.IsWithinBounds(obj.real_pos()) || !obj.lvl()->map.IsTileVisible(obj.real_pos()))
             return;
         obj.RenderAt(obj.real_pos() - obj.real_size() * 0.5f, obj.real_size(), Z_OFFSET);
     }
+
+    void UtilityHandler_No_Render(UtilityObject& obj) {}
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
@@ -470,6 +478,40 @@ namespace eng {
         //play sound
         if(obj.UData()->on_spawn.valid)
             Audio::Play(obj.UData()->on_spawn.Random());
+    }
+
+    void UtilityHandler_Vision_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        AnimatorDataRef anim = obj.Data()->animData;
+
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = obj.Data()->size;
+
+        //lifespan timing
+        d.f1 = 0.f;
+        d.f2 = obj.UData()->duration;
+        d.i1 = 0;
+
+        //initialize the vision
+        int radius = obj.UData()->i2;
+        d.i3 = src->FactionIdx();
+        obj.lvl()->map.VisibilityIncrement(glm::ivec2(d.target_pos), glm::ivec2(1), radius, d.i3);
+
+        ENG_LOG_FINE("UtilityObject - Holy vision at {}", d.target_pos);
+    }
+
+    bool UtilityHandler_Vision_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+
+        if(UtilityHandler_Visuals_Update2(obj, level) && (d.i1 == 0)) {
+            //disable the vision & terminate
+            int radius = obj.UData()->i2;
+            obj.lvl()->map.VisibilityDecrement(glm::ivec2(d.target_pos), glm::ivec2(1), radius, d.i3);
+            d.i1 = 1;
+            ENG_LOG_FINE("UtilityObject - Holy vision terminated at {}", d.target_pos);
+        }
+
+        return (d.i1 != 0);
     }
 
 }//namespace eng

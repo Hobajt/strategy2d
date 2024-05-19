@@ -245,6 +245,12 @@ namespace eng {
         ENG_LOG_TRACE("[C] SpriteGraphics '{}' ({} sprite{}, ID: {})", data.name, (int)data.sprites.size(), ((data.sprites.size() == 1) ? "" : "s6"), data.id);
     }
 
+    SpriteGroup SpriteGroup::CreateDefault() {
+        SpriteGroup sg = SpriteGroup();
+        sg.data.repeat = false;
+        return sg;
+    }
+
     void SpriteGroup::Render(const glm::vec3& screen_pos, const glm::vec2& screen_size, const glm::uvec4& info, int idxY, int idxX) {
         size_t i = 0;
         glm::uvec3 inf = glm::uvec3(info);

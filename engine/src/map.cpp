@@ -255,6 +255,10 @@ namespace eng {
     void MapTiles::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& obj_size, int range) {
         glm::ivec2 m = glm::ivec2(std::max(pos.x-range+1, 0), std::max(pos.y-range+1, 0));
         glm::ivec2 M = glm::ivec2(std::min(pos.x+obj_size.x+range, size.x+1), std::min(pos.y+obj_size.y+range, size.y+1));
+        if(m.x >= M.x || m.y >= M.y) {
+            ENG_LOG_WARN("MapTiles::Visibility - attempting to create visibility outside of the map bounds (m={}, M={})", m, M);
+            return;
+        }
 
         RoundCorners_Decrement(m, M, range);
 
@@ -269,6 +273,10 @@ namespace eng {
     void MapTiles::VisibilityDecrement(const glm::ivec2& pos, const glm::ivec2& obj_size, int range) {
         glm::ivec2 m = glm::ivec2(std::max(pos.x-range+1, 0), std::max(pos.y-range+1, 0));
         glm::ivec2 M = glm::ivec2(std::min(pos.x+obj_size.x+range, size.x+1), std::min(pos.y+obj_size.y+range, size.y+1));
+        if(m.x >= M.x || m.y >= M.y) {
+            ENG_LOG_WARN("MapTiles::Visibility - attempting to create visibility outside of the map bounds (m={}, M={})", m, M);
+            return;
+        }
 
         RoundCorners_Increment(m, M, range);
         

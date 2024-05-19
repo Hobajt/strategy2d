@@ -180,6 +180,8 @@
         "icon": [6,10],
         "utility_id": 3,
         "spell_id": 14,
+        "duration": 15,
+        "radius": 3,
         "sounds": { "on_spawn": "spells/holyvisn" }
     },
     {

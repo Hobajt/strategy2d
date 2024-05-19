@@ -9,6 +9,8 @@ namespace eng {
 
     //===== AnimatorData =====
 
+    static SpriteGroup no_anim = SpriteGroup::CreateDefault();
+
     AnimatorData::AnimatorData(const std::string& name_, const std::map<int, SpriteGroup>& anims_) : name(name_), anims(anims_) {}
 
     SpriteGroup& AnimatorData::GetGraphics(int action) {
@@ -17,7 +19,10 @@ namespace eng {
         }
         else {
             //TODO: AnimatorData - invalid actionID - add some defaulting mechanism
-            return anims.begin()->second;
+            if(anims.size() != 0)
+                return anims.begin()->second;
+            else
+                return no_anim;
         }
     }
 
