@@ -838,10 +838,14 @@ namespace eng {
             return;
         }
 
+        //direction fix, when targeting itself
+        glm::ivec2 target_dir = glm::ivec2(pos_min) - src.Position();
+        if(target_dir == glm::ivec2(0)) target_dir = DirectionVector(src.Orientation());
+
         //perform the cast action
         glm::ivec2 itarget_pos = glm::ivec2(target_pos);
         bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
-        action = Action::Cast(spellID, cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), leftover);
+        action = Action::Cast(spellID, cmd.target_id, itarget_pos, target_dir, leftover);
 
         //terminate the command (unless it's a continuous cast)
         if(!SpellID::IsContinuous(spellID))

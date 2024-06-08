@@ -231,7 +231,7 @@ namespace eng {
         }
         else {
             d.f1 = anim->GetGraphics(d.i1).Duration() + 1.f;
-            if(src->IsUnit() && src->NumID()[1] != UnitType::MISC1) {
+            if(src->IsUnit() && !Unit::IsMinion(src->NumID())) {
                 //2nd animation - transitioned to from the 1st one
                 if(src->NavigationType() == NavigationBit::GROUND) {
                     d.i2 = CorpseAnimID::CORPSE1_HU + src->Race();
@@ -533,7 +533,7 @@ namespace eng {
         Level& level = *src->lvl();
         bool raise_dead = obj.UData()->b1;
 
-        UnitDataRef minion_data = Resources::LoadUnit(UnitType::MISC1, raise_dead);
+        UnitDataRef minion_data = Resources::LoadUnit(raise_dead ? "misc/skeleton" : "misc/eye");
 
         if(raise_dead) {
             std::vector<UtilityObject*> corpses = {};

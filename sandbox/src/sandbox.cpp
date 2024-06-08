@@ -109,6 +109,7 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f2, glm::vec2(20.f, 22.f), false);
 
         level.objects.EmplaceUnit(level, Resources::LoadUnit("misc/skeleton"), f1, glm::vec2(18.f, 24.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("misc/pig"), f1, glm::vec2(17.f, 24.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("misc/eye"), f1, glm::vec2(16.f, 24.f), false);
 
         level.objects.GetUnit(id_mg).Mana(255);

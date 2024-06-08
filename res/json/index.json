@@ -15,8 +15,7 @@
         ["human/machine", "orc/roflcopter"],
         ["human/demo_squad", "orc/demosquad"],
         ["human/mage", "orc/death_knight"],
-        ["human/gryphon", "orc/dragon"],
-        ["misc/eye", "misc/skeleton"]
+        ["human/gryphon", "orc/dragon"]
     ],
     "buildings": [
         ["human/town_hall", "orc/great_hall"],
@@ -51,6 +50,12 @@
     "utility": [],
     "other": [
         { "name": "misc/gold_mine", "id": [101, 0]},
-        { "name": "misc/oil", "id": [102, 0]}
+        { "name": "misc/oil", "id": [102, 0]},
+
+        { "name": "misc/seal", "id": [101, 0]},
+        { "name": "misc/pig", "id": [102, 0]},
+        { "name": "misc/sheep", "id": [103, 0]},
+        { "name": "misc/skeleton", "id": [104, 0]},
+        { "name": "misc/eye", "id": [105, 0]}
     ]
 }

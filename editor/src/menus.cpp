@@ -419,7 +419,7 @@ void FactionsMenu::GUI_Update() {
             FactionController& f = *faction.get();
             bool mandatory = f.ControllerID() == FactionControllerID::LOCAL_PLAYER || f.ControllerID() == FactionControllerID::NATURE;
             std::string name = f.Name();
-            snprintf(buf, sizeof(buf), "[%d] %s###%lu", faction_idx, name.c_str(), uint64_t(&f));
+            snprintf(buf, sizeof(buf), "[%d] %s###%llu", faction_idx, name.c_str(), uint64_t(&f));
             if(ImGui::CollapsingHeader(buf)) {
                 ImGui::PushID(&f);
                 strncpy(buf, name.c_str(), std::min(int(sizeof(buf)), int(name.size()+1)));

@@ -157,23 +157,23 @@ namespace eng {
     };
 
     int Techtree::UnitLevel(int unit_type, bool isOrc) const {
-        return data[int(isOrc)].level_counters[idx_LUT[unit_type].z];
+        return (unit_type < UnitType::COUNT) ? data[int(isOrc)].level_counters[idx_LUT[unit_type].z] : 1;
     }
 
     int Techtree::BonusArmor(int unit_type, bool isOrc) const {
-        return data[int(isOrc)].armor_bonus[idx_LUT[unit_type].y];
+        return (unit_type < UnitType::COUNT) ? data[int(isOrc)].armor_bonus[idx_LUT[unit_type].y] : 0;
     }
 
     int Techtree::BonusDamage(int unit_type, bool isOrc) const {
-        return data[int(isOrc)].attack_bonus[idx_LUT[unit_type].x];
+        return (unit_type < UnitType::COUNT) ? data[int(isOrc)].attack_bonus[idx_LUT[unit_type].x] : 0;
     }
 
     int Techtree::BonusVision(int unit_type, bool isOrc) const {
-        return (unit_type == UnitType::RANGER) * data[int(isOrc)].vision_bonus;
+        return (unit_type < UnitType::COUNT) ? ((unit_type == UnitType::RANGER) * data[int(isOrc)].vision_bonus) : 0;
     }
 
     int Techtree::BonusRange(int unit_type, bool isOrc) const {
-        return (unit_type == UnitType::RANGER) * data[int(isOrc)].range_bonus;
+        return (unit_type < UnitType::COUNT) ? ((unit_type == UnitType::RANGER) * data[int(isOrc)].range_bonus) : 0;
     }
 
     bool Techtree::SetupResearchButton(GUI::ActionButtonDescription& btn, bool isOrc) const {

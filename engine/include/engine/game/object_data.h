@@ -36,8 +36,15 @@ namespace eng {
             ROFLCOPTER, DEMOSQUAD,
             MAGE,
             GRYPHON,
-            MISC1,
             COUNT
+        };
+
+        enum {
+            SEAL = 101,
+            PIG = 102,
+            SHEEP = 103,
+            SKELETON = 104,
+            EYE = 105
         };
     }
 

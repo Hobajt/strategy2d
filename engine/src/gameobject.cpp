@@ -20,10 +20,6 @@ namespace eng {
 
     static constexpr std::array<const char*, 2> workdone_sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
 
-    bool SpawnsCorpseOnDeath(const glm::ivec3& num_id) {
-        return !(num_id[0] == ObjectType::UNIT && num_id[1] == UnitType::MISC1);
-    }
-
     //===== GameObject =====
 
     int GameObject::idCounter = 0;
@@ -577,7 +573,7 @@ namespace eng {
     }
 
     bool Unit::IsMinion(const glm::ivec3& num_id) {
-        return num_id[0] == ObjectType::UNIT && num_id[1] == UnitType::MISC1;
+        return num_id[0] == ObjectType::UNIT && (num_id[1] == UnitType::SKELETON || num_id[1] == UnitType::EYE);
     }
 
     void Unit::Inner_DBG_GUI() {

@@ -1,0 +1,143 @@
+[
+    {
+        "str_id": "misc/skeleton",
+        "name": "skeleton",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0 },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 3,
+        "health": 40,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [600,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 5,
+        "pierce_damage": 4,
+        "cooldown": 1.0,
+        "race": 1,
+        "speed": 8,
+        "death_sound": 6,
+        "icon": [4,11],
+        "upgrade_src": [0,0],
+        "sounds": {
+            "yes": "misc/Skeleton Move",
+            "attack": "misc/punch"
+        }
+    },
+    {
+        "str_id": "misc/eye",
+        "name": "eye of killrog",
+        "type": 2,
+        "nav_type": 4,
+        "animations": {
+            "idle":     { "sprite_path": "misc/effects", "sprite_name": "eye", "duration": 1.0 }
+        },
+        "vision_range": 3,
+        "health": 100,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [600,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 1,
+        "speed": 42,
+        "death_sound": 4,
+        "scale": 0.75,
+        "icon": [1,11],
+        "upgrade_src": [0,0],
+        "sounds": {
+            "yes": "misc/Eye of Killrog Move",
+            "ready": "misc/Eye of Killrog"
+        }
+    },
+    {
+        "str_id": "misc/pig",
+        "name": "critter",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":     { "duration": 1.0 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 3,
+        "health": 10,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [100,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "speed": 8,
+        "death_sound": 4,
+        "scale": 0.6,
+        "icon": [5,18],
+        "upgrade_src": [0,0],
+        "sounds": { "yes": "misc/pig" }
+    },
+    {
+        "str_id": "misc/seal",
+        "name": "critter",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":     { "duration": 1.0 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 3,
+        "health": 10,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [100,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "speed": 8,
+        "death_sound": 4,
+        "scale": 0.6,
+        "icon": [5,18],
+        "upgrade_src": [0,0],
+        "sounds": { "yes": "misc/seal" }
+    },
+    {
+        "str_id": "misc/sheep",
+        "name": "critter",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle":     { "duration": 1.0 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 3,
+        "health": 10,
+        "mana": 0,
+        "build_time": 60,
+        "cost": [100,0,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 0,
+        "speed": 8,
+        "death_sound": 4,
+        "scale": 0.6,
+        "icon": [5,18],
+        "upgrade_src": [0,0],
+        "sounds": { "yes": "misc/sheep" }
+    }
+]
