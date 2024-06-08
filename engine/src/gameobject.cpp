@@ -468,6 +468,38 @@ namespace eng {
         return true;
     }
 
+    ObjectID Unit::Transform(const UnitDataRef& new_data, const FactionControllerRef& new_faction, bool preserve_health) {
+        ENG_LOG_FINE("Unit::Transform - {} -> {} (faction: {} -> {})", data->name, new_data->name, FactionIdx(), new_faction->ID());
+
+        //health update
+        int new_health = preserve_health ? (HealthPercentage() * new_data->MaxHealth()) : new_data->MaxHealth();
+
+        //withdraw object from the map, so that I don't have to modify values in the map struct (will update on reinsert)
+        WithdrawObject(true);
+
+        // lvl()->map.VisibilityDecrement(Position(), data->size, data->vision_range, FactionIdx());
+        // lvl()->map.VisibilityIncrement(Position(), new_data->size, new_data->vision_range, new_faction->ID());
+
+        ChangeFaction(new_faction);
+        
+        //data pointer & animator updates
+        data = new_data;
+        UpdateDataPointer(new_data);
+        animator = Animator(new_data->animData);
+
+        UnsetKilledFlag();
+        Finalized(true);
+
+        SetHealth(new_health);
+
+        //update unit's ID - in order to cancel any commands issued on the unit pre-transformation
+        lvl()->objects.UpdateUnitID(OID());
+
+        ReinsertObject();
+
+        return OID();
+    }
+
     void Unit::DecreaseMana(int value) {
         ENG_LOG_FINER("Unit::DecreaseMana - {}-{} ({})", mana, value, *this);
         mana = std::max(0.f, mana - value);

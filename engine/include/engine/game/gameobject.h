@@ -301,6 +301,7 @@ namespace eng {
         virtual int PierceDamage() const override;
 
         bool UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
+        ObjectID Transform(const UnitDataRef& new_data, const FactionControllerRef& new_faction, bool preserve_health = false);
 
         int MoveSpeed() const { return data->speed; }
         int UnitLevel() const { return Tech().UnitLevel(NumID()[1], IsOrc()); }

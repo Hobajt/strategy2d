@@ -7,6 +7,7 @@
 #include "engine/core/audio.h"
 
 #include <tuple>
+#include <sstream>
 
 #define Z_OFFSET -0.1f
 
@@ -16,6 +17,8 @@ namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
     void UtilityHandler_No_Render(UtilityObject& obj);
+
+    bool UtilityHandler_No_Update(UtilityObject& obj, Level& level);
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level);
@@ -39,6 +42,8 @@ namespace eng {
 
     void UtilityHandler_Minion_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Minion_Update(UtilityObject& obj, Level& level);
+
+    void UtilityHandler_Polymorph_Init(UtilityObject& obj, FactionObject* src);
 
     //===================================================================
 
@@ -76,6 +81,9 @@ namespace eng {
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Minion_Init, UtilityHandler_Minion_Update, UtilityHandler_No_Render };
                         data->b1 = true;
                         break;
+                    case SpellID::POLYMORPH:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Polymorph_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                        break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
@@ -101,6 +109,10 @@ namespace eng {
     }
 
     void UtilityHandler_No_Render(UtilityObject& obj) {}
+
+    bool UtilityHandler_No_Update(UtilityObject& obj, Level& level) {
+        return true;
+    }
 
     void UtilityHandler_Projectile_Init(UtilityObject& obj, FactionObject* src) {
         UtilityObject::LiveData& d = obj.LD();
@@ -607,6 +619,43 @@ namespace eng {
         }
 
         return timer_expired;
+    }
+
+    void UtilityHandler_Polymorph_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        
+        //target verification
+        Unit* target = nullptr;
+        if(d.targetID.type != ObjectType::UNIT || !obj.lvl()->objects.GetUnit(d.targetID, target)) {
+            ENG_LOG_ERROR("UtilityObject::Polymorph - invalid target, target must be an unit! ({})", d.targetID);
+            throw std::runtime_error("UtilityObject::Polymorph - invalid target, target must be an unit!");
+        }
+
+        int nav = target->NavigationType();
+        if((nav & (NavigationBit::GROUND | NavigationBit::AIR)) == 0) {
+            ENG_LOG_ERROR("UtilityObject::Polymorph - invalid target, only works for AIR/GND units! ({})", nav);
+            throw std::runtime_error("UtilityObject::Polymorph - invalid target, only works for AIR/GND units!");
+        }
+
+        bool sheepified = true;
+        std::stringstream ss  = {};
+        ss << *target;
+        std::string target_id = ss.str();
+        
+        if(nav == NavigationBit::AIR && !src->lvl()->map(target->Position()).Traversable(NavigationBit::GROUND)) {
+            //when there's nowhere to spawn the sheep - just silently remove the target unit
+            target->Kill(true);
+            sheepified = false;
+        }
+        else {
+            //transform the target unit
+            UnitDataRef sheep_data = Resources::LoadUnit("misc/sheep");
+            target->Transform(sheep_data, src->lvl()->factions.Nature());
+        }
+
+        //call visuals initialization - to play the spell animation
+        UtilityHandler_Visuals_Init(obj, src);
+        ENG_LOG_FINE("UtilityObject - unit '{}' was polymorphed (sheep spawned: {}).", target_id, sheepified);
     }
 
 }//namespace eng

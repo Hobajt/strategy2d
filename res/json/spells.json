@@ -68,10 +68,13 @@
         "type": 4,
         "nav_type": 1,
         "size": [1, 1],
-        "cost": [0,0,0,200],
+        "cost": [0,0,0,1],
         "icon": [5,11],
         "utility_id": 3,
-        "spell_id": 5
+        "spell_id": 5,
+        "duration": 1.0,
+        "animations": [ "misc/effects/spell_buzz" ],
+        "sounds": { "on_spawn": "spells/morph" }
     },
     {
         "str_id": "blizzard",

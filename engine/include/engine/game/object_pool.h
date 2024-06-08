@@ -98,6 +98,7 @@ namespace eng {
 
         //Updates building's identifier within the pool. Provided object_id will no longer be valid after this call.
         void UpdateBuildingID(const ObjectID& object_id);
+        void UpdateUnitID(const ObjectID& object_id);
 
         //===== insert =====
 
