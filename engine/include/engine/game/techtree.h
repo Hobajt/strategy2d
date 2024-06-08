@@ -46,6 +46,7 @@ namespace eng {
         void SetPrice(int spellID, int price);
 
         bool RequiresTarget(int spellID);
+        bool TargetlessCast(int spellID);
         bool IsContinuous(int spellID);
 
         int CastingRange(int spellID);

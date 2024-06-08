@@ -61,6 +61,10 @@ namespace eng {
             return is_targeted.at(spellID);
         }
 
+        bool TargetlessCast(int spellID) {
+            return spellID == SpellID::EYE;
+        }
+
         bool IsContinuous(int spellID) {
             return spellID == SpellID::BLIZZARD || spellID == SpellID::DEATH_AND_DECAY;
         }

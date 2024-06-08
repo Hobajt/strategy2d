@@ -20,6 +20,10 @@ namespace eng {
 
     static constexpr std::array<const char*, 2> workdone_sound_name = { "peasant/pswrkdon", "orc/owrkdone" };
 
+    bool SpawnsCorpseOnDeath(const glm::ivec3& num_id) {
+        return !(num_id[0] == ObjectType::UNIT && num_id[1] == UnitType::MISC1);
+    }
+
     //===== GameObject =====
 
     int GameObject::idCounter = 0;
@@ -186,10 +190,10 @@ namespace eng {
         if(!silent) {
             UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
             //spawn a corpse utility object
-            lvl()->objects.EmplaceUtilityObj(*lvl(), corpse_data, Position(), ObjectID(), *this);
+            lvl()->objects.QueueUtilityObject(*lvl(), corpse_data, Position(), ObjectID(), *this);
             
             //play the dying sound effect
-            static constexpr std::array<const char*, 6> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode", "misc/firehit" };
+            static constexpr std::array<const char*, 7> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode", "misc/firehit", "misc/Skeleton Death" };
             Audio::Play(SoundEffect::GetPath(sound_name[data_f->deathSoundIdx]), Position());
         }
 
@@ -570,6 +574,10 @@ namespace eng {
     bool Unit::GetEffectFlag(int idx) {
         ASSERT_MSG((((unsigned int)idx) < UnitEffectType::COUNT), "Unit::SetEffectFlag - invalid effect index ({}, max {})", idx, UnitEffectType::COUNT);
         return effects[idx];
+    }
+
+    bool Unit::IsMinion(const glm::ivec3& num_id) {
+        return num_id[0] == ObjectType::UNIT && num_id[1] == UnitType::MISC1;
     }
 
     void Unit::Inner_DBG_GUI() {

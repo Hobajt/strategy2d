@@ -150,6 +150,16 @@
         "duration": 3.0
     },
     {
+        "str_id": "dark_buzz",
+        "name": "dark buzz",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/dark_buzz" ],
+        "duration": 2.0
+    },
+    {
         "str_id": "lightning",
         "name": "lightning",
         "type": 4,

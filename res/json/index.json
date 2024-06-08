@@ -15,7 +15,8 @@
         ["human/machine", "orc/roflcopter"],
         ["human/demo_squad", "orc/demosquad"],
         ["human/mage", "orc/death_knight"],
-        ["human/gryphon", "orc/dragon"]
+        ["human/gryphon", "orc/dragon"],
+        ["misc/eye", "misc/skeleton"]
     ],
     "buildings": [
         ["human/town_hall", "orc/great_hall"],

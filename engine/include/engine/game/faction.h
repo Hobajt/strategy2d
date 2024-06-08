@@ -47,6 +47,7 @@ namespace eng {
     struct FactionStats {
         int unitCount = 0;
         int buildingCount = 0;
+        int minionCount = 0;
         std::array<int, BuildingType::COUNT> buildings = {0};
         int tier = 0;
     };

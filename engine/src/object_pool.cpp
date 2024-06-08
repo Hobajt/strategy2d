@@ -571,6 +571,15 @@ namespace eng {
         }
     }
 
+    int ObjectPool::GetCorpsesAround(const glm::ivec2& position, int radius, std::vector<UtilityObject*>& out_corpses) {
+        for(UtilityObject& u : utilityObjs) {
+            if(u.UData()->utility_id == UtilityObjectType::CORPSE && u.LD().i7 != 0 && chessboard_distance(position, u.Position()) <= radius) {
+                out_corpses.push_back(&u);
+            }
+        }
+        return out_corpses.size();
+    }
+
     void ObjectPool::UpdateBuildingID(const ObjectID& object_id) {
         if(object_id.type != ObjectType::BUILDING) {
             ENG_LOG_ERROR("ObjectPool::UpdateBuildingID - provided ID doesn't belong to a building (type={})", object_id.type);

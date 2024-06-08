@@ -36,6 +36,7 @@ namespace eng {
             ROFLCOPTER, DEMOSQUAD,
             MAGE,
             GRYPHON,
+            MISC1,
             COUNT
         };
     }

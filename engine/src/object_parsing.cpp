@@ -386,6 +386,11 @@ namespace eng {
                 data->i2 = 0;
                 if(config.count("radius"))
                     data->i2 = config.at("radius");
+                
+                if(config.count("followup")) {
+                    data->spawn_followup = true;
+                    data->followup_name = config.at("followup");
+                }
                 break;
             case UtilityObjectType::BUFF:
                 data->i1 = config.at("spell_id");

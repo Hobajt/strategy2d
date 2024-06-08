@@ -124,17 +124,6 @@
         "sounds": { "on_spawn": "spells/haste" }
     },
     {
-        "str_id": "raise_dead",
-        "name": "raise dead",
-        "type": 4,
-        "nav_type": 1,
-        "size": [1, 1],
-        "cost": [0,0,0,50],
-        "icon": [4,11],
-        "utility_id": 3,
-        "spell_id": 10
-    },
-    {
         "str_id": "tornado",
         "name": "whirlwind",
         "type": 4,
@@ -193,7 +182,22 @@
         "cost": [0,0,0,70],
         "icon": [1,11],
         "utility_id": 3,
+        "duration": 5,
         "spell_id": 15
+    },
+    {
+        "str_id": "raise_dead",
+        "name": "raise dead",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,50],
+        "icon": [4,11],
+        "utility_id": 3,
+        "spell_id": 10,
+        "duration": 5,
+        "radius": 3,
+        "followup": "dark_buzz"
     },
     {
         "str_id": "fireball",
@@ -206,6 +210,7 @@
         "utility_id": 0,
         "animations": [ "misc/effects/fireball" ],
         "duration": 1.0,
+        "spell_id": 16,
         "guided": false,
         "sounds": {
             "on_spawn": "misc/fireball",

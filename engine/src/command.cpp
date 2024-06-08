@@ -420,8 +420,8 @@ namespace eng {
                         if(!oom) {
                             obj = Resources::LoadSpell(spellID);
 
-                            //subtract spell resources (heal has special handling and subtracts from the spell handler instead)
-                            if(spellID != SpellID::HEAL)
+                            //subtract spell resources (heal & raise dead have special handling and subtracts from the spell handler instead)
+                            if(spellID != SpellID::HEAL && spellID != SpellID::RAISE_DEAD)
                                 src.DecreaseMana(price);
                         }
                     }

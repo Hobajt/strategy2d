@@ -41,6 +41,7 @@ namespace eng {
         Animator(const AnimatorDataRef& data, float anim_speed = 1.f);
 
         void SwitchAction(int action);
+        int GetLastActionIdx() const { return lastAction; }
 
         //Updates animation switching logic
         bool Update(int action);

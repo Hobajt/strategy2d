@@ -113,7 +113,10 @@ namespace eng {
                 }
                 break;
             case ObjectType::UNIT:
-                stats.unitCount++;
+                if(!Unit::IsMinion(data->num_id))
+                    stats.unitCount++;
+                else
+                    stats.minionCount++;
                 break;
             default:
                 ENG_LOG_ERROR("FactionController::ObjectAdded - invalid object type (neither building nor unit - {})", data->objectType);
@@ -143,11 +146,21 @@ namespace eng {
                 }
                 break;
             case ObjectType::UNIT:
-                stats.unitCount--;
-                if(stats.unitCount < 0) {
-                    ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
-                    stats.unitCount = 0;
+                if(!Unit::IsMinion(data->num_id)) {
+                    stats.unitCount--;
+                    if(stats.unitCount < 0) {
+                        ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
+                        stats.unitCount = 0;
+                    }
                 }
+                else {
+                    stats.minionCount--;
+                    if(stats.minionCount < 0) {
+                        ENG_LOG_WARN("FactionController::ObjectRemoved - negative count detected!");
+                        stats.minionCount = 0;
+                    }
+                }
+                
                 break;
             default:
                 ENG_LOG_ERROR("FactionController::ObjectAdded - invalid object type (neither building nor unit - {})", data->objectType);

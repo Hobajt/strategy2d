@@ -1469,10 +1469,10 @@ namespace eng {
         }
     }
 
-    void PlayerSelection::IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target) {
+    void PlayerSelection::IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target, GUI::PopupMessage& msg_bar) {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
-        ASSERT_MSG(GUI::ActionButton_CommandType::IsTargetless(command_id), "Attempting to issue command that requires targets using a wrong function.");
+        ASSERT_MSG(GUI::ActionButton_CommandType::IsTargetless(command_id) || (command_id == GUI::ActionButton_CommandType::CAST && SpellID::TargetlessCast(payload_id)), "Attempting to issue command that requires targets using a wrong function.");
 
         bool building_command = GUI::ActionButton_CommandType::IsBuildingCommand(command_id);
         ASSERT_MSG((building_command && selection_type == SelectionType::PLAYER_BUILDING) || (!building_command && selection_type == SelectionType::PLAYER_UNIT), "Invalid selection, cannot invoke targetless commands.");
@@ -1501,10 +1501,29 @@ namespace eng {
             }
         }
         else {
-            static const char* cmd_names[5] = { "Stop", "StandGround", "ReturnGoods", "TransportUnload", "???" };
-            const char* cmd_name = cmd_names[4];
+            static const char* cmd_names[6] = { "Stop", "StandGround", "ReturnGoods", "TransportUnload", "Cast", "???" };
+            const char* cmd_name = cmd_names[5];
             Command cmd;
             switch(command_id) {
+                case GUI::ActionButton_CommandType::CAST:
+                {
+                    if(!(GUI::ActionButton_CommandType::IsSingleUser(command_id) && selected_count == 1)) {
+                        ENG_LOG_FINE("Targetless command - '{}' - invalid GUI conditions for cast - (payload: {})", cmd_name, payload_id);
+                        return;
+                    }
+
+                    Unit& unit = level.objects.GetUnit(selection[0]);
+                    if(!unit.Faction()->CastConditionCheck(unit, payload_id)) {
+                        ENG_LOG_FINE("Targetless command - '{}' - conditions not met - (payload: {})", cmd_name, payload_id);
+                        msg_bar.DisplayMessage("You cannot cast that");
+                        return;
+                    }
+
+                    ENG_LOG_FINE("Targetless command - Cast");
+                    cmd = Command::Cast(payload_id, ObjectID(), unit.Position() + DirectionVector(unit.Orientation()));
+                    cmd_name = cmd_names[4];
+                    break;
+                }
                 case GUI::ActionButton_CommandType::STOP:
                     ENG_LOG_FINE("Targetless command - Stop");
                     cmd = Command::Idle();
@@ -2005,7 +2024,7 @@ namespace eng {
                 }
 
                 if (nontarget_cmd_issued) {
-                    selection.IssueTargetlessCommand(level, command_data, command_target);
+                    selection.IssueTargetlessCommand(level, command_data, command_target, msg_bar);
                     command_data = glm::ivec2(-1);
                     command_target = ObjectID();
                 }
@@ -2013,7 +2032,7 @@ namespace eng {
                     ResolveActionButtonClick();
 
                     if(nontarget_cmd_issued) {
-                        selection.IssueTargetlessCommand(level, command_data, command_target);
+                        selection.IssueTargetlessCommand(level, command_data, command_target, msg_bar);
                         command_data = glm::ivec2(-1);
                         command_target = ObjectID();
                     }
@@ -2160,6 +2179,13 @@ namespace eng {
                 command_target = ObjectID();
                 nontarget_cmd_issued = true;
                 break;
+            case GUI::ActionButton_CommandType::CAST:
+                if(SpellID::TargetlessCast(btn.payload_id)) {
+                    command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                    command_target = ObjectID();
+                    nontarget_cmd_issued = true;
+                    break;
+                }
             default:
                 //targetable commands, move to target selection
                 //keep track of the command (or button), watch out for selection changes -> selection cancel?

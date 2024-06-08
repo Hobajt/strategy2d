@@ -233,7 +233,7 @@ namespace eng {
 
         bool IssueTargetedCommand(Level& level, const glm::ivec2& target_pos, const glm::ivec2& target_pos_sharpened, const ObjectID& target_id, const glm::ivec2& cmd_data, GUI::PopupMessage& msg_bar);
         void IssueAdaptiveCommand(Level& level, const glm::ivec2& target_pos, const glm::ivec2& target_pos_sharpened, const ObjectID& target_id);
-        void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target);
+        void IssueTargetlessCommand(Level& level, const glm::ivec2& cmd_data, const ObjectID& command_target, GUI::PopupMessage& msg_bar);
 
         void CancelBuildingAction(Level& level);
 

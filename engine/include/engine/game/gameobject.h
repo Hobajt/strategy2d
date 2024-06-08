@@ -357,6 +357,8 @@ namespace eng {
         void SetInvisible(bool state);
         void SetEffectFlag(int idx, bool state);
         bool GetEffectFlag(int idx);
+
+        static bool IsMinion(const glm::ivec3& num_id);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -482,6 +484,9 @@ namespace eng {
             int i4 = 0;
             int i5 = 0;
             int i6 = 0;
+            int i7 = 0;
+
+            std::array<ObjectID,5> ids;
         public:
             glm::vec2 InterpolatePosition(float f);
         };

@@ -12,7 +12,6 @@
 
 static constexpr glm::vec2 BUFF_ICON_SIZE = glm::vec2(4.f / 9.f);
 static constexpr int BUFF_ROW_LENGTH = 4;
-
 namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
@@ -38,6 +37,9 @@ namespace eng {
     void UtilityHandler_Vision_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Vision_Update(UtilityObject& obj, Level& level);
 
+    void UtilityHandler_Minion_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Minion_Update(UtilityObject& obj, Level& level);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -55,7 +57,7 @@ namespace eng {
                 std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Corpse_Init, UtilityHandler_Corpse_Update, UtilityHandler_Corpse_Render };
                 break;
             case UtilityObjectType::VISUALS:
-                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_No_Render };
+                std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Visuals_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
                 break;
             case UtilityObjectType::SPELL:
                 //pick handler based on spellID
@@ -65,6 +67,14 @@ namespace eng {
                         break;
                     case SpellID::HOLY_VISION:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Vision_Init, UtilityHandler_Vision_Update, UtilityHandler_Default_Render };
+                        break;
+                    case SpellID::EYE:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Minion_Init, UtilityHandler_Minion_Update, UtilityHandler_No_Render };
+                        data->b1 = false;
+                        break;
+                    case SpellID::RAISE_DEAD:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Minion_Init, UtilityHandler_Minion_Update, UtilityHandler_No_Render };
+                        data->b1 = true;
                         break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
@@ -195,10 +205,14 @@ namespace eng {
 
         obj.real_pos() = glm::vec2(src->Position());
         obj.real_size() = obj.Data()->size;
+        obj.pos() = src->Position();
 
         //1st & 2nd anim indices
         d.i1 = src->DeathAnimIdx();
         d.i2 = -1;
+
+        //mark as ressurectable (for raise dead)
+        d.i7 = src->IsUnit() && src->NavigationType() == NavigationBit::GROUND;
 
         if(d.i1 < 0) {
             //1st anim has invalid idx -> play explosion animation
@@ -217,7 +231,7 @@ namespace eng {
         }
         else {
             d.f1 = anim->GetGraphics(d.i1).Duration() + 1.f;
-            if(src->IsUnit()) {
+            if(src->IsUnit() && src->NumID()[1] != UnitType::MISC1) {
                 //2nd animation - transitioned to from the 1st one
                 if(src->NavigationType() == NavigationBit::GROUND) {
                     d.i2 = CorpseAnimID::CORPSE1_HU + src->Race();
@@ -512,6 +526,87 @@ namespace eng {
         }
 
         return (d.i1 != 0);
+    }
+
+    void UtilityHandler_Minion_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        Level& level = *src->lvl();
+        bool raise_dead = obj.UData()->b1;
+
+        UnitDataRef minion_data = Resources::LoadUnit(UnitType::MISC1, raise_dead);
+
+        if(raise_dead) {
+            std::vector<UtilityObject*> corpses = {};
+            int corpses_available = level.objects.GetCorpsesAround(d.target_pos, obj.UData()->i2, corpses);
+
+            //cost computation & subtraction
+            Unit* source = dynamic_cast<Unit*>(src);
+            int max_count = source->Mana() / obj.UData()->cost[3];
+            int raised = (corpses_available > max_count) ? max_count : corpses_available;
+
+            if(raised == 0) {
+                ENG_LOG_FINE("UtilityObject - Spawn a minion (skeleton) failed - no mana ({}) or no corpses", source->Mana());
+                d.i1 = 0;
+                d.f1 = (float)Input::CurrentTime();
+                d.f2 = d.f1 + obj.UData()->duration;
+                return;
+            }
+
+            source->DecreaseMana(raised * obj.UData()->cost[3]);
+
+            UtilityObjectDataRef viz_data = obj.UData()->spawn_followup ? Resources::LoadUtilityObj(obj.UData()->followup_name) : nullptr;
+            
+            //unit spawning & corpse deletion
+            for(int i = 0; i < raised; i++) {
+                glm::ivec2 spawn_pos = corpses[i]->Position();
+                d.ids[i] = level.objects.EmplaceUnit(level, minion_data, src->Faction(), spawn_pos);
+
+                //alternative removal - could straightup mark for delete in the ObjectPool
+                corpses[i]->Kill(true);
+
+                //spawn spell visuals on each raised skeleton
+                if(obj.UData()->spawn_followup)
+                    level.objects.QueueUtilityObject(level, viz_data, glm::vec2(spawn_pos) + 0.5f);
+            }
+            d.i1 = raised;
+
+            ENG_LOG_FINE("UtilityObject - Spawned a minion - skeletons, '{}/{}' around {} ({})", raised, corpses_available, d.target_pos, obj);
+        }
+        else {
+            //pick a spawn position around the caster
+            glm::ivec2 spawn_pos = d.target_pos;
+            level.map.NearbySpawnCoords(src->Position(), glm::ivec2(1), 3, NavigationBit::AIR, spawn_pos);
+
+            //spawn the unit
+            d.ids[0] = level.objects.EmplaceUnit(level, minion_data, src->Faction(), spawn_pos);
+            d.i1 = 1;
+
+            ENG_LOG_FINE("UtilityObject - Spawned a minion - eye, at {} ({})", d.target_pos, obj);
+        }
+
+        //start the timer
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+    }
+
+    bool UtilityHandler_Minion_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        Input& input = Input::Get();
+
+        d.f2 += input.deltaTime;
+        bool timer_expired = (d.f2 - d.f1) >= obj.UData()->duration;
+
+        //kill spawned minions if timer expires
+        if(timer_expired) {
+            ENG_LOG_FINE("UtilityObject - Minions expired ({})", obj);
+            for(int i = 0; i < d.i1; i++) {
+                Unit* unit = nullptr;
+                if(level.objects.GetUnit(d.ids[i], unit, false)) {
+                    unit->Kill();
+                }
+            }
+        }
+
+        return timer_expired;
     }
 
 }//namespace eng
