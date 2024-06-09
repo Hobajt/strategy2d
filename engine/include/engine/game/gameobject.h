@@ -74,7 +74,7 @@ namespace eng {
         float AnimationProgress() const { return animator.GetCurrentFrame(); }
         bool AnimKeyframeSignal() const { return animator.KeyframeSignal(); }
         bool AnimKeyframeSignal(int actionIdx) const { return animator.KeyframeSignal(actionIdx); }
-        void SwitchAnimatorAction(int actionIdx) { animator.SwitchAction(actionIdx); }
+        void SwitchAnimatorAction(int actionIdx, bool forceReset = false) { animator.SwitchAction(actionIdx, forceReset); }
 
         int AnimationCount() const { return animator.ActionCount(); }
         float AnimationDuration(int actionIdx) const { return animator.GetAnimationDuration(actionIdx); }
@@ -193,6 +193,7 @@ namespace eng {
         //For melee damage application.
         int ApplyDirectDamage(const FactionObject& source);
         int ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
+        int ApplyDamageFlat(int dmg);
 
         void SetHealth(int health);
         void AddHealth(float value);

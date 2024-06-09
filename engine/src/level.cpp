@@ -80,6 +80,7 @@ namespace eng {
         map.UntouchabilityUpdate(factions.Diplomacy().Bitmap());
         factions.Update(*this);
         objects.Update();
+        objects.RunesDispatch(*this, map.RunesDispatch());
     }
 
     void Level::Render() {

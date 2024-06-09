@@ -58,6 +58,10 @@ namespace eng {
     void UtilityHandler_Tornado_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_Tornado_Update(UtilityObject& obj, Level& level);
 
+    void UtilityHandler_Runes_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Runes_Update(UtilityObject& obj, Level& level);
+    void UtilityHandler_Runes_Render(UtilityObject& obj);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -102,6 +106,9 @@ namespace eng {
                         break;
                     case SpellID::TORNADO:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Tornado_Init, UtilityHandler_Tornado_Update, UtilityHandler_Default_Render };
+                        break;
+                    case SpellID::RUNES:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Runes_Init, UtilityHandler_Runes_Update, UtilityHandler_Runes_Render };
                         break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
@@ -353,7 +360,7 @@ namespace eng {
         AnimatorDataRef anim = obj.Data()->animData;
 
         obj.real_pos() = d.target_pos;
-        obj.real_size() = obj.Data()->size;
+        obj.real_size() = obj.SizeScaled();
 
         d.f1 = 0.f;
 
@@ -799,6 +806,70 @@ namespace eng {
         }
         
         return false;
+    }
+
+    void UtilityHandler_Runes_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+
+        obj.pos() = d.target_pos;
+        obj.real_size() = obj.SizeScaled();
+
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+        d.f3 = ud.f1;
+
+        obj.lvl()->map.SpawnRunes(d.target_pos, obj.ID());
+
+        ENG_LOG_FINE("UtilityObject - Runes spawned at {}.", d.target_pos);
+    }
+
+    bool UtilityHandler_Runes_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+
+        //spell duration timer
+        d.f2 += Input::Get().deltaTime;
+        if(d.f2 - d.f1 >= ud.duration) {
+            int leftovers = level.map.DespawnRunes(d.target_pos, obj.ID());
+            ENG_LOG_FINE("UtilityObject - Runes despawned at {} ({} remained).", d.target_pos, leftovers);
+            return true;
+        }
+
+        //animation timer
+        d.f3 += Input::Get().deltaTime;
+        if(d.f3 >= ud.f1) {
+            d.i1 = 1;
+            d.f3 = 0.f;
+            //animation frame reset
+            obj.SwitchAnimatorAction(0, true);
+        }
+
+        return false;
+    }
+
+    void RenderRune(UtilityObject& obj, const glm::ivec2& pos) {
+        if(!obj.lvl()->map.IsWithinBounds(pos) || !obj.lvl()->map.IsTileVisible(pos) || obj.lvl()->map(pos).rune_id != obj.ID())
+            return;
+        
+        obj.RenderAt(glm::vec2(pos) - obj.real_size() * 0.5f + 0.5f, obj.real_size(), Z_OFFSET);
+    }
+
+    void UtilityHandler_Runes_Render(UtilityObject& obj) {
+        //only play if signaled from the Update() logic
+        if(obj.LD().i1 == 0)
+            return;
+        
+        Level& level = *obj.lvl();
+        RenderRune(obj, obj.pos() + glm::ivec2(+0,+0));
+        RenderRune(obj, obj.pos() + glm::ivec2(-1,+0));
+        RenderRune(obj, obj.pos() + glm::ivec2(+1,+0));
+        RenderRune(obj, obj.pos() + glm::ivec2(+0,-1));
+        RenderRune(obj, obj.pos() + glm::ivec2(+0,+1));
+
+        //stops the animation after playing once
+        if(obj.AnimKeyframeSignal()) {
+            obj.LD().i1 = 0;
+        }
     }
 
 }//namespace eng

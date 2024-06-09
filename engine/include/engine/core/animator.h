@@ -40,7 +40,7 @@ namespace eng {
         Animator() = default;
         Animator(const AnimatorDataRef& data, float anim_speed = 1.f);
 
-        void SwitchAction(int action);
+        void SwitchAction(int action, bool forceReset = false);
         int GetLastActionIdx() const { return lastAction; }
 
         //Updates animation switching logic

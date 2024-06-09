@@ -255,6 +255,21 @@ namespace eng {
         return dmg;
     }
 
+    int FactionObject::ApplyDamageFlat(int dmg) {
+        if(IsInvulnerable()) {
+            ENG_LOG_FINE("[DMG] attempting to damage invulnerable object ({}).", OID().to_string());
+            return 0;
+        }
+
+        if(dmg < 0) dmg = 0;
+
+        //death condition is handled in object's Update() method
+        health -= dmg;
+
+        ENG_LOG_FINE("[DMG] <<no_source>> dealt {} damage to {} (melee).", dmg, OID().to_string());
+        return dmg;
+    }
+
     void FactionObject::SetHealth(int value) {
         health = value;
         health = (health <= MaxHealth()) ? health : MaxHealth();

@@ -6,6 +6,8 @@
 #include "engine/game/config.h"
 #include "engine/game/map.h"
 
+#include "engine/game/resources.h"
+
 #define WORKER_ENTRY_DURATION 1.f
 
 #define MAX_UNLOAD_RANGE 3
@@ -578,6 +580,33 @@ namespace eng {
             }
         }
         return out_corpses.size();
+    }
+
+    void ObjectPool::RunesDispatch(Level& level, std::vector<std::pair<glm::ivec2, ObjectID>>& exploded_runes) {
+        UtilityObjectDataRef runes = Resources::LoadSpell(SpellID::RUNES);
+        int basicDamage = runes->i3;
+        int pierceDamage = runes->i4;
+
+        UtilityObjectDataRef followup = nullptr;
+        if(runes->spawn_followup) {
+            followup =  Resources::LoadUtilityObj(runes->followup_name);
+        }
+
+        Unit* unit = nullptr;
+        for(auto& [pos, id] : exploded_runes) {
+            if(!GetUnit(id, unit)) {
+                ENG_LOG_WARN("ObjectPool::RunesDispatch - something went wrong, unit not found.");
+                continue;
+            }
+
+            ENG_LOG_FINE("Rune exploded at {} - victim={}", pos, *unit);
+            unit->ApplyDamageFlat(basicDamage + pierceDamage);
+
+            if(followup != nullptr) {
+                QueueUtilityObject(level, followup, glm::vec2(pos) + 0.5f, ObjectID());
+            }
+        }
+        exploded_runes.clear();
     }
 
     void ObjectPool::UpdateBuildingID(const ObjectID& object_id) {

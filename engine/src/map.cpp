@@ -13,6 +13,8 @@
 #include "engine/game/player_controller.h"
 #include "engine/utils/generator.h"
 
+#include "engine/game/level.h"
+
 #include <random>
 #include <limits>
 #include <sstream>
@@ -118,6 +120,14 @@ namespace eng {
 
     bool TileData::IsCoastTile() const {
         return coastal;
+    }
+
+    int TileData::DespawnRune(ObjectID::dtype ID) {
+        if(rune_id == ID) {
+            rune_id = 0;
+            return 1;
+        }
+        return 0;
     }
 
     int TileData::TileTraversability() const {
@@ -1139,6 +1149,32 @@ namespace eng {
         if(factionId == playerFactionId) {
             VisibilityUpdate(pos_prev, pos_next, sight);
         }
+
+        //runes dispatch (non-air units only)
+        if(i == 0 && tiles(pos_next).rune_id != 0) {
+            rune_dispatch.push_back({pos_next, tiles(pos_next).info[0].id});
+            tiles(pos_next).rune_id = 0;
+        }
+    }
+
+    void Map::SpawnRunes(const glm::ivec2& pos, ObjectID::dtype ID) {
+        tiles(pos.y+0, pos.x+0).rune_id = ID;
+        tiles(pos.y+1, pos.x+0).rune_id = ID;
+        tiles(pos.y-1, pos.x+0).rune_id = ID;
+        tiles(pos.y+0, pos.x-1).rune_id = ID;
+        tiles(pos.y+0, pos.x+1).rune_id = ID;
+    }
+
+    int Map::DespawnRunes(const glm::ivec2& pos, ObjectID::dtype ID) {
+        int count = 0;
+
+        count += tiles(pos.y+0, pos.x+0).DespawnRune(ID);
+        count += tiles(pos.y+1, pos.x+0).DespawnRune(ID);
+        count += tiles(pos.y-1, pos.x+0).DespawnRune(ID);
+        count += tiles(pos.y+0, pos.x-1).DespawnRune(ID);
+        count += tiles(pos.y+0, pos.x+1).DespawnRune(ID);
+
+        return count;
     }
 
     void Map::UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId_) {
@@ -1392,7 +1428,7 @@ namespace eng {
 
         if(ImGui::Button("Coast tiles", btn_size)) mode = 12;
         ImGui::SameLine();
-        if(ImGui::Button("Untouchable", btn_size)) mode = 13;
+        if(ImGui::Button("Untouchable/Runes", btn_size)) mode = 13;
         ImGui::SameLine();
         if(ImGui::Button("Invisible", btn_size)) mode = 14;
         
@@ -1543,8 +1579,18 @@ namespace eng {
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).IsCoastTile() ? clr2 : clr1);
                             break;
                         case 13:
-                            ImGui::Text("%d", tiles(y,x).info[0].untouchable);
-                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bool(tiles(y,x).info[0].untouchable) ? clr2 : clr3);
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));
+                            if(ImGui::BeginTable("table2", 2, ImGuiTableFlags_ContextMenuInBody | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+                                ImGui::TableNextRow();
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).info[0].untouchable);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).info[0].untouchable ? clr2 : clr3);
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%d", tiles(y,x).rune_id);
+                                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).rune_id ? clr2 : clr3);
+                                ImGui::EndTable();
+                            }
+                            ImGui::PopStyleVar();
                             break;
                         case 14:
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(style.CellPadding.x, 0));

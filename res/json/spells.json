@@ -96,10 +96,17 @@
         "type": 4,
         "nav_type": 1,
         "size": [1, 1],
-        "cost": [0,0,0,200],
+        "cost": [0,0,0,2],
         "icon": [7,9],
         "utility_id": 3,
-        "spell_id": 8
+        "spell_id": 8,
+        "duration": 50.0,
+        "speed": 5.0,
+        "scale": 0.5,
+        "animations": [ { "sprite_name": "misc/effects/runes", "keyframe": 1.0 } ],
+        "followup": "explosion_long_s2",
+        "sounds": { "on_spawn": "misc/Runes" },
+        "damage": [0,50]
     },
     {
         "str_id": "haste",

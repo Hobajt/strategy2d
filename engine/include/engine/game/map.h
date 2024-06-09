@@ -134,6 +134,7 @@ namespace eng {
 
         ObjectInfo info[2];                 //info for ground & airborne units
         TileVisibility vis;
+        ObjectID::dtype rune_id = 0;
     public:
         TileData() = default;
         TileData(int tileType, int variation, int cornerType, int health);
@@ -160,6 +161,8 @@ namespace eng {
         bool IsVisible(bool occlusion_enabled = true) const;
 
         bool IsCoastTile() const;
+
+        int DespawnRune(ObjectID::dtype ID);
     private:
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
@@ -432,6 +435,10 @@ namespace eng {
         void RemoveObject(int navType, const glm::ivec2& pos, const glm::ivec2& size, bool is_building, int factionId, int sight);
         void MoveUnit(int unitNavType, const glm::ivec2& pos_prev, const glm::ivec2& pos_next, bool permanently, int sight);
 
+        void SpawnRunes(const glm::ivec2& position, ObjectID::dtype ID);
+        int DespawnRunes(const glm::ivec2& position, ObjectID::dtype ID);
+        std::vector<std::pair<glm::ivec2, ObjectID>>& RunesDispatch() { return rune_dispatch; }
+
         void UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId);
         void DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId);
         void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID);
@@ -514,6 +521,8 @@ namespace eng {
 
         bool enable_occlusion = true;
         Sprite occlusion;
+
+        std::vector<std::pair<glm::ivec2, ObjectID>> rune_dispatch;
     };
 
 }//namespace eng

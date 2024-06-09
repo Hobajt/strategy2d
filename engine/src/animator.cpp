@@ -34,8 +34,8 @@ namespace eng {
 
     Animator::Animator(const AnimatorDataRef& data_, float anim_speed_) : data(data_), anim_speed(anim_speed_), frame(Random::Uniform()) {}
 
-    void Animator::SwitchAction(int action) {
-        if(lastAction != action) {
+    void Animator::SwitchAction(int action, bool forceReset) {
+        if(lastAction != action || forceReset) {
             frame = data->GetGraphics(action).FirstFrameF();
         }
         lastAction = action;
