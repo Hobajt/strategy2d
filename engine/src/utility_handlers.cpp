@@ -242,8 +242,8 @@ namespace eng {
         d.i4 = src->Orientation();
         //TODO: maybe round up the orientation, as there are usually only 2 directions for dying animations
 
-        obj.real_pos() = glm::vec2(src->Position());
-        obj.real_size() = obj.Data()->size;
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = (src->NavigationType() == NavigationBit::GROUND) ? obj.Data()->size : src->RenderSize();
         obj.pos() = src->Position();
 
         //1st & 2nd anim indices

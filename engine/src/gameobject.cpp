@@ -184,9 +184,10 @@ namespace eng {
         GameObject::Kill(silent);
         
         if(!silent) {
-            UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
+            UtilityObjectDataRef corpse_data = (NumID()[1] != UnitType::BALLISTA) ? Resources::LoadUtilityObj("corpse") : Resources::LoadUtilityObj("explosion_long_s2");
+            glm::vec2 pos = (NumID()[1] != UnitType::BALLISTA) ? RenderPosition() : RenderPositionCentered();
             //spawn a corpse utility object
-            lvl()->objects.QueueUtilityObject(*lvl(), corpse_data, Position(), ObjectID(), *this);
+            lvl()->objects.QueueUtilityObject(*lvl(), corpse_data, pos, ObjectID(), *this);
             
             //play the dying sound effect
             static constexpr std::array<const char*, 7> sound_name = { "misc/bldexpl1", "human/hdead", "orc/odead", "ships/shipsink", "misc/explode", "misc/firehit", "misc/Skeleton Death" };
@@ -536,6 +537,10 @@ namespace eng {
             pos = (pos + 0.5f) - RenderSize() * 0.5f;
         }
         return pos;
+    }
+
+    glm::vec2 Unit::RenderPositionCentered() const {
+        return PositionCentered() + move_offset;
     }
 
     glm::vec2 Unit::RenderSize() const {

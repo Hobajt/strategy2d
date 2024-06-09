@@ -150,6 +150,7 @@ namespace eng {
 
         //Accounting for upscaled visuals (ie. ships take 2x2 tiles).
         virtual glm::vec2 PositionCentered() const;
+        virtual glm::vec2 RenderPositionCentered() const { return PositionCentered(); }
 
         bool CanAttack() const { return data_f->CanAttack(); }
         float Cooldown() const { return data_f->cooldown; }
@@ -321,6 +322,7 @@ namespace eng {
         glm::vec2& m_offset() { return move_offset; }
         virtual glm::vec2 RenderPosition() const override;
         virtual glm::vec2 RenderSize() const override;
+        virtual glm::vec2 RenderPositionCentered() const override;
 
         virtual bool DetectablyInvisible() const override;
 
