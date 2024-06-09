@@ -60,6 +60,11 @@ namespace eng {
         return std::max(v.x, v.y);
     }
 
+    float distance2(const glm::vec2& p1, const glm::vec2& p2) {
+        glm::vec2 v = p2-p1;
+        return v.x*v.x + v.y*v.y;
+    }
+
     int DirVectorCoord(int ori) {
         ori = ori % 8;
         return 1 - 2*(ori/5) - int(ori % 4 == 0);

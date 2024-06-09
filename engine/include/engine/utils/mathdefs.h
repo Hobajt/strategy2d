@@ -27,6 +27,8 @@ namespace eng {
 
     int chessboard_distance(const glm::ivec2& p1, const glm::ivec2& p2);
 
+    float distance2(const glm::vec2& p1, const glm::vec2& p2);
+
     //direction conversions (between vector and number identifier)
 
     int DirVectorCoord(int orientation);

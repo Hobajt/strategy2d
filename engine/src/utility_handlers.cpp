@@ -6,6 +6,8 @@
 #include "engine/game/resources.h"
 #include "engine/core/audio.h"
 
+#include "engine/utils/randomness.h"
+
 #include <tuple>
 #include <sstream>
 
@@ -15,6 +17,7 @@ static constexpr glm::vec2 BUFF_ICON_SIZE = glm::vec2(4.f / 9.f);
 static constexpr int BUFF_ROW_LENGTH = 4;
 
 static constexpr int FLAME_SHIELD_NUM_FLAMES = 5;
+static constexpr float TORNADO_MOTION_PROBABILITY = 0.3f;
 
 namespace eng {
 
@@ -51,6 +54,9 @@ namespace eng {
     void UtilityHandler_FlameShield_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_FlameShield_Update(UtilityObject& obj, Level& level);
     void UtilityHandler_FlameShield_Render(UtilityObject& obj);
+
+    void UtilityHandler_Tornado_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_Tornado_Update(UtilityObject& obj, Level& level);
 
     //===================================================================
 
@@ -93,6 +99,9 @@ namespace eng {
                         break;
                     case SpellID::FLAME_SHIELD:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_FlameShield_Init, UtilityHandler_FlameShield_Update, UtilityHandler_FlameShield_Render };
+                        break;
+                    case SpellID::TORNADO:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Tornado_Init, UtilityHandler_Tornado_Update, UtilityHandler_Default_Render };
                         break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
@@ -724,6 +733,72 @@ namespace eng {
             glm::vec2 offset = glm::vec2(std::cosf(d.f2*speed + i*f), std::sinf(d.f2*speed + i*f));
             obj.RenderAt(obj.real_pos() - obj.real_size()*0.5f + offset, obj.real_size(), Z_OFFSET);
         }
+    }
+
+    void UtilityHandler_Tornado_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+
+        obj.real_pos() = d.target_pos;
+        obj.real_size() = obj.SizeScaled();
+        obj.pos() = d.target_pos;
+
+        d.source_pos = d.target_pos;
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+        d.f3 = -1.f;
+
+        ENG_LOG_FINE("UtilityObject - Tornado spawned at {}.", d.target_pos);
+    }
+
+    bool UtilityHandler_Tornado_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+        float deltaTime = Input::Get().deltaTime;
+
+        //d.target_pos = last movement's direction vector
+        //d.source_pos = movement interpolation position
+        //obj.pos() = current position (map coords)
+
+        if(d.f3 >= 1.f) {
+            d.source_pos = glm::vec2(obj.pos());
+            d.f3 = -1.f;
+        }
+
+        if(d.f3 >= 0.f) {
+            //tornado in motion
+            d.f3 += ud.f1 * deltaTime;
+            d.source_pos = glm::vec2(obj.pos()) - d.target_pos * (1.f - d.f3);
+        }
+        else if(Random::Uniform() < TORNADO_MOTION_PROBABILITY) {
+            //initiate new motion
+            glm::ivec2 dir;
+            do {
+                dir = DirectionVector(int(9.f*Random::Uniform()));
+            } while(!level.map.IsWithinBounds(obj.pos() + dir));
+
+            d.target_pos = dir;
+            obj.pos() += dir;
+            d.f3 = 0.f;
+        }
+        // ENG_LOG_INFO("POS: {}, {}, {}", obj.pos(), d.source_pos, d.f3);
+
+        obj.real_pos() = d.source_pos + 0.5f;
+
+        d.f2 += deltaTime;
+        if((d.f2 - d.f1) >= obj.UData()->duration) {
+            d.f1 += obj.UData()->duration;
+
+            //apply damage to objects around
+            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, ObjectID(), false);
+            ENG_LOG_FINE("UtilityObject - Tornado tick - Damaged {} objects ({} damage in total).", hit_count, total_damage);
+            
+            //increment tick counter & possibly terminate
+            if((++d.i1) >= ud.i5) {
+                ENG_LOG_FINE("UtilityObject - Tornado terminated.");
+                return true;
+            }
+        }
+        
+        return false;
     }
 
 }//namespace eng
