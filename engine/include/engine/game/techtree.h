@@ -11,8 +11,6 @@ namespace eng {
 
     struct ObjectID;
 
-
-
     namespace ResearchType {
         enum {
             MELEE_ATTACK, MELEE_DEFENSE, NAVAL_ATTACK, NAVAL_DEFENSE, RANGED_ATTACK, SIEGE_ATTACK,
@@ -48,6 +46,9 @@ namespace eng {
         bool RequiresTarget(int spellID);
         bool TargetlessCast(int spellID);
         bool IsContinuous(int spellID);
+
+        bool SimplePrice(int spellID);
+        bool TargetConditionCheck(int spellID, Level& level, const ObjectID& targetID);
 
         int CastingRange(int spellID);
 

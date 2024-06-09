@@ -13,6 +13,9 @@
 
 static constexpr glm::vec2 BUFF_ICON_SIZE = glm::vec2(4.f / 9.f);
 static constexpr int BUFF_ROW_LENGTH = 4;
+
+static constexpr int FLAME_SHIELD_NUM_FLAMES = 5;
+
 namespace eng {
 
     void UtilityHandler_Default_Render(UtilityObject& obj);
@@ -44,6 +47,10 @@ namespace eng {
     bool UtilityHandler_Minion_Update(UtilityObject& obj, Level& level);
 
     void UtilityHandler_Polymorph_Init(UtilityObject& obj, FactionObject* src);
+
+    void UtilityHandler_FlameShield_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_FlameShield_Update(UtilityObject& obj, Level& level);
+    void UtilityHandler_FlameShield_Render(UtilityObject& obj);
 
     //===================================================================
 
@@ -83,6 +90,9 @@ namespace eng {
                         break;
                     case SpellID::POLYMORPH:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Polymorph_Init, UtilityHandler_Visuals_Update, UtilityHandler_Default_Render };
+                        break;
+                    case SpellID::FLAME_SHIELD:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_FlameShield_Init, UtilityHandler_FlameShield_Update, UtilityHandler_FlameShield_Render };
                         break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
@@ -131,7 +141,10 @@ namespace eng {
         obj.real_pos() = src->PositionCentered();
 
         //projectile damage setup (use caster's stats if not set in object data)
-        if(ud.i3 + ud.i4 == 0) {
+        if(ud.b2) {
+            d.i2 = d.i3 = 0;
+        }
+        else if(ud.i3 + ud.i4 == 0) {
             d.i2 = src->BasicDamage();
             d.i3 = src->PierceDamage();
         }
@@ -147,8 +160,6 @@ namespace eng {
 
         ENG_LOG_FINE("UtilityObject - Projectile spawned (guided={}, from {} to {})", obj.UData()->Projectile_IsAutoGuided(), d.source_pos, d.target_pos);
     }
-
-    glm::vec2 NextBouncePos(const glm::vec2& source, const glm::vec2& target);
 
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
         UtilityObject::LiveData& d = obj.LD();
@@ -173,7 +184,7 @@ namespace eng {
             if(obj.UData()->spawn_followup) {
                 UtilityObjectDataRef data =  Resources::LoadUtilityObj(obj.UData()->followup_name);
                 if(data != nullptr) {
-                    level.objects.QueueUtilityObject(level, data, d.target_pos);
+                    level.objects.QueueUtilityObject(level, data, d.target_pos, d.targetID);
                 }
                 else {
                     ENG_LOG_WARN("UtilityHandler_Projectile_Update - invalid followup object ('{}')", obj.UData()->followup_name);
@@ -656,6 +667,63 @@ namespace eng {
         //call visuals initialization - to play the spell animation
         UtilityHandler_Visuals_Init(obj, src);
         ENG_LOG_FINE("UtilityObject - unit '{}' was polymorphed (sheep spawned: {}).", target_id, sheepified);
+    }
+
+    void UtilityHandler_FlameShield_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+
+        obj.real_size() = obj.SizeScaled();
+
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+
+        ENG_LOG_FINE("UtilityObject - Flame Shield effect applied to '{}'.", d.targetID);
+    }
+
+    bool UtilityHandler_FlameShield_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+
+        //fetch the central unit
+        Unit* target = nullptr;
+        if(!level.objects.GetUnit(d.targetID, target)) {
+            ENG_LOG_FINE("UtilityObject - Flame Shield effect expired from '{}' (central unit lost).", d.targetID);
+            return true;
+        }
+
+        obj.real_pos() = target->RenderPosition() + target->RenderSize() * 0.5f;
+        obj.pos() = target->Position();
+
+        d.f2 += Input::Get().deltaTime;
+
+        if((d.f2 - d.f1) >= obj.UData()->duration) {
+            d.f1 += obj.UData()->duration;
+
+            //apply damage to objects around
+            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, d.targetID, false);
+            ENG_LOG_FINE("UtilityObject - Flame Shield tick - Damaged {} objects ({} damage in total).", hit_count, total_damage);
+            
+            //increment tick counter & possibly terminate
+            if((++d.i1) >= ud.i5) {
+                ENG_LOG_FINE("UtilityObject - Flame Shield effect expired from '{}'.", d.targetID);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    void UtilityHandler_FlameShield_Render(UtilityObject& obj) {
+        if(!obj.lvl()->map.IsWithinBounds(obj.real_pos()) || !obj.lvl()->map.IsTileVisible(obj.real_pos()))
+            return;
+
+        UtilityObject::LiveData& d = obj.LD();
+        float speed = obj.UData()->f1;
+
+        float f = 2.f*glm::pi<float>() / FLAME_SHIELD_NUM_FLAMES;
+        for(int i = 0; i < FLAME_SHIELD_NUM_FLAMES; i++) {
+            glm::vec2 offset = glm::vec2(std::cosf(d.f2*speed + i*f), std::sinf(d.f2*speed + i*f));
+            obj.RenderAt(obj.real_pos() - obj.real_size()*0.5f + offset, obj.real_size(), Z_OFFSET);
+        }
     }
 
 }//namespace eng

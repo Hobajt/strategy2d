@@ -77,6 +77,7 @@ namespace eng {
         std::string to_string() const;
         friend std::ostream& operator<<(std::ostream& os, const ObjectID& id);
         friend bool operator==(const ObjectID& lhs, const ObjectID& rhs);
+        friend bool operator!=(const ObjectID& lhs, const ObjectID& rhs);
     };
 
     //===== SoundEffect =====
@@ -242,8 +243,9 @@ namespace eng {
         std::string followup_name;
 
         //generic fields - content is specific to individual UtilityObject types (look in object_parsing.cpp for details)
-        bool b1;
-        int i1, i2, i3, i4;
+        bool b1, b2;
+        int i1, i2, i3, i4, i5;
+        float f1;
     public:
         bool Projectile_IsAutoGuided() const { return (i1 == 0); }
         int Projectile_SplashRadius() const { return i1; }

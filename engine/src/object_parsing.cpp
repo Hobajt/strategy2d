@@ -379,6 +379,8 @@ namespace eng {
                     data->i3 = config.at("damage").at(0);
                     data->i4 = config.at("damage").at(1);
                 }
+
+                data->b2 = config.count("no_damage") ? config.at("no_damage") : false;
                 break;
             case UtilityObjectType::SPELL:
                 data->i1 = config.at("spell_id");
@@ -390,6 +392,19 @@ namespace eng {
                 if(config.count("followup")) {
                     data->spawn_followup = true;
                     data->followup_name = config.at("followup");
+                }
+
+                if(config.count("damage")) {
+                    data->i3 = config.at("damage").at(0);
+                    data->i4 = config.at("damage").at(1);
+                }
+
+                if(config.count("ticks")) {
+                    data->i5 = config.at("ticks");
+                }
+
+                if(config.count("speed")) {
+                    data->f1 = config.at("speed");
                 }
                 break;
             case UtilityObjectType::BUFF:

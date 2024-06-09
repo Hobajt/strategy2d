@@ -417,11 +417,11 @@ namespace eng {
                         spellID = payload_id-2;
                         int price = SpellID::Price(spellID);
                         oom = price > src.Mana();
-                        if(!oom) {
+                        if(!oom && SpellID::TargetConditionCheck(spellID, level, action.data.target)) {
                             obj = Resources::LoadSpell(spellID);
 
-                            //subtract spell resources (heal & raise dead have special handling and subtracts from the spell handler instead)
-                            if(spellID != SpellID::HEAL && spellID != SpellID::RAISE_DEAD)
+                            //complex price (ie. heal) -> subtraction handled from the spell handler instead
+                            if(SpellID::SimplePrice(spellID))
                                 src.DecreaseMana(price);
                         }
                     }

@@ -217,10 +217,10 @@ namespace eng {
         return glm::vec2(Position()) + (data_f->size * 0.5f);
     }
 
-    void FactionObject::ApplyDirectDamage(const FactionObject& source) {
+    int FactionObject::ApplyDirectDamage(const FactionObject& source) {
         if(IsInvulnerable()) {
-            ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
-            return;
+            ENG_LOG_FINE("[DMG] attempting to damage invulnerable object ({}).", OID().to_string());
+            return 0;
         }
 
         //formula from http://classic.battle.net/war2/basic/combat.shtml
@@ -233,12 +233,13 @@ namespace eng {
         health -= dmg;
 
         ENG_LOG_FINE("[DMG] {} dealt {} damage to {} (melee).", source.OID().to_string(), dmg, OID().to_string());
+        return dmg;
     }
 
-    void FactionObject::ApplyDirectDamage(int src_basicDmg, int src_pierceDmg) {
+    int FactionObject::ApplyDirectDamage(int src_basicDmg, int src_pierceDmg) {
         if(IsInvulnerable()) {
-            ENG_LOG_FINE("[DMG] attempting to damage invlunerable object ({}).", OID().to_string());
-            return;
+            ENG_LOG_FINE("[DMG] attempting to damage invulnerable object ({}).", OID().to_string());
+            return 0;
         }
 
         //formula from http://classic.battle.net/war2/basic/combat.shtml
@@ -251,6 +252,7 @@ namespace eng {
         health -= dmg;
 
         ENG_LOG_FINE("[DMG] <<no_source>> dealt {} damage to {} (melee).", dmg, OID().to_string());
+        return dmg;
     }
 
     void FactionObject::SetHealth(int value) {
@@ -1038,9 +1040,9 @@ namespace eng {
         ChangeType(data_, target_pos_, targetID_, src_, play_sound, true);
     }
 
-    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, bool play_sound)
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
-        ChangeType(data_, target_pos_, play_sound, true);
+        ChangeType(data_, target_pos_, targetID_, play_sound, true);
     }
 
     UtilityObject::~UtilityObject() {}
@@ -1082,7 +1084,7 @@ namespace eng {
         }
     }
 
-    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, bool play_sound, bool call_init) {
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, bool play_sound, bool call_init) {
         data = new_data;
         UpdateDataPointer(new_data);
 
@@ -1090,7 +1092,7 @@ namespace eng {
         live_data.sourceID = ObjectID();
 
         live_data.source_pos = glm::ivec2(-1);
-        live_data.targetID = ObjectID();
+        live_data.targetID = targetID_;
 
         if(call_init) {
             //this might throw if invoked with Init() handler, that requires src to not be null
@@ -1203,6 +1205,54 @@ namespace eng {
         }
 
         return hit_count;
+    }
+
+    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff) {
+        int hit_count = 0;
+        int total_damage = 0;
+
+        //to avoid applying damage to the same object multiple times
+        std::vector<ObjectID> hit_objects = {};
+
+        glm::ivec2 corner = target_pos - (radius-1);
+        int diameter = (radius-1)*2 + 1;
+        for(int y = 0; y < diameter; y++) {
+            for(int x = 0; x < diameter; x++) {
+                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
+
+                if(!level.map.IsWithinBounds(pos))
+                    continue;
+
+                const TileData& td = level.map(pos);
+                float m =  dropoff ? ((pos == target_pos) ? 1.f : 0.5f) : 1.f;
+                int B = int(basicDamage  * m);
+                int P = int(pierceDamage * m);
+                
+                //apply damage to regular objects (ground & flying)
+                for(int i = 0; i < 2; i++) {
+                    ObjectID id = td.info[i].id;
+                    if(id != exceptID && ObjectID::IsObject(id) && (std::find(hit_objects.begin(), hit_objects.end(), id) == hit_objects.end())) {
+                        hit_objects.push_back(id);
+                        FactionObject* target = nullptr;
+                        if(level.objects.GetObject(id, target)) {
+                             total_damage += target->ApplyDirectDamage(B, P);
+                            hit_count++;
+                        }
+                    }
+                }
+
+                //apply damage to map objects
+                ObjectID wallID = ObjectID(ObjectType::MAP_OBJECT, pos.x, pos.y);
+                if(wallID != exceptID && IsWallTile(td.tileType) && (std::find(hit_objects.begin(), hit_objects.end(), wallID) == hit_objects.end())) {
+                    hit_objects.push_back(wallID);
+                    total_damage += level.map.DamageTile(pos, B);
+                    hit_count++;
+                }
+
+            }
+        }
+
+        return { hit_count, total_damage };
     }
 
 }//namespace eng

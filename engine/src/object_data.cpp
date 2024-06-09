@@ -24,6 +24,10 @@ namespace eng {
         return lhs.id == rhs.id && lhs.idx == rhs.idx && lhs.type == rhs.type;
     }
 
+    bool operator!=(const ObjectID& lhs, const ObjectID& rhs) {
+        return !(lhs == rhs);
+    }
+
     bool ObjectID::IsAttackable(const ObjectID& id) {
         return ((unsigned int)(id.type - 1) < ObjectType::UTILITY) || (id.type == ObjectType::MAP_OBJECT && IsWallTile(id.id));
     }

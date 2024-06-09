@@ -4,6 +4,7 @@
 #include "engine/game/gameobject.h"
 #include "engine/game/resources.h"
 #include "engine/utils/dbg_gui.h"
+#include "engine/game/level.h"
 
 //represents column count in the icons spritesheet
 #define ICON_MAX_X 10
@@ -67,6 +68,25 @@ namespace eng {
 
         bool IsContinuous(int spellID) {
             return spellID == SpellID::BLIZZARD || spellID == SpellID::DEATH_AND_DECAY;
+        }
+
+        bool SimplePrice(int spellID) {
+            return spellID != SpellID::HEAL && spellID != SpellID::RAISE_DEAD;
+        }
+
+        bool TargetConditionCheck(int spellID, Level& level, const ObjectID& targetID) {
+            switch(spellID) {
+                case SpellID::FLAME_SHIELD:
+                {
+                    Unit* target = nullptr;
+                    if(level.objects.GetUnit(targetID, target)) {
+                        return target->NavigationType() == NavigationBit::GROUND;
+                    }
+                    return false;
+                }
+                default:
+                    return true;
+            }
         }
 
         int CastingRange(int spellID) {

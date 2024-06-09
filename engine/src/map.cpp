@@ -568,7 +568,7 @@ namespace eng {
         return operator()(idx.y, idx.x);
     }
 
-    void Map::DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src) {
+    int Map::DamageTile(const glm::ivec2& idx, int damage, const ObjectID& src) {
         constexpr static std::array<int, 6> tileMapping = {
             TileType::ROCK_BROKEN,
             TileType::WALL_HU_DAMAGED, 
@@ -581,7 +581,7 @@ namespace eng {
         TileData& td = at(idx.y, idx.x);
         if(!IsMapObject(td.tileType)) {
             ENG_LOG_WARN("Map::DamageTile - Attempting to damage a tile which isn't a map object (type={}).", td.tileType);
-            return;
+            return 0;
         }
         
         damage = int(damage * (Random::Uniform() * 0.5f + 0.5f));
@@ -599,6 +599,7 @@ namespace eng {
             td.UpdateID();
         }
 
+        return damage;
     }
 
     bool Map::HarvestTile(const glm::ivec2& idx) {

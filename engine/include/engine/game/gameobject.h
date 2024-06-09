@@ -191,8 +191,8 @@ namespace eng {
         bool IsFullHealth() const { return int(health) == data_f->health; }
 
         //For melee damage application.
-        void ApplyDirectDamage(const FactionObject& source);
-        void ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
+        int ApplyDirectDamage(const FactionObject& source);
+        int ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
 
         void SetHealth(int health);
         void AddHealth(float value);
@@ -494,7 +494,7 @@ namespace eng {
     public:
         UtilityObject() = default;
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
-        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, bool play_sound = true);
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID = ObjectID(), bool play_sound = true);
         virtual ~UtilityObject();
 
         //move enabled
@@ -512,7 +512,7 @@ namespace eng {
 
         glm::vec2 SizeScaled() const { return data->size * data->scale; }
 
-        void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, bool play_sound = true, bool call_init = true);
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, bool play_sound = true, bool call_init = true);
         void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, FactionObject& src, bool play_sound = true, bool call_init = true);
     protected:
         virtual void Inner_DBG_GUI() override;
@@ -532,5 +532,6 @@ namespace eng {
     bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos);
     bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
     int ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius);
+    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
 
 }//namespace eng
