@@ -171,6 +171,16 @@
         "duration": 2.0
     },
     {
+        "str_id": "spell_buzz",
+        "name": "spell buzz",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/spell_buzz" ],
+        "duration": 2.0
+    },
+    {
         "str_id": "lightning",
         "name": "lightning",
         "type": 4,
@@ -207,6 +217,18 @@
         "sounds": {
             "on_spawn": "spells/touchdrk"
         },
+        "followup": "death_coil_explosion"
+    },
+    {
+        "str_id": "coil_projectile",
+        "name": "coil projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/death_coil_projectile" ],
+        "duration": 0.4,
+        "flat_dmg": true,
         "followup": "death_coil_explosion"
     },
     {

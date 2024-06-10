@@ -49,6 +49,7 @@ namespace eng {
 
         bool SimplePrice(int spellID);
         bool TargetConditionCheck(int spellID, Level& level, const ObjectID& targetID);
+        bool SoundOnSpawn(int spellID);
 
         int CastingRange(int spellID);
 

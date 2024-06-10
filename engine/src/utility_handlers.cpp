@@ -62,6 +62,8 @@ namespace eng {
     bool UtilityHandler_Runes_Update(UtilityObject& obj, Level& level);
     void UtilityHandler_Runes_Render(UtilityObject& obj);
 
+    void UtilityHandler_ExoCoil_Init(UtilityObject& obj, FactionObject* src);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -110,6 +112,10 @@ namespace eng {
                     case SpellID::RUNES:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Runes_Init, UtilityHandler_Runes_Update, UtilityHandler_Runes_Render };
                         break;
+                    case SpellID::DEATH_COIL:
+                    case SpellID::EXORCISM:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_ExoCoil_Init, UtilityHandler_No_Update, UtilityHandler_No_Render };
+                        break;
                     default:
                         //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
@@ -149,6 +155,11 @@ namespace eng {
             throw std::runtime_error("");
         }
 
+        //damage possibly passed in runtime
+        int live_damage = d.i1;
+        int dmg_base = d.i2;
+        int dmg_pierce = d.i3;
+
         //set projectile orientation, start & end time, starting position and copy unit's damage values
         glm::vec2 target_dir = d.target_pos - d.source_pos;
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
@@ -157,7 +168,11 @@ namespace eng {
         obj.real_pos() = src->PositionCentered();
 
         //projectile damage setup (use caster's stats if not set in object data)
-        if(ud.b2) {
+        if(live_damage != 0) {
+            d.i2 = dmg_base;
+            d.i3 = dmg_pierce;
+        }
+        else if(ud.b2) {
             d.i2 = d.i3 = 0;
         }
         else if(ud.i3 + ud.i4 == 0) {
@@ -191,8 +206,12 @@ namespace eng {
         obj.real_pos() = d.InterpolatePosition(t);
         if(t >= 1.f) {
             //damage application from the projectile
-            if(obj.UData()->Projectile_IsAutoGuided())
-                ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+            if(obj.UData()->Projectile_IsAutoGuided()) {
+                if(!obj.UData()->b3)
+                    ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+                else
+                    ApplyDamageFlat(level, d.i3, d.targetID, d.target_pos);
+            }
             else
                 ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, obj.UData()->Projectile_SplashRadius());
 
@@ -870,6 +889,126 @@ namespace eng {
         if(obj.AnimKeyframeSignal()) {
             obj.LD().i1 = 0;
         }
+    }
+
+    //Spreads provided damage among given targets with varying health.
+    //Attempts to do it evenly. When health cap is reached, spreads the leftover damage among the remaining units.
+    //Returns the total damage spread out.
+    //Also, health values in the vector are overriden and now represent the damage for given unit.
+    int spread_dmg_evenly(std::vector<std::pair<Unit*,int>>& targets, int max_damage) {
+        if(targets.size() == 0)
+            return 0;
+
+        std::sort(targets.begin(), targets.end(), [](auto& lhs, auto& rhs) { return lhs.second < rhs.second; });
+
+        int i = 0;
+
+        //skip entries with no capacity
+        while(targets[i].second == 0) { i++; }
+
+        //fill slots from left to right without leftovers
+        //meaning that when assigning v[i] = x, there's enough value to assign x to all the slots to the right as well
+        int used = 0;
+        int size, thresh;
+        do {
+            size = targets.size() - i;
+            thresh = (max_damage-used) / size;
+
+            while(i < targets.size() && targets[i].second <= thresh) {
+                used += targets[i++].second;
+            }
+        } while(i < targets.size() && thresh >= targets[i].second);
+
+        //spread out the remainder, when there's no longer enough value to spread it evenly among the slots
+        int leftover = max_damage-used-thresh*size;
+        while(i < targets.size() && leftover > 0) {
+            targets[i++].second = thresh + 1;
+            leftover--;
+            used += thresh + 1;
+        }
+
+        //cap the remaining slots
+        while(i < targets.size()) {
+            targets[i++].second = thresh;
+            used += thresh;
+        }
+
+        return used;
+    }
+
+    void UtilityHandler_ExoCoil_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+        Level& level = *obj.lvl();
+
+        int spell_damage = ud.i4;
+
+        Unit* source = static_cast<Unit*>(src);
+        UtilityObjectDataRef followup = nullptr;
+        if(ud.spawn_followup) {
+            followup = Resources::LoadUtilityObj(ud.followup_name);
+        }
+
+        if(followup == nullptr) {
+            ENG_LOG_ERROR("UtilityObject - Exo/Coil requires followup object!");
+            return;
+        }
+
+        //mana & damage computation
+        int max_damage = ud.b1 ? (spell_damage * (source->Mana() / ud.cost[3])) : spell_damage;
+
+        if(max_damage <= 0) {
+            ENG_LOG_FINE("UtilityObject - Exo/Coil - not enough resources (damage={})", max_damage);
+            return;
+        }
+
+        //scan the area for targets
+        std::vector<ObjectID> ids = level.map.EnemyUnitsInArea(level.factions.Diplomacy(), d.target_pos, ud.i2, src->FactionIdx());
+        std::vector<std::pair<Unit*,int>> targets;
+        for(ObjectID& id : ids) {
+            Unit& target = level.objects.GetUnit(id);
+
+            //exorcism can only target undeads
+            if(!ud.b1 || target.IsUndead()) {
+                targets.push_back({&target, target.Health()});
+            }
+        }
+
+        if(targets.size() == 0) {
+            ENG_LOG_FINE("UtilityObject - Exo/Coil - no targets.");
+            return;
+        }
+
+        //divide damage among the targets
+        int damage = spread_dmg_evenly(targets, max_damage);
+
+        UtilityObject::LiveData init_data = {};
+        init_data.i1 = 1;
+
+        //spawn a followup for each (damaged passed through target_pos param)
+        for(auto& [target, dmg] : targets) {
+            //exorcism - also deal damage (followup is just visuals) ... coil spawns a guided projectile
+            if(ud.b1) {
+                target->ApplyDamageFlat(dmg);
+            }
+            init_data.i3 = dmg;
+            level.objects.QueueUtilityObject(level, followup, target->Positionf() + 0.5f, target->OID(), init_data, *src);
+        }
+
+        if(ud.b1) {
+            //subtract the mana for exorcism
+            source->DecreaseMana((ud.cost[3] * damage) / spell_damage);
+        }
+        else {
+            //heal for damage dealt if not flag1
+            source->AddHealth(spell_damage);
+        }
+
+        //play sound
+        if(ud.on_spawn.valid)
+            Audio::Play(ud.on_spawn.Random());
+
+        ENG_LOG_FINE("UtilityObject - Exo/Coil wrapper spawned ({} targets, {} total damage dealt).", targets.size(), damage);
     }
 
 }//namespace eng

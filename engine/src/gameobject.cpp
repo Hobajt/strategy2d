@@ -543,6 +543,10 @@ namespace eng {
         return PositionCentered() + move_offset;
     }
 
+    bool Unit::IsUndead() const {
+        return (data->num_id[2] == 1 && data->num_id[1] == UnitType::MAGE) || data->num_id[1] == UnitType::SKELETON;
+    }
+
     glm::vec2 Unit::RenderSize() const {
         return glm::vec2(data->size) * data->scale;
     }
@@ -1055,6 +1059,11 @@ namespace eng {
         return source_pos + f * (target_pos - source_pos);
     }
 
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, const LiveData& init_data_, FactionObject& src_, bool play_sound)
+        : GameObject(level_, data_), data(data_) {
+        ChangeType(data_, target_pos_, targetID_, init_data_, src_, play_sound, true);
+    }
+
     UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, FactionObject& src_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
         ChangeType(data_, target_pos_, targetID_, src_, play_sound, true);
@@ -1081,6 +1090,28 @@ namespace eng {
         }
         animator.Update(ActionIdx());
         return res || IsKilled();
+    }
+
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, const LiveData& init_data_, FactionObject& src_, bool play_sound, bool call_init) {
+        data = new_data;
+        UpdateDataPointer(new_data);
+
+        live_data = init_data_;
+        live_data.target_pos = target_pos_;
+        live_data.source_pos = src_.PositionCentered(); 
+        live_data.targetID = targetID_;
+        live_data.sourceID = src_.OID();
+
+        if(call_init) {
+            //this might throw if invoked with Init() handler, that requires src to not be null
+            ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
+            data->Init(*this, &src_);
+        }
+
+        if(play_sound && data->on_spawn.valid) {
+            //TODO: add once sound positioning works properly (is way too much attenuated currently)
+            Audio::Play(data->on_spawn.Random());//, Position());
+        }
     }
 
     void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, FactionObject& src_, bool play_sound, bool call_init) {
@@ -1174,6 +1205,27 @@ namespace eng {
             const TileData& tile = level.map(target_pos);
             if(IsWallTile(tile.tileType)) {
                 level.map.DamageTile(target_pos, basicDamage);
+                attack_happened = true;
+            }
+        }
+        return attack_happened;
+    }
+
+    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos) {
+        bool attack_happened = false;
+        if(targetID.type != ObjectType::MAP_OBJECT) {
+            //target is regular object
+            FactionObject* target = nullptr;
+            if(level.objects.GetObject(targetID, target)) {
+                target->ApplyDamageFlat(damage);
+                attack_happened = true;
+            }
+        }
+        else {
+            //target is attackable map object
+            const TileData& tile = level.map(target_pos);
+            if(IsWallTile(tile.tileType)) {
+                level.map.DamageTile(target_pos, damage);
                 attack_happened = true;
             }
         }

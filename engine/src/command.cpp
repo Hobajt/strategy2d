@@ -429,7 +429,7 @@ namespace eng {
                     if(obj != nullptr) {
                         //spawn an utility object (projectile/spell effect/buff)
                         glm::vec2 target_pos = glm::vec2(action.data.target_pos) + (action.data.k * 0.5f);
-                        level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src, spellID != SpellID::HEAL);
+                        level.objects.EmplaceUtilityObj(level, obj, target_pos, action.data.target, src, SpellID::SoundOnSpawn(spellID));
                     }
                     else {
                         if(oom)

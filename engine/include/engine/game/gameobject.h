@@ -324,6 +324,8 @@ namespace eng {
         virtual glm::vec2 RenderSize() const override;
         virtual glm::vec2 RenderPositionCentered() const override;
 
+        bool IsUndead() const;
+
         virtual bool DetectablyInvisible() const override;
 
         bool AnimationFinished() const { return animation_ended; }
@@ -496,6 +498,7 @@ namespace eng {
         };
     public:
         UtilityObject() = default;
+        UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, const LiveData& init_data, FactionObject& src, bool play_sound = true);
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID = ObjectID(), bool play_sound = true);
         virtual ~UtilityObject();
@@ -517,6 +520,7 @@ namespace eng {
 
         void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, bool play_sound = true, bool call_init = true);
         void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, FactionObject& src, bool play_sound = true, bool call_init = true);
+        void ChangeType(const UtilityObjectDataRef& new_data, const glm::vec2 target_pos, const ObjectID targetID, const LiveData& init_data, FactionObject& src, bool play_sound = true, bool call_init = true);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -534,6 +538,7 @@ namespace eng {
     //Apply damage to given target. Works for both regular & map objects. Returns true if the application went through.
     bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos);
     bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
+    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos);
     int ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius);
     std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
 

@@ -29,9 +29,9 @@ namespace eng {
         static std::array<int, SpellID::COUNT> spell_price = init_spell_prices();
 
         static std::array<bool, SpellID::COUNT> is_targeted = {
-            true, true, true, true, true, true, false,
+            true, false, true, true, true, true, false,
             true, false, true, false, false, true, false,
-            false, false, false, true
+            false, false, false, false
         };
 
         static std::array<int, SpellID::COUNT> casting_range = {
@@ -71,7 +71,7 @@ namespace eng {
         }
 
         bool SimplePrice(int spellID) {
-            return spellID != SpellID::HEAL && spellID != SpellID::RAISE_DEAD;
+            return spellID != SpellID::HEAL && spellID != SpellID::RAISE_DEAD && spellID != SpellID::EXORCISM;
         }
 
         bool TargetConditionCheck(int spellID, Level& level, const ObjectID& targetID) {
@@ -87,6 +87,10 @@ namespace eng {
                 default:
                     return true;
             }
+        }
+
+        bool SoundOnSpawn(int spellID) {
+            return spellID != SpellID::HEAL && spellID != SpellID::DEATH_COIL && spellID != SpellID::EXORCISM;
         }
 
         int CastingRange(int spellID) {

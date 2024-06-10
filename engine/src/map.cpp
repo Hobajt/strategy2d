@@ -1177,6 +1177,28 @@ namespace eng {
         return count;
     }
 
+    std::vector<ObjectID> Map::EnemyUnitsInArea(const DiplomacyMatrix& diplomacy, const glm::ivec2& position, int radius, int factionID) {
+        glm::ivec2 m = glm::max(position - radius, glm::ivec2(0));
+        glm::ivec2 M = glm::min(position + radius, Size());
+
+        std::vector<ObjectID> enemies = {};
+        
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                glm::ivec2 pos = glm::ivec2(x, y);
+
+                for(int i = 0; i < 2; i++) {
+                    ObjectInfo& info = tiles(pos).info[i];
+                    if(info.id.type == ObjectType::UNIT && diplomacy.AreHostile(factionID, info.factionId)) {
+                        enemies.push_back(info.id);
+                    }
+                }
+            }
+        }
+
+        return enemies;
+    }
+
     void Map::UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId_) {
         ASSERT_MSG(Size() == occlusion.Size(), "Map size and occlusion mask size do not match.");
 

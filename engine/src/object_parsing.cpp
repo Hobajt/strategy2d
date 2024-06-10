@@ -381,6 +381,7 @@ namespace eng {
                 }
 
                 data->b2 = config.count("no_damage") ? config.at("no_damage") : false;
+                data->b3 = config.count("flat_dmg") ? config.at("flat_dmg") : false;
                 break;
             case UtilityObjectType::SPELL:
                 data->i1 = config.at("spell_id");
@@ -406,6 +407,8 @@ namespace eng {
                 if(config.count("speed")) {
                     data->f1 = config.at("speed");
                 }
+
+                data->b1 = config.count("flag1") ? config.at("flag1") : false;
                 break;
             case UtilityObjectType::BUFF:
                 data->i1 = config.at("spell_id");

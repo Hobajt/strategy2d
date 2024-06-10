@@ -439,6 +439,8 @@ namespace eng {
         int DespawnRunes(const glm::ivec2& position, ObjectID::dtype ID);
         std::vector<std::pair<glm::ivec2, ObjectID>>& RunesDispatch() { return rune_dispatch; }
 
+        std::vector<ObjectID> EnemyUnitsInArea(const DiplomacyMatrix& diplomacy, const glm::ivec2& position, int radius, int factionID);
+
         void UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId);
         void DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId);
         void VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& size, int range, int factionID);
