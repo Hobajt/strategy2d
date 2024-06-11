@@ -1788,6 +1788,25 @@ namespace eng {
                 data[Y*sz.x + x] = color;
             }
         }
+
+        //render the camera view rectangle
+        auto [start, end] = Camera::Get().RectangleCoords();
+        start = glm::clamp(start * scale, glm::ivec2(0), sz-1);
+        end   = glm::clamp(end   * scale, glm::ivec2(0), sz-1);
+
+        int a = sz.y-1-start.y;
+        int b = sz.y-1-end.y;
+        for(int x = start.x; x < end.x; x++) {
+            data[a*sz.x+x] = data[b*sz.x+x] = rgba(255);
+        }
+
+        a = start.x;
+        b = end.x;
+        for(int y = start.y; y < end.y; y++) {
+            int Y = (sz.y-1-y);
+            data[Y*sz.x+a] = data[Y*sz.x+b] = rgba(255);
+        }
+
         return data;
     }
 

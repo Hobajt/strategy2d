@@ -727,6 +727,11 @@ namespace eng {
         int res = action.Update(src, level);
 
         if(res != ACTION_INPROGRESS) {
+            //cannot attack itself
+            if(cmd.target_id == src.OID()) {
+                cmd = Command::Idle();
+                return;
+            }
 
             //target existence check & value retrieval
             glm::vec2 pos_min, pos_max, target_pos;

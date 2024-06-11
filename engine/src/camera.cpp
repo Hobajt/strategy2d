@@ -101,6 +101,20 @@ namespace eng {
         mult = Window::Get().Aspect() * zoom;
     }
 
+    std::pair<glm::ivec2, glm::ivec2> Camera::RectangleCoords() const {
+        glm::vec2 screen_half = 1.f / mult;
+        float xOff = GUI_bounds_offset / mult.x;
+
+        glm::ivec2 a = glm::ivec2(position - screen_half);
+        glm::ivec2 b = glm::ivec2(position + screen_half);
+        a.x += xOff;
+
+        a = glm::clamp(a, glm::ivec2(0), glm::ivec2(bounds+1.f));
+        b = glm::clamp(b, glm::ivec2(0), glm::ivec2(bounds+1.f));
+
+        return { a, b };
+    }
+
     void Camera::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("Camera");

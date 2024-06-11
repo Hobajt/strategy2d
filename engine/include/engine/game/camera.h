@@ -29,6 +29,8 @@ namespace eng {
         void UpdateMultiplier();
         void UpdateMultiplier(const glm::vec2& aspect);
 
+        std::pair<glm::ivec2, glm::ivec2> RectangleCoords() const;
+
         void DBG_GUI();
 
         //=== getters/setters ===
