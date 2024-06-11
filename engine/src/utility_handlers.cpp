@@ -64,6 +64,9 @@ namespace eng {
 
     void UtilityHandler_ExoCoil_Init(UtilityObject& obj, FactionObject* src);
 
+    void UtilityHandler_BlizzDnD_Init(UtilityObject& obj, FactionObject* src);
+    bool UtilityHandler_BlizzDnD_Update(UtilityObject& obj, Level& level);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -116,11 +119,13 @@ namespace eng {
                     case SpellID::EXORCISM:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_ExoCoil_Init, UtilityHandler_No_Update, UtilityHandler_No_Render };
                         break;
+                    case SpellID::BLIZZARD:
+                    case SpellID::DEATH_AND_DECAY:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_BlizzDnD_Init, UtilityHandler_BlizzDnD_Update, UtilityHandler_No_Render };
+                        break;
                     default:
-                        //TODO: REMOVE ONCE ALL SPELLS ARE IMPLEMENTED
-                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Heal_Init, UtilityHandler_Visuals_Update2, UtilityHandler_Default_Render };
-                        // ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
-                        // throw std::runtime_error("");
+                        ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
+                        throw std::runtime_error("");
                 }
                 break;
             case UtilityObjectType::BUFF:
@@ -150,11 +155,6 @@ namespace eng {
         UtilityObject::LiveData& d = obj.LD();
         UtilityObjectData& ud = *obj.UData();
 
-        if(src == nullptr) {
-            ENG_LOG_ERROR("UtilityHandler::Init - handler requires a valid pointer to the source object.");
-            throw std::runtime_error("");
-        }
-
         //damage possibly passed in runtime
         int live_damage = d.i1;
         int dmg_base = d.i2;
@@ -165,7 +165,13 @@ namespace eng {
         d.i1 = VectorOrientation(target_dir / glm::length(target_dir));
         d.f1 = d.f2 = (float)Input::CurrentTime();
         obj.real_size() = obj.SizeScaled();
-        obj.real_pos() = src->PositionCentered();
+
+        if(src != nullptr) {
+            obj.real_pos() = src->PositionCentered();
+        }
+        else {
+            obj.real_pos() = d.source_pos;
+        }
 
         //projectile damage setup (use caster's stats if not set in object data)
         if(live_damage != 0) {
@@ -175,7 +181,7 @@ namespace eng {
         else if(ud.b2) {
             d.i2 = d.i3 = 0;
         }
-        else if(ud.i3 + ud.i4 == 0) {
+        else if(ud.i3 + ud.i4 == 0 && src != nullptr) {
             d.i2 = src->BasicDamage();
             d.i3 = src->PierceDamage();
         }
@@ -186,14 +192,18 @@ namespace eng {
 
         //bounce count for bouncing projectiles
         d.i4 = obj.UData()->b1 ? obj.UData()->i2 : 0;
+
         //store duration in separate variable, so that it can be changed for bouncing
-        d.f3 = 1.f / obj.UData()->duration;
+        d.f3 = obj.UData()->duration;
+        if(ud.b4) d.f3 -= Random::Uniform() * 1.f;
+        d.f3 = 1.f / d.f3;
 
         ENG_LOG_FINE("UtilityObject - Projectile spawned (guided={}, from {} to {})", obj.UData()->Projectile_IsAutoGuided(), d.source_pos, d.target_pos);
     }
 
     bool UtilityHandler_Projectile_Update(UtilityObject& obj, Level& level) {
         UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData ud = *obj.UData();
         Input& input = Input::Get();
 
         obj.act() = 0;
@@ -206,28 +216,28 @@ namespace eng {
         obj.real_pos() = d.InterpolatePosition(t);
         if(t >= 1.f) {
             //damage application from the projectile
-            if(obj.UData()->Projectile_IsAutoGuided()) {
-                if(!obj.UData()->b3)
+            if(ud.Projectile_IsAutoGuided()) {
+                if(!ud.b3)
                     ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
                 else
                     ApplyDamageFlat(level, d.i3, d.targetID, d.target_pos);
             }
             else
-                ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, obj.UData()->Projectile_SplashRadius());
+                ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, ud.Projectile_SplashRadius(), ud.b3 ? d.sourceID : ObjectID());
 
             //optional spawning of followup object
-            if(obj.UData()->spawn_followup) {
-                UtilityObjectDataRef data =  Resources::LoadUtilityObj(obj.UData()->followup_name);
+            if(ud.spawn_followup) {
+                UtilityObjectDataRef data =  Resources::LoadUtilityObj(ud.followup_name);
                 if(data != nullptr) {
                     level.objects.QueueUtilityObject(level, data, d.target_pos, d.targetID);
                 }
                 else {
-                    ENG_LOG_WARN("UtilityHandler_Projectile_Update - invalid followup object ('{}')", obj.UData()->followup_name);
+                    ENG_LOG_WARN("UtilityHandler_Projectile_Update - invalid followup object ('{}')", ud.followup_name);
                 }
             }
 
             //projectile "bouncing"
-            if(obj.UData()->b1 && d.i4 > 0) {
+            if(ud.b1 && d.i4 > 0) {
                 //start next bounce instead of terminating
                 d.i4--;                             //decrease the bounce counter
                 glm::vec2 dir = glm::normalize(d.target_pos - d.source_pos);
@@ -237,8 +247,8 @@ namespace eng {
                 d.f3 = 1.f / 0.25f;    //update duration for the bounces
 
                 //manually play the on done sound, since it normally only spawns when object dies
-                if(obj.UData()->on_done.valid)
-                    Audio::Play(obj.UData()->on_done.Random(), d.source_pos);
+                if(ud.on_done.valid)
+                    Audio::Play(ud.on_done.Random(), d.source_pos);
 
                 return false;
             }
@@ -1009,6 +1019,91 @@ namespace eng {
             Audio::Play(ud.on_spawn.Random());
 
         ENG_LOG_FINE("UtilityObject - Exo/Coil wrapper spawned ({} targets, {} total damage dealt).", targets.size(), damage);
+    }
+
+    std::string stringify_dnd_pattern(const std::array<ObjectID,5>& ids) {
+        int n = 0;
+        for(int i = 0; i < 5; i++) {
+            n |= ids[i].type*5+ids[i].idx;
+        }
+        char buf[64];
+        for(int i = 0; i < 25; i++) {
+            buf[i] = ((n & (1 << i)) != 0) ? '1' : '0';
+        }
+        buf[26] = '\0';
+        return std::string(buf);
+    }
+
+    void UtilityHandler_BlizzDnD_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+
+        //pattern setup
+        int i = 0;
+        while(i < 5) {
+            bool duplicate = false;
+
+            //storing the position as objectIDs in the live data
+            ObjectID pos = ObjectID(Random::UniformInt(5), Random::UniformInt(5), 0);
+            for(int j = 0; j < i; j++) {
+                if(d.ids[i] == pos) {
+                    duplicate = true;
+                    break;
+                }
+            }
+
+            if(!duplicate) {
+                d.ids[i++] = pos;
+            }
+        }
+
+        d.f1 = d.f2 = (float)Input::CurrentTime();
+
+        ENG_LOG_FINE("UtilityObject - Blizzard/DnD spawned at {} (pattern: {}).", d.target_pos, stringify_dnd_pattern(d.ids));
+        d.target_pos -= 2.f;
+    }
+
+    bool UtilityHandler_BlizzDnD_Update(UtilityObject& obj, Level& level) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+        float deltaTime = Input::Get().deltaTime;
+
+        d.f2 += deltaTime;
+        if((d.f2 - d.f1) >= obj.UData()->duration) {
+            d.f1 += obj.UData()->duration;
+
+            UtilityObject::LiveData init_data = {};
+            init_data.sourceID = d.sourceID;
+
+            UtilityObjectDataRef followup = nullptr;
+            if(ud.spawn_followup) {
+                followup = Resources::LoadUtilityObj(ud.followup_name);
+            }
+
+            if(followup == nullptr) {
+                ENG_LOG_ERROR("UtilityObject - Blizzard/DnD requires followup object!");
+                return true;
+            }
+
+            glm::vec2 start_offset = glm::vec2(ud.i2, ud.i3);
+
+            //spawn the next salvo
+            for(int i = 0; i < 5; i++) {
+                init_data.target_pos = d.target_pos + glm::vec2(d.ids[i].type, d.ids[i].idx);
+                init_data.source_pos = init_data.target_pos - start_offset;
+
+                level.objects.QueueUtilityObject(level, followup, init_data, nullptr);
+            }
+            ENG_LOG_FINE("UtilityObject - Blizzard/DnD tick {}.", obj);
+            
+            //increment tick counter & possibly terminate
+            if((++d.i1) >= ud.i5) {
+                ENG_LOG_FINE("UtilityObject - Blizzard/DnD spawner {} terminated.", obj);
+                return true;
+            }
+        }
+        
+        return false;
     }
 
 }//namespace eng

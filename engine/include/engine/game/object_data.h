@@ -243,7 +243,7 @@ namespace eng {
         std::string followup_name;
 
         //generic fields - content is specific to individual UtilityObject types (look in object_parsing.cpp for details)
-        bool b1, b2, b3;
+        bool b1, b2, b3, b4;
         int i1, i2, i3, i4, i5;
         float f1;
     public:

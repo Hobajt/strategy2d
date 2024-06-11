@@ -1059,6 +1059,11 @@ namespace eng {
         return source_pos + f * (target_pos - source_pos);
     }
 
+    UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const LiveData& init_data_, bool play_sound)
+        : GameObject(level_, data_), data(data_) {
+        ChangeType(data_, init_data_, play_sound, true);
+    }
+
     UtilityObject::UtilityObject(Level& level_, const UtilityObjectDataRef& data_, const glm::vec2& target_pos_, const ObjectID& targetID_, const LiveData& init_data_, FactionObject& src_, bool play_sound)
         : GameObject(level_, data_), data(data_) {
         ChangeType(data_, target_pos_, targetID_, init_data_, src_, play_sound, true);
@@ -1106,6 +1111,24 @@ namespace eng {
             //this might throw if invoked with Init() handler, that requires src to not be null
             ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
             data->Init(*this, &src_);
+        }
+
+        if(play_sound && data->on_spawn.valid) {
+            //TODO: add once sound positioning works properly (is way too much attenuated currently)
+            Audio::Play(data->on_spawn.Random());//, Position());
+        }
+    }
+
+    void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, const LiveData& init_data_, bool play_sound, bool call_init) {
+        data = new_data;
+        UpdateDataPointer(new_data);
+
+        live_data = init_data_;
+
+        if(call_init) {
+            //this might throw if invoked with Init() handler, that requires src to not be null
+            ASSERT_MSG(data->Init != nullptr, "UtilityObject - Init() handler in prefab '{}' isn't setup properly!", data->name);
+            data->Init(*this, nullptr);
         }
 
         if(play_sound && data->on_spawn.valid) {
@@ -1230,53 +1253,6 @@ namespace eng {
             }
         }
         return attack_happened;
-    }
-
-    int ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius) {
-        int hit_count = 0;
-
-        //to avoid applying damage to the same object multiple times
-        std::vector<ObjectID> hit_objects = {};
-
-        glm::ivec2 corner = target_pos - (radius-1);
-        int diameter = (radius-1)*2 + 1;
-        for(int y = 0; y < diameter; y++) {
-            for(int x = 0; x < diameter; x++) {
-                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
-
-                if(!level.map.IsWithinBounds(pos))
-                    continue;
-
-                const TileData& td = level.map(pos);
-                float m = (pos == target_pos) ? 1.f : 0.5f;
-                int B = int(basicDamage  * m);
-                int P = int(pierceDamage * m);
-                
-                //apply damage to regular objects (ground & flying)
-                for(int i = 0; i < 2; i++) {
-                    ObjectID id = td.info[i].id;
-                    if(ObjectID::IsObject(id) && (std::find(hit_objects.begin(), hit_objects.end(), id) == hit_objects.end())) {
-                        hit_objects.push_back(id);
-                        FactionObject* target = nullptr;
-                        if(level.objects.GetObject(id, target)) {
-                            target->ApplyDirectDamage(B, P);
-                            hit_count++;
-                        }
-                    }
-                }
-
-                //apply damage to map objects
-                ObjectID wallID = ObjectID(ObjectType::MAP_OBJECT, pos.x, pos.y);
-                if(IsWallTile(td.tileType) && (std::find(hit_objects.begin(), hit_objects.end(), wallID) == hit_objects.end())) {
-                    hit_objects.push_back(wallID);
-                    level.map.DamageTile(pos, B);
-                    hit_count++;
-                }
-
-            }
-        }
-
-        return hit_count;
     }
 
     std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff) {

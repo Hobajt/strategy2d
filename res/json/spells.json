@@ -55,17 +55,6 @@
         "sounds": { "on_spawn": "spells/morph" }
     },
     {
-        "str_id": "blizzard",
-        "name": "blizzard",
-        "type": 4,
-        "nav_type": 1,
-        "size": [1, 1],
-        "cost": [0,0,0,25],
-        "icon": [5,10],
-        "utility_id": 3,
-        "spell_id": 6
-    },
-    {
         "str_id": "bloodlust",
         "name": "bloodlust",
         "type": 4,
@@ -144,6 +133,23 @@
         "sounds": { "on_spawn": "spells/unhlyarm" }
     },
     {
+        "str_id": "blizzard",
+        "name": "blizzard",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,25],
+        "icon": [5,10],
+        "utility_id": 3,
+        "spell_id": 6,
+        "sounds": { "on_spawn": "spells/icestorm" },
+        "followup": "ice_projectile",
+        "duration": 1.75,
+        "ticks": 11,
+        "damage": [0,7],
+        "trajectory": [3,-5]
+    },
+    {
         "str_id": "death_and_decay",
         "name": "death and decay",
         "type": 4,
@@ -152,7 +158,13 @@
         "cost": [0,0,0,25],
         "icon": [3,10],
         "utility_id": 3,
-        "spell_id": 13
+        "spell_id": 13,
+        "sounds": { "on_spawn": "spells/decay" },
+        "followup": "dnd_projectile",
+        "duration": 1.75,
+        "ticks": 11,
+        "damage": [0,7],
+        "trajectory": [0,0]
     },
     {
         "str_id": "holy_vision",

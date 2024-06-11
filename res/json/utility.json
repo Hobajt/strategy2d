@@ -257,5 +257,45 @@
         },
         "followup": "explosion_long",
         "bounces": 2
+    },
+    {
+        "str_id": "dnd_projectile",
+        "name": "dnd projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/death_and_decay" ],
+        "dont_damage_caster": true,
+        "perturb_speed": true,
+        "duration": 1.0,
+        "guided": false,
+        "damage": [0,7]
+    },
+    {
+        "str_id": "ice_projectile",
+        "name": "ice projectile",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ { "sprite_name": "misc/effects/blizzard_projectile", "repeat": false, "duration": 2.0 } ],
+        "duration": 1.25,
+        "guided": false,
+        "damage": [0,7],
+        "sounds": { "on_done": "misc/firehit" },
+        "dont_damage_caster": true,
+        "perturb_speed": true,
+        "followup": "ice_explosion"
+    },
+    {
+        "str_id": "ice_explosion",
+        "name": "ice explosion",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 2,
+        "animations": [ "misc/effects/blizzard_explosion" ],
+        "duration": 0.25
     }
 ]

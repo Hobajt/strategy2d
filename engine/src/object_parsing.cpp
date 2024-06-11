@@ -358,6 +358,8 @@ namespace eng {
 
         //parse fields specific to different utility object types
         switch(data->utility_id) {
+            case UtilityObjectType::VISUALS:
+                data->duration = config.count("duration") ? config.at("duration") : 1.0;
             case UtilityObjectType::PROJECTILE:
                 data->duration  = config.at("duration");
                 //"guided" not defined -> is guided; "guided" defined -> sets default radius; "splas_radius" defined -> custom radius
@@ -382,6 +384,9 @@ namespace eng {
 
                 data->b2 = config.count("no_damage") ? config.at("no_damage") : false;
                 data->b3 = config.count("flat_dmg") ? config.at("flat_dmg") : false;
+                if(config.count("dont_damage_caster"))
+                    data->b3 = config.at("dont_damage_caster");
+                data->b4 = config.count("perturb_speed") ? config.at("perturb_speed") : false;
                 break;
             case UtilityObjectType::SPELL:
                 data->i1 = config.at("spell_id");
@@ -406,6 +411,11 @@ namespace eng {
 
                 if(config.count("speed")) {
                     data->f1 = config.at("speed");
+                }
+
+                if(config.count("trajectory")) {
+                    data->i2 = config.at("trajectory").at(0);
+                    data->i3 = config.at("trajectory").at(1);
                 }
 
                 data->b1 = config.count("flag1") ? config.at("flag1") : false;
