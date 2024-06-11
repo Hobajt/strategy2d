@@ -242,6 +242,12 @@ namespace eng {
         void DBG_GUI();
     private:
         bool AlreadySelected(const ObjectID& target_id, int currentSelectionSize);
+    private:
+        int last_group_select_idx = -1;
+        float last_group_select_time = 0.f;
+
+        ObjectID prev_selection = ObjectID();
+        float last_select_time = 0.f;
     };
 
     //===== OcclusionMask =====

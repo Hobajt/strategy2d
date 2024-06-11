@@ -1107,7 +1107,7 @@ namespace eng {
                 tiles(idx).info[i].id = id;
                 tiles(idx).info[i].factionId = factionId;
                 tiles(idx).info[i].colorIdx = colorIdx;
-                tiles(idx).info[i].num_id = glm::ivec2(num_id);
+                tiles(idx).info[i].num_id = num_id;
             }
         }
 
@@ -1197,6 +1197,43 @@ namespace eng {
         }
 
         return enemies;
+    }
+
+    int Map::SelectByType(const glm::ivec3& num_id, std::array<ObjectID, 9>& results, const glm::ivec2& coords_from, const glm::ivec2& coords_to) {
+        glm::ivec2 m = glm::clamp(coords_from, glm::ivec2(0), Size());
+        glm::ivec2 M = glm::clamp(coords_to, glm::ivec2(0), Size());
+
+        int i = num_id[0] == ObjectType::UNIT && (num_id[1] == UnitType::EYE || num_id[1] == UnitType::GRYPHON || num_id[1] == UnitType::ROFLCOPTER);
+
+        int j = 0;
+
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                glm::ivec2 pos = glm::ivec2(x, y);
+                ObjectInfo& info = tiles(pos).info[i];
+                if(info.num_id == num_id) {
+                    if(num_id[0] == ObjectType::BUILDING) {
+                        bool duplicate = false;
+                        for(int k = 0; k < j; k++) {
+                            if(results[k] == info.id) {
+                                duplicate = true;
+                                break;
+                            }
+                        }
+                        if(duplicate)
+                            continue;
+                    }
+
+                    results[j++] = info.id;
+                    if(j >= 9) {
+                        return 9;
+                    }
+                }
+                
+            }
+        }
+
+        return j;
     }
 
     void Map::UploadOcclusionMask(const OcclusionMask& occlusion, int playerFactionId_) {

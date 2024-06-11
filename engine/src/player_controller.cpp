@@ -21,6 +21,8 @@ namespace eng {
     constexpr float SELECTION_ZIDX = GUI_BORDERS_ZIDX + 0.01f;
     constexpr float SELECTION_HIGHLIGHT_WIDTH = 0.025f;
 
+    constexpr float DOUBLE_CLICK_DELAY = 0.2f;
+
     static glm::vec4 textClr = glm::vec4(0.92f, 0.77f, 0.20f, 1.f);
 
     constexpr glm::vec2 MAP_A = glm::vec2(0.025f,                0.05f);
@@ -1054,9 +1056,12 @@ namespace eng {
 
         ENG_LOG_FINE("PlayerSelection::Select - range: ({}, {}) - ({}, {})", im.x, im.y, iM.x, iM.y);
 
+        SelectionData prev_selected = selection;
+
         //selection based on map tiles readthrough
         int object_count = 0;
         int selection_mode = 0;
+        glm::ivec3 num_id = glm::ivec3(-1);
         for(int y = im.y; y <= iM.y; y++) {
             for(int x = im.x; x <= iM.x; x++) {
 
@@ -1080,12 +1085,56 @@ namespace eng {
                         if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
                             if(!AlreadySelected(td.info[i].id, object_count)) {
                                 selection[object_count++] = td.info[i].id;
+                                num_id = td.info[i].num_id;
                             }
                         }
                     }
                 }
             }
         }
+
+        bool force_update = false;
+        if(object_count == 1 && selection_mode >= SelectionType::PLAYER_BUILDING) {
+            Input& input = Input::Get();
+            
+            float current_select_time = input.CurrentTime();
+            if(input.ctrl || ((current_select_time - last_select_time) < DOUBLE_CLICK_DELAY && selection[0] == prev_selection && !input.shift)) {
+                //select units of the same type (currently visible on screen)
+                auto [a,b] = Camera::Get().RectangleCoords();
+                object_count = level.map.SelectByType(num_id, selection, a, b);
+            }
+            else if(input.shift && selection_mode == SelectionType::PLAYER_UNIT && selection_type == selection_mode && selected_count > 0 && selected_count < 9) {
+                //only add this unit to the previous selection
+                ObjectID newly_selected = selection[0];
+
+                int idx = -1;
+                for(int i = 0; i < selected_count; i++) {
+                    if(prev_selected[i] == newly_selected)
+                        idx = i;
+                }
+                
+                if(idx < 0) {
+                    //add to selection
+                    object_count = selected_count+1;
+                    selection_mode = selection_type;
+                    selection = prev_selected;
+                    selection[object_count-1] = newly_selected;
+                }
+                else {
+                    //remove from selection
+                    object_count = selected_count-1;
+                    selection_mode = selection_type;
+                    for(int i = idx; i < selected_count; i++) {
+                        prev_selected[i] = prev_selected[i+1];
+                    }
+                    selection = prev_selected;
+                    force_update = true;
+                }
+            }
+
+            last_select_time = current_select_time;
+        }
+        prev_selection = selection[0];
 
         //selection among traversable objects (which are not part of regular map tiles data)
         iM += 1;
@@ -1116,15 +1165,17 @@ namespace eng {
         }
         
         //dont update values if there was nothing selected (keep the old selection)
-        if(object_count != 0) {
+        if(object_count != 0 || force_update) {
             selected_count = object_count;
             selection_type = selection_mode;
             update_flag = true;
             ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
 
-            FactionObject& object = level.objects.GetObject(selection[0]);
-            if(object.Sound_Yes().valid && ((selection_type > SelectionType::ENEMY_UNIT) || (selection_type == SelectionType::ENEMY_BUILDING && ((Building&)object).IsGatherable()))) {
-                Audio::Play(object.Sound_Yes().Random());
+            if(object_count != 0) {
+                FactionObject& object = level.objects.GetObject(selection[0]);
+                if(object.Sound_Yes().valid && ((selection_type > SelectionType::ENEMY_UNIT) || (selection_type == SelectionType::ENEMY_BUILDING && ((Building&)object).IsGatherable()))) {
+                    Audio::Play(object.Sound_Yes().Random());
+                }
             }
         }
         else {
@@ -1215,11 +1266,14 @@ namespace eng {
                 std::tie(s_data, s_count, s_type) = groups[group_update_idx];
                 update_flag = true;
 
+                glm::vec2 center_pos = glm::vec2(0.f);
+
                 int new_count = 0;
                 for(size_t i = 0; i < s_count; i++) {
                     FactionObject* object = nullptr;
                     if(level.objects.GetObject(s_data[i], object)) {
                         s_data[new_count] = s_data[i];
+                        center_pos += object->Positionf();
 
                         if(new_count == 0 && s_type > SelectionType::ENEMY_UNIT && object->Sound_Yes().valid) {
                             Audio::Play(object->Sound_Yes().Random());
@@ -1230,12 +1284,23 @@ namespace eng {
 
                 }
                 s_count = new_count;
+                center_pos = center_pos / float(s_count);
 
                 if(s_count > 0) {
+                    //repeated click - center on the group as well
+                    bool centered = false;
+                    float group_update_time = Input::CurrentTime();
+                    if(last_group_select_idx == group_update_idx && (group_update_time - last_group_select_time) < DOUBLE_CLICK_DELAY) {
+                        Camera::Get().Center(center_pos);
+                        centered = true;
+                    }
+                    last_group_select_idx = group_update_idx;
+                    last_group_select_time = group_update_time;
+
                     selection = s_data;
                     selection_type = s_type;
                     selected_count = s_count;
-                    ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {}", selection_type, selected_count);
+                    ENG_LOG_FINE("PlayerSelection::Select - mode {}, count: {} (centered: {})", selection_type, selected_count, centered);
                 }
             }
                 break;

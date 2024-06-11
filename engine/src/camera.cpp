@@ -71,8 +71,10 @@ namespace eng {
         Audio::UpdateListenerPosition(position);
     }
 
-    void Camera::Center(const glm::vec2& pos) {
+    void Camera::Center(const glm::vec2& pos, bool account_for_gui) {
         position = pos;
+        if(account_for_gui)
+            position.x += GUI_bounds_offset / mult.x;
         
         if(checkForBounds)
             BoundariesCheck();
