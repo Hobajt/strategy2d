@@ -291,5 +291,18 @@
         "radius": 2,
         "followup": "coil_projectile",
         "sounds": { "on_spawn": "spells/dethcoil" }
+    },
+    {
+        "str_id": "demolish",
+        "name": "demolish",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "cost": [0,0,0,0],
+        "icon": [2,14],
+        "utility_id": 3,
+        "spell_id": 18,
+        "radius": 2,
+        "damage": [0,400]
     }
 ]

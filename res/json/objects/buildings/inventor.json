@@ -5,7 +5,7 @@
         "type": 3,
         "nav_type": 1,
         "size": [3,3],
-        "icon": [7,5],
+        "icon": [8,5],
         "vision_range": 3,
         "health": 500,
         "mana": 0,
@@ -21,6 +21,32 @@
                 { "idx": 0, "cmd": 11, "pid": 12, "hotkey": ["f", 0] },
                 { "idx": 1, "cmd": 11, "pid": 13, "hotkey": ["d", 0] }
             ]
-        ]
+        ],
+        "sounds": { "yes": "bldg/inventor" }
+    },
+    {
+        "str_id": "orc/goblin_laboratory",
+        "name": "goblin alchemist",
+        "type": 3,
+        "nav_type": 1,
+        "size": [3,3],
+        "icon": [9,5],
+        "vision_range": 3,
+        "health": 500,
+        "mana": 0,
+        "build_time": 150,
+        "cost": [1000,400,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 12, "hotkey": ["f", 0] },
+                { "idx": 1, "cmd": 11, "pid": 13, "hotkey": ["d", 0] }
+            ]
+        ],
+        "sounds": { "yes": "bldg/alchemst" }
     }
 ]

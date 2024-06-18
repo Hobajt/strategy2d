@@ -368,6 +368,7 @@ namespace eng {
         bool GetEffectFlag(int idx);
 
         static bool IsMinion(const glm::ivec3& num_id);
+        static bool IsRessurectable(const glm::ivec3& num_id, int navType);
     protected:
         virtual void Inner_DBG_GUI() override;
     private:
@@ -545,5 +546,6 @@ namespace eng {
     bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
     bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos);
     std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
+    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
 
 }//namespace eng

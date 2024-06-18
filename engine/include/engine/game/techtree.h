@@ -31,6 +31,7 @@ namespace eng {
 
             //researchless
             HOLY_VISION, EYE, FIREBALL, DEATH_COIL,
+            DEMOLISH,
             COUNT,
 
             INVALID_PRICE = 9999

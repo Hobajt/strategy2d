@@ -157,7 +157,7 @@
         "size": [1, 1],
         "scale": 1.5,
         "utility_id": 2,
-        "animations": [ "misc/effects/explosion_big" ],
+        "animations": [ { "sprite_name": "misc/effects/explosion_big", "repeat": false } ],
         "duration": 5.0
     },
     {

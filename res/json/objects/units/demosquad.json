@@ -1,6 +1,6 @@
 [
     {
-        "str_id": "human/demo_squad",
+        "str_id": "human/demosquad",
         "name": "demo squad",
         "type": 2,
         "nav_type": 1,
@@ -11,7 +11,7 @@
             "death": { "duration": 1.0, "repeat": false }
         },
         "vision_range": 4,
-        "speed": 14,
+        "speed": 11,
         "health": 40,
         "mana": 0,
         "build_time": 200,
@@ -22,13 +22,47 @@
         "pierce_damage": 2,
         "cooldown": 2.0,
         "race": 0,
-        "death_sound": 5,
+        "death_sound": 4,
         "icon": [2,1],
         "sounds": {
             "yes": ["dwarf/dwyessr", 5],
             "ready": "dwarf/dwready",
             "pissed": ["dwarf/dwpissd", 3],
             "what": ["dwarf/dwhat", 2]
-        }
+        },
+        "buttons": [ [ { "idx": 8, "cmd": 6, "pid": 18, "hotkey": ["d", 0] } ] ]
+    },
+    {
+        "str_id": "orc/sappers",
+        "name": "sappers",
+        "type": 2,
+        "nav_type": 1,
+        "animations": {
+            "idle": { "duration": 1.0 },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "action": { "duration": 1.0, "sprite_name": "attack", "keyframe": 0.5 },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "speed": 11,
+        "health": 40,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [700,250,0],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 4,
+        "pierce_damage": 2,
+        "cooldown": 2.0,
+        "race": 1,
+        "death_sound": 4,
+        "icon": [3,1],
+        "sounds": {
+            "yes": ["goblin/goyessr", 4],
+            "ready": "goblin/goready",
+            "pissed": ["goblin/gopissd", 3],
+            "what": ["goblin/gowhat", 4]
+        },
+        "buttons": [ [ { "idx": 8, "cmd": 6, "pid": 18, "hotkey": ["d", 0] } ] ]
     }
 ]

@@ -67,6 +67,8 @@ namespace eng {
     void UtilityHandler_BlizzDnD_Init(UtilityObject& obj, FactionObject* src);
     bool UtilityHandler_BlizzDnD_Update(UtilityObject& obj, Level& level);
 
+    void UtilityHandler_Demolish_Init(UtilityObject& obj, FactionObject* src);
+
     //===================================================================
 
     namespace CorpseAnimID { enum { CORPSE1_HU = 0, CORPSE1_OC, CORPSE2, CORPSE_WATER, RUINS_GROUND, RUINS_GROUND_WASTELAND, RUINS_WATER, EXPLOSION }; }
@@ -122,6 +124,9 @@ namespace eng {
                     case SpellID::BLIZZARD:
                     case SpellID::DEATH_AND_DECAY:
                         std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_BlizzDnD_Init, UtilityHandler_BlizzDnD_Update, UtilityHandler_No_Render };
+                        break;
+                    case SpellID::DEMOLISH:
+                        std::tie(data->Init, data->Update, data->Render) = handlerRefs{ UtilityHandler_Demolish_Init, UtilityHandler_No_Update, UtilityHandler_No_Render };
                         break;
                     default:
                         ENG_LOG_ERROR("UtilityObject - ResolveUtilityHandlers - invalid spell ID ({})", data->i1);
@@ -272,7 +277,7 @@ namespace eng {
         //TODO: maybe round up the orientation, as there are usually only 2 directions for dying animations
 
         obj.real_pos() = d.target_pos;
-        obj.real_size() = (src->NavigationType() == NavigationBit::GROUND) ? obj.Data()->size : src->RenderSize();
+        obj.real_size() = (src->NavigationType() == NavigationBit::GROUND && src->NumID()[1] != UnitType::BALLISTA) ? obj.Data()->size : src->RenderSize();
         obj.pos() = src->Position();
 
         //1st & 2nd anim indices
@@ -280,7 +285,8 @@ namespace eng {
         d.i2 = -1;
 
         //mark as ressurectable (for raise dead)
-        d.i7 = src->IsUnit() && src->NavigationType() == NavigationBit::GROUND;
+        // d.i7 = src->IsUnit() && src->NavigationType() == NavigationBit::GROUND;
+        d.i7 = Unit::IsRessurectable(src->NumID(), src->NavigationType());
 
         if(d.i1 < 0) {
             //1st anim has invalid idx -> play explosion animation
@@ -299,7 +305,7 @@ namespace eng {
         }
         else {
             d.f1 = anim->GetGraphics(d.i1).Duration() + 1.f;
-            if(src->IsUnit() && !Unit::IsMinion(src->NumID())) {
+            if(src->IsUnit() && d.i7) {
                 //2nd animation - transitioned to from the 1st one
                 if(src->NavigationType() == NavigationBit::GROUND) {
                     d.i2 = CorpseAnimID::CORPSE1_HU + src->Race();
@@ -1104,6 +1110,21 @@ namespace eng {
         }
         
         return false;
+    }
+
+    void UtilityHandler_Demolish_Init(UtilityObject& obj, FactionObject* src) {
+        UtilityObject::LiveData& d = obj.LD();
+        UtilityObjectData& ud = *obj.UData();
+
+        if(src->NumID()[1] != UnitType::DEMOSQUAD) {
+            ENG_LOG_ERROR("UtilityObject - Demolish only works with demosquad!");
+            return;
+        }
+
+        src->Kill();
+        auto [hit_count, damage] = ApplyDamageFlat_Splash(*obj.lvl(), ud.i4, d.target_pos, ud.i2, src->OID(), false);
+
+        ENG_LOG_FINE("UtilityObject - Demolish spawned at {} ({} objects hit, {} damage dealt).", d.target_pos, hit_count, damage);
     }
 
 }//namespace eng

@@ -807,10 +807,24 @@ namespace eng {
 
         //target verification & retrieval
         glm::vec2 pos_min, pos_max, target_pos;
+        bool demolish_on_object = spellID == SpellID::DEMOLISH && ObjectID::IsValid(cmd.target_id);
         if(SpellID::RequiresTarget(spellID)) {
             FactionObject* target;
             //spells with target requirement only work on units
-            if((cmd.target_id.type != ObjectType::UNIT)|| !level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
+            if((cmd.target_id.type != ObjectType::UNIT) || !level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
+                //existence check failed - target no longer exists
+                cmd = Command::Idle();
+                return;
+            }
+
+            pos_min = target->MinPos();
+            pos_max = target->MaxPos();
+            target_pos = target->PositionCentered();
+        }
+        else if(demolish_on_object) {
+            FactionObject* target;
+            //demolish can target both object and tile
+            if(!level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
                 //existence check failed - target no longer exists
                 cmd = Command::Idle();
                 return;
@@ -827,7 +841,7 @@ namespace eng {
         }
 
         //range check
-        int spell_range = SpellID::CastingRange(spellID);
+        int spell_range = SpellID::CastingRange(spellID) + int(demolish_on_object);
         if(spell_range < get_range(src.Position(), pos_min, pos_max)) {
             //range check failed -> lookup new possible location for casting & start moving there
             glm::ivec2 move_pos = level.map.Pathfinding_NextPosition_Range(src, pos_min, pos_max, spell_range);

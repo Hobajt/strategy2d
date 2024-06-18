@@ -12,8 +12,8 @@
         ["human/battleship", "orc/juggernaut"],
         ["human/submarine", "orc/submarine"],
         ["human/transport", "orc/transport"],
-        ["human/machine", "orc/roflcopter"],
-        ["human/demo_squad", "orc/demosquad"],
+        ["human/machine", "orc/zeppelin"],
+        ["human/demosquad", "orc/sappers"],
         ["human/mage", "orc/death_knight"],
         ["human/gryphon", "orc/dragon"]
     ],
@@ -30,7 +30,7 @@
         ["human/oil_refinery", "orc/oil_refinery"],
         ["human/oil_platform", "orc/oil_platform"],
 
-        ["human/gnomish_inventor", "orc/inventor"],
+        ["human/gnomish_inventor", "orc/goblin_laboratory"],
         ["human/stables", "orc/ogre_mound"],
         ["human/church", "orc/altar"],
         ["human/mage_tower", "orc/temple"],
@@ -45,7 +45,7 @@
     "spells": [
         "heal","exorcism","slow","flame_shield","invisibility","polymorph","blizzard",
         "bloodlust","runes","haste","raise_dead","tornado","unholy_armor","death_and_decay",
-        "holy_vision","eye","fireball","death_coil"
+        "holy_vision","eye","fireball","death_coil", "demolish"
     ],
     "utility": [],
     "other": [

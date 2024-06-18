@@ -196,8 +196,10 @@ namespace eng {
         GameObject::Kill(silent);
         
         if(!silent) {
-            UtilityObjectDataRef corpse_data = (NumID()[1] != UnitType::BALLISTA) ? Resources::LoadUtilityObj("corpse") : Resources::LoadUtilityObj("explosion_long_s2");
-            glm::vec2 pos = (NumID()[1] != UnitType::BALLISTA) ? RenderPosition() : RenderPositionCentered();
+            // UtilityObjectDataRef corpse_data = (NumID()[1] != UnitType::BALLISTA) ? Resources::LoadUtilityObj("corpse") : Resources::LoadUtilityObj("explosion_long_s2");
+            // glm::vec2 pos = (NumID()[1] != UnitType::BALLISTA) ? RenderPosition() : RenderPositionCentered();
+            UtilityObjectDataRef corpse_data = Resources::LoadUtilityObj("corpse");
+            glm::vec2 pos = RenderPosition();
             //spawn a corpse utility object
             lvl()->objects.QueueUtilityObject(*lvl(), corpse_data, pos, ObjectID(), *this);
             
@@ -644,6 +646,10 @@ namespace eng {
 
     bool Unit::IsMinion(const glm::ivec3& num_id) {
         return num_id[0] == ObjectType::UNIT && (num_id[1] == UnitType::SKELETON || num_id[1] == UnitType::EYE);
+    }
+
+    bool Unit::IsRessurectable(const glm::ivec3& num_id, int navType) {
+        return navType == NavigationBit::GROUND && num_id[0] == ObjectType::UNIT && !(num_id[1] == UnitType::SKELETON || num_id[1] == UnitType::EYE || num_id[1] == UnitType::BALLISTA || num_id[1] == UnitType::DEMOSQUAD);
     }
 
     void Unit::Inner_DBG_GUI() {
@@ -1306,6 +1312,53 @@ namespace eng {
                 if(wallID != exceptID && IsWallTile(td.tileType) && (std::find(hit_objects.begin(), hit_objects.end(), wallID) == hit_objects.end())) {
                     hit_objects.push_back(wallID);
                     total_damage += level.map.DamageTile(pos, B);
+                    hit_count++;
+                }
+
+            }
+        }
+
+        return { hit_count, total_damage };
+    }
+
+    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff) {
+        int hit_count = 0;
+        int total_damage = 0;
+
+        //to avoid applying damage to the same object multiple times
+        std::vector<ObjectID> hit_objects = {};
+
+        glm::ivec2 corner = target_pos - (radius-1);
+        int diameter = (radius-1)*2 + 1;
+        for(int y = 0; y < diameter; y++) {
+            for(int x = 0; x < diameter; x++) {
+                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
+
+                if(!level.map.IsWithinBounds(pos))
+                    continue;
+
+                const TileData& td = level.map(pos);
+                float m =  dropoff ? ((pos == target_pos) ? 1.f : 0.5f) : 1.f;
+                int D = int(damage  * m);
+                
+                //apply damage to regular objects (ground & flying)
+                for(int i = 0; i < 2; i++) {
+                    ObjectID id = td.info[i].id;
+                    if(id != exceptID && ObjectID::IsObject(id) && (std::find(hit_objects.begin(), hit_objects.end(), id) == hit_objects.end())) {
+                        hit_objects.push_back(id);
+                        FactionObject* target = nullptr;
+                        if(level.objects.GetObject(id, target)) {
+                             total_damage += target->ApplyDamageFlat(D);
+                            hit_count++;
+                        }
+                    }
+                }
+
+                //apply damage to map objects
+                ObjectID wallID = ObjectID(ObjectType::MAP_OBJECT, pos.x, pos.y);
+                if(wallID != exceptID && IsWallTile(td.tileType) && (std::find(hit_objects.begin(), hit_objects.end(), wallID) == hit_objects.end())) {
+                    hit_objects.push_back(wallID);
+                    total_damage += level.map.DamageTile(pos, D);
                     hit_count++;
                 }
 

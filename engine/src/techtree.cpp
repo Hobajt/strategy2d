@@ -31,13 +31,15 @@ namespace eng {
         static std::array<bool, SpellID::COUNT> is_targeted = {
             true, false, true, true, true, true, false,
             true, false, true, false, false, true, false,
-            false, false, false, false
+            false, false, false, false,
+            false
         };
 
         static std::array<int, SpellID::COUNT> casting_range = {
             6,10,10,6,6,10,12,
             6,10,6,6,12,6,12,
-            9999,9999,10,10
+            9999,9999,10,10,
+            0
         };
 
         std::pair<int,int> SpellID::TechtreeInfo(int spellID) {
@@ -101,7 +103,7 @@ namespace eng {
             static std::array<const char*, SpellID::COUNT> spell_names = {
                 "HEAL", "EXORCISM", "SLOW", "FLAME_SHIELD", "INVISIBILITY", "POLYMORPH", "BLIZZARD",
                 "BLOODLUST", "RUNES", "HASTE", "RAISE_DEAD", "TORNADO", "UNHOLY_ARMOR", "DEATH_AND_DECAY",
-                "HOLY_VISION", "EYE", "FIREBALL", "DEATH_COIL"
+                "HOLY_VISION", "EYE", "FIREBALL", "DEATH_COIL", "DEMOLISH"
             };
             return spell_names.at(spellID);
         }
