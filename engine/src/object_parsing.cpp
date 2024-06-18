@@ -625,17 +625,19 @@ namespace eng {
                 float duration = 1.f;
                 float keyframe = 1.f;
                 bool repeat = true;
+                bool wobble = false;
                 std::string sprite_name;
                 if(anim_data.is_object()) {
                     sprite_name = anim_data.at("sprite_name");
                     repeat = anim_data.count("repeat") ? bool(anim_data.at("repeat")) : false;
                     keyframe = anim_data.count("keyframe") ? float(anim_data.at("keyframe")) : 1.f;
                     duration = anim_data.count("duration") ? float(anim_data.at("duration")) : 1.f;
+                    wobble   = anim_data.count("wobble") ? bool(anim_data.at("wobble")) : false;
                 }
                 else {
                     sprite_name = anim_data;
                 }
-                animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_name), repeat, duration, keyframe)) });
+                animations.insert({ anim_id, SpriteGroup(SpriteGroupData(anim_id, Resources::LoadSprite(sprite_name), repeat, duration, keyframe, wobble)) });
                 anim_id++;
             }
         }

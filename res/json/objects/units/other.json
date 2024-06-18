@@ -36,7 +36,7 @@
         "type": 2,
         "nav_type": 4,
         "animations": {
-            "idle":     { "sprite_path": "misc/effects", "sprite_name": "eye", "duration": 1.0 }
+            "idle":     { "sprite_path": "misc/effects", "sprite_name": "eye", "duration": 3.0, "wobble": true }
         },
         "vision_range": 3,
         "health": 100,
