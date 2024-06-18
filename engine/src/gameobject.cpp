@@ -88,6 +88,18 @@ namespace eng {
         return lvl()->map.NearbySpawnCoords(position, data->size, preferred_direction, nav_type, out_coords, max_range);
     }
 
+    std::pair<glm::vec2, glm::vec2> GameObject::AABB() const {
+        glm::vec2 pos = RenderPosition();
+        glm::vec2 size = RenderSize();
+        return { glm::vec2(pos.x, pos.y), glm::vec2(pos.x+size.x, pos.y+size.y) };
+    }
+
+    glm::vec4 GameObject::AABB_v4() const {
+        glm::vec2 pos = RenderPosition();
+        glm::vec2 size = RenderSize();
+        return glm::vec4(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+    }
+
     Level* GameObject::lvl() {
         ASSERT_MSG(level != nullptr, "GameObject isn't properly initialized!");
         return level;

@@ -1177,6 +1177,31 @@ namespace eng {
         return count;
     }
 
+    std::vector<ObjectID> Map::ObjectsInArea(const glm::ivec2& start, const glm::ivec2& end, bool ignore_unselectable) {
+        glm::ivec2 m = glm::max(start, glm::ivec2(0));
+        glm::ivec2 M = glm::min(end, Size());
+
+        std::vector<ObjectID> res = {};
+
+        for(int y = m.y; y < M.y; y++) {
+            for(int x = m.x; x < M.x; x++) {
+                glm::ivec2 pos = glm::ivec2(x, y);
+                TileData& td = tiles(pos);
+                bool tile_visible = td.IsVisible();
+
+                for(int i = 0; i < 2; i++) {
+                    ObjectInfo& info = td.info[i];
+                    
+                    if(ObjectID::IsValid(info.id) && (!ignore_unselectable || (tile_visible && !info.IsUntouchable(playerFactionId))) && std::find(res.begin(), res.end(), info.id) == res.end()) {
+                        res.push_back(info.id);
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
     std::vector<ObjectID> Map::EnemyUnitsInArea(const DiplomacyMatrix& diplomacy, const glm::ivec2& position, int radius, int factionID) {
         glm::ivec2 m = glm::max(position - radius, glm::ivec2(0));
         glm::ivec2 M = glm::min(position + radius, Size());

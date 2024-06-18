@@ -54,6 +54,14 @@ namespace eng {
         std::vector<std::pair<ObjectID, int>> gms;
     };
 
+    struct ClickSelectionEntry {
+        ObjectID id;
+        int factionID;
+        FactionObject* obj;
+        std::pair<glm::vec2, glm::vec2> aabb;
+        glm::ivec3 num_id;
+    };
+
     //===== ObjectPool =====
 
     class ObjectPool {
@@ -63,6 +71,8 @@ namespace eng {
     public:
         void Update();
         void Render();
+
+        std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(std::vector<ObjectID>& ids);
 
         //Update units of certain type to new type.
         void UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);

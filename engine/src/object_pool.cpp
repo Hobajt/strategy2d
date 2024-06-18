@@ -463,6 +463,26 @@ namespace eng {
             u.Render();
     }
 
+    std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(std::vector<ObjectID>& ids) {
+        std::vector<ClickSelectionEntry> entries;
+        entries.reserve(ids.size());
+
+        for(ObjectID& id : ids) {
+            FactionObject& obj = GetObject(id);
+
+            ClickSelectionEntry entry = {};
+            entry.id = id;
+            entry.obj = &obj;
+            entry.factionID = obj.FactionIdx();
+            entry.aabb = obj.AABB();
+            entry.num_id = obj.NumID();
+
+            entries.push_back(entry);
+        }
+
+        return entries;
+    }
+
     void ObjectPool::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {
         int count = 0;
 

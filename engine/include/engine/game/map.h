@@ -439,6 +439,7 @@ namespace eng {
         int DespawnRunes(const glm::ivec2& position, ObjectID::dtype ID);
         std::vector<std::pair<glm::ivec2, ObjectID>>& RunesDispatch() { return rune_dispatch; }
 
+        std::vector<ObjectID> ObjectsInArea(const glm::ivec2& start, const glm::ivec2& end, bool ignore_unselectable = true);
         std::vector<ObjectID> EnemyUnitsInArea(const DiplomacyMatrix& diplomacy, const glm::ivec2& position, int radius, int factionID);
 
         int SelectByType(const glm::ivec3& num_id, std::array<ObjectID, 9>& results, const glm::ivec2& coords_from, const glm::ivec2& coords_to);

@@ -29,6 +29,8 @@ namespace eng {
 
     float distance2(const glm::vec2& p1, const glm::vec2& p2);
 
+    bool AABB_intersection(const std::pair<glm::vec2, glm::vec2>& a, const std::pair<glm::vec2, glm::vec2>& b);
+
     //direction conversions (between vector and number identifier)
 
     int DirVectorCoord(int orientation);

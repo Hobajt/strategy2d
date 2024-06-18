@@ -60,6 +60,9 @@ namespace eng {
         virtual glm::vec2 RenderPosition() const { return glm::vec2(position); }
         virtual glm::vec2 RenderSize() const { return glm::vec2(data->size); }
 
+        std::pair<glm::vec2, glm::vec2> AABB() const;
+        glm::vec4 AABB_v4() const;
+
         glm::vec2 MinPos() const { return glm::vec2(position); }
         glm::vec2 MaxPos() const { return glm::vec2(position) + data->size - 1.f; }
 

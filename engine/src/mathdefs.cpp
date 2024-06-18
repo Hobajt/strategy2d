@@ -65,6 +65,10 @@ namespace eng {
         return v.x*v.x + v.y*v.y;
     }
 
+    bool AABB_intersection(const std::pair<glm::vec2, glm::vec2>& a, const std::pair<glm::vec2, glm::vec2>& b) {
+        return (a.first.x <= b.second.x && a.second.x >= b.first.x) && (a.first.y <= b.second.y && a.second.y >= b.first.y);
+    }
+
     int DirVectorCoord(int ori) {
         ori = ori % 8;
         return 1 - 2*(ori/5) - int(ori % 4 == 0);

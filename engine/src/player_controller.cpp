@@ -11,6 +11,8 @@
 
 #include "engine/utils/dbg_gui.h"
 
+#define CLICK_SELECTION_V2
+
 namespace eng {
 
     constexpr float GUI_WIDTH = 0.25f;
@@ -1056,12 +1058,39 @@ namespace eng {
 
         ENG_LOG_FINE("PlayerSelection::Select - range: ({}, {}) - ({}, {})", im.x, im.y, iM.x, iM.y);
 
+
         SelectionData prev_selected = selection;
 
-        //selection based on map tiles readthrough
         int object_count = 0;
         int selection_mode = 0;
         glm::ivec3 num_id = glm::ivec3(-1);
+
+#ifdef CLICK_SELECTION_V2
+        //selection based on object bounding boxes intersections
+        std::pair<glm::vec2, glm::vec2> selection_aabb = { m, M };
+        std::vector<ClickSelectionEntry> selectionData = level.objects.ClickSelectionDataFromIDs(level.map.ObjectsInArea(im-1, iM+1, true));
+        for(auto& entry : selectionData) {
+            if(!AABB_intersection(entry.aabb, selection_aabb))
+                continue;
+
+            //under which category does current object belong; reset object counting when more important category is picked
+            int object_mode = ObjectSelectionType(entry.id, entry.factionID, playerFactionID);
+            if(selection_mode < object_mode) {
+                selection_mode = object_mode;
+                object_count = 0;
+            }
+
+            if(object_mode == selection_mode) {
+                if((selection_mode < 3 && object_count < 1) || (selection_mode == 3 && object_count < selection.size())) {
+                    if(!AlreadySelected(entry.id, object_count)) {
+                        selection[object_count++] = entry.id;
+                        num_id = entry.num_id;
+                    }
+                }
+            }
+        }
+#else
+        //selection based on map tiles readthrough
         for(int y = im.y; y <= iM.y; y++) {
             for(int x = im.x; x <= iM.x; x++) {
 
@@ -1092,6 +1121,7 @@ namespace eng {
                 }
             }
         }
+#endif
 
         bool force_update = false;
         if(object_count == 1 && selection_mode >= SelectionType::PLAYER_BUILDING) {
