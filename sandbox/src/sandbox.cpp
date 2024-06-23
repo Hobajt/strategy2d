@@ -292,6 +292,8 @@ void Sandbox::OnGUI() {
         ImGui::Text("FPS: %.1f", Input::Get().fps);
         ImGui::Text("Draw calls: %d | Total quads: %d (%d wasted)", Renderer::Stats().drawCalls, Renderer::Stats().totalQuads, Renderer::Stats().wastedQuads);
         ImGui::Text("Textures: %d", Renderer::Stats().numTextures);
+        ImGui::Text("TextureGenerator count: %d", TextureGenerator::Count());
+        ImGui::Text("TextureGenerator invokations: %d", TextureGenerator::InvokationCount());
         if(ImGui::Button("Reload shaders")) {
             try {
                 ReloadShaders();

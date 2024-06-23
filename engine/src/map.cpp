@@ -1192,7 +1192,7 @@ namespace eng {
                 for(int i = 0; i < 2; i++) {
                     ObjectInfo& info = td.info[i];
                     
-                    if(ObjectID::IsValid(info.id) && (!ignore_unselectable || (tile_visible && !info.IsUntouchable(playerFactionId))) && std::find(res.begin(), res.end(), info.id) == res.end()) {
+                    if(ObjectID::IsValid(info.id) && ObjectID::IsObject(info.id) && (!ignore_unselectable || (tile_visible && !info.IsUntouchable(playerFactionId))) && std::find(res.begin(), res.end(), info.id) == res.end()) {
                         res.push_back(info.id);
                     }
                 }
@@ -2071,9 +2071,8 @@ namespace eng {
     }
 
     Sprite Map::GenOcclusionSprite() {
-        //TODO: remove this method once there's better handling for the generated textures
         int px = 64;
-        TextureRef tex = TextureGenerator::OcclusionTileset(px, 2);
+        TextureRef tex = TextureGenerator::GetTexture(TextureGenerator::Params::OcclusionTileset(px, 2));
 
         SpriteData data = SpriteData();
         data.size                   = glm::ivec2(px);

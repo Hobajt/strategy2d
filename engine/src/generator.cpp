@@ -9,8 +9,279 @@ namespace eng {
 
     namespace TextureGenerator {
 
-        using rgb = glm::u8vec3;
-        using rgba = glm::u8vec4;
+        struct TextureCache {
+            std::unordered_map<int, TextureRef> cache;
+            int invokation_count = 0;
+        public:
+            bool Contains(int hash);
+            TextureRef GetTexture(int hash);
+            TextureRef Add(int hash, const TextureRef& texture);
+            //TODO: either trigger merging automatically from Add(), or add explicit function & expose it
+        };
+
+        static TextureCache cache = {};
+
+        //========== old API ==========
+        
+        TextureRef ButtonTexture_Clear1(const Params& params);
+        TextureRef ButtonTexture_Clear2(const Params& params);
+        TextureRef ButtonTexture_Clear3(const Params& params);
+        TextureRef ButtonTexture_Clear_2borders(const Params& params);
+        TextureRef ButtonTexture_Clear_3borders(const Params& params);
+        TextureRef ButtonTexture_Triangle(const Params& params);
+        TextureRef ButtonTexture_Gem(const Params& params);
+        TextureRef ButtonTexture_Gem2(const Params& params);
+        TextureRef ButtonHighlightTexture(const Params& params);
+        TextureRef ShadowsTexture(const Params& params);
+        TextureRef OcclusionTileset(const Params& params);
+
+        //==============================
+
+        //Creates a very basic button texture (plain color, borders & simple shading).
+        TextureRef ButtonTexture_Clear(int width, int height, int borderWidth, int shadingWidth, int channel, bool flipShading);
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow);
+        TextureRef ButtonTexture_Clear(int width, int height, int bw, int sw, const rgba& fill, const rgba& border, const rgba& light, const rgba& shadow);
+        TextureRef ButtonTexture_Clear_2borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w);
+        TextureRef ButtonTexture_Clear_3borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w, const rgb& b3, int b3w);
+        TextureRef ButtonTexture_Triangle(int width, int height, int borderWidth, bool flipShading, bool up);
+
+        //ratio is screen width/height - to make it a circle rather than ellipsoid
+        TextureRef ButtonTexture_Gem(int width, int height, int borderWidth, float ratio, const rgba& fillColor = rgba(71,0,0,255));
+        TextureRef ButtonTexture_Gem2(int width, int height, int borderWidth, float ratio, const rgba& clr1 = rgba(71,0,0,255), const rgba& clr2 = rgba(222,0,0,255));
+
+        //Yellow outline that marks selected button.
+        TextureRef ButtonHighlightTexture(int width, int height, int borderWidth);
+        TextureRef ButtonHighlightTexture(int width, int height, int borderWidth, const rgba& clr);
+
+        TextureRef ShadowsTexture(int width, int height, int size);
+        TextureRef OcclusionTileset(int tile_size, int block_size);
+
+        //============ Params ==================
+
+        Params::colorArray setupColors(const rgba& c1 = rgba(0), const rgba& c2 = rgba(0), const rgba& c3 = rgba(0), const rgba& c4 = rgba(0), const rgba& c5 = rgba(0), const rgba& c6 = rgba(0)) {
+            return Params::colorArray{ c1, c2, c3, c4, c5, c6 };
+        }
+
+        Params::colorArray setupColors(const rgb& c1, const rgb& c2 = rgb(0), const rgb& c3 = rgb(0), const rgb& c4 = rgb(0), const rgb& c5 = rgb(0), const rgb& c6 = rgb(0)) {
+            return Params::colorArray{ rgba(c1, 0), rgba(c2, 0), rgba(c3, 0), rgba(c4, 0), rgba(c5, 0), rgba(c6, 0) };
+        }
+
+        Params::Params(int type_, const glm::ivec2& size_, const glm::ivec2& borderSize_, const glm::ivec2& shadingSize_, int channel_, const glm::ivec2& w_, float ratio_, int flags_, const colorArray& colors_)
+            : type(type_), size(size_), borderSize(borderSize_), shadingSize(shadingSize_), channel(channel_), w(w_), ratio(ratio_), flags(flags_), colors(colors_) {}
+
+        Params Params::ButtonTexture_Clear(int width, int height, int borderWidth, int shadingWidth, int channel, bool flipShading) {
+            return Params(
+                GeneratedTextureType::BUTTON1, glm::ivec2(width, height), glm::ivec2(borderWidth), glm::ivec2(shadingWidth), 
+                channel, glm::ivec2(0), 1.f, flipShading * GeneratedTextureFlags::FLIP_SHADING, setupColors()
+            );
+        }
+
+        Params Params::ButtonTexture_Clear(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow) {
+            return Params(
+                GeneratedTextureType::BUTTON2, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                0, glm::ivec2(0), 1.f, 0, setupColors(fill, border, light, shadow)
+            );
+        }
+
+        Params Params::ButtonTexture_Clear(int width, int height, int bw, int sw, const rgba& fill, const rgba& border, const rgba& light, const rgba& shadow) {
+            return Params(
+                GeneratedTextureType::BUTTON3, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                0, glm::ivec2(0), 1.f, 0, setupColors(fill, border, light, shadow)
+            );
+        }
+
+        Params Params::ButtonTexture_Clear_2borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w) {
+            return Params(
+                GeneratedTextureType::BUTTON2, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                0, glm::ivec2(b2w, 0), 1.f, 0, setupColors(fill, border, light, shadow, b2)
+            );
+        }
+
+        Params Params::ButtonTexture_Clear_3borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w, const rgb& b3, int b3w) {
+            return Params(
+                GeneratedTextureType::BUTTON2, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                0, glm::ivec2(b2w, b3w), 1.f, 0, setupColors(fill, border, light, shadow, b2, b3)
+            );
+        }
+        
+        Params Params::ButtonTexture_Triangle(int width, int height, int borderWidth, bool flipShading, bool up) {
+            return Params(
+                GeneratedTextureType::BUTTON_TRIANGLE, glm::ivec2(width, height), glm::ivec2(borderWidth), glm::ivec2(0), 
+                0, glm::ivec2(0), 1.f, (flipShading*GeneratedTextureFlags::FLIP_SHADING) | (up*GeneratedTextureFlags::UP), setupColors()
+            );
+        }
+
+        Params Params::ButtonTexture_Gem(int width, int height, int borderWidth, float ratio, const rgba& fillColor) {
+            return Params(
+                GeneratedTextureType::BUTTON_GEM1, glm::ivec2(width, height), glm::ivec2(borderWidth), glm::ivec2(0), 
+                0, glm::ivec2(0), ratio, 0, setupColors(fillColor)
+            );
+        }
+
+        Params Params::ButtonTexture_Gem2(int width, int height, int borderWidth, float ratio, const rgba& clr1, const rgba& clr2) {
+            return Params(
+                GeneratedTextureType::BUTTON_GEM2, glm::ivec2(width, height), glm::ivec2(borderWidth), glm::ivec2(0), 
+                0, glm::ivec2(0), ratio, 0, setupColors(clr1, clr2)
+            );
+        }
+
+        Params Params::ButtonHighlightTexture(int width, int height, int borderWidth, const rgba& clr) {
+            return Params(
+                GeneratedTextureType::BUTTON_HIGHLIGHT, glm::ivec2(width, height), glm::ivec2(borderWidth), glm::ivec2(0), 
+                0, glm::ivec2(0), 1.f, 0, setupColors(clr)
+            );
+        }
+
+        Params Params::ShadowsTexture(int width, int height, int size) {
+            return Params(
+                GeneratedTextureType::SHADOWS, glm::ivec2(width, height), glm::ivec2(0), glm::ivec2(0), 
+                size, glm::ivec2(0), 1.f, 0, setupColors()
+            );
+        }
+
+        Params Params::OcclusionTileset(int tile_size, int block_size) {
+            return Params(
+                GeneratedTextureType::OCCLUSION, glm::ivec2(tile_size, block_size), glm::ivec2(0), glm::ivec2(0), 
+                0, glm::ivec2(0), 1.f, 0, setupColors()
+            );
+        }
+
+        int Params::Hash() const {
+            int h = 0;
+
+            h = type*31;
+            h = h*31 + size.x;
+            h = h*31 + size.y;
+            h = h*31 + borderSize.x;
+            h = h*31 + borderSize.y;
+            h = h*31 + shadingSize.x;
+            h = h*31 + shadingSize.y;
+            h = h*31 + channel;
+            h = h*31 + w.x;
+            h = h*31 + w.y;
+            h = h*31 + int(ratio*100);
+            h = h*31 + flags;
+            
+            for(auto& c : colors) {
+                h = h*31 + c.r;
+                h = h*31 + c.g;
+                h = h*31 + c.b;
+                h = h*31 + c.a;
+            }
+            
+            return h;
+        }
+
+        //==============================
+
+        size_t Count() {
+            return cache.cache.size();
+        }
+
+        int InvokationCount() {
+            return cache.invokation_count;
+        }
+
+        void Clear() {
+            cache.cache.clear();
+        }
+
+        TextureRef GetTexture(const Params& params) {
+            cache.invokation_count++;
+
+            int hash = params.Hash();
+            if(cache.Contains(hash))
+                return cache.GetTexture(hash);
+
+            switch(params.type) {
+                case GeneratedTextureType::BUTTON1:
+                    return cache.Add(hash, ButtonTexture_Clear1(params));
+                case GeneratedTextureType::BUTTON2:
+                    return cache.Add(hash, ButtonTexture_Clear2(params));
+                case GeneratedTextureType::BUTTON3:
+                    return cache.Add(hash, ButtonTexture_Clear3(params));
+                case GeneratedTextureType::BUTTON_2BORDERS:
+                    return cache.Add(hash, ButtonTexture_Clear_2borders(params));
+                case GeneratedTextureType::BUTTON_3BORDERS:
+                    return cache.Add(hash, ButtonTexture_Clear_3borders(params));
+                case GeneratedTextureType::BUTTON_TRIANGLE:
+                    return cache.Add(hash, ButtonTexture_Triangle(params));
+                case GeneratedTextureType::BUTTON_GEM1:
+                    return cache.Add(hash, ButtonTexture_Gem(params));
+                case GeneratedTextureType::BUTTON_GEM2:
+                    return cache.Add(hash, ButtonTexture_Gem2(params));
+                case GeneratedTextureType::BUTTON_HIGHLIGHT:
+                    return cache.Add(hash, ButtonHighlightTexture(params)); 
+                case GeneratedTextureType::SHADOWS:
+                    return cache.Add(hash, ShadowsTexture(params));
+                case GeneratedTextureType::OCCLUSION:
+                    return cache.Add(hash, OcclusionTileset(params)); 
+                default:
+                    ENG_LOG_ERROR("TextureGenerator::GetTexture - invalid texture type ({})", params.type);
+                    throw std::runtime_error("");
+            }
+        }
+
+        bool TextureCache::Contains(int hash) {
+            return cache.count(hash);
+        }
+
+        TextureRef TextureCache::GetTexture(int hash) {
+            return cache.at(hash);
+        }
+
+        TextureRef TextureCache::Add(int hash, const TextureRef& texture) {
+            if(cache.count(hash))
+                ENG_LOG_WARN("TextureGenerator::Add - overriding an existing texture reference.");
+            cache.insert({ hash, texture });
+            return texture;
+        }
+
+        TextureRef ButtonTexture_Clear1(const Params& params) {
+            return ButtonTexture_Clear(params.size.x, params.size.y, params.borderSize.x, params.shadingSize.x, params.channel, params.flags & GeneratedTextureFlags::FLIP_SHADING);
+        }
+
+        TextureRef ButtonTexture_Clear2(const Params& params) {
+            return ButtonTexture_Clear(params.size.x, params.size.y, params.borderSize.x, params.shadingSize.x, (rgb)params.colors[0], (rgb)params.colors[1], (rgb)params.colors[2], (rgb)params.colors[3]);
+        }
+
+        TextureRef ButtonTexture_Clear3(const Params& params) {
+            return ButtonTexture_Clear(params.size.x, params.size.y, params.borderSize.x, params.shadingSize.x, params.colors[0], params.colors[1], params.colors[2], params.colors[3]);
+        }
+
+        TextureRef ButtonTexture_Clear_2borders(const Params& params) {
+            return ButtonTexture_Clear_2borders(params.size.x, params.size.y, params.borderSize.x, params.shadingSize.x, params.colors[0], params.colors[1], params.colors[2], params.colors[3], params.colors[4], params.w[0]);
+        }
+
+        TextureRef ButtonTexture_Clear_3borders(const Params& params) {
+            return ButtonTexture_Clear_3borders(params.size.x, params.size.y, params.borderSize.x, params.shadingSize.x, params.colors[0], params.colors[1], params.colors[2], params.colors[3], params.colors[4], params.w[0], params.colors[5], params.w[1]);
+        }
+
+        TextureRef ButtonTexture_Triangle(const Params& params) {
+            return ButtonTexture_Triangle(params.size.x, params.size.y, params.borderSize.x, params.flags & GeneratedTextureFlags::FLIP_SHADING, params.flags & GeneratedTextureFlags::UP);
+        }
+
+        TextureRef ButtonTexture_Gem(const Params& params) {
+            return ButtonTexture_Gem(params.size.x, params.size.y, params.borderSize.x, params.ratio, params.colors[0]);
+        }
+
+        TextureRef ButtonTexture_Gem2(const Params& params) {
+            return ButtonTexture_Gem2(params.size.x, params.size.y, params.borderSize.x, params.ratio, params.colors[0], params.colors[1]);
+        }
+        
+        TextureRef ButtonHighlightTexture(const Params& params) {
+            return ButtonHighlightTexture(params.size.x, params.size.y, params.borderSize.x, params.colors[0]);
+        }
+
+        TextureRef ShadowsTexture(const Params& params) {
+            return ShadowsTexture(params.size.x, params.size.y, params.channel);
+        }
+
+        TextureRef OcclusionTileset(const Params& params) {
+            return OcclusionTileset(params.size.x, params.size.y);
+        }
+
+        //==============================
 
         void basicButton(rgb* data, int width, int height, int channel, int bw, int sw, bool flipShading);
         void basicButton2(rgb* data, int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow);

@@ -6,6 +6,7 @@
 #include "engine/core/audio.h"
 
 #include "engine/game/resources.h"
+#include "engine/utils/generator.h"
 
 namespace eng {
 
@@ -27,6 +28,7 @@ namespace eng {
         Renderer::Release();
         Audio::Release();
         DBG_GUI::Release();
+        TextureGenerator::Clear();
 
         ENG_LOG_TRACE("[D] App");
     }

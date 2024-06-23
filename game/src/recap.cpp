@@ -21,10 +21,10 @@ RecapController::RecapController() {
     GUI::StyleRef btnStyle = std::make_shared<GUI::Style>();
     btnStyle->textColor = glm::vec4(1.f);
     btnStyle->font = Resources::DefaultFont();
-    btnStyle->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+    btnStyle->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
     btnStyle->hoverTexture = btnStyle->texture;
-    btnStyle->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
-    btnStyle->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+    btnStyle->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
+    btnStyle->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
     btnStyle->holdOffset = glm::ivec2(borderWidth);
 
     btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 

@@ -2407,24 +2407,24 @@ namespace eng {
         glm::ivec2 textureSize = ts * upscaleFactor;
         int borderWidth = 2 * upscaleFactor;
 
-        shadows = TextureGenerator::ShadowsTexture(256,256,8);
+        shadows = TextureGenerator::GetTexture(TextureGenerator::Params::ShadowsTexture(256,256,8));
 
         //general style for menu buttons
         GUI::StyleRef menu_btn_style = std::make_shared<GUI::Style>();
-        menu_btn_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        menu_btn_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
         menu_btn_style->hoverTexture = menu_btn_style->texture;
-        menu_btn_style->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
-        menu_btn_style->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+        menu_btn_style->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
+        menu_btn_style->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
         menu_btn_style->textColor = textClr;
         menu_btn_style->font = font;
         menu_btn_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
 
         //style for the menu background
         GUI::StyleRef menu_style = std::make_shared<GUI::Style>();
-        menu_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        menu_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
         menu_style->hoverTexture = menu_style->texture;
-        menu_style->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
-        menu_style->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+        menu_style->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
+        menu_style->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
         menu_style->textColor = textClr;
         menu_style->font = font;
         menu_style->holdOffset = glm::ivec2(borderWidth);       //= texture border width
@@ -2457,11 +2457,11 @@ namespace eng {
 
         //dbg only - to visualize the element size
         // text_style->color = glm::vec4(1.f);
-        // text_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
         // text_style_small->color = glm::vec4(1.f);
-        // text_style_small->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style_small->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
         // text_style_small2->color = glm::vec4(1.f);
-        // text_style_small2->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+        // text_style_small2->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
 
         buttonSize = glm::vec2(0.25f, 0.25f);
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -2471,10 +2471,10 @@ namespace eng {
 
         //style for icon buttons
         GUI::StyleRef icon_btn_style = std::make_shared<GUI::Style>();
-        icon_btn_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125));
-        icon_btn_style->hoverTexture = TextureGenerator::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125), glm::uvec3(125), borderWidth / 2);
-        icon_btn_style->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(170), glm::uvec3(20), glm::uvec3(170), glm::uvec3(110));
-        icon_btn_style->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth / 2, glm::u8vec4(66, 245, 84, 255));
+        icon_btn_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125)));
+        icon_btn_style->hoverTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(200), glm::uvec3(20), glm::uvec3(240), glm::uvec3(125), glm::uvec3(125), borderWidth / 2));
+        icon_btn_style->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(170), glm::uvec3(20), glm::uvec3(170), glm::uvec3(110)));
+        icon_btn_style->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth / 2, glm::u8vec4(66, 245, 84, 255)));
         icon_btn_style->textColor = textClr;
         icon_btn_style->font = font;
         icon_btn_style->holdOffset = glm::ivec2(borderWidth);
@@ -2485,7 +2485,7 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         borderWidth = 3 * upscaleFactor;
         GUI::StyleRef borders_style = std::make_shared<GUI::Style>();
-        borders_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::u8vec4(0,0,0,0), glm::u8vec4(20,20,20,255), glm::u8vec4(240,240,240,255), glm::u8vec4(125,125,125,255));
+        borders_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::u8vec4(0,0,0,0), glm::u8vec4(20,20,20,255), glm::u8vec4(240,240,240,255), glm::u8vec4(125,125,125,255)));
 
         //style for icon buttons bar
         buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
@@ -2496,7 +2496,7 @@ namespace eng {
         glm::vec2 bar_border_size = 7.f / ts;
 
         GUI::StyleRef bar_style = std::make_shared<GUI::Style>();
-        bar_style->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(70), glm::uvec3(20), glm::uvec3(70), glm::uvec3(70));
+        bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(70), glm::uvec3(20), glm::uvec3(70), glm::uvec3(70)));
 
         buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
         ts = glm::vec2(Window::Get().Size()) * buttonSize;
@@ -2505,11 +2505,11 @@ namespace eng {
         borderWidth = 7 * upscaleFactor;
         glm::vec2 mana_bar_borders_size = 7.f / ts;
         GUI::StyleRef mana_bar_style = std::make_shared<GUI::Style>();
-        mana_bar_style->texture = TextureGenerator::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2);
+        mana_bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2));
 
         glm::vec2 progress_bar_borders_size = 7.f / ts;
         GUI::StyleRef progress_bar_style = std::make_shared<GUI::Style>();
-        progress_bar_style->texture = TextureGenerator::ButtonTexture_Clear_3borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(252,208,61), 2*borderWidth/3, glm::uvec3(20), borderWidth/3);
+        progress_bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_3borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(252,208,61), 2*borderWidth/3, glm::uvec3(20), borderWidth/3));
 
         SpritesheetRef icons = Resources::LoadSpritesheet("misc/icons");
         Sprite icon = (*icons)("icon");
@@ -2611,7 +2611,7 @@ namespace eng {
 
         s = std::make_shared<GUI::Style>();
         s->font = font;
-        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightTexture = s->texture;
@@ -2626,7 +2626,7 @@ namespace eng {
 
         s = std::make_shared<GUI::Style>();
         s->font = font;
-        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, glm::u8vec3(140), glm::u8vec3(30), glm::u8vec3(200), glm::u8vec3(100));
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, glm::u8vec3(140), glm::u8vec3(30), glm::u8vec3(200), glm::u8vec3(100)));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightTexture = s->texture;
@@ -2653,22 +2653,22 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         shadingWidth = 2 * upscaleFactor;
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true));
         s->hoverTexture = s->texture;
-        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
+        s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true));
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
 
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false));
         s->hoverTexture = s->texture;
-        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+        s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false));
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
 
         s = std::make_shared<GUI::Style>();
         GUI::StyleRef z = s;
-        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio()));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;
@@ -2681,7 +2681,7 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         shadingWidth = 2 * upscaleFactor;
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;
@@ -2717,22 +2717,22 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         shadingWidth = 2 * upscaleFactor;
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true));
         s->hoverTexture = s->texture;
-        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
+        s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true));
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
 
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false));
         s->hoverTexture = s->texture;
-        s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+        s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false));
         s->highlightMode = GUI::HighlightMode::NONE;
         res.push_back(s);
 
         s = std::make_shared<GUI::Style>();
         GUI::StyleRef z = s;
-        s->texture = TextureGenerator::ButtonTexture_Gem2(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Gem2(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio()));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;
@@ -2742,7 +2742,7 @@ namespace eng {
 
         s = std::make_shared<GUI::Style>();
         GUI::StyleRef w = s;
-        s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio(), glm::u8vec4(110,110,110,255));
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio(), glm::u8vec4(110,110,110,255)));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;
@@ -2757,7 +2757,7 @@ namespace eng {
         textureSize = ts * upscaleFactor;
         shadingWidth = 2 * upscaleFactor;
         s = std::make_shared<GUI::Style>();
-        s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+        s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false));
         s->hoverTexture = s->texture;
         s->holdTexture = s->texture;
         s->highlightMode = GUI::HighlightMode::NONE;

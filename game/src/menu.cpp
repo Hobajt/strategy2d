@@ -347,10 +347,10 @@ void InitStyles_Main(GUI::StyleMap& styles, const FontRef& font, const glm::vec2
 
     //main style
     GUI::StyleRef s = styles["main"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
     s->hoverTexture = s->texture;
-    s->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true);
-    s->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth);
+    s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
+    s->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
     s->textColor = textClr;
     s->font = font;
     s->holdOffset = glm::ivec2(borderWidth);       //= texture border width
@@ -374,7 +374,7 @@ void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const gl
 
     s = styles["scroll_items"] = std::make_shared<GUI::Style>();
     s->font = font;
-    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, 0, shadingWidth, 0, false));
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
     s->highlightTexture = s->texture;
@@ -393,10 +393,10 @@ void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const gl
     shadingWidth = 2 * upscaleFactor;
 
     s = styles["small_btn"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, false);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, false));
     s->hoverTexture = s->texture;
-    s->holdTexture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, true);
-    s->highlightTexture = TextureGenerator::ButtonHighlightTexture(textureSize.x, textureSize.y, shadingWidth);
+    s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, shadingWidth, 0, true));
+    s->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, shadingWidth));
     s->textColor = textClr;
     s->font = font;
     s->holdOffset = glm::ivec2(shadingWidth);       //= texture border width
@@ -408,19 +408,19 @@ void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const gl
     textureSize = ts * upscaleFactor;
     shadingWidth = 2 * upscaleFactor;
     s = styles["scroll_up"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, true));
     s->hoverTexture = s->texture;
-    s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true);
+    s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, true));
     s->highlightMode = GUI::HighlightMode::NONE;
 
     s = styles["scroll_down"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, false, false));
     s->hoverTexture = s->texture;
-    s->holdTexture = TextureGenerator::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false);
+    s->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Triangle(textureSize.x, textureSize.y, shadingWidth, true, false));
     s->highlightMode = GUI::HighlightMode::NONE;
 
     s = styles["scroll_grip"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio());
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Gem(textureSize.x, textureSize.y, shadingWidth, Window::Get().Ratio()));
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
     s->highlightMode = GUI::HighlightMode::NONE;
@@ -433,7 +433,7 @@ void InitStyles_Single_Load(GUI::StyleMap& styles, const FontRef& font, const gl
     textureSize = ts * upscaleFactor;
     shadingWidth = 2 * upscaleFactor;
     s = styles["scroll_slider"] = std::make_shared<GUI::Style>();
-    s->texture = TextureGenerator::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false);
+    s->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, shadingWidth, 0, 0, false));
     s->hoverTexture = s->texture;
     s->holdTexture = s->texture;
     s->highlightMode = GUI::HighlightMode::NONE;
