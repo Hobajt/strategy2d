@@ -50,10 +50,40 @@ namespace eng {
         TextureParams(const TextureParams& params, bool dummy);
     };
 
+    //======= TexCoords =======
+
+    //Wrapper for texture coordinates, to properly initialize quads.
+    struct TexCoords {
+        glm::vec2 texCoords[4];
+    public:
+        TexCoords() = default;
+        TexCoords(const glm::vec2& tc1, const glm::vec2& tc2, const glm::vec2& tc3, const glm::vec2& tc4);
+
+        //Generates coords that cover the entire texture.
+        static TexCoords& Default();
+
+        glm::vec2& operator[](int i) { return texCoords[i]; }
+        const glm::vec2& operator[](int i) const { return texCoords[i]; }
+
+        TexCoords operator +(const glm::vec2& offset) const;
+        TexCoords& operator +=(const glm::vec2& offset);
+    };
+
     //======== Texture ========
 
     //Wrapper for the underlaying texture resource on the GPU.
     class Texture {
+    private:
+        //Texture handle wrapper, has ownership of the handle.
+        //Used internally by Texture to share ownership when working with merged textures.
+        struct TextureHandle {
+            GLuint handle = 0;
+        public:
+            TextureHandle() = default;
+            TextureHandle(GLuint handle_) : handle(handle_) {}
+            ~TextureHandle();
+        };
+        using TextureHandleRef = std::shared_ptr<TextureHandle>;
     public:
         // static uint64_t DefaultTextureID();
 
@@ -87,6 +117,9 @@ namespace eng {
 
         void UpdateData(void* data);
 
+        //To update handle and offset into the texture after texture merging.
+        void UpdateDataAfterMerge(TextureHandleRef handle, const glm::ivec2& offset, const glm::vec2& size);
+
         int Width() const { return params.width; }
         int Height() const { return params.height; }
         glm::ivec2 Size() const { return glm::ivec2(params.width, params.height); }
@@ -94,6 +127,12 @@ namespace eng {
         std::string Name() const { return name; }
 
         GLuint Handle() const { return handle; }
+
+        //Returns TexCoords for given rectangle in the texture. Takes into account texture merging.
+        TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size) const;
+        TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size, bool flip) const;
+
+        static void MergeTextures(std::vector<TextureRef>& texturesToMerge);
 
         void DBG_GUI() const;
     private:
@@ -103,28 +142,13 @@ namespace eng {
         //Loads texture from provided file.
         bool LoadFromFile(const std::string& filepath, int flags);
     private:
-        GLuint handle = 0;
-        TextureParams params;
         std::string name;
-    };
+        TextureParams params;
 
-    //======= TexCoords =======
-
-    //Wrapper for texture coordinates, to properly initialize quads.
-    struct TexCoords {
-        glm::vec2 texCoords[4];
-    public:
-        TexCoords() = default;
-        TexCoords(const glm::vec2& tc1, const glm::vec2& tc2, const glm::vec2& tc3, const glm::vec2& tc4);
-
-        //Generates coords that cover the entire texture.
-        static TexCoords& Default();
-
-        glm::vec2& operator[](int i) { return texCoords[i]; }
-        const glm::vec2& operator[](int i) const { return texCoords[i]; }
-
-        TexCoords operator +(const glm::vec2& offset) const;
-        TexCoords& operator +=(const glm::vec2& offset);
+        TextureHandleRef handle_data = nullptr;
+        GLuint handle = 0;     //keeping a copy, to avoid the pointer dereference
+        glm::ivec2 merge_offset;
+        glm::vec2 merge_size;
     };
 
     //===== Image =====

@@ -67,6 +67,8 @@ namespace eng {
 
         TextureRef GetTexture(const Params& params);
 
+        void Merge();
+
 
     }//namespace TextureGenerator
 

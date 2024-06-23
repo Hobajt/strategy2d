@@ -12,11 +12,11 @@ namespace eng {
         struct TextureCache {
             std::unordered_map<int, TextureRef> cache;
             int invokation_count = 0;
+            bool updated = true;
         public:
             bool Contains(int hash);
             TextureRef GetTexture(int hash);
             TextureRef Add(int hash, const TextureRef& texture);
-            //TODO: either trigger merging automatically from Add(), or add explicit function & expose it
         };
 
         static TextureCache cache = {};
@@ -92,14 +92,14 @@ namespace eng {
 
         Params Params::ButtonTexture_Clear_2borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w) {
             return Params(
-                GeneratedTextureType::BUTTON2, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                GeneratedTextureType::BUTTON_2BORDERS, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
                 0, glm::ivec2(b2w, 0), 1.f, 0, setupColors(fill, border, light, shadow, b2)
             );
         }
 
         Params Params::ButtonTexture_Clear_3borders(int width, int height, int bw, int sw, const rgb& fill, const rgb& border, const rgb& light, const rgb& shadow, const rgb& b2, int b2w, const rgb& b3, int b3w) {
             return Params(
-                GeneratedTextureType::BUTTON2, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
+                GeneratedTextureType::BUTTON_3BORDERS, glm::ivec2(width, height), glm::ivec2(bw), glm::ivec2(sw), 
                 0, glm::ivec2(b2w, b3w), 1.f, 0, setupColors(fill, border, light, shadow, b2, b3)
             );
         }
@@ -222,6 +222,21 @@ namespace eng {
             }
         }
 
+        void Merge() {
+            if(!cache.updated)
+                return;
+
+            ENG_LOG_INFO("TextureGenerator::Merge - new textures detected, merging.");
+
+            std::vector<TextureRef> textures = {};
+            for(auto& [hash, tex] : cache.cache) {
+                textures.push_back(tex);
+            }
+            Texture::MergeTextures(textures);
+            
+            cache.updated = true;
+        }
+
         bool TextureCache::Contains(int hash) {
             return cache.count(hash);
         }
@@ -234,6 +249,7 @@ namespace eng {
             if(cache.count(hash))
                 ENG_LOG_WARN("TextureGenerator::Add - overriding an existing texture reference.");
             cache.insert({ hash, texture });
+            updated = false;
             return texture;
         }
 

@@ -115,39 +115,11 @@ namespace eng {
     }
 
     TexCoords Sprite::TexOffset(const glm::ivec2& added_offset) const {
-        const glm::ivec2& of = data.offset + added_offset;
-        const glm::ivec2& sz = data.size;
-        const glm::vec2  tsz = glm::vec2(texture->Size());
-
-        return TexCoords(
-            glm::vec2(of + glm::ivec2(   0, sz.y)) / tsz,
-            glm::vec2(of + glm::ivec2(   0,    0)) / tsz,
-            glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
-            glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz
-        );
+        return texture->GetTexCoords(data.offset + added_offset, data.size);
     }
 
     TexCoords Sprite::TexOffset(const glm::ivec2& added_offset, bool flip) const {
-        const glm::ivec2& of = data.offset + added_offset;
-        const glm::ivec2& sz = data.size;
-        const glm::vec2  tsz = glm::vec2(texture->Size());
-
-        if(!flip) {
-            return TexCoords(
-                glm::vec2(of + glm::ivec2(   0, sz.y)) / tsz,
-                glm::vec2(of + glm::ivec2(   0,    0)) / tsz,
-                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
-                glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz
-            );
-        }
-        else {
-            return TexCoords(
-                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / tsz,
-                glm::vec2(of + glm::ivec2(sz.x,    0)) / tsz,
-                glm::vec2(of + glm::ivec2(   0, sz.y)) / tsz,
-                glm::vec2(of + glm::ivec2(   0,    0)) / tsz
-            );
-        }
+        return texture->GetTexCoords(data.offset + added_offset, data.size, flip);
     }
 
     //===== Spritesheet =====

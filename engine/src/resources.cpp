@@ -7,6 +7,7 @@
 #include "engine/utils/json.h"
 #include "engine/utils/utils.h"
 #include "engine/utils/timer.h"
+#include "engine/utils/generator.h"
 
 #include "engine/game/gameobject.h"
 #include "engine/game/object_parsing.h"
@@ -14,6 +15,7 @@
 constexpr float DEFAULT_FONT_SCALE = 0.055f;
 
 #define RESEARCH_MAX_LEVEL 10
+#define TEXTURE_MERGE_FREQUENCY 60
 
 namespace eng {
     //defined in sprite.cpp:280 (+-)
@@ -91,6 +93,16 @@ namespace eng::Resources {
 
     void OnResize(int width, int height) {
         ResizeFonts(height);
+    }
+
+    void TextureMergingUpdate() {
+        static int counter = 0;
+
+        if(++counter >= TEXTURE_MERGE_FREQUENCY) {
+            TextureGenerator::Merge();
+            //TODO: merge the Resources textures as well
+            counter = 0;
+        }
     }
 
     //============

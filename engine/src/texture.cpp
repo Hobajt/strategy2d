@@ -27,6 +27,14 @@ namespace eng {
 
     //======== Texture ========
 
+    Texture::TextureHandle::~TextureHandle() {
+        if(handle != 0) {
+            ENG_LOG_TRACE("[D] TextureHandle ({})", handle);
+            glDeleteTextures(1, &handle);
+            handle = 0;
+        }
+    }
+
     Texture::Texture(const std::string& filepath, int flags, const TextureParams& params_) : Texture(filepath, params_, flags) {}
 
     Texture::Texture(const std::string& filepath, const TextureParams& params_, int flags) : name(GetFilename(filepath)), params(params_) {
@@ -34,12 +42,14 @@ namespace eng {
             ENG_LOG_DEBUG("Texture - Failed to load from '{}'.", filepath.c_str());
             throw std::exception();
         }
+        UpdateDataAfterMerge(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
         ENG_LOG_TRACE("[C] Texture '{}' ({})", name.c_str(), handle);
     }
 
     Texture::Texture(const TextureParams& params, const std::string& name) : Texture(TextureParams::EmptyTexture(params), nullptr, name) {}
 
-    Texture::Texture(const TextureParams& params_, void* data, const std::string& name_) : params(params_) {
+    Texture::Texture(const TextureParams& params_, void* data, const std::string& name_)
+        : params(params_) {
         name = name_;
 
         glActiveTexture(GL_TEXTURE0);
@@ -60,6 +70,8 @@ namespace eng {
         glTexImage2D(GL_TEXTURE_2D, 0, params.internalFormat, params.width, params.height, 0, params.format, params.dtype, data);
 
         glBindTexture(GL_TEXTURE_2D, 0);
+
+        UpdateDataAfterMerge(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
 
         ENG_LOG_TRACE("[R] Created custom texture '{}' ({}x{}).", name.c_str(), params.width, params.height);
         ENG_LOG_TRACE("[C] Texture '{}' ({})", name.c_str(), handle);
@@ -105,6 +117,58 @@ namespace eng {
         Unbind(0);
     }
 
+    void Texture::UpdateDataAfterMerge(TextureHandleRef new_handle, const glm::ivec2& offset, const glm::vec2& size) {
+        handle_data = new_handle;
+        handle = new_handle->handle;
+        merge_size = glm::vec2(params.width, params.height);
+        merge_offset = glm::ivec2(0);
+    }
+
+    TexCoords Texture::GetTexCoords(const glm::ivec2& rect_offset, const glm::ivec2& rect_size) const {
+        glm::ivec2 of = merge_offset + rect_offset;
+        glm::ivec2 sz = rect_size;
+
+        return TexCoords(
+            glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
+            glm::vec2(of + glm::ivec2(   0,    0)) / merge_size,
+            glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
+            glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size
+        );
+    }
+
+    TexCoords Texture::GetTexCoords(const glm::ivec2& rect_offset, const glm::ivec2& rect_size, bool flip) const {
+        glm::ivec2 of = merge_offset + rect_offset;
+        glm::ivec2 sz = rect_size;
+
+        if(!flip) {
+            return TexCoords(
+                glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
+                glm::vec2(of + glm::ivec2(   0,    0)) / merge_size,
+                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
+                glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size
+            );
+        }
+        else {
+            return TexCoords(
+                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
+                glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size,
+                glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
+                glm::vec2(of + glm::ivec2(   0,    0)) / merge_size
+            );
+        }
+    }
+
+    void Texture::MergeTextures(std::vector<TextureRef>& texturesToMerge) {
+        /* THE MERGING PROCESS:
+            - find an optimal layout, taking into account all the textures (2d knapsack problem?)
+                - could still possibly end up with than 1 texture, if the texture size limits are too small
+            - retrieve handle,merge_offset,merge_size for all the touched textures
+            - create the new texture/s
+            - copy over all the textures to their respective locations + call UpdateAfterMerge
+            - don't have to manually delete the handles - handled by lost of reference from the Textures
+        */
+    }
+
     void Texture::DBG_GUI() const {
 #ifdef ENGINE_ENABLE_GUI
         // ImVec2 wsize = ImGui::GetWindowSize();
@@ -119,19 +183,23 @@ namespace eng {
 #endif
     }
 
-    void Texture::Release() noexcept {
+    void Texture::Release() noexcept { 
         if(handle != 0) {
             ENG_LOG_TRACE("[D] Texture '{}' ({})", name.c_str(), handle);
-            glDeleteTextures(1, &handle);
+            handle_data = nullptr;
             handle = 0;
         }
     }
 
     void Texture::Move(Texture&& t) noexcept {
         handle = t.handle;
+        handle_data = t.handle_data;
         params = t.params;
         name = std::move(t.name);
+        merge_offset = t.merge_offset;
+        merge_size = t.merge_size;
         t.handle = 0;
+        t.handle_data = nullptr;
     }
 
     //======= TexCoords =======

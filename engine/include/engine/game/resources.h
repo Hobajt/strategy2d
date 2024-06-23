@@ -21,6 +21,8 @@ namespace eng::Resources {
 
     void OnResize(int width, int height);
 
+    void TextureMergingUpdate();
+
     //============
 
     ShaderRef LoadShader(const std::string& name, bool forceReload = false);
