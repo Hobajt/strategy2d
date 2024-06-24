@@ -19,6 +19,8 @@ bool eng::Texture::LoadFromFile(const std::string& filepath, int flags) {
         return false;
     }
 
+    ENG_LOG_WARN("{}", params.filtering);
+
     //generate the texture
     glGenTextures(1, &handle);
     glBindTexture(GL_TEXTURE_2D, handle);

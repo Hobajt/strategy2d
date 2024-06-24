@@ -697,7 +697,7 @@ namespace eng::Resources {
         for(auto& [hash, ss] : data.spritesheets) {
             textures.push_back(ss->Texture());
         }
-        Texture::MergeTextures(textures);
+        Texture::MergeTextures(textures, GL_NEAREST);
     }
 
     void ValidateIndexEntries() {

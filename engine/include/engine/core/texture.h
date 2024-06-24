@@ -133,7 +133,7 @@ namespace eng {
         TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size) const;
         TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size, bool flip) const;
 
-        static void MergeTextures(std::vector<TextureRef>& texturesToMerge);
+        static void MergeTextures(std::vector<TextureRef>& texturesToMerge, GLenum filteringMode, bool rgba = true);
         static int HandleCount() { return TextureHandle::counter; }
 
         void DBG_GUI() const;

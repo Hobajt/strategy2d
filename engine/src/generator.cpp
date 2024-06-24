@@ -244,7 +244,7 @@ namespace eng {
             for(auto& [hash, tex] : cache.cache) {
                 textures.push_back(tex);
             }
-            Texture::MergeTextures(textures);
+            Texture::MergeTextures(textures, GL_LINEAR);
             
             cache.updated = true;
         }

@@ -43,21 +43,10 @@ namespace eng {
         return result_size;
     }
 
-    void Texture::MergeTextures(std::vector<TextureRef>& textures) {
-        /* THE MERGING PROCESS:
-            - 
-                - could still possibly end up with than 1 texture, if the texture size limits are too small
-            - retrieve handle,merge_offset,merge_size for all the touched textures
-            - create the new texture/s
-            - 
-            - don't have to manually delete the handles - handled by lost of reference from the Textures
-
-            - https://github.com/TeamHypersomnia/rectpack2D - header-only lib with packing alg
-            - alternatively, could try to solve myself (annealing could work)
-        */
+    void Texture::MergeTextures(std::vector<TextureRef>& textures, GLenum filteringMode, bool rgba) {
+        Timer t1, t2;
 
         //TODO: case where the algorithm fails is not handled (should split into more than 1 texture)
-        Timer t1, t2;
 
         t1.Reset();
         t2.Reset();
@@ -72,7 +61,8 @@ namespace eng {
         auto size = BinPacking(rectangles);
 
         //create new texture (temporary, only the handle will survive)
-        TextureRef tex = std::make_shared<Texture>(TextureParams::EmptyTexture(size.w, size.h, GL_RGBA), "merge_texture");
+        GLenum internalFormat = rgba ? GL_RGBA : GL_RGB;
+        TextureRef tex = std::make_shared<Texture>(TextureParams::EmptyTexture(size.w, size.h, internalFormat, filteringMode), "merge_texture");
         glm::vec2 tex_size = glm::vec2(tex->Size());
 
         t2.Reset();
