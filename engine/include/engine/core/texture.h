@@ -78,9 +78,11 @@ namespace eng {
         //Used internally by Texture to share ownership when working with merged textures.
         struct TextureHandle {
             GLuint handle = 0;
+
+            static int counter;
         public:
             TextureHandle() = default;
-            TextureHandle(GLuint handle_) : handle(handle_) {}
+            TextureHandle(GLuint handle_);
             ~TextureHandle();
         };
         using TextureHandleRef = std::shared_ptr<TextureHandle>;
@@ -113,6 +115,7 @@ namespace eng {
         bool operator!=(const Texture& rhs) const;
 
         void Bind(int slot) const;
+        static void Bind(int slot, GLuint handle);
 	    static void Unbind(int slot);
 
         void UpdateData(void* data);
@@ -131,6 +134,7 @@ namespace eng {
         TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size, bool flip) const;
 
         static void MergeTextures(std::vector<TextureRef>& texturesToMerge);
+        static int HandleCount() { return TextureHandle::counter; }
 
         void DBG_GUI() const;
     private:

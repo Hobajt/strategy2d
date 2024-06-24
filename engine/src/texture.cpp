@@ -27,11 +27,19 @@ namespace eng {
 
     //======== Texture ========
 
+    int Texture::TextureHandle::counter = 0;
+
+    Texture::TextureHandle::TextureHandle(GLuint handle_) : handle(handle_) {
+        ENG_LOG_TRACE("[C] TextureHandle ({})", handle);
+        counter++;
+    }
+
     Texture::TextureHandle::~TextureHandle() {
         if(handle != 0) {
             ENG_LOG_TRACE("[D] TextureHandle ({})", handle);
             glDeleteTextures(1, &handle);
             handle = 0;
+            counter--;
         }
     }
 
@@ -100,6 +108,10 @@ namespace eng {
     }
 
     void Texture::Bind(int slot) const {
+        Texture::Bind(slot, handle);
+    }
+
+    void Texture::Bind(int slot, GLuint handle) {
         ASSERT_MSG(handle != 0, "Attempting to use uninitialized texture.");
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, handle);

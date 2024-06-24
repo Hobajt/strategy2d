@@ -40,7 +40,7 @@ namespace eng {
             int texIdx = 1;
             int texIdxEnd = MAX_TEXTURE_COUNT-1;
 
-            TextureRef textures[MAX_TEXTURE_COUNT];
+            GLuint textures[MAX_TEXTURE_COUNT];
             TextureRef blankTexture = nullptr;
 
             int lastFlush_wastedQuads = 0;
@@ -110,8 +110,9 @@ namespace eng {
             instance.shader = shader;
 
             //reset all texture slots to blank texture
+            GLuint blank_handle = instance.blankTexture->Handle();
             for (int i = 0; i < MAX_TEXTURE_COUNT; i++) {
-                instance.textures[i] = instance.blankTexture;
+                instance.textures[i] = blank_handle;
             }
             instance.idx = 0;
             instance.texIdx = 1;
@@ -161,7 +162,7 @@ namespace eng {
                 //bind all used textures into proper slots
                 // ENG_LOG_INFO("Draw call textures:");
                 for (int i = 0; i < MAX_TEXTURE_COUNT; i++) {
-                    instance.textures[i]->Bind(i);
+                    Texture::Bind(i, instance.textures[i]);
                     // ENG_LOG_INFO("[{}] - '{}' ({})", i, instance.textures[i]->Name(), instance.textures[i]->Handle());
                 }
                 // ENG_LOG_INFO("----");
@@ -257,7 +258,7 @@ namespace eng {
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 
             ENG_LOG_TRACE("[C] RendererInstance");
-            ENG_LOG_TRACE("Texture Units: {}, Max Size: {}", maxTextureCount, maxTextureSize);;
+            ENG_LOG_TRACE("Texture Units: {}, Max Size: {}", maxTextureCount, maxTextureSize);
             maxTextureCount = MAX_TEXTURE_COUNT;
         }
 
@@ -271,10 +272,13 @@ namespace eng {
             uint32_t idx = 0;
 
             if(texture != nullptr) {
+                //using handle, bcs merged textures can be in different objects
+                GLuint handle = texture->Handle();
+
                 //search for the texture in already queued textures
                 //search only the textures queued in this draw call (higher index textures might get overriden)
                 for (int i = 0; i < instance.texIdx; i++) {
-                    if (*(instance.textures[i]) == *texture) {
+                    if (instance.textures[i] == handle) {
                         idx = uint32_t(i);
                         break;
                     }
@@ -288,7 +292,7 @@ namespace eng {
                     }
 
                     idx = (uint32_t)instance.texIdx;
-                    instance.textures[instance.texIdx] = texture;
+                    instance.textures[instance.texIdx] = handle;
                     instance.texIdx++;
                 }
             }
@@ -308,7 +312,7 @@ namespace eng {
                 if(instance.texIdx >= instance.texIdxEnd) {
                     Flush();
                 }
-                instance.textures[idx] = texture;
+                instance.textures[idx] = texture->Handle();
             }
 
             return idx;

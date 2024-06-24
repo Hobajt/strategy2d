@@ -288,6 +288,7 @@ void Sandbox::OnGUI() {
         Audio::DBG_GUI();
         Camera::Get().DBG_GUI();
         TextureGenerator::DBG_GUI();
+        Resources::DBG_GUI();
 
         ImGui::Begin("General");
         ImGui::Text("FPS: %.1f", Input::Get().fps);

@@ -71,6 +71,8 @@ namespace eng::Resources {
     int LoadResearchBonus(int type, int level);
     int LoadResearchLevels(int type);
 
+    void DBG_GUI();
+
     //===== Cursor icons =====
 
     namespace CursorIcons {

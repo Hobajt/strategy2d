@@ -126,6 +126,8 @@ namespace eng {
 
         size_t Size() const { return data.sprites.size(); }
 
+        TextureRef Texture() const { return data.texture; }
+
         //=== other ===
 
         void DBG_GUI();

@@ -7,6 +7,7 @@
 #include "engine/utils/json.h"
 #include "engine/utils/utils.h"
 #include "engine/utils/timer.h"
+#include "engine/utils/dbg_gui.h"
 
 #include "engine/game/gameobject.h"
 #include "engine/game/object_parsing.h"
@@ -59,6 +60,7 @@ namespace eng::Resources {
     void LoadObjectDefinitions();
     void PreloadResearchDefinitions();
     void FinalizeOthers();
+    void MergeSpritesheets();
 
     void ValidateIndexEntries();
     UtilityObjectDataRef SetupCorpseData();
@@ -78,6 +80,8 @@ namespace eng::Resources {
         PreloadObjects();
 
         PreloadResearchDefinitions();
+
+        MergeSpritesheets();
 
         data.cursorIcons = CursorIconManager("res/json/cursors.json");
 
@@ -446,6 +450,26 @@ namespace eng::Resources {
         return data.research_viz.at(type).levels;
     }
 
+    void DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGui::Begin("Resources");
+
+        ImGui::Text("Fonts: %d, Shaders: %d", data.fonts.size(), data.shaders.size());
+        ImGui::Text("Textures: %d, Tilesets: %d", data.textures.size(), data.tilesets.size());
+        ImGui::Text("Spritesheets: %d", data.spritesheets.size());
+        ImGui::Text("Object data: %d", data.objects.size());
+
+        ImGui::Separator();
+        ImGui::Text("Buildings: %d, Units: %d", data.buildings.size(), data.units.size());
+        ImGui::Text("Utilities: %d, Spells: %d, Research: %d", data.spells.size(), data.utilities.size(), data.research_data.size());
+
+        ImGui::Separator();
+        ImGui::Text("Total texture handles: %d", Texture::HandleCount());
+        
+        ImGui::End();
+#endif
+    }
+
     namespace CursorIcons {
 
         void Update() {
@@ -665,6 +689,15 @@ namespace eng::Resources {
             if(SpellID::Price(i) == SpellID::INVALID_PRICE)
                 ENG_LOG_WARN("Spell (id={}) data were not found.", i);
         }
+    }
+
+    void MergeSpritesheets() {
+        ENG_LOG_TRACE("Resources::MergeSpritesheets");
+        std::vector<TextureRef> textures = {};
+        for(auto& [hash, ss] : data.spritesheets) {
+            textures.push_back(ss->Texture());
+        }
+        Texture::MergeTextures(textures);
     }
 
     void ValidateIndexEntries() {
