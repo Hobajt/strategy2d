@@ -67,8 +67,10 @@ namespace eng {
 
         TextureRef GetTexture(const Params& params);
 
+        void TextureMergingUpdate();
         void Merge();
 
+        void DBG_GUI();
 
     }//namespace TextureGenerator
 

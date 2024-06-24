@@ -1,9 +1,12 @@
 #include "engine/utils/generator.h"
 
 #include "engine/core/window.h"
+#include "engine/utils/dbg_gui.h"
 
 #include <utility>
 #include <array>
+
+#define TEXTURE_MERGE_FREQUENCY 60
 
 namespace eng {
 
@@ -63,7 +66,7 @@ namespace eng {
         }
 
         Params::colorArray setupColors(const rgb& c1, const rgb& c2 = rgb(0), const rgb& c3 = rgb(0), const rgb& c4 = rgb(0), const rgb& c5 = rgb(0), const rgb& c6 = rgb(0)) {
-            return Params::colorArray{ rgba(c1, 0), rgba(c2, 0), rgba(c3, 0), rgba(c4, 0), rgba(c5, 0), rgba(c6, 0) };
+            return Params::colorArray{ rgba(c1, 255), rgba(c2, 255), rgba(c3, 255), rgba(c4, 255), rgba(c5, 255), rgba(c6, 255) };
         }
 
         Params::Params(int type_, const glm::ivec2& size_, const glm::ivec2& borderSize_, const glm::ivec2& shadingSize_, int channel_, const glm::ivec2& w_, float ratio_, int flags_, const colorArray& colors_)
@@ -222,8 +225,17 @@ namespace eng {
             }
         }
 
+        void TextureMergingUpdate() {
+            static int counter = 0;
+
+            if(++counter >= TEXTURE_MERGE_FREQUENCY) {
+                TextureGenerator::Merge();
+                counter = 0;
+            }
+        }
+
         void Merge() {
-            if(!cache.updated)
+            if(cache.updated)
                 return;
 
             ENG_LOG_INFO("TextureGenerator::Merge - new textures detected, merging.");
@@ -235,6 +247,19 @@ namespace eng {
             Texture::MergeTextures(textures);
             
             cache.updated = true;
+        }
+
+        void DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+            ImGui::Begin("TextureGen");
+            ImGui::Text("TextureGenerator count: %d", TextureGenerator::Count());
+            ImGui::Text("TextureGenerator invokations: %d", TextureGenerator::InvokationCount());
+
+            if(cache.cache.size() > 0) {
+                cache.cache.begin()->second->DBG_GUI();
+            }
+            ImGui::End();
+#endif
         }
 
         bool TextureCache::Contains(int hash) {
@@ -333,7 +358,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "btnTex_clear_%c%s", c[channel], flipShading ? "_flip" : "");
 
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -352,7 +377,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
 
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -390,7 +415,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
 
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -409,7 +434,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "btnTex_clear2_0x%02X%02X%02X", fill.r, fill.g, fill.b);
 
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );
@@ -429,7 +454,7 @@ namespace eng {
             snprintf(buf, sizeof(buf), "btnTex_triangle_%s%s", up ? "up" : "down", flipShading ? "_flip" : "");
 
             TextureRef texture = std::make_shared<Texture>(
-                TextureParams::CustomData(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
+                TextureParams::CustomData(width, height, GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE),
                 (void*)data,
                 std::string(buf)
             );

@@ -80,20 +80,30 @@ namespace eng {
         static int paletteSize;
     public:
         Quad() = default;
-        Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
-        Quad(const glm::uvec4& info, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture = nullptr);
+        Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
+        Quad(const glm::uvec4& info, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture = nullptr);
+        Quad(const glm::uvec4& info, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
+        
 
-        static Quad FromCenter(const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
-        static Quad FromCorner(const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        static Quad FromCenter(const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad FromCenter(const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
+        static Quad FromCorner(const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad FromCorner(const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
         static Quad SpriteQuad(const glm::vec3& botLeft, const glm::vec3& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc, int depthMode);
-        static Quad Tile(const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        static Quad Tile(const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad Tile(const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
 
-        static Quad FromCenter(const glm::uvec4& info, const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
-        static Quad FromCorner(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        static Quad FromCenter(const glm::uvec4& info, const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad FromCenter(const glm::uvec4& info, const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
+        static Quad FromCorner(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad FromCorner(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
         static Quad SpriteQuad(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc, int depthMode);
-        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
 
-        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture = nullptr, const TexCoords& tc = TexCoords::Default());
+        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture = nullptr);
+        static Quad Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc);
 
         static Quad Char(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z = 0.f);
         static Quad CharClippedTop(const glm::uvec4& info, const CharInfo& c, const glm::vec2& pos, const glm::vec2& size_mult, const glm::vec2& texSize_inv, const glm::vec4& color, const TextureRef& texture, float z, int clipPos);

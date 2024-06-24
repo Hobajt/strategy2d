@@ -45,7 +45,7 @@ namespace eng {
 
             OnUpdate();
             Resources::CursorIcons::Update();
-            Resources::TextureMergingUpdate();
+            TextureGenerator::TextureMergingUpdate();
 
 #ifdef ENGINE_ENABLE_GUI
             OnGUI();

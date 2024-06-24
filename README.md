@@ -12,6 +12,7 @@ My attempts at a 2D strategy game, inspired by Warcraft II.
 * <a href="https://gitlab.freedesktop.org/freetype/freetype">FreeType</a> (2.13.0)
 * <a href="https://github.com/gabime/spdlog">spdlog</a> (v1.11.0)
 * <a href="https://github.com/mackron/miniaudio">miniaudio</a> (0.11.11)
+* <a href="https://github.com/TeamHypersomnia/rectpack2D">rectpack2D</a>
 
 Libraries are included in the repo itself or are added as submodules, use `git clone --recursive` when cloning.
 

@@ -117,9 +117,6 @@ namespace eng {
 
         void UpdateData(void* data);
 
-        //To update handle and offset into the texture after texture merging.
-        void UpdateDataAfterMerge(TextureHandleRef handle, const glm::ivec2& offset, const glm::vec2& size);
-
         int Width() const { return params.width; }
         int Height() const { return params.height; }
         glm::ivec2 Size() const { return glm::ivec2(params.width, params.height); }
@@ -129,6 +126,7 @@ namespace eng {
         GLuint Handle() const { return handle; }
 
         //Returns TexCoords for given rectangle in the texture. Takes into account texture merging.
+        TexCoords GetTexCoords() const;
         TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size) const;
         TexCoords GetTexCoords(const glm::ivec2& offset, const glm::ivec2& size, bool flip) const;
 
@@ -141,6 +139,12 @@ namespace eng {
 
         //Loads texture from provided file.
         bool LoadFromFile(const std::string& filepath, int flags);
+
+        //To update handle and offset into the texture after texture merging.
+        void Merge_UpdateData(TextureHandleRef handle, const glm::ivec2& offset, const glm::vec2& size);
+
+        //Copy this texture's data into another texture at given pixel offset.
+        void Merge_CopyTo(const TextureRef& other, const glm::ivec2& offset);
     private:
         std::string name;
         TextureParams params;

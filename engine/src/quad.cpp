@@ -54,10 +54,21 @@ namespace eng {
         indices[4] = (uint32_t)(-1);
     }
 
+
     //======= Quad =======
 
+    TexCoords GetTexCoords(const TextureRef& texture) {
+        return (texture != nullptr) ? texture->GetTexCoords() : TexCoords::Default();
+    }
+
+    Quad::Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture)
+        : Quad(DefaultInfo(), v1, v2, v3, v4, color, texture, GetTexCoords(texture)) {}
+    
     Quad::Quad(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc)
         : Quad(DefaultInfo(), v1, v2, v3, v4, color, texture, tc) {}
+
+    Quad::Quad(const glm::uvec4& info, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture)
+        : Quad(info, v1, v2, v3, v4, color, texture, GetTexCoords(texture)) {}
 
     Quad::Quad(const glm::uvec4& info, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) : tex(texture) {
         vertices[0] = Vertex(v1, color, tc[0], info);
@@ -66,8 +77,16 @@ namespace eng {
         vertices[3] = Vertex(v4, color, tc[3], info);
     }
 
+    Quad Quad::FromCenter(const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture) {
+        return FromCenter(DefaultInfo(), center, halfSize, color, texture, GetTexCoords(texture));
+    }
+
     Quad Quad::FromCenter(const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
         return FromCenter(DefaultInfo(), center, halfSize, color, texture, tc);
+    }
+
+    Quad Quad::FromCorner(const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture) {
+        return FromCorner(DefaultInfo(), botLeft, size, color, texture, GetTexCoords(texture));
     }
 
     Quad Quad::FromCorner(const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
@@ -78,8 +97,16 @@ namespace eng {
         return SpriteQuad(DefaultInfo(), botLeft, size, color, texture, tc, depthMode);
     }
 
+    Quad Quad::Tile(const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture) {
+        return Tile(DefaultInfo(), botLeft, right, fwd, color, texture, GetTexCoords(texture));
+    }
+
     Quad Quad::Tile(const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
         return Tile(DefaultInfo(), botLeft, right, fwd, color, texture, tc);
+    }
+
+    Quad Quad::FromCenter(const glm::uvec4& info, const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture) {
+        return FromCenter(info, center, halfSize, color, texture, GetTexCoords(texture));
     }
 
     Quad Quad::FromCenter(const glm::uvec4& info, const glm::vec3& center, const glm::vec2& halfSize, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
@@ -93,6 +120,10 @@ namespace eng {
         q.vertices[3] = Vertex(center + glm::vec3(+halfSize.x, +halfSize.y, 0.f), color, tc[3], info);
 
         return q;
+    }
+
+    Quad Quad::FromCorner(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture) {
+        return FromCorner(info, botLeft, size, color, texture, GetTexCoords(texture));
     }
     
     Quad Quad::FromCorner(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec2& size, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
@@ -124,6 +155,10 @@ namespace eng {
         return q;
     }
 
+    Quad Quad::Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture) {
+        return Tile(info, botLeft, right, fwd, color, texture, GetTexCoords(texture));
+    }
+
     Quad Quad::Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {
         Quad q = {};
         q.tex = texture;
@@ -134,6 +169,10 @@ namespace eng {
         q.vertices[3] = Vertex(botLeft + right + fwd, color, tc[3], info);
 
         return q;
+    }
+
+    Quad Quad::Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture) {
+        return Tile(info, botLeft, right, fwd, up, h, color, texture, GetTexCoords(texture));
     }
 
     Quad Quad::Tile(const glm::uvec4& info, const glm::vec3& botLeft, const glm::vec3& right, const glm::vec3& fwd, const glm::vec3& up, const glm::vec4& h, const glm::vec4& color, const TextureRef& texture, const TexCoords& tc) {

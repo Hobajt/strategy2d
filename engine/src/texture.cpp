@@ -42,7 +42,7 @@ namespace eng {
             ENG_LOG_DEBUG("Texture - Failed to load from '{}'.", filepath.c_str());
             throw std::exception();
         }
-        UpdateDataAfterMerge(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
+        Merge_UpdateData(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
         ENG_LOG_TRACE("[C] Texture '{}' ({})", name.c_str(), handle);
     }
 
@@ -71,7 +71,7 @@ namespace eng {
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        UpdateDataAfterMerge(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
+        Merge_UpdateData(std::make_shared<TextureHandle>(handle), glm::ivec2(0), glm::vec2(params.width, params.height));
 
         ENG_LOG_TRACE("[R] Created custom texture '{}' ({}x{}).", name.c_str(), params.width, params.height);
         ENG_LOG_TRACE("[C] Texture '{}' ({})", name.c_str(), handle);
@@ -117,56 +117,63 @@ namespace eng {
         Unbind(0);
     }
 
-    void Texture::UpdateDataAfterMerge(TextureHandleRef new_handle, const glm::ivec2& offset, const glm::vec2& size) {
+    void Texture::Merge_UpdateData(TextureHandleRef new_handle, const glm::ivec2& offset, const glm::vec2& size) {
         handle_data = new_handle;
         handle = new_handle->handle;
-        merge_size = glm::vec2(params.width, params.height);
-        merge_offset = glm::ivec2(0);
+        merge_offset = offset;
+        merge_size = size;
+    }
+
+    void Texture::Merge_CopyTo(const TextureRef& other, const glm::ivec2& offset) {
+        glCopyImageSubData(handle, GL_TEXTURE_2D, 0, merge_offset.x, merge_offset.y, 0, other->handle, GL_TEXTURE_2D, 0, offset.x, offset.y, 0, params.width, params.height, 1);
+    }
+
+    TexCoords Texture::GetTexCoords() const {
+        glm::vec2 m = glm::vec2(merge_offset         ) / merge_size;
+        glm::vec2 M = glm::vec2(merge_offset + Size()) / merge_size;
+
+        return TexCoords(
+            glm::vec2(m.x, M.y),
+            glm::vec2(m.x, m.y),
+            glm::vec2(M.x, M.y),
+            glm::vec2(M.x, m.y)
+        );
     }
 
     TexCoords Texture::GetTexCoords(const glm::ivec2& rect_offset, const glm::ivec2& rect_size) const {
-        glm::ivec2 of = merge_offset + rect_offset;
-        glm::ivec2 sz = rect_size;
+        glm::vec2 m = glm::vec2(merge_offset + rect_offset            ) / merge_size;
+        glm::vec2 M = glm::vec2(merge_offset + rect_offset + rect_size) / merge_size;
 
         return TexCoords(
-            glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
-            glm::vec2(of + glm::ivec2(   0,    0)) / merge_size,
-            glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
-            glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size
+            glm::vec2(m.x, M.y),
+            glm::vec2(m.x, m.y),
+            glm::vec2(M.x, M.y),
+            glm::vec2(M.x, m.y)
         );
     }
 
     TexCoords Texture::GetTexCoords(const glm::ivec2& rect_offset, const glm::ivec2& rect_size, bool flip) const {
         glm::ivec2 of = merge_offset + rect_offset;
         glm::ivec2 sz = rect_size;
+        glm::vec2 m = glm::vec2(merge_offset + rect_offset            ) / merge_size;
+        glm::vec2 M = glm::vec2(merge_offset + rect_offset + rect_size) / merge_size;
 
         if(!flip) {
             return TexCoords(
-                glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
-                glm::vec2(of + glm::ivec2(   0,    0)) / merge_size,
-                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
-                glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size
+                glm::vec2(m.x, M.y),
+                glm::vec2(m.x, m.y),
+                glm::vec2(M.x, M.y),
+                glm::vec2(M.x, m.y)
             );
         }
         else {
             return TexCoords(
-                glm::vec2(of + glm::ivec2(sz.x, sz.y)) / merge_size,
-                glm::vec2(of + glm::ivec2(sz.x,    0)) / merge_size,
-                glm::vec2(of + glm::ivec2(   0, sz.y)) / merge_size,
-                glm::vec2(of + glm::ivec2(   0,    0)) / merge_size
+                glm::vec2(M.x, M.y),
+                glm::vec2(M.x, m.y),
+                glm::vec2(m.x, M.y),
+                glm::vec2(m.x, m.y)
             );
         }
-    }
-
-    void Texture::MergeTextures(std::vector<TextureRef>& texturesToMerge) {
-        /* THE MERGING PROCESS:
-            - find an optimal layout, taking into account all the textures (2d knapsack problem?)
-                - could still possibly end up with than 1 texture, if the texture size limits are too small
-            - retrieve handle,merge_offset,merge_size for all the touched textures
-            - create the new texture/s
-            - copy over all the textures to their respective locations + call UpdateAfterMerge
-            - don't have to manually delete the handles - handled by lost of reference from the Textures
-        */
     }
 
     void Texture::DBG_GUI() const {
@@ -175,8 +182,8 @@ namespace eng {
         ImVec2 wsize = ImGui::GetContentRegionAvail();
         
         //to preserve texture sides ratio while allowing scaling
-        ImVec2 r = ImVec2(wsize.x / params.width, wsize.y / params.height);
-        float ratio = float(params.width) / params.height;
+        ImVec2 r = ImVec2(wsize.x / merge_size.x, wsize.y / merge_size.y);
+        float ratio = float(merge_size.x) / merge_size.y;
         wsize = (r.x > r.y) ? ImVec2(wsize.y * ratio, wsize.y) : ImVec2(wsize.x, wsize.x / ratio);
 
         ImGui::Image((ImTextureID)handle, wsize, ImVec2(0, 1), ImVec2(1, 0));

@@ -44,6 +44,9 @@ namespace eng {
             TextureRef blankTexture = nullptr;
 
             int lastFlush_wastedQuads = 0;
+
+            int maxTextureCount = 8;
+            int maxTextureSize = 0;
         public:
             RendererInstance() = default;
             ~RendererInstance();
@@ -65,7 +68,11 @@ namespace eng {
         }
 
         int TextureSlotsCount() {
-            return MAX_TEXTURE_COUNT;
+            return instance.maxTextureCount;
+        }
+
+        int MaxTextureSize() {
+            return instance.maxTextureSize;
         }
 
         //======================
@@ -245,7 +252,13 @@ namespace eng {
             uint8_t tmp[] = { 255,255,255,255 };
             blankTexture = std::make_shared<Texture>(TextureParams::CustomData(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE), (void*)&tmp, "renderer_blankTexture");
 
+            //texture info retrieval
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureCount);
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
             ENG_LOG_TRACE("[C] RendererInstance");
+            ENG_LOG_TRACE("Texture Units: {}, Max Size: {}", maxTextureCount, maxTextureSize);;
+            maxTextureCount = MAX_TEXTURE_COUNT;
         }
 
         bool RendererInstance::IsInitialized() const {

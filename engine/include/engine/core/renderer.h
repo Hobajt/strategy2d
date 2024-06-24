@@ -24,6 +24,7 @@ namespace eng {
         void StatsReset();
 
         int TextureSlotsCount();
+        int MaxTextureSize();
 
         //======================
 
