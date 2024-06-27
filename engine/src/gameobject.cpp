@@ -34,6 +34,21 @@ namespace eng {
         animator = Animator(data->animData, data->anim_speed);
     }
 
+    GameObject::GameObject(Level& level_, const GameObjectDataRef& data_, const GameObject::Entry& entry) : level(&level_), data(data_) {
+        ASSERT_MSG(data != nullptr, "Cannot create GameObject without any data!");
+        ASSERT_MSG(level != nullptr, "GameObject needs a reference to the Level it's contained in!");
+
+        position = entry.position;
+        orientation = entry.anim_orientation;
+        actionIdx = entry.anim_action;
+        killed = entry.killed;
+        oid = ObjectID(entry.id);
+        id = entry.id.z;
+
+        animator = Animator(data->animData, data->anim_speed);
+        animator.Restore(entry.anim_action, entry.anim_frame);
+    }
+
     void GameObject::Render() {
         RenderAt(glm::vec2(position));
     }
@@ -78,6 +93,17 @@ namespace eng {
         ASSERT_MSG(data != nullptr && level != nullptr, "GameObject isn't properly initialized!");
         animator.Update(ActionIdx());
         return killed;
+    }
+
+    void GameObject::Export(GameObject::Entry& entry) const {
+        entry.id = glm::ivec3(oid.type, oid.idx, oid.id);
+        entry.num_id = NumID();
+
+        entry.position = position;
+        entry.anim_action = actionIdx;
+        entry.anim_orientation = orientation;
+        entry.anim_frame = animator.GetCurrentFrame();
+        entry.killed = killed;
     }
 
     bool GameObject::CheckPosition(const glm::ivec2& map_coords) {
@@ -166,6 +192,25 @@ namespace eng {
         }
     }
 
+    FactionObject::FactionObject(Level& level_, const FactionObjectDataRef& data_, const FactionObject::Entry& entry, bool is_finished_) 
+        : GameObject(level_, std::static_pointer_cast<GameObjectData>(data_), entry), data_f(data_) {
+
+        faction = level_.factions[entry.factionIdx];
+        ASSERT_MSG((faction != nullptr) && (faction->ID() >= 0), "FactionObject must be assigned to a valid faction!");
+        
+        health              = entry.health;
+        factionIdx          = entry.factionIdx;
+        colorIdx            = entry.colorIdx;
+        variationIdx        = entry.variationIdx;
+        active              = entry.active;
+        finalized           = entry.finalized;
+        faction_informed    = entry.faction_informed;
+        ChangeColor(entry.colorIdx);
+        if(is_finished_) {
+            faction->ObjectAdded(data_f);
+        }
+    }
+
     FactionObject::~FactionObject() {
         RemoveFromMap();
         lvl()->objects.KillObjectsInside(OID());
@@ -188,6 +233,17 @@ namespace eng {
         factionIdx = faction->ID();
         if(!keep_color)
             ChangeColor(faction->GetColorIdx(NumID()));
+    }
+
+    void FactionObject::Export(FactionObject::Entry& entry) const {
+        GameObject::Export(entry);
+        entry.health = health;
+        entry.factionIdx = factionIdx;
+        entry.colorIdx = colorIdx;
+        entry.variationIdx = variationIdx;
+        entry.active = active;
+        entry.finalized = finalized;
+        entry.faction_informed = faction_informed;
     }
 
     bool FactionObject::Kill(bool silent) {
@@ -411,6 +467,24 @@ namespace eng {
             Audio::Play(data->sound_ready.Random());
     }
 
+    Unit::Unit(Level& level_, const Unit::Entry& entry)
+        : FactionObject(level_, Resources::LoadUnit(entry.num_id[1], entry.num_id[2]), entry), data(Resources::LoadUnit(entry.num_id[1], entry.num_id[2])) {
+        
+        if(data->navigationType != NavigationBit::GROUND) {
+            if(int(Position().x) % 2 != 0 || int(Position().y) % 2 != 0) {
+                ENG_LOG_ERROR("Unit - cannot spawn naval/air unit on odd coordinates (pathfinding only works on even coords for these).");
+                throw std::runtime_error("");
+            }
+        }
+
+        move_offset = entry.move_offset;
+        carry_state = entry.carry_state;
+        mana = entry.mana;
+        animation_ended = entry.anim_ended;
+        command = Command(entry.command);
+        action = Action(entry.action);
+    }
+
     Unit::~Unit() {}
 
     void Unit::Render() {
@@ -431,6 +505,27 @@ namespace eng {
         TrollRegeneration();
         animation_ended = animator.Update(ActionIdx());
         return (Health() <= 0) || IsKilled();
+    }
+
+    Unit::Entry Unit::Export() const {
+        Unit::Entry entry = {};
+
+        FactionObject::Export(entry);
+
+        entry.move_offset = move_offset;
+        entry.carry_state = carry_state;
+        entry.mana = mana;
+        entry.anim_ended = animation_ended;
+
+        entry.command = command.Export();
+        entry.action = action.Export();
+
+        return entry;
+    }
+
+    void Unit::RepairIDs(const idMappingType& ids) {
+        command.UpdateTargetID(ids.at(command.TargetID()));
+        action.data.target = ids.at(action.data.target);
     }
 
     void Unit::IssueCommand(const Command& cmd) {
@@ -716,6 +811,22 @@ namespace eng {
         }
     }
 
+    Building::Building(Level& level_, const Building::Entry& entry)
+        : FactionObject(level_, Resources::LoadBuilding(entry.num_id[1], entry.num_id[2]), entry, false), data(Resources::LoadBuilding(entry.num_id[1], entry.num_id[2])) {
+        
+        if(data->navigationType == NavigationBit::WATER && data->num_id[1] == BuildingType::OIL_PLATFORM) {
+            if(int(Position().x) % 2 != 0 || int(Position().y) % 2 != 0) {
+                ENG_LOG_ERROR("Building - cannot spawn oil platform on odd coordinates (pathfinding only works on even coords for these).");
+                throw std::runtime_error("");
+            }
+        }
+
+        constructed = entry.constructed;
+        amount_left = entry.amount_left;
+        real_actionIdx = entry.real_actionIdx;
+        action = BuildingAction(entry.action);
+    }
+
     Building::~Building() {
         Finalized(constructed);
         if(lvl() != nullptr && Data() != nullptr) {
@@ -766,6 +877,22 @@ namespace eng {
             return (Health() <= 0) || IsKilled();
         action.Update(*this, *lvl());
         return (Health() <= 0) || IsKilled();
+    }
+
+    Building::Entry Building::Export() const {
+        Building::Entry entry = {};
+
+        FactionObject::Export(entry);
+        entry.constructed = constructed;
+        entry.amount_left = amount_left;
+        entry.real_actionIdx = real_actionIdx;
+        entry.action = action.Export();
+        
+        return entry;
+    }
+
+    void Building::RepairIDs(const idMappingType& ids) {
+        action.data.target_id = ids.at(action.data.target_id);
     }
 
     void Building::IssueAction(const BuildingAction& new_action) {
@@ -1097,6 +1224,14 @@ namespace eng {
         ChangeType(data_, target_pos_, targetID_, play_sound, true);
     }
 
+    UtilityObject::UtilityObject(Level& level_, const UtilityObject::Entry& entry)
+        : GameObject(level_, Resources::LoadUtilityObj(entry.num_id[1]), entry), data(Resources::LoadUtilityObj(entry.num_id[1])) {
+        
+        live_data = entry.live_data;
+        real_position = entry.real_position;
+        m_real_size = entry.real_size;
+    }
+
     UtilityObject::~UtilityObject() {}
 
     void UtilityObject::Render() {
@@ -1113,6 +1248,28 @@ namespace eng {
         }
         animator.Update(ActionIdx());
         return res || IsKilled();
+    }
+
+    UtilityObject::Entry UtilityObject::Export() const {
+        UtilityObject::Entry entry = {};
+
+        GameObject::Export(entry);
+        entry.live_data = live_data;
+        entry.real_position = real_position;
+        entry.real_size = m_real_size;
+
+        return entry;
+    }
+
+    void UtilityObject::RepairIDs(const idMappingType& ids) {
+        live_data.sourceID = ids.at(live_data.sourceID);
+        live_data.targetID = ids.at(live_data.targetID);
+
+        live_data.ids[0] = ids.at(live_data.ids[0]);
+        live_data.ids[1] = ids.at(live_data.ids[1]);
+        live_data.ids[2] = ids.at(live_data.ids[2]);
+        live_data.ids[3] = ids.at(live_data.ids[3]);
+        live_data.ids[4] = ids.at(live_data.ids[4]);
     }
 
     void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, const LiveData& init_data_, FactionObject& src_, bool play_sound, bool call_init) {

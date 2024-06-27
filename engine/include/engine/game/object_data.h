@@ -62,6 +62,7 @@ namespace eng {
     public:
         ObjectID() = default;
         ObjectID(dtype type_, dtype idx_, dtype id_) : type(type_), idx(idx_), id(id_) {}
+        ObjectID(const glm::ivec3& v) : type(v[0]), idx(v[1]), id(v[2]) {}
 
         static bool IsValid(const ObjectID& id) { return id.type != ObjectType::INVALID; }
 
@@ -253,3 +254,10 @@ namespace eng {
     using UtilityObjectDataRef = std::shared_ptr<UtilityObjectData>;
 
 }//namespace eng
+
+template <>
+struct std::hash<eng::ObjectID> {
+    std::size_t operator()(const eng::ObjectID& k) const {
+        return ((std::hash<eng::ObjectID::dtype>{}(k.type) ^ (std::hash<eng::ObjectID::dtype>{}(k.idx) << 1) >> 1) ^ std::hash<eng::ObjectID::dtype>{}(k.id));
+    }
+};

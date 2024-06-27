@@ -16,12 +16,24 @@ namespace eng {
     bool Parse_Mapfile(Mapfile& map, const nlohmann::json& config);
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
     bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config);
+    bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config);
     Techtree Parse_Techtree(const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
     nlohmann::json Export_FactionsFile(const LevelInfo& info, const FactionsFile& factions);
+    nlohmann::json Export_Objects(const ObjectsFile& objects);
     nlohmann::json Export_Techtree(const Techtree& techtree);
+
+    void parse_GameObject(const nlohmann::json& d, GameObject::Entry& e);
+    void parse_FactionObject(const nlohmann::json& d, FactionObject::Entry& e);
+    void parse_Unit(const nlohmann::json& d, Unit::Entry& e);
+    void parse_UnitCommand(const nlohmann::json& d, Unit::Entry& e);
+    void parse_UnitAction(const nlohmann::json& d, Unit::Entry& e);
+    void parse_Building(const nlohmann::json& d, Building::Entry& e);
+    void parse_BuildingAction(const nlohmann::json& d, Building::Entry& e);
+    void parse_Utilities(const nlohmann::json& d, UtilityObject::Entry& e);
+    void parse_Utilities_LiveData(const nlohmann::json& d, UtilityObject::Entry& e);
 
     //===== Savefile =====
 
@@ -49,6 +61,11 @@ namespace eng {
             throw std::runtime_error("Savefile - invalid factions data.");
         }
 
+        if(config.count("objects") && !Parse_Objects(objects, config.at("objects"))) {
+            ENG_LOG_WARN("Savefile - invalid object data.");
+            throw std::runtime_error("Savefile - invalid object data.");
+        }
+
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
     }
 
@@ -58,6 +75,7 @@ namespace eng {
         json data = {};
         data["map"] = Export_Mapfile(map);
         data["factions"] = Export_FactionsFile(info, factions);
+        data["objects"] = Export_Objects(objects);
         data["info"] = Export_Info(info);
 
         WriteFile(filepath.c_str(), data.dump());
@@ -67,11 +85,11 @@ namespace eng {
 
     //===== Level =====
 
-    Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects({}) {}
+    Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects(ObjectPool{}) {}
 
-    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects({}), factions(Factions()), initialized(true) {}
+    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects(ObjectPool{}), factions(Factions()), initialized(true) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), objects({}), factions(std::move(savefile.factions), map.Size()), info(savefile.info), initialized(true) {
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size()), objects(*this, std::move(savefile.objects)), initialized(true) {
         if(factions.IsInitialized())
             map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
     }
@@ -155,6 +173,7 @@ namespace eng {
         Savefile savefile;
         savefile.map = map.Export();
         savefile.factions = factions.Export();
+        savefile.objects = objects.Export();
         savefile.info = info;
         return savefile;
     }
@@ -245,6 +264,51 @@ namespace eng {
             for(auto& relation : config.at("diplomacy")) {
                 factions.diplomacy.push_back(json::parse_ivec3(relation));
             }
+        }
+
+        return true;
+    }
+
+    
+
+    bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config) {
+        for(auto& entry : config.at("units")) {
+            Unit::Entry e = {};
+            parse_GameObject(entry.at(0), e);
+            parse_FactionObject(entry.at(1), e);
+            parse_Unit(entry.at(2), e);
+            parse_UnitCommand(entry.at(3), e);
+            parse_UnitAction(entry.at(4), e);
+            objects.units.push_back(e);
+        }
+
+        for(auto& entry : config.at("buildings")) {
+            Building::Entry e = {};
+            parse_GameObject(entry.at(0), e);
+            parse_FactionObject(entry.at(1), e);
+            parse_Building(entry.at(2), e);
+            parse_BuildingAction(entry.at(3), e);
+            objects.buildings.push_back(e);
+        }
+
+        for(auto& entry : config.at("utilities")) {
+            UtilityObject::Entry e = {};
+            parse_GameObject(entry.at(0), e);
+            parse_Utilities(entry.at(1), e);
+            parse_Utilities_LiveData(entry.at(2), e);
+            objects.utilities.push_back(e);
+        }
+
+        for(auto& e : config.at("entrance").at(0)) {
+            objects.entrance.entries.push_back(EntranceController::Entry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), e.at(6), e.at(7) });
+        }
+
+        for(auto& e : config.at("entrance").at(1)) {
+            objects.entrance.workEntries.push_back(EntranceController::WorkEntry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), glm::ivec2(e.at(6), e.at(7)), e.at(8), e.at(9) });
+        }
+
+        for(auto& e : config.at("entrance").at(2)) {
+            objects.entrance.gms.push_back({ ObjectID(e.at(0), e.at(1), e.at(2)), e.at(3) });
         }
 
         return true;
@@ -345,6 +409,91 @@ namespace eng {
                 diplomacy.push_back({ r.x, r.y, r.z });
             }
         }
+        return out;
+    }
+
+    nlohmann::json Export_Objects(const ObjectsFile& objects) {
+        using json = nlohmann::json;
+        json out = {};
+
+        json& units = out["units"] = {};
+        for(const auto& entry : objects.units) {
+            json e = {};
+
+            //GameObject
+            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame, entry.killed });
+            //FactionObject
+            e.push_back({ entry.health, entry.factionIdx, entry.colorIdx, entry.variationIdx, entry.active, entry.finalized, entry.faction_informed });
+            //Unit
+            e.push_back({ entry.move_offset.x, entry.move_offset.y, entry.carry_state, entry.mana, entry.anim_ended });
+            //Unit::Command
+            e.push_back({ entry.command.type, entry.command.target_pos.x, entry.command.target_pos.y, entry.command.target_id.type, entry.command.target_id.idx, entry.command.target_id.id, entry.command.flag, entry.command.v2.x, entry.command.v2.y });
+            //Unit::Action
+            e.push_back({ entry.action.type, entry.action.data.i, entry.action.data.j, entry.action.data.k, entry.action.data.b, entry.action.data.c, entry.action.data.t, entry.action.data.count });
+            
+            units.push_back(e);
+        }
+
+        json& buildings = out["buildings"] = {};
+        for(const auto& entry : objects.buildings) {
+            json e = {};
+
+            //GameObject
+            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame });
+            //FactionObject
+            e.push_back({ entry.health, entry.factionIdx, entry.colorIdx, entry.variationIdx, entry.active, entry.finalized, entry.faction_informed });
+            //Building
+            e.push_back({ entry.constructed, entry.amount_left, entry.real_actionIdx });
+            //Building::Action
+            e.push_back({ entry.action.type, entry.action.data.t1, entry.action.data.t2, entry.action.data.t3, entry.action.data.i, entry.action.data.flag, entry.action.data.target_id.type, entry.action.data.target_id.idx, entry.action.data.target_id.id });
+
+            buildings.push_back(e);
+        }
+
+        json& utilities = out["utilities"] = {};
+        for(const auto& entry : objects.utilities) {
+            json e = {};
+
+            //GameObject
+            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame });
+            //UtilityObject
+            e.push_back({ entry.real_position.x, entry.real_position.y, entry.real_size.x, entry.real_size.y });
+            //UtilityObject::LiveData
+            const auto& ld = entry.live_data;
+            e.push_back({ 
+                ld.source_pos.x, ld.source_pos.y, ld.target_pos.x, ld.target_pos.y, 
+                ld.targetID.type, ld.targetID.idx, ld.targetID.id, 
+                ld.sourceID.type, ld.sourceID.idx, ld.sourceID.id, 
+                ld.f1, ld.f2, ld.f3, ld.i1, ld.i2, ld.i3, ld.i4, ld.i5, ld.i6, ld.i7,
+                ld.ids[0].type, ld.ids[0].idx, ld.ids[0].id,
+                ld.ids[1].type, ld.ids[1].idx, ld.ids[1].id,
+                ld.ids[2].type, ld.ids[2].idx, ld.ids[2].id,
+                ld.ids[3].type, ld.ids[3].idx, ld.ids[3].id,
+                ld.ids[4].type, ld.ids[4].idx, ld.ids[4].id,
+            });
+
+            utilities.push_back(e);
+        }
+
+        json& entrance = out["entrance"] = {};
+
+        json entries = {};
+        for(const auto& entry : objects.entrance.entries) {
+            entries.push_back({ entry.entered.type, entry.entered.idx, entry.entered.id, entry.enteree.type, entry.enteree.idx, entry.enteree.id, entry.construction, entry.carry_state });
+        }
+        entrance.push_back(entries);
+
+        entries = {};
+        for(const auto& entry : objects.entrance.workEntries) {
+            entries.push_back({ entry.entered.type, entry.entered.idx, entry.entered.id, entry.enteree.type, entry.enteree.idx, entry.enteree.id, entry.cmd_target.x, entry.cmd_target.y, entry.cmd_type, entry.start_time });
+        }
+        entrance.push_back(entries);
+
+        entries = {};
+        for(const auto& entry : objects.entrance.gms) {
+            entries.push_back({ entry.first.type, entry.first.idx, entry.first.id, entry.second });
+        }
+        entrance.push_back(entries);
 
         return out;
     }
@@ -379,6 +528,127 @@ namespace eng {
             out.push_back(std::vector<int>{});
 
         return out;
+    }
+
+    //============================================
+
+    void parse_GameObject(const nlohmann::json& d, GameObject::Entry& e) {
+        int i = 0;
+        e.id[0]              = d.at(i++);
+        e.id[1]              = d.at(i++);
+        e.id[2]              = d.at(i++);
+        e.num_id[0]          = d.at(i++);
+        e.num_id[1]          = d.at(i++);
+        e.num_id[2]          = d.at(i++);
+        e.position[0]        = d.at(i++);
+        e.position[1]        = d.at(i++);
+        e.anim_orientation   = d.at(i++);
+        e.anim_action        = d.at(i++);
+        e.anim_frame         = d.at(i++);
+        e.killed             = d.at(i++);
+    }
+
+    void parse_FactionObject(const nlohmann::json& d, FactionObject::Entry& e) {
+        int i = 0;
+        e.health             = d.at(i++);
+        e.factionIdx         = d.at(i++);
+        e.colorIdx           = d.at(i++);
+        e.variationIdx       = d.at(i++);
+        e.active             = d.at(i++);
+        e.finalized          = d.at(i++);
+        e.faction_informed   = d.at(i++);
+    }
+
+    void parse_Unit(const nlohmann::json& d, Unit::Entry& e) {
+        int i = 0;
+        e.move_offset[0] = d.at(i++);
+        e.move_offset[1] = d.at(i++);
+        e.carry_state    = d.at(i++);
+        e.mana           = d.at(i++);
+        e.anim_ended     = d.at(i++);
+    }
+
+    void parse_UnitCommand(const nlohmann::json& d, Unit::Entry& e) {
+        int i = 0;
+        e.command.type               = d.at(i++);
+        e.command.target_pos[0]      = d.at(i++);
+        e.command.target_pos[1]      = d.at(i++);
+        e.command.target_id.type     = d.at(i++);
+        e.command.target_id.idx      = d.at(i++);
+        e.command.target_id.id       = d.at(i++);
+        e.command.flag               = d.at(i++);
+        e.command.v2.x               = d.at(i++);
+        e.command.v2.y               = d.at(i++);
+    }
+
+    void parse_UnitAction(const nlohmann::json& d, Unit::Entry& e) {
+        int i = 0;
+        e.action.type            = d.at(i++);
+        e.action.data.i          = d.at(i++);
+        e.action.data.j          = d.at(i++);
+        e.action.data.k          = d.at(i++);
+        e.action.data.b          = d.at(i++);
+        e.action.data.c          = d.at(i++);
+        e.action.data.t          = d.at(i++);
+        e.action.data.count      = d.at(i++);
+    }
+
+    void parse_Building(const nlohmann::json& d, Building::Entry& e) {
+        int i = 0;
+        e.constructed    = d.at(i++);
+        e.amount_left    = d.at(i++);
+        e.real_actionIdx = d.at(i++);
+    }
+
+    void parse_BuildingAction(const nlohmann::json& d, Building::Entry& e) {
+        int i = 0;
+        e.action.type            = d.at(i++);
+        e.action.data.t1         = d.at(i++);
+        e.action.data.t2         = d.at(i++);
+        e.action.data.t3         = d.at(i++);
+        e.action.data.i          = d.at(i++);
+        e.action.data.flag       = d.at(i++);
+    }
+
+    void parse_Utilities(const nlohmann::json& d, UtilityObject::Entry& e) {
+        int i = 0;
+        e.real_position[0]  = d.at(i++);
+        e.real_position[1]  = d.at(i++);
+        e.real_size[0]      = d.at(i++);
+        e.real_size[1]      = d.at(i++);
+    }
+
+    void parse_Utilities_LiveData(const nlohmann::json& d, UtilityObject::Entry& e) {
+        auto& ld = e.live_data;
+
+        int i = 0;
+        ld.source_pos[0] = d.at(i++);
+        ld.source_pos[1] = d.at(i++);
+        ld.target_pos[0] = d.at(i++);
+        ld.target_pos[1] = d.at(i++);
+        ld.targetID.type = d.at(i++);
+        ld.targetID.idx  = d.at(i++);
+        ld.targetID.id   = d.at(i++);
+        ld.sourceID.type = d.at(i++);
+        ld.sourceID.idx  = d.at(i++);
+        ld.sourceID.id   = d.at(i++);
+
+        ld.f1 = d.at(i++);
+        ld.f2 = d.at(i++);
+        ld.f3 = d.at(i++);
+        ld.i1 = d.at(i++);
+        ld.i2 = d.at(i++);
+        ld.i3 = d.at(i++);
+        ld.i4 = d.at(i++);
+        ld.i5 = d.at(i++);
+        ld.i6 = d.at(i++);
+        ld.i7 = d.at(i++);
+
+        for(int j = 0; j < 5; j++) {
+            ld.ids[j].type = d.at(i++);
+            ld.ids[j].idx  = d.at(i++);
+            ld.ids[j].id   = d.at(i++);
+        }
     }
 
 }//namespace eng

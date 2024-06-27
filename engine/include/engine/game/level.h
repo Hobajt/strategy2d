@@ -27,6 +27,7 @@ namespace eng {
         Mapfile map;
         LevelInfo info;
         FactionsFile factions;
+        ObjectsFile objects;
     public:
         Savefile() = default;
         Savefile(const std::string& filepath);
@@ -55,27 +56,11 @@ namespace eng {
         Savefile Export();
     public:
         Map map;
-        ObjectPool objects;
-        Factions factions;
         LevelInfo info;
+        Factions factions;
+        ObjectPool objects;
 
         bool initialized = false;
     };
-
-    // class Savefile {
-    //     struct GameObjectSave {
-    //         int id;
-    //         int type;
-    //         Action action;
-    //         float progress;
-    //     };
-
-    //     std::string levelName;
-    //     int campaignIdx;
-
-    //     std::vector<> resources;
-    //     std::vector<GameObjectSave> objects;
-        
-    // };
 
 }//namespace eng

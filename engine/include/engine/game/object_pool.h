@@ -14,6 +14,7 @@ namespace eng {
     //===== EntranceController =====
 
     class EntranceController {
+    public:
         struct Entry {
             ObjectID entered;
             ObjectID enteree;
@@ -27,8 +28,18 @@ namespace eng {
             int cmd_type;
             float start_time;
         };
+        struct ExportData {
+            std::vector<Entry> entries;
+            std::vector<WorkEntry> workEntries;
+            std::vector<std::pair<ObjectID, int>> gms;
+        };
     public:
+        EntranceController() = default;
+        EntranceController(EntranceController::ExportData&& data, const idMappingType& id_mapping);
+
         void Update(ObjectPool& objects);
+
+        ExportData Export() const;
 
         bool IssueEntrance_Work(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmd_type);
 
@@ -62,6 +73,15 @@ namespace eng {
         glm::ivec3 num_id;
     };
 
+    //Struct for serialization.
+    struct ObjectsFile {
+    public:
+        std::vector<Unit::Entry> units;
+        std::vector<Building::Entry> buildings;
+        std::vector<UtilityObject::Entry> utilities;
+        EntranceController::ExportData entrance;
+    };
+
     //===== ObjectPool =====
 
     class ObjectPool {
@@ -69,8 +89,13 @@ namespace eng {
         using BuildingsPool = pool<Building, ObjectID::dtype, ObjectID::dtype>;
         using UtilityObjsPool = pool<UtilityObject, ObjectID::dtype, ObjectID::dtype>;
     public:
+        ObjectPool() = default;
+        ObjectPool(Level& level, ObjectsFile&& file);
+
         void Update();
         void Render();
+
+        ObjectsFile Export() const;
 
         std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(std::vector<ObjectID>& ids);
 
@@ -148,6 +173,9 @@ namespace eng {
         }
 
         void DBG_GUI();
+    private:
+        idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file);
+        void UpdateLinkage(const idMappingType& id_mapping);
     private:
         UnitsPool units;
         BuildingsPool buildings;

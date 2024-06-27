@@ -28,6 +28,7 @@ namespace eng {
     //Struct for serialization.
     struct FactionsFile {
         struct FactionEntry {
+            int id;
             int controllerID;
             int colorIdx;
             int race;

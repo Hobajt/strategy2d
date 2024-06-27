@@ -69,6 +69,8 @@ namespace eng {
         bool KeyframeSignal(int actionIdx) const;
 
         void DBG_Print(int actionIdx = -1) const;
+
+        void Restore(int action, float frame);
     private:
         AnimatorDataRef data = nullptr;
         float frame = 0;

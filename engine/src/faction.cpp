@@ -87,11 +87,12 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id(idCounter++), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
+        : id((entry.id >= 0) ? entry.id : (idCounter++)), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
 
     FactionsFile::FactionEntry FactionController::Export() {
         FactionsFile::FactionEntry entry = {};
 
+        entry.id = id;
         entry.controllerID = controllerID;
         entry.colorIdx = colorIdx;
         entry.race = race;

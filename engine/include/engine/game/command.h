@@ -60,12 +60,17 @@ namespace eng {
             void Reset();
             void DBG_Print();
         };
+        struct Entry {
+            Data data;
+            int type;
+        };
     public:
         Logic logic;
         Data data;
     public:
         //Creates idle action.
         Action();
+        Action(const Action::Entry& entry);
 
         static Action Idle();
         static Action Move(const glm::ivec2& pos_src, const glm::ivec2& pos_dst, int is_transport = 0);
@@ -78,6 +83,8 @@ namespace eng {
 
         int Update(Unit& source, Level& level);
         void Signal(Unit& source, int signal, int cmdType, int prevCmdType);
+
+        Action::Entry Export() const;
     };
 
     //===== Command =====
@@ -102,8 +109,17 @@ namespace eng {
         friend void CommandHandler_EnterTransport(Unit& source, Level& level, Command& cmd, Action& action);
         friend void CommandHandler_TransportUnload(Unit& source, Level& level, Command& cmd, Action& action);
     public:
+        struct Entry {
+            int type;
+            glm::ivec2 target_pos;
+            ObjectID target_id;
+            int flag;
+            glm::ivec2 v2;
+        };
+    public:
         //Creates idle command
         Command();
+        Command(const Command::Entry& entry);
 
         static Command Idle();
         static Command Move(const glm::ivec2& target_pos);
@@ -127,9 +143,14 @@ namespace eng {
 
         void Update(Unit& src, Level& level);
 
+        Command::Entry Export() const;
+
         int Type() const { return type; }
         glm::ivec2 TargetPos() const { return target_pos; }
         int Flag() const { return flag; }
+        ObjectID TargetID() const { return target_id; }
+
+        void UpdateTargetID(const ObjectID& new_id) { target_id = new_id; }
 
         //only use for debug msgs
         std::string to_string() const;
@@ -172,12 +193,17 @@ namespace eng {
             bool flag = false;
             ObjectID target_id = ObjectID();
         };
+        struct Entry {
+            int type;
+            Data data;
+        };
     public:
         Logic logic;
         Data data;
     public:
         //Construction action
         BuildingAction();
+        BuildingAction(const BuildingAction::Entry& entry);
 
         static BuildingAction Idle(bool canAttack);
         static BuildingAction Idle();
@@ -188,6 +214,8 @@ namespace eng {
         static BuildingAction Upgrade(int payload_id);
 
         void Update(Building& src, Level& level);
+
+        BuildingAction::Entry Export() const;
 
         bool IsConstructionAction() const;
         bool CustomConstructionViz() const;

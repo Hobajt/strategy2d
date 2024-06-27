@@ -170,6 +170,24 @@ namespace eng {
 
     Action::Action() : logic(Action::Logic(ActionType::IDLE, IdleAction_Update, IdleAction_Signal)), data(Action::Data{}) {}
 
+    Action::Action(const Action::Entry& entry) : data(entry.data) {
+        logic.type = entry.type;
+        switch(entry.type) {
+        case ActionType::IDLE:
+            logic.update = IdleAction_Update;
+            logic.signal = IdleAction_Signal;
+            break;
+        case ActionType::MOVE:
+            logic.update = MoveAction_Update;
+            logic.signal = MoveAction_Signal;
+            break;
+        case ActionType::ACTION:
+            logic.update = ActionAction_Update;
+            logic.signal = ActionAction_Signal;
+            break;
+        }
+    }
+
     Action Action::Idle() {
         return Action();
     }
@@ -252,6 +270,13 @@ namespace eng {
     void Action::Signal(Unit& source, int signal, int cmdType, int prevCmdType) {
         ASSERT_MSG(logic.signal != nullptr, "Action::Signal - handler should never be null.");
         logic.signal(source, *this, signal, cmdType, prevCmdType);
+    }
+
+    Action::Entry Action::Export() const {
+        Action::Entry entry = {};
+        entry.data = data;
+        entry.type = logic.type;
+        return entry;
     }
 
     //=======================================
@@ -469,6 +494,55 @@ namespace eng {
 
     Command::Command() : type(CommandType::IDLE), handler(CommandHandler_Idle), flag(0) {}
 
+    Command::Command(const Command::Entry& entry) {
+        type = entry.type;
+        target_pos = entry.target_pos;
+        target_id = entry.target_id;
+        flag = entry.flag;
+        v2 = entry.v2;
+        switch(type) {
+        case CommandType::IDLE:
+            handler = CommandHandler_Idle;
+            break;
+        case CommandType::MOVE:
+            handler = CommandHandler_Move;
+            break;
+        case CommandType::ATTACK:
+            handler = CommandHandler_Attack;
+            break;
+        case CommandType::CAST:
+            handler = CommandHandler_Cast;
+            break;
+        case CommandType::STAND_GROUND:
+            handler = CommandHandler_StandGround;
+            break;
+        case CommandType::PATROL:
+            handler = CommandHandler_Patrol;
+            break;
+        case CommandType::HARVEST_WOOD:
+            handler = CommandHandler_Harvest;
+            break;
+        case CommandType::GATHER_RESOURCES:
+            handler = CommandHandler_Gather;
+            break;
+        case CommandType::RETURN_GOODS:
+            handler = CommandHandler_ReturnGoods;
+            break;
+        case CommandType::BUILD:
+            handler = CommandHandler_Build;
+            break;
+        case CommandType::REPAIR:
+            handler = CommandHandler_Repair;
+            break;
+        case CommandType::ENTER_TRANSPORT:
+            handler = CommandHandler_EnterTransport;
+            break;
+        case CommandType::TRANSPORT_UNLOAD:
+            handler = CommandHandler_TransportUnload;
+            break;
+        }
+    }
+
     Command Command::Idle() {
         return Command();
     }
@@ -633,6 +707,16 @@ namespace eng {
     void Command::Update(Unit& src, Level& level) {
         ASSERT_MSG(handler != nullptr, "Command::Update - handler should never be null.");
         handler(src, level, *this, src.action);
+    }
+
+    Command::Entry Command::Export() const {
+        Command::Entry entry = {};
+        entry.type = type;
+        entry.target_pos = target_pos;
+        entry.target_id = target_id;
+        entry.flag = flag;
+        entry.v2 = v2;
+        return entry;
     }
 
     std::string Command::to_string() const {
@@ -1335,6 +1419,24 @@ namespace eng {
         data.flag = false;      //marks the action as construction
     }
 
+    BuildingAction::BuildingAction(const BuildingAction::Entry& entry) : data(entry.data) {
+        logic.type = entry.type;
+        switch(entry.type) {
+        case BuildingActionType::IDLE:
+            logic.update = BuildingAction_Idle;
+            break;
+        case BuildingActionType::IDLE_ATTACK:
+            logic.update = BuildingAction_Attack;
+            break;
+        case BuildingActionType::TRAIN_OR_RESEARCH:
+            logic.update = BuildingAction_TrainOrResearch;
+            break;
+        case BuildingActionType::CONSTRUCTION_OR_UPGRADE:
+            logic.update = BuildingAction_ConstructOrUpgrade;
+            break;
+        }
+    }
+
     BuildingAction BuildingAction::Construction() {
         return BuildingAction();
     }
@@ -1377,6 +1479,13 @@ namespace eng {
     void BuildingAction::Update(Building& source, Level& level) {
         ASSERT_MSG(logic.update != nullptr, "BuildingAction::Update - handler should never be null.");
         logic.update(source, level, *this);
+    }
+
+    BuildingAction::Entry BuildingAction::Export() const {
+        Entry entry = {};
+        entry.data = data;
+        entry.type = logic.type;
+        return entry;
     }
 
     bool BuildingAction::IsConstructionAction() const {

@@ -109,4 +109,9 @@ namespace eng {
         ENG_LOG_INFO("FRAME: {}, DURATION: {}, KEYFRAME: {}, ACTION: {} (LAST: {})", frame, graphics.Duration(), graphics.Keyframe(), actionIdx, actionIdx == lastAction);
     }
 
+    void Animator::Restore(int action, float frame_) {
+        lastAction = action;
+        frame = frame_;
+    }
+
 }//namespace eng

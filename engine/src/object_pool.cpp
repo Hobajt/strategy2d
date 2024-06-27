@@ -18,6 +18,24 @@ namespace eng {
 
     //===== EntranceController =====
 
+    EntranceController::EntranceController(EntranceController::ExportData&& data, const idMappingType& id_mapping)
+        : entries(std::move(data.entries)), workEntries(std::move(data.workEntries)), gms(std::move(data.gms)) {
+
+        for(Entry& entry : entries) {
+            entry.entered = id_mapping.at(entry.entered);
+            entry.enteree = id_mapping.at(entry.enteree);
+        }
+
+        for(WorkEntry& entry : workEntries) {
+            entry.entered = id_mapping.at(entry.entered);
+            entry.enteree = id_mapping.at(entry.enteree);
+        }
+
+        for(auto& entry : gms) {
+            entry.first = id_mapping.at(entry.first);
+        }
+    }
+
     void EntranceController::Update(ObjectPool& objects) {
         //TODO: could maybe use some more fitting data structure, other than vector
 
@@ -50,6 +68,14 @@ namespace eng {
                 - can maybe do requests from within Kill() method
                 - sufficient to only invoke from enterable objects
         */
+    }
+
+    EntranceController::ExportData EntranceController::Export() const {
+        EntranceController::ExportData data = {};
+        data.workEntries = workEntries;
+        data.entries = entries;
+        data.gms = gms;
+        return data;
     }
 
     bool EntranceController::IssueEntrance_Work(ObjectPool& objects, const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmd_type) {
@@ -403,6 +429,54 @@ namespace eng {
 
     //===== ObjectPool =====
 
+    ObjectPool::ObjectPool(Level& level, ObjectsFile&& file) {
+        auto id_mapping = PopulatePools(level, file);
+        id_mapping.insert({ ObjectID(), ObjectID() });
+        entranceController = EntranceController(std::move(file.entrance), id_mapping);
+        UpdateLinkage(id_mapping);
+    }
+
+    idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file) {
+        std::vector<std::pair<ObjectID, ObjectID>> id_mapping = {};
+
+        for(const Unit::Entry& entry : file.units) {
+            UnitsPool::key key = units.emplace(entry.id.z, level, entry);
+            ObjectID new_id = ObjectID(ObjectType::UNIT, key.idx, key.id);
+            units[key].IntegrateIntoLevel(new_id);
+            id_mapping.push_back({ entry.id, new_id });
+        }
+
+        for(const Building::Entry& entry : file.buildings) {
+            BuildingsPool::key key = buildings.emplace(entry.id.z, level, entry);
+            ObjectID new_id = ObjectID(ObjectType::BUILDING, key.idx, key.id);
+            buildings[key].IntegrateIntoLevel(new_id);
+            id_mapping.push_back({ entry.id, new_id });
+        }
+
+        for(const UtilityObject::Entry& entry : file.utilities) {
+            UtilityObjsPool::key key = utilityObjs.emplace(entry.id.z, level, entry);
+            ObjectID new_id = ObjectID(ObjectType::UTILITY, key.idx, key.id);
+            utilityObjs[key].IntegrateIntoLevel(new_id);
+            id_mapping.push_back({ entry.id, new_id });
+        }
+
+        return idMappingType(id_mapping.begin(), id_mapping.end());
+    }
+
+    void ObjectPool::UpdateLinkage(const idMappingType& id_mapping) {
+        for(Unit& u : units) {
+            u.RepairIDs(id_mapping);
+        }
+        
+        for(Building& b : buildings) {
+            b.RepairIDs(id_mapping);
+        }
+        
+        for(UtilityObject& u : utilityObjs) {
+            u.RepairIDs(id_mapping);
+        }
+    }
+
     void ObjectPool::Update() {
         entranceController.Update(*this);
 
@@ -461,6 +535,23 @@ namespace eng {
         
         for(UtilityObject& u : utilityObjs)
             u.Render();
+    }
+
+    ObjectsFile ObjectPool::Export() const {
+        ObjectsFile file = {};
+
+        for(const Unit& u : units)
+            file.units.push_back(u.Export());
+        
+        for(const Building& b : buildings)
+            file.buildings.push_back(b.Export());
+        
+        for(const UtilityObject& u : utilityObjs)
+            file.utilities.push_back(u.Export());
+        
+        file.entrance = entranceController.Export();
+
+        return file;
     }
 
     std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(std::vector<ObjectID>& ids) {

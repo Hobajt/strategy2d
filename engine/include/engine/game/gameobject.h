@@ -18,13 +18,18 @@ namespace eng {
     class FactionController;
     using FactionControllerRef = std::shared_ptr<FactionController>;
 
+    using idMappingType = std::unordered_map<ObjectID, ObjectID>;
+
     //===== GameObject =====
     
     class GameObject {
         friend class ObjectPool;
     public:
+        struct Entry;
+    public:
         GameObject() = default;
         GameObject(Level& level, const GameObjectDataRef& data, const glm::vec2& position = glm::vec2(0.f));
+        GameObject(Level& level, const GameObjectDataRef& data_, const GameObject::Entry& entry);
 
         //copy disabled
         GameObject(const GameObject&) = delete;
@@ -42,6 +47,8 @@ namespace eng {
 
         //Return true when requesting object removal.
         virtual bool Update();
+
+        void Export(GameObject::Entry& entry) const;
 
         //Returns false to signal that the object is being reused & shouldn't be removed (for the use in ObjectPool).
         virtual bool Kill(bool silent = false) { killed = true; return true; }
@@ -129,10 +136,13 @@ namespace eng {
 
     class FactionObject : public GameObject {
     public:
+        struct Entry;
+    public:
         FactionObject() = default;
         FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position, bool is_finished);
         FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1, bool is_finished = true);
         FactionObject(Level& level, const FactionObjectDataRef& data, const FactionControllerRef& faction, float health_percentage, const glm::vec2& position = glm::vec2(0.f), int colorIdx = -1, bool is_finished = true);
+        FactionObject(Level& level, const FactionObjectDataRef& data, const FactionObject::Entry& entry, bool is_finished = true);
         virtual ~FactionObject();
 
         //move enabled
@@ -141,6 +151,8 @@ namespace eng {
 
         void ChangeColor(int colorIdx);
         void ChangeFaction(const FactionControllerRef& new_faction, bool keep_color = false);
+
+        void Export(FactionObject::Entry& entry) const;
 
         virtual bool Kill(bool silent = false) override;
 
@@ -283,8 +295,11 @@ namespace eng {
         friend class Command;
         friend class Action;
     public:
+        struct Entry;
+    public:
         Unit() = default;
         Unit(Level& level, const UnitDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), bool playReadySound = true);
+        Unit(Level& level, const Unit::Entry& entry);
         virtual ~Unit();
 
         //move enabled
@@ -293,6 +308,9 @@ namespace eng {
 
         virtual void Render() override;
         virtual bool Update() override;
+
+        Unit::Entry Export() const;
+        void RepairIDs(const idMappingType& ids);
 
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);
@@ -397,8 +415,11 @@ namespace eng {
 
     class Building : public FactionObject {
     public:
+        struct Entry;
+    public:
         Building() = default;
         Building(Level& level, const BuildingDataRef& data, const FactionControllerRef& faction, const glm::vec2& position = glm::vec2(0.f), bool constructed = false);
+        Building(Level& level, const Building::Entry& entry);
         virtual ~Building();
 
         //move enabled
@@ -407,6 +428,9 @@ namespace eng {
 
         virtual void Render() override;
         virtual bool Update() override;
+
+        Building::Entry Export() const;
+        void RepairIDs(const idMappingType& ids);
 
         void IssueAction(const BuildingAction& action);
         void CancelAction();
@@ -500,12 +524,14 @@ namespace eng {
         public:
             glm::vec2 InterpolatePosition(float f);
         };
+        struct Entry;
     public:
         UtilityObject() = default;
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const LiveData& init_data, bool play_sound = true);
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, const LiveData& init_data, FactionObject& src, bool play_sound = true);
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID, FactionObject& src, bool play_sound = true);
         UtilityObject(Level& level_, const UtilityObjectDataRef& data, const glm::vec2& target_pos, const ObjectID& targetID = ObjectID(), bool play_sound = true);
+        UtilityObject(Level& level_, const UtilityObject::Entry& entry);
         virtual ~UtilityObject();
 
         //move enabled
@@ -514,6 +540,9 @@ namespace eng {
 
         virtual void Render() override;
         virtual bool Update() override;
+
+        UtilityObject::Entry Export() const;
+        void RepairIDs(const idMappingType& ids);
 
         glm::vec2& real_pos() { return real_position; }
         glm::vec2& real_size() { return m_real_size; }
@@ -537,6 +566,49 @@ namespace eng {
 
         glm::vec2 real_position;
         glm::vec2 m_real_size = glm::vec2(1.f);
+    };
+
+    struct GameObject::Entry {
+        glm::ivec3 id;
+        glm::ivec3 num_id;
+
+        glm::ivec2 position;
+        int anim_orientation;
+        int anim_action;
+        float anim_frame;
+        bool killed;
+    };
+
+    struct FactionObject::Entry : public GameObject::Entry {
+        float health;
+        int factionIdx;
+        int colorIdx;
+        int variationIdx;
+        bool active;
+        bool finalized;
+        bool faction_informed;
+    };
+
+    struct Unit::Entry : public FactionObject::Entry {
+        glm::vec2 move_offset;
+        int carry_state;
+        float mana;
+        bool anim_ended;
+        Command::Entry command;
+        Action::Entry action;
+    };
+
+    struct Building::Entry : public FactionObject::Entry {
+        bool constructed;
+        int amount_left;
+        int real_actionIdx;
+        BuildingAction::Entry action;
+    };
+
+    struct UtilityObject::Entry : public GameObject::Entry {
+        LiveData live_data;
+        glm::vec2 real_position;
+        glm::vec2 real_size;
     };
 
     //=============================================
