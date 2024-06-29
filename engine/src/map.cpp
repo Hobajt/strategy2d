@@ -1265,9 +1265,11 @@ namespace eng {
         //copy the explored bit from occlusion mask, set fog of war everywhere
         for(int y = 0; y < Size().y; y++) {
             for(int x = 0; x < Size().x; x++) {
-                tiles(y,x).vis.occlusion = occlusion(y,x) & (~2);
+                // tiles(y,x).vis.occlusion = occlusion(y,x) & (~2);
+                tiles(y,x).vis.occlusion = occlusion(y,x) & 1;
             }
         }
+        // occlusion.DBG_Print();
     }
 
     void Map::DownloadOcclusionMask(OcclusionMask& occlusion, int playerFactionId_) {

@@ -820,7 +820,6 @@ namespace eng {
         switch(action) {
             case MenuAction::SAVE:
                 ASSERT_MSG(textInput != nullptr, "TextInput GUI element not set.");
-                ctrl.UpdateOcclusions(level);
                 level.Save(Config::Saves::FullPath(textInput->Text(), true));
                 ctrl.SwitchMenu(false);
                 break;
@@ -1791,6 +1790,16 @@ namespace eng {
                     i = 0;
                 }
             }
+        }
+    }
+
+    void OcclusionMask::DBG_Print() const {
+        ENG_LOG_INFO("OcclusionMask ({}x{}):", size.x, size.y);
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                printf("%3d ", operator()(y,x));
+            }
+            printf("\n");
         }
     }
 

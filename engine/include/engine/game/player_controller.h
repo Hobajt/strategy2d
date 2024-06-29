@@ -273,6 +273,8 @@ namespace eng {
         void Import(const std::vector<uint32_t>& data);
 
         glm::ivec2 Size() const { return size; }
+
+        void DBG_Print() const;
     private:
         glm::ivec2 size;
         int* data = nullptr;
