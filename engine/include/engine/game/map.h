@@ -516,6 +516,8 @@ namespace eng {
         void DBG_PrintDistances() const;
 
         Sprite GenOcclusionSprite();
+
+        void Move(Map&&) noexcept;
     private:
         TilesetRef tileset;
         MapTiles tiles;

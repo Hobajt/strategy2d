@@ -26,6 +26,7 @@ namespace eng {
         enum {
             GOLD_MINE = 101,
             OIL_PATCH = 102,
+            COUNT2 = 2,
         };
     }
 
@@ -44,7 +45,8 @@ namespace eng {
             PIG = 102,
             SHEEP = 103,
             SKELETON = 104,
-            EYE = 105
+            EYE = 105,
+            COUNT2 = 5,
         };
     }
 

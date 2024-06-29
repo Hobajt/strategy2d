@@ -165,6 +165,7 @@ namespace eng {
     class Image {
     public:
         Image(const std::string& filepath, int flags = 0);
+        Image(int width, int height, int channels, const void* data);
 
         Image() = default;
         ~Image();
@@ -180,6 +181,8 @@ namespace eng {
         Image operator()(int y, int x, int h, int w);
 
         uint8_t* ptr() { return data; }
+
+        bool Write(const std::string& filepath);
     private:
         Image(const Image& img, int y, int x, int h, int w);
 
@@ -187,6 +190,7 @@ namespace eng {
         void Move(Image&&) noexcept;
 
         bool LoadFromFile(const std::string& filepath, int flags);
+        bool WriteToFile(const std::string& filepath);
     private:
         uint8_t* data;
         int channels;

@@ -37,7 +37,7 @@ namespace eng {
             std::vector<uint32_t> occlusionData;
         public:
             FactionEntry() = default;
-            FactionEntry(int controllerID, int race, const std::string& name, int colorIdx);
+            FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
         };
     public:
         std::vector<FactionEntry> factions;
@@ -219,12 +219,12 @@ namespace eng {
         friend class FactionsEditor;
     public:
         Factions() = default;
-        Factions(FactionsFile&& data, const glm::ivec2& mapSize);
+        Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map);
 
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
 
-        PlayerFactionControllerRef Player() { return player; }
-        FactionControllerRef Nature() { return nature; }
+        PlayerFactionControllerRef Player();
+        FactionControllerRef Nature();
 
         FactionControllerRef operator[](int i);
         const FactionControllerRef operator[](int i) const;

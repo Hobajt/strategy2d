@@ -21,4 +21,6 @@ namespace eng {
     //Extract filename from a path.
     std::string GetFilename(const std::string& path, bool stripExtension = false);
 
+    std::string GetExtension(const std::string& path);
+
 }//namespace eng

@@ -554,11 +554,11 @@ namespace eng {
         return file;
     }
 
-    std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(std::vector<ObjectID>& ids) {
+    std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids) {
         std::vector<ClickSelectionEntry> entries;
         entries.reserve(ids.size());
 
-        for(ObjectID& id : ids) {
+        for(const ObjectID& id : ids) {
             FactionObject& obj = GetObject(id);
 
             ClickSelectionEntry entry = {};
@@ -572,6 +572,15 @@ namespace eng {
         }
 
         return entries;
+    }
+
+    void ObjectPool::LevelPtrUpdate(Level& lvl) {
+        for(Unit& u : units)
+            u.LevelPtrUpdate(lvl);
+        for(Building& u : buildings)
+            u.LevelPtrUpdate(lvl);
+        for(UtilityObject& u : utilityObjs)
+            u.LevelPtrUpdate(lvl);
     }
 
     void ObjectPool::UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit) {

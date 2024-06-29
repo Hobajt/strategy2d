@@ -39,6 +39,9 @@ namespace eng::Resources {
         std::array<UtilityObjectDataRef, SpellID::COUNT> spells;
         std::vector<UtilityObjectDataRef> utilities;
 
+        std::array<UnitDataRef, UnitType::COUNT2> other_units;
+        std::array<BuildingDataRef, BuildingType::COUNT2> other_buildings;
+
         std::array<ResearchVisuals, ResearchType::COUNT> research_viz;
         std::unordered_map<int, ResearchData> research_data;
 
@@ -400,11 +403,18 @@ namespace eng::Resources {
             ENG_LOG_ERROR("Resources::LoadBuilding - objects need to be preloaded!");
             throw std::runtime_error("");
         }
-        if((unsigned int)(num_id) >= data.buildings.size()) {
-            ENG_LOG_ERROR("Resources::LoadBuilding - invalid ID (id = {}, max legit value = {})!", num_id, data.buildings.size());
-            throw std::runtime_error("");
+        if((unsigned int)(num_id) < data.buildings.size()) {
+            return data.buildings[num_id][(int)(isOrc)];
         }
-        return data.buildings[num_id][(int)(isOrc)];
+        else {
+            num_id -= 101;
+            if(num_id >= 0 && num_id < data.other_buildings.size()) {
+                return data.other_buildings[num_id];
+            }
+        }
+        
+        ENG_LOG_ERROR("Resources::LoadBuilding - invalid ID (id = {})!", num_id);
+        throw std::runtime_error("");
     }
 
     UnitDataRef LoadUnit(int num_id, bool isOrc) {
@@ -412,11 +422,18 @@ namespace eng::Resources {
             ENG_LOG_ERROR("Resources::LoadUnit - objects need to be preloaded!");
             throw std::runtime_error("");
         }
-        if((unsigned int)(num_id) >= data.units.size()) {
-            ENG_LOG_ERROR("Resources::LoadUnit - invalid ID (id = {}, max legit value = {})!", num_id, data.units.size());
-            throw std::runtime_error("");
+        if((unsigned int)(num_id) < data.units.size()) {
+            return data.units[num_id][(int)(isOrc)];
         }
-        return data.units[num_id][(int)(isOrc)];
+        else {
+            num_id -= 101;
+            if(num_id >= 0 && num_id < data.other_units.size()) {
+                return data.other_units[num_id];
+            }
+        }
+        
+        ENG_LOG_ERROR("Resources::LoadUnit - invalid ID (id = {})!", num_id);
+        throw std::runtime_error("");
     }
 
     bool LoadResearchInfo(int type, int level, ResearchInfo& out_info) {
@@ -454,14 +471,14 @@ namespace eng::Resources {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("Resources");
 
-        ImGui::Text("Fonts: %d, Shaders: %d", data.fonts.size(), data.shaders.size());
-        ImGui::Text("Textures: %d, Tilesets: %d", data.textures.size(), data.tilesets.size());
-        ImGui::Text("Spritesheets: %d", data.spritesheets.size());
-        ImGui::Text("Object data: %d", data.objects.size());
+        ImGui::Text("Fonts: %d, Shaders: %d", (int)data.fonts.size(), (int)data.shaders.size());
+        ImGui::Text("Textures: %d, Tilesets: %d", (int)data.textures.size(), (int)data.tilesets.size());
+        ImGui::Text("Spritesheets: %d", (int)data.spritesheets.size());
+        ImGui::Text("Object data: %d", (int)data.objects.size());
 
         ImGui::Separator();
-        ImGui::Text("Buildings: %d, Units: %d", data.buildings.size(), data.units.size());
-        ImGui::Text("Utilities: %d, Spells: %d, Research: %d", data.spells.size(), data.utilities.size(), data.research_data.size());
+        ImGui::Text("Buildings: %d, Units: %d", (int)data.buildings.size(), (int)data.units.size());
+        ImGui::Text("Utilities: %d, Spells: %d, Research: %d", (int)data.spells.size(), (int)data.utilities.size(), (int)data.research_data.size());
 
         ImGui::Separator();
         ImGui::Text("Total texture handles: %d", Texture::HandleCount());
@@ -680,6 +697,14 @@ namespace eng::Resources {
 
             GameObjectDataRef obj = data.objects.at(name);
             obj->SetupID(name, glm::ivec3(obj->objectType, id.x, id.y));
+            switch(obj->objectType) {
+                case ObjectType::UNIT:
+                    data.other_units.at(id.x - 101) = std::static_pointer_cast<UnitData>(obj);
+                    break;
+                case ObjectType::BUILDING:
+                    data.other_buildings.at(id.x - 101) = std::static_pointer_cast<BuildingData>(obj);
+                    break;
+            }
         }
 
         for(const auto& spell : data.spells) {

@@ -81,4 +81,16 @@ namespace eng {
         return name;
     }
 
+    std::string GetExtension(const std::string& path) {
+        std::string name;
+
+        size_t pos = path.find_last_of(".");
+        if(pos != std::string::npos)
+            name = path.substr(pos+1);
+        else
+            name = path;
+            
+        return name;
+    }
+
 }//namespace eng

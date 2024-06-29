@@ -1806,6 +1806,14 @@ namespace eng {
             counter = 0;
             
             rgba* data = Redraw(map);
+
+            // static int counter = 0;
+            // char buf[256];
+            // Image img = Image(tex->Width(), tex->Height(), 4, data);
+            // snprintf(buf, sizeof(buf), "mapview_%02d.png", counter++);
+            // img.Write(buf);
+
+
             tex->UpdateData((void*)data);
             delete[] data;
         }

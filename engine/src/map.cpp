@@ -557,15 +557,11 @@ namespace eng {
     }
 
     Map::Map(Map&& m) noexcept {
-        tileset = m.tileset;
-        tiles = std::move(m.tiles);
-        m.tileset = nullptr;
+        Move(std::move(m));
     }
 
     Map& Map::operator=(Map&& m) noexcept {
-        tileset = m.tileset;
-        tiles = std::move(m.tiles);
-        m.tileset = nullptr;
+        Move(std::move(m));
         return *this;
     }
 
@@ -1670,7 +1666,7 @@ namespace eng {
                                 ImGui::Text("%d", tiles(y,x).info[0].untouchable);
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).info[0].untouchable ? clr2 : clr3);
                                 ImGui::TableNextColumn();
-                                ImGui::Text("%d", tiles(y,x).rune_id);
+                                ImGui::Text("%d", (int)tiles(y,x).rune_id);
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tiles(y,x).rune_id ? clr2 : clr3);
                                 ImGui::EndTable();
                             }
@@ -2081,6 +2077,20 @@ namespace eng {
         data.frames.line_length     = 16;
 
         return Sprite(tex, data);
+    }
+
+    void Map::Move(Map&& m) noexcept {
+        tileset = m.tileset;
+        tiles = std::move(m.tiles);
+        traversableObjects = std::move(m.traversableObjects);
+        playerFactionId = m.playerFactionId;
+        enable_occlusion = m.enable_occlusion;
+        occlusion = m.occlusion;
+        rune_dispatch = m.rune_dispatch;
+        
+        m.rune_dispatch = {};
+        m.traversableObjects = {};
+        m.tileset = nullptr;
     }
 
     //===================================================================================

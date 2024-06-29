@@ -252,7 +252,7 @@ namespace eng {
         void DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
             ImGui::Begin("TextureGen");
-            ImGui::Text("TextureGenerator count: %d", TextureGenerator::Count());
+            ImGui::Text("TextureGenerator count: %d", (int)TextureGenerator::Count());
             ImGui::Text("TextureGenerator invokations: %d", TextureGenerator::InvokationCount());
 
             if(cache.cache.size() > 0) {

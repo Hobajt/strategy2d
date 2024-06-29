@@ -343,6 +343,8 @@ namespace eng {
         void QuitMission();
 
         void UpdateOcclusions(Level& level);
+
+        MapView& GetMapView() { return mapview; }
     private:
         void OnKeyPressed(int keycode, int modifiers, bool single_press);
 

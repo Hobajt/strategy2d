@@ -24,8 +24,8 @@ namespace eng {
         return names[res_idx];
     }
 
-    FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_)
-        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}) {}
+    FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_, int id_)
+        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_) {}
 
     //===== FactionsEditor =====
 
@@ -33,7 +33,7 @@ namespace eng {
 
     void FactionsEditor::AddFaction(Factions& factions, const char* name, int controllerID, int colorIdx) {
         //TODO: maybe create separate class for faction controller representation in the editor
-        FactionControllerRef faction = std::make_shared<FactionController>(FactionsFile::FactionEntry(controllerID, 0, std::string(name), colorIdx), glm::ivec2(-1), controllerID);
+        FactionControllerRef faction = std::make_shared<FactionController>(FactionsFile::FactionEntry(controllerID, 0, std::string(name), colorIdx, FactionController::idCounter++), glm::ivec2(-1), controllerID);
         factions.factions.push_back(faction);
     }
 
@@ -618,7 +618,7 @@ namespace eng {
 
     //===== Factions =====
 
-    Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+    Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
         for(FactionsFile::FactionEntry& entry : data.factions) {
             factions.push_back(FactionController::CreateController(std::move(entry), mapSize));
 
@@ -637,6 +637,19 @@ namespace eng {
         if(player == nullptr) {
             initialized = false;
         }
+        else {
+            map.UploadOcclusionMask(player->Occlusion(), player->ID());
+        }
+    }
+
+    PlayerFactionControllerRef Factions::Player() {
+        ASSERT_MSG(initialized && player != nullptr, "Factions are not initialized properly!");
+        return player; 
+    }
+
+    FactionControllerRef Factions::Nature() {
+        ASSERT_MSG(initialized && nature != nullptr, "Factions are not initialized properly!");
+        return nature;
     }
 
     FactionControllerRef Factions::operator[](int i) {

@@ -257,6 +257,13 @@ namespace eng {
         ENG_LOG_TRACE("[C] Image '{}'", name.c_str());
     }
 
+    Image::Image(int width_, int height_, int channels_, const void* data_)
+        : width(width_), height(height_), channels(channels_) {
+        
+        data = new uint8_t[width*height*channels];
+        memcpy(data, data_, width*height*channels);
+    }
+
     Image::~Image() {
         Release();
     }
@@ -273,6 +280,10 @@ namespace eng {
 
     Image Image::operator()(int y, int x, int h, int w) {
         return Image(*this, y, x, h, w);
+    }
+
+    bool Image::Write(const std::string& filepath) {
+        return WriteToFile(filepath);
     }
 
     Image::Image(const Image& img, int iy, int ix, int h, int w) : height(h), width(w), channels(img.channels), name(img.name) {

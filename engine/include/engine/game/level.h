@@ -54,7 +54,9 @@ namespace eng {
         void CustomGame_InitFactions(int playerRace, int opponentCount);
     private:
         Savefile Export();
+        void LevelPtrUpdate();
     public:
+        //dont change the order !!!
         Map map;
         LevelInfo info;
         Factions factions;

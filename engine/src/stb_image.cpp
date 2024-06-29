@@ -1,7 +1,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 #include "engine/core/texture.h"
+#include "engine/utils/utils.h"
 
 bool eng::Texture::LoadFromFile(const std::string& filepath, int flags) {
     //use texture unit 0 for manipulation
@@ -18,8 +22,6 @@ bool eng::Texture::LoadFromFile(const std::string& filepath, int flags) {
         ENG_LOG_WARN("Failed to load texture from '{}'.", filepath.c_str());
         return false;
     }
-
-    ENG_LOG_WARN("{}", params.filtering);
 
     //generate the texture
     glGenTextures(1, &handle);
@@ -83,4 +85,18 @@ bool eng::Image::LoadFromFile(const std::string& filepath, int flags) {
 
     ENG_LOG_TRACE("[R] Loaded image from '{}' ({}x{}).", name.c_str(), width, height);
     return true;
+}
+
+bool eng::Image::WriteToFile(const std::string& filepath) {
+    ENG_LOG_TRACE("[R] Writing image to '{}'.", filepath.c_str());
+    std::string ext = GetExtension(filepath);
+
+    if(ext.compare("png") == 0)
+        return stbi_write_png(filepath.c_str(), width, height, channels, data, width * channels) != 0;
+    else if(ext.compare("jpg") == 0) {
+        return stbi_write_jpg(filepath.c_str(), width, height, channels, data, 100) != 0;
+    }
+
+    ENG_LOG_WARN("Image::Write - Failed to write to '{}' - unknown format.", filepath.c_str());
+    return false;
 }

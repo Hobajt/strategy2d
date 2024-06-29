@@ -89,10 +89,7 @@ namespace eng {
 
     Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects(ObjectPool{}), factions(Factions()), initialized(true) {}
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size()), objects(*this, std::move(savefile.objects)), initialized(true) {
-        if(factions.IsInitialized())
-            map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
-    }
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size(), map), objects(*this, std::move(savefile.objects)), initialized(true) {}
 
     void Level::Update() {
         map.UntouchabilityUpdate(factions.Diplomacy().Bitmap());
@@ -125,6 +122,7 @@ namespace eng {
         try {
             Savefile sf = Savefile(filepath);
             out_level = Level(sf);
+            out_level.LevelPtrUpdate();
         } catch(std::exception&) {
             ENG_LOG_WARN("Level::Load - Failed to load level from '{}'", filepath);
             return 2;
@@ -134,8 +132,8 @@ namespace eng {
 
     void Level::CustomGame_InitFactions(int playerRace, int opponents) {
         FactionsFile ff = {};
-        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "Neutral", 5));
-        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  playerRace, "Player", 0));
+        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "Neutral", 5, 0));
+        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  playerRace, "Player", 0, 1));
 
         if(opponents == 0) {
             opponents = info.preferred_opponents;
@@ -146,14 +144,13 @@ namespace eng {
         for(int i = 1; i < factionCount; i++) {
             snprintf(name_buf, sizeof(name_buf), "Faction %d", i);
             int race = Random::UniformInt(1);
-            ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::RandomAIMindset(), race, std::string(name_buf), i));
+            ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::RandomAIMindset(), race, std::string(name_buf), i, i+1));
 
             for(int j = 1; j < i+2; j++) {
                 ff.diplomacy.push_back({i, j, 1});
             }
         }
-        factions = Factions(std::move(ff), map.Size());
-        map.UploadOcclusionMask(factions.Player()->Occlusion(), factions.Player()->ID());
+        factions = Factions(std::move(ff), map.Size(), map);
 
         //spawn starting unit for each faction
         std::vector<glm::ivec2> starting_locations = info.startingLocations;
@@ -176,6 +173,10 @@ namespace eng {
         savefile.objects = objects.Export();
         savefile.info = info;
         return savefile;
+    }
+
+    void Level::LevelPtrUpdate() {
+        objects.LevelPtrUpdate(*this);
     }
 
     //==============================
@@ -231,10 +232,12 @@ namespace eng {
         for(auto& entry : config.at("factions")) {
             FactionsFile::FactionEntry e = {};
 
-            glm::ivec3 v = json::parse_ivec3(entry.at(0));
-            e.controllerID  = v[0];
-            e.colorIdx      = v[1];
-            e.race          = v[2];
+            int i = 0;
+            auto& v = entry.at(0);
+            e.id            = v.at(i++);
+            e.controllerID  = v.at(i++);
+            e.colorIdx      = v.at(i++);
+            e.race          = v.at(i++);
 
             e.name = entry.at(1);
 
@@ -272,43 +275,48 @@ namespace eng {
     
 
     bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config) {
-        for(auto& entry : config.at("units")) {
-            Unit::Entry e = {};
-            parse_GameObject(entry.at(0), e);
-            parse_FactionObject(entry.at(1), e);
-            parse_Unit(entry.at(2), e);
-            parse_UnitCommand(entry.at(3), e);
-            parse_UnitAction(entry.at(4), e);
-            objects.units.push_back(e);
-        }
+        try {
+            for(auto& entry : config.at("units")) {
+                Unit::Entry e = {};
+                parse_GameObject(entry.at(0), e);
+                parse_FactionObject(entry.at(1), e);
+                parse_Unit(entry.at(2), e);
+                parse_UnitCommand(entry.at(3), e);
+                parse_UnitAction(entry.at(4), e);
+                objects.units.push_back(e);
+            }
 
-        for(auto& entry : config.at("buildings")) {
-            Building::Entry e = {};
-            parse_GameObject(entry.at(0), e);
-            parse_FactionObject(entry.at(1), e);
-            parse_Building(entry.at(2), e);
-            parse_BuildingAction(entry.at(3), e);
-            objects.buildings.push_back(e);
-        }
+            for(auto& entry : config.at("buildings")) {
+                Building::Entry e = {};
+                parse_GameObject(entry.at(0), e);
+                parse_FactionObject(entry.at(1), e);
+                parse_Building(entry.at(2), e);
+                parse_BuildingAction(entry.at(3), e);
+                objects.buildings.push_back(e);
+            }
 
-        for(auto& entry : config.at("utilities")) {
-            UtilityObject::Entry e = {};
-            parse_GameObject(entry.at(0), e);
-            parse_Utilities(entry.at(1), e);
-            parse_Utilities_LiveData(entry.at(2), e);
-            objects.utilities.push_back(e);
-        }
+            for(auto& entry : config.at("utilities")) {
+                UtilityObject::Entry e = {};
+                parse_GameObject(entry.at(0), e);
+                parse_Utilities(entry.at(1), e);
+                parse_Utilities_LiveData(entry.at(2), e);
+                objects.utilities.push_back(e);
+            }
 
-        for(auto& e : config.at("entrance").at(0)) {
-            objects.entrance.entries.push_back(EntranceController::Entry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), e.at(6), e.at(7) });
-        }
+            for(auto& e : config.at("entrance").at(0)) {
+                objects.entrance.entries.push_back(EntranceController::Entry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), e.at(6), e.at(7) });
+            }
 
-        for(auto& e : config.at("entrance").at(1)) {
-            objects.entrance.workEntries.push_back(EntranceController::WorkEntry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), glm::ivec2(e.at(6), e.at(7)), e.at(8), e.at(9) });
-        }
+            for(auto& e : config.at("entrance").at(1)) {
+                objects.entrance.workEntries.push_back(EntranceController::WorkEntry{ ObjectID(e.at(0), e.at(1), e.at(2)), ObjectID(e.at(3), e.at(4), e.at(5)), glm::ivec2(e.at(6), e.at(7)), e.at(8), e.at(9) });
+            }
 
-        for(auto& e : config.at("entrance").at(2)) {
-            objects.entrance.gms.push_back({ ObjectID(e.at(0), e.at(1), e.at(2)), e.at(3) });
+            for(auto& e : config.at("entrance").at(2)) {
+                objects.entrance.gms.push_back({ ObjectID(e.at(0), e.at(1), e.at(2)), e.at(3) });
+            }
+        } catch(nlohmann::json::exception&) {
+            ENG_LOG_WARN("Failed to parse savefile objects.");
+            return false;
         }
 
         return true;
@@ -395,7 +403,7 @@ namespace eng {
         for(const FactionsFile::FactionEntry& entry : factions.factions) {
             json e = {};
 
-            e.push_back({ entry.controllerID, entry.colorIdx, entry.race });
+            e.push_back({ entry.id, entry.controllerID, entry.colorIdx, entry.race });
             e.push_back(entry.name);
             e.push_back(entry.occlusionData);
             e.push_back(Export_Techtree(entry.techtree));
@@ -439,7 +447,7 @@ namespace eng {
             json e = {};
 
             //GameObject
-            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame });
+            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame, entry.killed });
             //FactionObject
             e.push_back({ entry.health, entry.factionIdx, entry.colorIdx, entry.variationIdx, entry.active, entry.finalized, entry.faction_informed });
             //Building
@@ -455,7 +463,7 @@ namespace eng {
             json e = {};
 
             //GameObject
-            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame });
+            e.push_back({ entry.id.x, entry.id.y, entry.id.z, entry.num_id.x, entry.num_id.y, entry.num_id.z, entry.position.x, entry.position.y, entry.anim_orientation, entry.anim_action, entry.anim_frame, entry.killed });
             //UtilityObject
             e.push_back({ entry.real_position.x, entry.real_position.y, entry.real_size.x, entry.real_size.y });
             //UtilityObject::LiveData

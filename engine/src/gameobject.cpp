@@ -106,6 +106,10 @@ namespace eng {
         entry.killed = killed;
     }
 
+    void GameObject::LevelPtrUpdate(Level& lvl) {
+        level = &lvl;
+    }
+
     bool GameObject::CheckPosition(const glm::ivec2& map_coords) {
         return map_coords.x >= position.x && map_coords.x < (position.x + data->size.x) && map_coords.y >= position.y && map_coords.y < (position.y + data->size.y);
     }
@@ -524,8 +528,8 @@ namespace eng {
     }
 
     void Unit::RepairIDs(const idMappingType& ids) {
-        command.UpdateTargetID(ids.at(command.TargetID()));
-        action.data.target = ids.at(action.data.target);
+        if(ids.count(command.TargetID())) command.UpdateTargetID(ids.at(command.TargetID()));
+        if(ids.count(action.data.target)) action.data.target = ids.at(action.data.target);
     }
 
     void Unit::IssueCommand(const Command& cmd) {
@@ -812,7 +816,7 @@ namespace eng {
     }
 
     Building::Building(Level& level_, const Building::Entry& entry)
-        : FactionObject(level_, Resources::LoadBuilding(entry.num_id[1], entry.num_id[2]), entry, false), data(Resources::LoadBuilding(entry.num_id[1], entry.num_id[2])) {
+        : FactionObject(level_, Resources::LoadBuilding(entry.num_id[1], entry.num_id[2]), entry, entry.constructed), data(Resources::LoadBuilding(entry.num_id[1], entry.num_id[2])) {
         
         if(data->navigationType == NavigationBit::WATER && data->num_id[1] == BuildingType::OIL_PLATFORM) {
             if(int(Position().x) % 2 != 0 || int(Position().y) % 2 != 0) {
@@ -892,7 +896,7 @@ namespace eng {
     }
 
     void Building::RepairIDs(const idMappingType& ids) {
-        action.data.target_id = ids.at(action.data.target_id);
+        if(ids.count(action.data.target_id)) action.data.target_id = ids.at(action.data.target_id);
     }
 
     void Building::IssueAction(const BuildingAction& new_action) {
@@ -1262,14 +1266,13 @@ namespace eng {
     }
 
     void UtilityObject::RepairIDs(const idMappingType& ids) {
-        live_data.sourceID = ids.at(live_data.sourceID);
-        live_data.targetID = ids.at(live_data.targetID);
-
-        live_data.ids[0] = ids.at(live_data.ids[0]);
-        live_data.ids[1] = ids.at(live_data.ids[1]);
-        live_data.ids[2] = ids.at(live_data.ids[2]);
-        live_data.ids[3] = ids.at(live_data.ids[3]);
-        live_data.ids[4] = ids.at(live_data.ids[4]);
+        if(ids.count(live_data.sourceID)) live_data.sourceID = ids.at(live_data.sourceID);
+        if(ids.count(live_data.targetID)) live_data.targetID = ids.at(live_data.targetID);
+        if(ids.count(live_data.ids[0]  )) live_data.ids[0]   = ids.at(live_data.ids[0]);
+        if(ids.count(live_data.ids[1]  )) live_data.ids[1]   = ids.at(live_data.ids[1]);
+        if(ids.count(live_data.ids[2]  )) live_data.ids[2]   = ids.at(live_data.ids[2]);
+        if(ids.count(live_data.ids[3]  )) live_data.ids[3]   = ids.at(live_data.ids[3]);
+        if(ids.count(live_data.ids[4]  )) live_data.ids[4]   = ids.at(live_data.ids[4]);
     }
 
     void UtilityObject::ChangeType(const UtilityObjectDataRef& new_data, glm::vec2 target_pos_, ObjectID targetID_, const LiveData& init_data_, FactionObject& src_, bool play_sound, bool call_init) {

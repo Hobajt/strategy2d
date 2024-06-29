@@ -42,7 +42,7 @@ namespace eng {
             0
         };
 
-        std::pair<int,int> SpellID::TechtreeInfo(int spellID) {
+        std::pair<int,int> TechtreeInfo(int spellID) {
             int race = spellID / SpellID::BLOODLUST;
             int researchType = SPELL_RESEARCH_OFFSET + (spellID % SpellID::BLOODLUST);
             return { race, researchType };

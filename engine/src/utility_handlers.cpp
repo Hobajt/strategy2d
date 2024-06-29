@@ -772,7 +772,7 @@ namespace eng {
 
         float f = 2.f*glm::pi<float>() / FLAME_SHIELD_NUM_FLAMES;
         for(int i = 0; i < FLAME_SHIELD_NUM_FLAMES; i++) {
-            glm::vec2 offset = glm::vec2(std::cosf(d.f2*speed + i*f), std::sinf(d.f2*speed + i*f));
+            glm::vec2 offset = glm::vec2(cosf(d.f2*speed + i*f), sinf(d.f2*speed + i*f));
             obj.RenderAt(obj.real_pos() - obj.real_size()*0.5f + offset, obj.real_size(), Z_OFFSET);
         }
     }
@@ -1098,7 +1098,7 @@ namespace eng {
                 init_data.target_pos = d.target_pos + glm::vec2(d.ids[i].type, d.ids[i].idx);
                 init_data.source_pos = init_data.target_pos - start_offset;
 
-                level.objects.QueueUtilityObject(level, followup, init_data, nullptr);
+                level.objects.QueueUtilityObject(level, followup, init_data, false);
             }
             ENG_LOG_FINE("UtilityObject - Blizzard/DnD tick {}.", obj);
             

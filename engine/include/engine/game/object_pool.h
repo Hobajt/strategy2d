@@ -97,7 +97,9 @@ namespace eng {
 
         ObjectsFile Export() const;
 
-        std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(std::vector<ObjectID>& ids);
+        std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids);
+
+        void LevelPtrUpdate(Level& lvl);
 
         //Update units of certain type to new type.
         void UnitUpgrade(int factionID, int old_type, int new_type, bool isOrcUnit);
@@ -174,7 +176,7 @@ namespace eng {
 
         void DBG_GUI();
     private:
-        idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file);
+        idMappingType PopulatePools(Level& level, const ObjectsFile& file);
         void UpdateLinkage(const idMappingType& id_mapping);
     private:
         UnitsPool units;

@@ -50,6 +50,8 @@ namespace eng {
 
         void Export(GameObject::Entry& entry) const;
 
+        void LevelPtrUpdate(Level& lvl);
+
         //Returns false to signal that the object is being reused & shouldn't be removed (for the use in ObjectPool).
         virtual bool Kill(bool silent = false) { killed = true; return true; }
 

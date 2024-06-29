@@ -359,7 +359,7 @@ namespace eng {
         //parse fields specific to different utility object types
         switch(data->utility_id) {
             case UtilityObjectType::VISUALS:
-                data->duration = config.count("duration") ? config.at("duration") : 1.0;
+                data->duration = config.count("duration") ? float(config.at("duration")) : 1.f;
             case UtilityObjectType::PROJECTILE:
                 data->duration  = config.at("duration");
                 //"guided" not defined -> is guided; "guided" defined -> sets default radius; "splas_radius" defined -> custom radius
@@ -382,15 +382,15 @@ namespace eng {
                     data->i4 = config.at("damage").at(1);
                 }
 
-                data->b2 = config.count("no_damage") ? config.at("no_damage") : false;
-                data->b3 = config.count("flat_dmg") ? config.at("flat_dmg") : false;
+                data->b2 = config.count("no_damage") ? bool(config.at("no_damage")) : false;
+                data->b3 = config.count("flat_dmg") ? bool(config.at("flat_dmg")) : false;
                 if(config.count("dont_damage_caster"))
                     data->b3 = config.at("dont_damage_caster");
-                data->b4 = config.count("perturb_speed") ? config.at("perturb_speed") : false;
+                data->b4 = config.count("perturb_speed") ? bool(config.at("perturb_speed")) : false;
                 break;
             case UtilityObjectType::SPELL:
                 data->i1 = config.at("spell_id");
-                data->duration = config.count("duration") ? config.at("duration") : 1.0;
+                data->duration = config.count("duration") ? float(config.at("duration")) : 1.f;
                 data->i2 = 0;
                 if(config.count("radius"))
                     data->i2 = config.at("radius");
@@ -418,11 +418,11 @@ namespace eng {
                     data->i3 = config.at("trajectory").at(1);
                 }
 
-                data->b1 = config.count("flag1") ? config.at("flag1") : false;
+                data->b1 = config.count("flag1") ? bool(config.at("flag1")) : false;
                 break;
             case UtilityObjectType::BUFF:
                 data->i1 = config.at("spell_id");
-                data->duration = config.count("duration") ? config.at("duration") : 1.0;
+                data->duration = config.count("duration") ? float(config.at("duration")) : 1.f;
                 break;
         }
 
