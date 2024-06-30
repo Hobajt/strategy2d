@@ -996,6 +996,10 @@ namespace eng {
         return has_coast;
     }
 
+    bool Map::CanSpawn(const glm::ivec2& position, int unitNavType) {
+        return tiles.IsWithinBounds(position) && tiles(position).Traversable(unitNavType);
+    }
+
     int Map::NearestOilPatchDistance(const glm::ivec2& pos, const glm::ivec2& size) const {
         int min_d = std::numeric_limits<int>::max();
         for(auto& to : traversableObjects) {

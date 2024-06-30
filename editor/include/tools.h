@@ -122,6 +122,23 @@ public:
     virtual void Render() override;
 
     virtual void OnLMB(int state) override;
+    virtual void OnRMB(int state) override;
+private:
+    void RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size);
+    void RenderTileHighlight(const glm::ivec2& location, const glm::ivec2& size);
+
+    void AddObject(const glm::ivec2& location);
+private:
+    bool drag = false;
+    eng::ObjectID dragID = eng::ObjectID();
+    glm::vec2 dragCoords = glm::vec2(0.f);
+
+    int objIdx = -1;
+    int objRace = 0;
+    glm::ivec3 numID = glm::ivec3(-1);
+    bool place_buildings = false;
+    eng::FactionObjectDataRef data = nullptr;
+    eng::TextureRef shadows = nullptr;
 };
 
 //===== StartingLocationTool =====

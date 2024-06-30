@@ -421,6 +421,8 @@ namespace eng {
         bool IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const;
         bool CoastCheck(const glm::ivec2& position, const glm::ivec2& building_size, bool coastal) const;
 
+        bool CanSpawn(const glm::ivec2& position, int unitNavType);
+
         int NearestOilPatchDistance(const glm::ivec2& position, const glm::ivec2& size) const;
         bool BuildingFoundationCheck(const glm::ivec2& position, int type) const;
         ObjectID GetFoundationObjectAt(const glm::ivec2& position) const;

@@ -7,21 +7,11 @@ using namespace eng;
 
 #define MAX_PLAYERS_COUNT 8
 
-const char* toolType2str(int toolType) {
-    static const char* names[ToolType::COUNT] = { "SELECT", "TILE_PAINT", "OBJECT_PLACEMENT", "STARTING_LOCATION" };
-    return (toolType < ToolType::COUNT) ? names[toolType] : "INVALID";
-}
+const char* toolType2str(int toolType);
+const char* tileIdx2name(int idx);
 
-const char* tileIdx2name(int idx) {
-    static const char* names[] = {
-        "GROUND1", "GROUND2", "MUD", "MUD2",
-        "WALL_BROKEN", "ROCK_BROKEN", "TREES_FELLED",
-        "WATER",
-        "ROCK", "WALL_HU", "WALL_HU_DAMAGED", "WALL_OC", "WALL_OC_DAMAGED",
-        "TREES"
-    };
-    return (idx < TileType::COUNT) ? names[idx] : "INVALID TILE TYPE";
-}
+const char* unitType2name(int idx, int race);
+const char* buildingType2name(int idx, int race);
 
 //===== EditorTool =====
 
@@ -222,21 +212,210 @@ void PaintTool::ApplyPaint() {
 
 //===== ObjectPlacementTool =====
 
-ObjectPlacementTool::ObjectPlacementTool(EditorContext& context_) : EditorTool(context_) {}
+ObjectPlacementTool::ObjectPlacementTool(EditorContext& context_) : EditorTool(context_), shadows(TextureGenerator::GetTexture(TextureGenerator::Params::ShadowsTexture(256,256,8))) {}
 
 void ObjectPlacementTool::GUI_Update() {
 #ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Object Placement Tool");
     ImGui::Separator();
-    //TODO:
+    
+    ImGui::Text("Mode");
+    ImGui::SameLine();
+    if(ImGui::Button(place_buildings ? "Buildings" : "Units")) {
+        place_buildings = !place_buildings;
+        data = nullptr;
+        objIdx = -1;
+    }
+    if(ImGui::Button(objRace ? "Human" : "Orc")) {
+        objRace = 1 - objRace;
+        data = nullptr;
+    }
+    ImGui::Separator();
+
+    ImGui::PushID(0);
+    if(place_buildings) {
+        if(ImGui::BeginListBox("Buildings:")) {
+            for(int i = 0; i < BuildingType::COUNT; i++) {
+                if(ImGui::Selectable(buildingType2name(i, objRace), objIdx == i)) {
+                    objIdx = i;
+                }
+            }
+            for(int i = 101; i < 101+BuildingType::COUNT2; i++) {
+                if(ImGui::Selectable(buildingType2name(i, objRace), objIdx == i)) {
+                    objIdx = i;
+                }
+            }
+            ImGui::EndListBox();
+        }
+    }
+    else {
+        if(ImGui::BeginListBox("Units:")) {
+            for(int i = 0; i < UnitType::COUNT; i++) {
+                if(ImGui::Selectable(unitType2name(i, objRace), objIdx == i)) {
+                    objIdx = i;
+                }
+            }
+            for(int i = 101; i < 101+UnitType::COUNT2; i++) {
+                if(ImGui::Selectable(unitType2name(i, objRace), objIdx == i)) {
+                    objIdx = i;
+                }
+            }
+            ImGui::EndListBox();
+        }
+    }
+    ImGui::PopID();
+
+    glm::ivec3 prev_numID = numID;
+    numID = glm::ivec3(place_buildings ? ObjectType::BUILDING : ObjectType::UNIT, objIdx, objRace);
+    if(numID != prev_numID) {
+        data = (objIdx >= 0) ? std::dynamic_pointer_cast<FactionObjectData>(Resources::LoadObject(numID)) : nullptr;
+    }
 #endif
 }
 
 void ObjectPlacementTool::Render() {
-    //TODO:
+    if(data == nullptr)
+        return;
+
+    glm::ivec2 object_size = glm::ivec2(data->size);
+
+    Camera& cam = Camera::Get();
+
+    //hovering tile coordinate (in map space)
+    glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
+
+    if(data->navigationType != NavigationBit::GROUND) {
+        coord = make_even(coord);
+        if(!place_buildings) object_size = glm::ivec2(2);
+    }
+
+    RenderTileHighlight(coord, object_size);
+    RenderObjectViz(coord, object_size);
 }
 
+void ObjectPlacementTool::RenderTileHighlight(const glm::ivec2& location, const glm::ivec2& size) {
+    Camera& cam = Camera::Get();
+
+    //corner points for the highlights
+    int xm = std::max(0, location.x);
+    int ym = std::max(0, location.y);
+    int xM = std::min(location.x+size.x, context.level.MapSize().x);
+    int yM = std::min(location.y+size.y, context.level.MapSize().y);
+
+    //highlight rectangle parameters
+    float width = 0.1f;
+    float zIdx = -0.1f;
+    glm::vec4 clr = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+    //render quads as highlight borders
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, ym)), zIdx), glm::vec2(xM - xm + width, width) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, yM)), zIdx), glm::vec2(xM - xm + width, width) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xm, ym)), zIdx), glm::vec2(width, yM - ym) * cam.Mult(), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xM, ym)), zIdx), glm::vec2(width, yM - ym) * cam.Mult(), clr));
+} 
+
+void ObjectPlacementTool::RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size) {
+        Camera& cam = Camera::Get();
+        Input& input = Input::Get();
+
+        SpriteGroup& sg = data->animData->GetGraphics(BuildingAnimationType::IDLE);
+        glm::ivec2 sz = size;
+
+        float zIdx = -0.5f;
+        int nav_type = data->navigationType;
+        bool preconditions;
+        if(place_buildings) {
+            BuildingData* building = static_cast<BuildingData*>(data.get());
+            // location_valid = context.level.map.IsAreaBuildable(location, glm::ivec2(bd->size), bd->navigationType, glm::ivec2(-1), bd->coastal, bd->requires_foundation);
+            preconditions = context.level.map.CoastCheck(location, sz, building->coastal);
+        }
+        else {
+            if(nav_type != NavigationBit::WATER)
+                preconditions = context.level.map.CanSpawn(location, data->navigationType);
+            else {
+                preconditions = true;
+                for(int y = 0; y < 2; y++) {
+                    for(int x = 0; x < 2; x++) {
+                        preconditions &= context.level.map.CanSpawn(location + glm::ivec2(x,y), data->navigationType);
+                    }
+                }
+            }
+        }
+
+        //render object sprite
+        if(place_buildings) {
+            sg.Render(glm::vec3(cam.map2screen(location), zIdx), data->size * cam.Mult(), glm::ivec4(0), 0, 0);
+        }
+        else {
+            UnitData* unit = static_cast<UnitData*>(data.get());
+            glm::vec2 render_size = unit->size * unit->scale;
+            bool render_centered = (nav_type == NavigationBit::GROUND);
+            glm::vec2 pos = location;
+            if(render_centered) {
+                pos = (pos + 0.5f) - render_size * 0.5f;
+            }
+            pos = cam.map2screen(pos);
+            sg.Render(glm::vec3(pos, zIdx), render_size * cam.Mult(), glm::ivec4(0), 0, 0);
+        }
+        
+        //render colored overlay, signaling buildability for each tile
+        for(int y = 0; y < sz.y; y++) {
+            for(int x = 0; x < sz.x; x++) {
+                glm::ivec2 pos = glm::ivec2(location.x + x, location.y + y);
+                bool within_bounds = context.level.map.IsWithinBounds(pos);
+                glm::vec4 clr = ((!place_buildings || context.level.map.IsBuildable(pos, nav_type, glm::ivec2(-1))) && preconditions && within_bounds) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
+                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
+            }
+        }
+    }
+
 void ObjectPlacementTool::OnLMB(int state) {
+    // if(!context.level.info.custom_game)
+    //     return;
+
+    // Input& input = Input::Get();
+    // Camera& cam = Camera::Get();
+
+    // glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
+    // glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
+
+    // switch(state) {
+    //     case InputButtonState::DOWN:
+    //     {
+    //         ObjectID id = context.level.map.ObjectIDAt(coord);
+    //         if(ObjectID::IsValid(id)) {
+    //             if(input.ctrl) {
+    //                 //object drag started
+    //                 drag = true;
+    //                 dragID = id;
+    //             }
+    //             else {
+    //                 //object placement
+    //                 AddObject(coord);
+    //             }
+    //         }
+    //         break;
+    //     }
+    //     case InputButtonState::PRESSED:
+    //         dragCoords = coord_f;
+    //         break;
+    //     case InputButtonState::UP:
+    //         if(drag) {
+    //             ASSERT_MSG(dragIdx < (int)startingLocations.size(), "Something went wrong, dragIdx is out of range.");
+    //             context.level.objects.GetObject(dragID)
+    //             if(LocationIdx(coord) < 0) {
+    //                 startingLocations[dragIdx] = coord;
+    //                 LocationsUpdated();
+    //             }
+
+    //         }
+    //         drag = false;
+    //         dragID = ObjectID();
+    //         break;
+    // }
+}
+
+void ObjectPlacementTool::OnRMB(int state) {
     //TODO:
 }
 
@@ -504,4 +683,64 @@ void EditorTools::Redo() {
     else {
         LOG_TRACE("Editor::Redo - there nothing to redo");
     }
+}
+
+//=============================================
+
+const char* toolType2str(int toolType) {
+    static const char* names[ToolType::COUNT] = { "SELECT", "TILE_PAINT", "OBJECT_PLACEMENT", "STARTING_LOCATION" };
+    return (toolType < ToolType::COUNT) ? names[toolType] : "INVALID";
+}
+
+const char* tileIdx2name(int idx) {
+    static const char* names[] = {
+        "GROUND1", "GROUND2", "MUD", "MUD2",
+        "WALL_BROKEN", "ROCK_BROKEN", "TREES_FELLED",
+        "WATER",
+        "ROCK", "WALL_HU", "WALL_HU_DAMAGED", "WALL_OC", "WALL_OC_DAMAGED",
+        "TREES"
+    };
+    return (idx < TileType::COUNT) ? names[idx] : "INVALID TILE TYPE";
+}
+
+const char* unitType2name(int idx, int race) {
+    static std::array<const char*,UnitType::COUNT> names = {
+        "PEASANT", "FOOTMAN", "ARCHER", "RANGER", "BALLISTA", "KNIGHT", "PALADIN",
+        "TANKER", "DESTROYER", "BATTLESHIP", "SUBMARINE", "TRANSPORT",
+        "ROFLCOPTER", "DEMOSQUAD",
+        "MAGE",
+        "GRYPHON"
+    };
+
+    static std::array<const char*,UnitType::COUNT2> names2 = {
+        "SEAL", "PIG", "SHEEP", "SKELETON", "EYE"
+    };
+    
+    if(idx < UnitType::COUNT)
+        return names[idx];
+    else if((idx - 101) < UnitType::COUNT2 && (idx - 101) >= 0)
+        return names2[idx-101];
+    else
+        return "INVALID UNIT TYPE";
+}
+
+const char* buildingType2name(int idx, int race) {
+    static std::array<const char*,BuildingType::COUNT> names = {
+        "TOWN_HALL", "BARRACKS", "FARM", "LUMBER_MILL", "BLACKSMITH", "TOWER",
+        "SHIPYARD", "FOUNDRY", "OIL_REFINERY", "OIL_PLATFORM",
+        "INVENTOR", "STABLES", "CHURCH", "WIZARD_TOWER", "DRAGON_ROOST",
+        "GUARD_TOWER", "CANNON_TOWER",
+        "KEEP", "CASTLE"
+    };
+
+    static std::array<const char*,BuildingType::COUNT2> names2 = {
+        "GOLD_MINE", "OIL_PATCH"
+    };
+    
+    if(idx < BuildingType::COUNT)
+        return names[idx];
+    else if((idx - 101) < BuildingType::COUNT2 && (idx - 101) >= 0)
+        return names2[idx-101];
+    else
+        return "INVALID BUILDING TYPE";
 }
