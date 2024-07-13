@@ -12,6 +12,10 @@ const char* toolType2str(int toolType);
 
 //===== OperationRecord =====
 
+namespace ObjectOperation {
+    enum { ADD, REMOVE, MOVE };
+}//namespace ObjectOperation
+
 struct OperationRecord {
     //TileRecord fields:
     //  paint == true  -> original meaning
@@ -19,6 +23,13 @@ struct OperationRecord {
 public:
     bool paint;
     std::vector<eng::TileRecord> actions;
+};
+
+namespace UndoRedoUpdateType { enum { NONE = 0, ID_UPDATE = 1, }; }
+
+struct UndoRedoUpdateData {
+    int flag = 0;
+    std::pair<eng::ObjectID, eng::ObjectID> id_update;
 };
 
 //===== EditorTool =====
@@ -42,7 +53,7 @@ public:
     virtual void NewLevelCreated(const glm::ivec2& size) {}
 
     //Return true when operation matches given tool (and was successfully undone).
-    virtual bool UndoOperation(OperationRecord& op) { return false; }
+    virtual bool UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) { return false; }
 protected:
     EditorContext& context;
     bool hover = false;
@@ -80,7 +91,7 @@ public:
 
     virtual void NewLevelCreated(const glm::ivec2& size) override;
 
-    virtual bool UndoOperation(OperationRecord& op) override;
+    virtual bool UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) override;
 private:
     void UpdateBrushSize(int newSize);
 
@@ -123,11 +134,17 @@ public:
 
     virtual void OnLMB(int state) override;
     virtual void OnRMB(int state) override;
-private:
-    void RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size);
-    void RenderTileHighlight(const glm::ivec2& location, const glm::ivec2& size);
 
-    void AddObject(const glm::ivec2& location);
+    virtual bool UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) override;
+private:
+    void RenderTileHighlight(const glm::ivec2& location, const glm::ivec2& size);
+    void RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size, const eng::FactionObjectDataRef& data);
+
+    bool IsLocationValid(const glm::ivec2& location, const glm::ivec2& size, const eng::FactionObjectDataRef& data);
+
+    eng::ObjectID AddObject(const glm::ivec3& num_id, const glm::ivec2& location, bool add_op_record = true);
+    eng::ObjectID AddObject(const eng::FactionObjectDataRef& data, const glm::ivec2& location, bool add_op_record = true);
+    int MoveObject(const eng::ObjectID& id, const glm::ivec2& new_pos, bool add_op_record = true, glm::ivec2* out_prev_pos = nullptr);
 private:
     bool drag = false;
     eng::ObjectID dragID = eng::ObjectID();
@@ -137,8 +154,11 @@ private:
     int objRace = 0;
     glm::ivec3 numID = glm::ivec3(-1);
     bool place_buildings = false;
-    eng::FactionObjectDataRef data = nullptr;
+    eng::FactionObjectDataRef objdata = nullptr;
     eng::TextureRef shadows = nullptr;
+
+    eng::FactionControllerRef faction = nullptr;
+    int factionIdx = 0;
 };
 
 //===== StartingLocationTool =====
@@ -194,6 +214,8 @@ public:
 
     void Undo();
     void Redo();
+private:
+    void UndoRedo_InfoUpdate(const UndoRedoUpdateData& data);
 private:
     EditorContext& context;
 

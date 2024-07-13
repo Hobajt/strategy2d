@@ -7,6 +7,7 @@
 #include "engine/game/map.h"
 
 #include "engine/game/resources.h"
+#include "engine/game/level.h"
 
 #define WORKER_ENTRY_DURATION 1.f
 
@@ -552,6 +553,35 @@ namespace eng {
         file.entrance = entranceController.Export();
 
         return file;
+    }
+
+    void ObjectPool::RefreshColors() {
+        for(Unit& u : units) {
+            u.ResetColor();
+        }
+        for(Building& b : buildings) {
+            b.ResetColor();
+        }
+    }
+
+    void ObjectPool::RemoveFactionlessObjects(Level& level) {
+        int units_removed = 0;
+        for(Unit& u : units) {
+            if(!level.factions.IsValidFaction(u.Faction())) {
+                u.Kill(true);
+                units_removed++;
+            }
+        }
+
+        int buildings_removed = 0;
+        for(Building& b : buildings) {
+            if(!level.factions.IsValidFaction(b.Faction())) {
+                b.Kill(true);
+                buildings_removed++;
+            }
+        }
+
+        ENG_LOG_TRACE("ObjectPool::RemoveFactionlessObjects - removed {} factionless objects ({} units, {} buildings).", units_removed+buildings_removed, units_removed, buildings_removed);
     }
 
     std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids) {

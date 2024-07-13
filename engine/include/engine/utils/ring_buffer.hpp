@@ -20,6 +20,9 @@ namespace eng {
         void Push(T&& entry);
         T Pop();
 
+        T& PeekAt(int depth);
+        const T& PeekAt(int depth) const;
+
         void Clear();
 
         int Size() const { return size; }
@@ -83,7 +86,19 @@ namespace eng {
         throw std::out_of_range("RingBuffer is empty.");
     }
 
-    template <typename T> inline void RingBuffer<T>:: Clear() {
+    template <typename T> inline T& RingBuffer<T>::PeekAt(int depth) {
+        ASSERT_MSG(depth < size, "Out of bounds ring buffer depth (going in circles or accessing empty buffer cells).");
+        int idx = (head - 1 - depth + capacity) % capacity;
+        return buf[idx];
+    }
+
+    template <typename T> inline const T& RingBuffer<T>::PeekAt(int depth) const {
+        ASSERT_MSG(depth < size, "Out of bounds ring buffer depth (going in circles or accessing empty buffer cells).");
+        int idx = (head - 1 - depth + capacity) % capacity;
+        return buf[idx];
+    }
+
+    template <typename T> inline void RingBuffer<T>::Clear() {
         size = 0;
         head = 0;
     }

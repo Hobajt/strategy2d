@@ -231,6 +231,11 @@ namespace eng {
         animator.SetPaletteIdx((float)colorIdx);
     }
 
+    void FactionObject::ResetColor() {
+        colorIdx = faction->GetColorIdx(Data()->num_id);
+        animator.SetPaletteIdx((float)colorIdx);
+    }
+
     void FactionObject::ChangeFaction(const FactionControllerRef& new_faction, bool keep_color) {
         ASSERT_MSG((new_faction != nullptr) && (new_faction->ID() >= 0), "FactionObject must be assigned to a valid faction!");
         faction = new_faction;
@@ -385,6 +390,11 @@ namespace eng {
             }
         }
         faction_informed = true;
+    }
+
+    void FactionObject::MoveTo(const glm::ivec2& position) {
+        WithdrawObject(true);
+        ReinsertObject(position);
     }
 
     void FactionObject::Inner_DBG_GUI() {
@@ -1005,15 +1015,17 @@ namespace eng {
 
         bool res = FactionObject::Kill(silent);
 
-        //non-depleted oil platform -> respawn oil patch in
-        if(NumID()[1] == BuildingType::OIL_PLATFORM && amount_left > 0) {
-            BuildingDataRef new_data = Resources::LoadBuilding("misc/oil");
-            TransformFoundation(new_data, lvl()->factions.Nature(), true);
-            res = false;
+        if(!silent) {
+            //non-depleted oil platform -> respawn oil patch in
+            if(NumID()[1] == BuildingType::OIL_PLATFORM && amount_left > 0) {
+                BuildingDataRef new_data = Resources::LoadBuilding("misc/oil");
+                TransformFoundation(new_data, lvl()->factions.Nature(), true);
+                res = false;
 
-            //trigger this, as it's normally triggered from destructor (which doesn't get called here)
-            lvl()->objects.KillObjectsInside(OID());
-            lvl()->factions.Player()->SignalGUIUpdate(*this);
+                //trigger this, as it's normally triggered from destructor (which doesn't get called here)
+                lvl()->objects.KillObjectsInside(OID());
+                lvl()->factions.Player()->SignalGUIUpdate(*this);
+            }
         }
 
         return res;

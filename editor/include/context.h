@@ -23,6 +23,7 @@ public:
     int Terrain_Save(const std::string& filepath);
 
     void Render();
+    void Update();
 };
 
 //===========

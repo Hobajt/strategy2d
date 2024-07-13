@@ -33,7 +33,7 @@ void Editor::OnInit() {
 void Editor::OnUpdate() {
     Window& window = Window::Get();
 
-    context.input.Update();
+    context.Update();
 
     Renderer::StatsReset();
 

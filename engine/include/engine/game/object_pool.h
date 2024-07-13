@@ -97,6 +97,9 @@ namespace eng {
 
         ObjectsFile Export() const;
 
+        void RefreshColors();
+        void RemoveFactionlessObjects(Level& level);
+
         std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids);
 
         void LevelPtrUpdate(Level& lvl);

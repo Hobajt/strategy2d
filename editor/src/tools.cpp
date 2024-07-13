@@ -161,7 +161,7 @@ void PaintTool::NewLevelCreated(const glm::ivec2& size_) {
     paint = PaintBitmap(size_);
 }
 
-bool PaintTool::UndoOperation(OperationRecord& op) {
+bool PaintTool::UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) {
     if(!op.paint)
         return false;
 
@@ -218,17 +218,36 @@ void ObjectPlacementTool::GUI_Update() {
 #ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Object Placement Tool");
     ImGui::Separator();
+
+    if(context.level.info.custom_game) {
+        ImGui::Text("Objects can only be placed in non-custom game.");
+        if(ImGui::Button("Change to scenario")) {
+            context.level.info.custom_game = false;
+        }
+        return;
+    }
+
+    ImGui::Text("ctrl + LMB - placement");
+    ImGui::Text("LMB - move object (dragging)");
+    ImGui::Text("RMB - removal");
+    ImGui::Separator();
     
-    ImGui::Text("Mode");
+    ImGui::Text("Mode:");
+    ImGui::SameLine();
+    if(ImGui::Button(objRace ? "Human" : "Orc")) {
+        objRace = 1 - objRace;
+        objdata = nullptr;
+    }
     ImGui::SameLine();
     if(ImGui::Button(place_buildings ? "Buildings" : "Units")) {
         place_buildings = !place_buildings;
-        data = nullptr;
+        objdata = nullptr;
         objIdx = -1;
     }
-    if(ImGui::Button(objRace ? "Human" : "Orc")) {
-        objRace = 1 - objRace;
-        data = nullptr;
+    ImGui::Separator();
+    ImGui::Text("FactionIdx:");
+    if(ImGui::SliderInt("Faction idx", &factionIdx, 0, context.level.factions.size()-1)) {
+        faction = context.level.factions[factionIdx];
     }
     ImGui::Separator();
 
@@ -268,29 +287,174 @@ void ObjectPlacementTool::GUI_Update() {
     glm::ivec3 prev_numID = numID;
     numID = glm::ivec3(place_buildings ? ObjectType::BUILDING : ObjectType::UNIT, objIdx, objRace);
     if(numID != prev_numID) {
-        data = (objIdx >= 0) ? std::dynamic_pointer_cast<FactionObjectData>(Resources::LoadObject(numID)) : nullptr;
+        objdata = (objIdx >= 0) ? std::dynamic_pointer_cast<FactionObjectData>(Resources::LoadObject(numID)) : nullptr;
     }
 #endif
 }
 
 void ObjectPlacementTool::Render() {
-    if(data == nullptr)
+    if(context.level.info.custom_game)
         return;
 
+    //faction reset, in case faction count changes
+    if(factionIdx >= context.level.factions.size() || faction == nullptr) {
+        factionIdx = 0;
+        faction = context.level.factions[factionIdx];
+    }
+
+    FactionObjectDataRef data = drag ? context.level.objects.GetObject(dragID).DataF() : objdata;
+    if(data == nullptr)
+        return;
     glm::ivec2 object_size = glm::ivec2(data->size);
 
     Camera& cam = Camera::Get();
+    Input& input = Input::Get();
 
     //hovering tile coordinate (in map space)
     glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
-
-    if(data->navigationType != NavigationBit::GROUND) {
+    if(data->navigationType != NavigationBit::GROUND && data->objectType != ObjectType::BUILDING) {
         coord = make_even(coord);
         if(!place_buildings) object_size = glm::ivec2(2);
     }
 
-    RenderTileHighlight(coord, object_size);
-    RenderObjectViz(coord, object_size);
+    //render object preview if dragging or when in placement mode
+    if(data != nullptr && (drag || input.ctrl)) {
+        RenderTileHighlight(coord, object_size);
+        RenderObjectViz(coord, object_size, objdata);
+    }
+}
+
+void ObjectPlacementTool::OnLMB(int state) {
+    Input& input = Input::Get();
+    Camera& cam = Camera::Get();
+
+    glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
+    glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
+
+    switch(state) {
+        case InputButtonState::DOWN:
+        {
+            if(input.ctrl) {
+                //object placement
+                AddObject(objdata, coord);
+            }
+            else {
+                ObjectID id = context.level.map.ObjectIDAt(coord);
+                if(ObjectID::IsValid(id)) {
+                    //object drag started
+                    drag = true;
+                    dragID = id;
+                }
+            }
+            break;
+        }
+        case InputButtonState::PRESSED:
+            dragCoords = coord_f;
+            break;
+        case InputButtonState::UP:
+            if(drag) {
+                MoveObject(dragID, coord);
+            }
+            drag = false;
+            dragID = ObjectID();
+            break;
+    }
+}
+
+void ObjectPlacementTool::OnRMB(int state) {
+    if(state != InputButtonState::DOWN)
+        return;
+
+    Input& input = Input::Get();
+    Camera& cam = Camera::Get();
+
+    glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
+    glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
+    
+    //object removal - retrieval & validation
+    ObjectID id = context.level.map.ObjectIDAt(coord);
+    if(!ObjectID::IsValid(id)) {
+        LOG_TRACE("ObjectPlacementTool::Remove - nothing to remove");
+        return;
+    }
+    FactionObject& obj = context.level.objects.GetObject(id);
+
+    //add undo/redo entry
+    OperationRecord op = {};
+    op.paint = false;
+    op.actions.push_back(TileRecord(obj.OID(), ObjectOperation::REMOVE, obj.Position(), obj.NumID()));
+    context.tools.PushOperation(std::move(op));
+
+    /* HOW TO HANDLE OBJECT RESTORATION (from undo operation):
+        - need to keep the removed object params in the memory (for as long as the undo record exists)
+        - the most basic approach is to just track the object NumID(), and then recreate it
+        - this doesn't account for any object stats modifications tho (health, etc.)
+    */
+
+    //object removal
+    obj.Kill(true);
+    LOG_TRACE("ObjectPlacementTool::RemoveObject - removed {} from {}.", obj.OID(), obj.Position());
+}
+
+bool ObjectPlacementTool::UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) {
+    if(op.paint)
+        return false;
+    TileRecord& r = op.actions.at(0);
+    int& action = r.tileType;
+
+    switch(action) {
+        case ObjectOperation::ADD:
+        {
+            FactionObject* obj = nullptr;
+            if(!context.level.objects.GetObject(r.id, obj)) {
+                LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Add, object not found.");
+                return false;
+            }
+            obj->Kill(true);
+            action = ObjectOperation::REMOVE;
+            break;
+        }
+        case ObjectOperation::REMOVE:
+        {
+            ObjectID id = AddObject(r.num_id, r.pos, false);
+            if(!ObjectID::IsValid(id)) {
+                LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Remove, object restoration failed.");
+                return false;
+            }
+            info_update.flag = UndoRedoUpdateType::ID_UPDATE;
+            info_update.id_update = { r.id, id };
+
+            r.id = id;
+            action = ObjectOperation::ADD;
+            break;
+        }
+        case ObjectOperation::MOVE:
+        {
+            glm::ivec2 old_pos = glm::ivec2(0);
+            int res = MoveObject(r.id, r.pos, false, &old_pos);
+            switch(res) {
+                case 1:
+                    LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Move, object not found.");
+                    return false;
+                case 2:
+                    LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Move, location is invalid.");
+                    return false;
+                case 0:
+                    break;
+                default:
+                    LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Move, unknown error.");
+                    return false;
+            }
+            r.pos = old_pos;
+            action = ObjectOperation::MOVE;
+            break;
+        }
+        default:
+            LOG_WARN("ObjectPlacementTool::UndoOperation - invalid action type.");
+            return false;
+    }
+    
+    return true;
 }
 
 void ObjectPlacementTool::RenderTileHighlight(const glm::ivec2& location, const glm::ivec2& size) {
@@ -314,109 +478,137 @@ void ObjectPlacementTool::RenderTileHighlight(const glm::ivec2& location, const 
     Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(glm::vec2(xM, ym)), zIdx), glm::vec2(width, yM - ym) * cam.Mult(), clr));
 } 
 
-void ObjectPlacementTool::RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size) {
-        Camera& cam = Camera::Get();
-        Input& input = Input::Get();
+void ObjectPlacementTool::RenderObjectViz(const glm::ivec2& location, const glm::ivec2& size, const FactionObjectDataRef& data) {
+    Camera& cam = Camera::Get();
+    Input& input = Input::Get();
 
-        SpriteGroup& sg = data->animData->GetGraphics(BuildingAnimationType::IDLE);
-        glm::ivec2 sz = size;
+    SpriteGroup& sg = data->animData->GetGraphics(BuildingAnimationType::IDLE);
+    glm::ivec2 sz = size;
 
-        float zIdx = -0.5f;
-        int nav_type = data->navigationType;
-        bool preconditions;
-        if(place_buildings) {
-            BuildingData* building = static_cast<BuildingData*>(data.get());
-            // location_valid = context.level.map.IsAreaBuildable(location, glm::ivec2(bd->size), bd->navigationType, glm::ivec2(-1), bd->coastal, bd->requires_foundation);
-            preconditions = context.level.map.CoastCheck(location, sz, building->coastal);
-        }
-        else {
-            if(nav_type != NavigationBit::WATER)
-                preconditions = context.level.map.CanSpawn(location, data->navigationType);
-            else {
-                preconditions = true;
-                for(int y = 0; y < 2; y++) {
-                    for(int x = 0; x < 2; x++) {
-                        preconditions &= context.level.map.CanSpawn(location + glm::ivec2(x,y), data->navigationType);
-                    }
-                }
-            }
-        }
+    float zIdx = -0.5f;
+    int nav_type = data->navigationType;
+    bool preconditions = IsLocationValid(location, sz, data);
 
-        //render object sprite
-        if(place_buildings) {
-            sg.Render(glm::vec3(cam.map2screen(location), zIdx), data->size * cam.Mult(), glm::ivec4(0), 0, 0);
+    //render object sprite
+    if(place_buildings) {
+        sg.Render(glm::vec3(cam.map2screen(location), zIdx), data->size * cam.Mult(), glm::ivec4(0), 0, 0);
+    }
+    else {
+        UnitData* unit = static_cast<UnitData*>(data.get());
+        glm::vec2 render_size = unit->size * unit->scale;
+        bool render_centered = (nav_type == NavigationBit::GROUND);
+        glm::vec2 pos = location;
+        if(render_centered) {
+            pos = (pos + 0.5f) - render_size * 0.5f;
         }
-        else {
-            UnitData* unit = static_cast<UnitData*>(data.get());
-            glm::vec2 render_size = unit->size * unit->scale;
-            bool render_centered = (nav_type == NavigationBit::GROUND);
-            glm::vec2 pos = location;
-            if(render_centered) {
-                pos = (pos + 0.5f) - render_size * 0.5f;
-            }
-            pos = cam.map2screen(pos);
-            sg.Render(glm::vec3(pos, zIdx), render_size * cam.Mult(), glm::ivec4(0), 0, 0);
+        pos = cam.map2screen(pos);
+        sg.Render(glm::vec3(pos, zIdx), render_size * cam.Mult(), glm::ivec4(0), 0, 0);
+    }
+    
+    //render colored overlay, signaling buildability for each tile
+    for(int y = 0; y < sz.y; y++) {
+        for(int x = 0; x < sz.x; x++) {
+            glm::ivec2 pos = glm::ivec2(location.x + x, location.y + y);
+            bool within_bounds = context.level.map.IsWithinBounds(pos);
+            glm::vec4 clr = ((!place_buildings || context.level.map.IsBuildable(pos, nav_type, glm::ivec2(-1))) && preconditions && within_bounds) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
+            Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
         }
-        
-        //render colored overlay, signaling buildability for each tile
-        for(int y = 0; y < sz.y; y++) {
-            for(int x = 0; x < sz.x; x++) {
-                glm::ivec2 pos = glm::ivec2(location.x + x, location.y + y);
-                bool within_bounds = context.level.map.IsWithinBounds(pos);
-                glm::vec4 clr = ((!place_buildings || context.level.map.IsBuildable(pos, nav_type, glm::ivec2(-1))) && preconditions && within_bounds) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
-                Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
+    }
+}
+
+bool ObjectPlacementTool::IsLocationValid(const glm::ivec2& location, const glm::ivec2& size, const FactionObjectDataRef& data) {
+    bool preconditions;
+    if(data->objectType == ObjectType::BUILDING) {
+        BuildingData* building = static_cast<BuildingData*>(data.get());
+        preconditions = context.level.map.CoastCheck(location, size, building->coastal);
+    }
+    else if(data->navigationType != NavigationBit::WATER) {
+        preconditions = context.level.map.CanSpawn(location, data->navigationType);
+    }
+    else {
+        preconditions = true;
+        for(int y = 0; y < 2; y++) {
+            for(int x = 0; x < 2; x++) {
+                preconditions &= context.level.map.CanSpawn(location + glm::ivec2(x,y), data->navigationType);
             }
         }
     }
-
-void ObjectPlacementTool::OnLMB(int state) {
-    // if(!context.level.info.custom_game)
-    //     return;
-
-    // Input& input = Input::Get();
-    // Camera& cam = Camera::Get();
-
-    // glm::vec2 coord_f = cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f);
-    // glm::ivec2 coord = glm::ivec2(coord_f + 0.5f);
-
-    // switch(state) {
-    //     case InputButtonState::DOWN:
-    //     {
-    //         ObjectID id = context.level.map.ObjectIDAt(coord);
-    //         if(ObjectID::IsValid(id)) {
-    //             if(input.ctrl) {
-    //                 //object drag started
-    //                 drag = true;
-    //                 dragID = id;
-    //             }
-    //             else {
-    //                 //object placement
-    //                 AddObject(coord);
-    //             }
-    //         }
-    //         break;
-    //     }
-    //     case InputButtonState::PRESSED:
-    //         dragCoords = coord_f;
-    //         break;
-    //     case InputButtonState::UP:
-    //         if(drag) {
-    //             ASSERT_MSG(dragIdx < (int)startingLocations.size(), "Something went wrong, dragIdx is out of range.");
-    //             context.level.objects.GetObject(dragID)
-    //             if(LocationIdx(coord) < 0) {
-    //                 startingLocations[dragIdx] = coord;
-    //                 LocationsUpdated();
-    //             }
-
-    //         }
-    //         drag = false;
-    //         dragID = ObjectID();
-    //         break;
-    // }
+    return preconditions;
 }
 
-void ObjectPlacementTool::OnRMB(int state) {
-    //TODO:
+ObjectID ObjectPlacementTool::AddObject(const glm::ivec3& num_id, const glm::ivec2& location, bool add_op_record) {
+    GameObjectDataRef data_go = Resources::LoadObject(num_id);
+    FactionObjectDataRef data = std::dynamic_pointer_cast<FactionObjectData>(data_go);
+    return AddObject(data, location, add_op_record);
+}
+
+ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const glm::ivec2& location, bool add_op_record) {
+    ASSERT_MSG(data != nullptr, "ObjectPlacementTool::AddObject - data should never be null at this point.");
+
+    glm::ivec2 coord = location;
+    if(data->navigationType != NavigationBit::GROUND && data->objectType != ObjectType::BUILDING) {
+        coord = make_even(coord);
+    }
+
+    if(!IsLocationValid(coord, data->size, data)) {
+        LOG_TRACE("ObjectPlacementTool::AddObject - invalid placement location.");
+        return ObjectID();
+    }
+
+    ObjectID id = ObjectID();
+    switch(data->objectType) {
+        case ObjectType::UNIT:
+            id = context.level.objects.EmplaceUnit(context.level, std::static_pointer_cast<UnitData>(data), faction, coord, false);
+            break;
+        case ObjectType::BUILDING:
+            id = context.level.objects.EmplaceBuilding(context.level, std::static_pointer_cast<BuildingData>(data), faction, coord, true);
+            break;
+        default:
+            LOG_TRACE("ObjectPlacementTool::AddObject - invalid object type.");
+            return ObjectID();
+    }
+
+    //add undo/redo entry
+    if(add_op_record) {
+        OperationRecord op = {};
+        op.paint = false;
+        op.actions.push_back(TileRecord(id, ObjectOperation::ADD, coord, data->num_id));
+        context.tools.PushOperation(std::move(op));
+    }
+
+    //object placement automatically turns the game type to scenario
+    context.level.info.custom_game = false;
+
+    LOG_TRACE("ObjectPlacementTool::AddObject - added {} at {}.", id, coord);
+    return id;
+}
+
+int ObjectPlacementTool::MoveObject(const ObjectID& id, const glm::ivec2& new_pos, bool add_op_record, glm::ivec2* out_prev_pos) {
+    FactionObject* obj = nullptr;
+    if(!context.level.objects.GetObject(id, obj)) {
+        LOG_TRACE("ObjectPlacementTool::MoveObject - failed to move {} to {} (object not found).", id, new_pos);
+        return 1;
+    }
+    if(!IsLocationValid(new_pos, obj->Data()->size, obj->DataF())) {
+        LOG_TRACE("ObjectPlacementTool::MoveObject - failed to move {} to {} (invalid location).", id, new_pos);
+        return 2;
+    }
+
+    if(add_op_record) {
+        //add undo/redo entry
+        OperationRecord op = {};
+        op.paint = false;
+        op.actions.push_back(TileRecord(obj->OID(), ObjectOperation::MOVE, obj->Position(), obj->NumID()));
+        context.tools.PushOperation(std::move(op));
+    }
+
+    if(out_prev_pos != nullptr) {
+        *out_prev_pos = obj->Position();
+    }
+    
+    obj->MoveTo(new_pos);
+    LOG_TRACE("ObjectPlacementTool::MoveObject - moved {} to {}.", id, new_pos);
+    return 0;
 }
 
 //===== StartingLocationTool =====
@@ -656,12 +848,16 @@ void EditorTools::Undo() {
         LOG_TRACE("Editor::Undo ({} left)", ops_undo.Size()-1);
         OperationRecord op = ops_undo.Pop();
 
+        UndoRedoUpdateData info_update = {};
         for(auto& [id, tool] : tools) {
-            if(tool->UndoOperation(op)) {
+            if(tool->UndoOperation(op, info_update)) {
                 ops_redo.Push(op);
+                // LOG_INFO("REDO = [P: {}, A: {}, ID: {}]", ops_redo.PeekAt(0).paint, ops_redo.PeekAt(0).actions[0].tileType, ops_redo.PeekAt(0).actions[0].id);
                 break;
             }
         }
+
+        UndoRedo_InfoUpdate(info_update);
     }
     else {
         LOG_TRACE("Editor::Undo - there nothing to undo");
@@ -673,15 +869,38 @@ void EditorTools::Redo() {
         LOG_TRACE("Editor::Redo ({} left)", ops_redo.Size()-1);
         OperationRecord op = ops_redo.Pop();
 
+        UndoRedoUpdateData info_update = {};
         for(auto& [id, tool] : tools) {
-            if(tool->UndoOperation(op)) {
+            if(tool->UndoOperation(op, info_update)) {
                 ops_undo.Push(op);
+                // LOG_INFO("UNDO = [P: {}, A: {}, ID: {}]", ops_undo.PeekAt(0).paint, ops_undo.PeekAt(0).actions[0].tileType, ops_undo.PeekAt(0).actions[0].id);
                 break;
             }
         }
+
+        UndoRedo_InfoUpdate(info_update);
     }
     else {
         LOG_TRACE("Editor::Redo - there nothing to redo");
+    }
+}
+
+void EditorTools::UndoRedo_InfoUpdate(const UndoRedoUpdateData& data) {
+    switch(data.flag) {
+        case UndoRedoUpdateType::ID_UPDATE:
+            for(int i = 0; i < ops_undo.Size(); i++) {
+                OperationRecord& op = ops_undo.PeekAt(i);
+                if(!op.paint && op.actions[0].id == data.id_update.first) {
+                    op.actions[0].id = data.id_update.second;
+                }
+            }
+            for(int i = 0; i < ops_redo.Size(); i++) {
+                OperationRecord& op = ops_redo.PeekAt(i);
+                if(!op.paint && op.actions[0].id == data.id_update.first) {
+                    op.actions[0].id = data.id_update.second;
+                }
+            }
+            break;
     }
 }
 

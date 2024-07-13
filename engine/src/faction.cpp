@@ -668,6 +668,11 @@ namespace eng {
         }
     }
 
+    bool Factions::IsValidFaction(const FactionControllerRef& faction) const {
+        auto& pos = std::find(factions.begin(), factions.end(), faction);
+        return (pos != factions.end());
+    }
+
     FactionsFile Factions::Export() {
         FactionsFile file = {};
 

@@ -169,6 +169,7 @@ namespace eng {
         virtual int MaxHealth() const override { return health; }
         virtual bool IntegrateInMap() const { return true; }
         virtual bool IsNotableObject() const { return false; }
+        virtual bool Coastal() const { return false; }
 
         bool CanAttack() const { return basic_damage + pierce_damage > 0; }
     };
@@ -212,6 +213,7 @@ namespace eng {
     public:
         virtual bool IntegrateInMap() const override { return !traversable; }
         virtual bool IsNotableObject() const override { return requires_foundation; }
+        virtual bool Coastal() const override { return coastal; }
     };
     using BuildingDataRef = std::shared_ptr<BuildingData>;
 

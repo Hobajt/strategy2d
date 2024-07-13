@@ -57,8 +57,14 @@ int EditorContext::Terrain_Save(const std::string& filepath) {
 
 void EditorContext::Render() {
     level.map.Render();
+    level.objects.Render();
     tools.Render();
     for(EditorComponentRef& comp : components) {
         comp->Render();
     }
+}
+
+void EditorContext::Update() {
+    input.Update();
+    level.objects.Update();
 }

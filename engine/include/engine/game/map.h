@@ -168,15 +168,19 @@ namespace eng {
         int TileTraversability() const;
     };
 
-    //To track map changes. Separate struct, in case TileData gets modified.
+    //To track map changes (for editor impl). Separate struct, in case TileData gets modified.
     struct TileRecord {
         int tileType = 0;
         int variation = 0;
         int cornerType = 0;
         glm::ivec2 pos = glm::ivec2(0);
+        ObjectID id = ObjectID();
+        glm::ivec3 num_id = glm::ivec3(0);
     public:
         TileRecord() = default;
         TileRecord(const TileData& td, int cornerType_, int y, int x) : tileType(td.tileType), variation(td.variation), cornerType(cornerType_), pos(glm::ivec2(x, y)) {}
+
+        TileRecord(const ObjectID& id_, int action_, const glm::ivec2& pos_, const glm::ivec3& num_id_) : id(id_), tileType(action_), pos(pos_), num_id(num_id_) {}
     };
 
     //Helper struct, used during the map modifications.

@@ -240,6 +240,9 @@ namespace eng {
 
         bool IsInitialized() const { return initialized; }
 
+        //Returns false if provided faction isn't tracked from within this object.
+        bool IsValidFaction(const FactionControllerRef& faction) const;
+
         FactionsFile Export();
 
         void DBG_GUI();

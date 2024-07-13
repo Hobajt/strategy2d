@@ -397,19 +397,25 @@ void FactionsMenu::GUI_Update() {
     }
     ImGui::Separator();
 
+    Factions& factions = level.factions;
+    
+    //recreate nature & player factions if somehow deleted (or initially)
+    bool has_player, has_nature;
+    CheckForRequiredFactions(factions, has_player, has_nature);
+    if(!has_nature) AddFaction(factions, "Nature", FactionControllerID::NATURE, 5);
+    if(!has_player) AddFaction(factions, "Player", FactionControllerID::LOCAL_PLAYER, 0);
+
     if(!is_custom) {
-        Factions& factions = level.factions;
+        if(ImGui::Button("Update colors")) {
+            context.level.objects.RefreshColors();
+        }
+        ImGui::Separator();
 
         //slider that creates/deletes faction entries
         if(ImGui::SliderInt("faction count", &factionCount, 2, 12)) {
             UpdateFactionCount(factions, factionCount);
+            context.level.objects.RemoveFactionlessObjects(context.level);
         }
-
-        //recreate nature & player factions if somehow deleted (or initially)
-        bool has_player, has_nature;
-        CheckForRequiredFactions(factions, has_player, has_nature);
-        if(!has_nature) AddFaction(factions, "Nature", FactionControllerID::NATURE, 5);
-        if(!has_player) AddFaction(factions, "Player", FactionControllerID::LOCAL_PLAYER, 0);
 
         //display editable entry for each faction
         char buf[1024];
@@ -419,7 +425,7 @@ void FactionsMenu::GUI_Update() {
             FactionController& f = *faction.get();
             bool mandatory = f.ControllerID() == FactionControllerID::LOCAL_PLAYER || f.ControllerID() == FactionControllerID::NATURE;
             std::string name = f.Name();
-            snprintf(buf, sizeof(buf), "[%d] %s###%lu", faction_idx, name.c_str(), uint64_t(&f));
+            snprintf(buf, sizeof(buf), "[%d] %s###%llu", faction_idx, name.c_str(), uint64_t(&f));
             if(ImGui::CollapsingHeader(buf)) {
                 ImGui::PushID(&f);
                 strncpy(buf, name.c_str(), std::min(int(sizeof(buf)), int(name.size()+1)));

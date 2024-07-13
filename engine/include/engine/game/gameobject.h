@@ -53,6 +53,7 @@ namespace eng {
         void LevelPtrUpdate(Level& lvl);
 
         //Returns false to signal that the object is being reused & shouldn't be removed (for the use in ObjectPool).
+        //silent = purely to remove the object (without sounds, corpse, death animation)
         virtual bool Kill(bool silent = false) { killed = true; return true; }
 
         //Check if this object covers given map coordinates.
@@ -152,9 +153,12 @@ namespace eng {
         FactionObject& operator=(FactionObject&&) noexcept = default;
 
         void ChangeColor(int colorIdx);
+        void ResetColor();
         void ChangeFaction(const FactionControllerRef& new_faction, bool keep_color = false);
 
         void Export(FactionObject::Entry& entry) const;
+
+        FactionObjectDataRef DataF() { return data_f; }
 
         virtual bool Kill(bool silent = false) override;
 
@@ -243,6 +247,8 @@ namespace eng {
         //Reactivates the object & adds it back to pathfinding.
         void ReinsertObject();
         void ReinsertObject(const glm::ivec2& position);
+
+        void MoveTo(const glm::ivec2& position);
 
         UtilityObjectDataRef FetchProjectileRef() const { return data_f->projectile; }
 
