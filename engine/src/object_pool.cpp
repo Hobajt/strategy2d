@@ -584,6 +584,26 @@ namespace eng {
         ENG_LOG_TRACE("ObjectPool::RemoveFactionlessObjects - removed {} factionless objects ({} units, {} buildings).", units_removed+buildings_removed, units_removed, buildings_removed);
     }
 
+    void ObjectPool::RemoveInvalidlyPlacedObjects(Level& level) {
+        int units_removed = 0;
+        for(Unit& u : units) {
+            if(!level.map.HasValidPlacement_Unit(u.Position(), u.NavigationType())) {
+                u.Kill(true);
+                units_removed++;
+            }
+        }
+
+        int buildings_removed = 0;
+        for(Building& b : buildings) {
+            if(!level.map.HasValidPlacement_Building(b.Position(), b.Data()->size, b.NavigationType(), b.IsCoastal(), b.Data()->IsOil())) {
+                b.Kill(true);
+                buildings_removed++;
+            }
+        }
+
+        ENG_LOG_TRACE("ObjectPool::RemoveInvalidlyPlacedObjects - removed {} factionless objects ({} units, {} buildings).", units_removed+buildings_removed, units_removed, buildings_removed);
+    }
+
     std::vector<ClickSelectionEntry> ObjectPool::ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids) {
         std::vector<ClickSelectionEntry> entries;
         entries.reserve(ids.size());

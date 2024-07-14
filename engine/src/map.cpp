@@ -82,6 +82,10 @@ namespace eng {
         return Traversable(unitNavType) || nav.part_of_forrest;
     }
 
+    bool TileData::Traversable_Terrain(int unitNavType) const {
+        return bool(unitNavType & (TileTraversability() + NavigationBit::AIR));
+    }
+
     bool TileData::IsEmptyWaterTile() const {
         return (TileTraversability() == NavigationBit::WATER) && !(ObjectID::IsObject(info[0].id) && ObjectID::IsValid(info[0].id));
     }
@@ -259,7 +263,7 @@ namespace eng {
     }
 
     bool MapTiles::IsWithinBounds(int y, int x) const {
-        return ((unsigned(y) <= unsigned(size.y)) && (unsigned(x) <= unsigned(size.x)));
+        return ((unsigned(y) < unsigned(size.y)) && (unsigned(x) < unsigned(size.x)));
     }
 
     void MapTiles::VisibilityIncrement(const glm::ivec2& pos, const glm::ivec2& obj_size, int range) {
@@ -983,10 +987,14 @@ namespace eng {
         if(NearestOilPatchDistance(position, building_size) < MIN_OIL_PATCH_DISTANCE)
             return false;
 
+        return IsLocationCoastal(position, building_size);
+    }
+
+    bool Map::IsLocationCoastal(const glm::ivec2& position, const glm::ivec2& size) const {
         bool has_coast = false;
 
-        for(int y = position.y; y < position.y + building_size.y; y++) {
-            for(int x = position.x; x < position.x + building_size.x; x++) {
+        for(int y = position.y; y < position.y + size.y; y++) {
+            for(int x = position.x; x < position.x + size.x; x++) {
                 if(!tiles.IsWithinBounds(y,x))
                     return false;
                 has_coast |= tiles(y,x).IsCoastTile();
@@ -998,6 +1006,35 @@ namespace eng {
 
     bool Map::CanSpawn(const glm::ivec2& position, int unitNavType) {
         return tiles.IsWithinBounds(position) && tiles(position).Traversable(unitNavType);
+    }
+
+    bool Map::HasValidPlacement_Unit(const glm::ivec2& position, int unitNavType) {
+        if(unitNavType != NavigationBit::WATER)
+            return tiles.IsWithinBounds(position) && tiles(position).Traversable_Terrain(unitNavType);
+        else {
+            bool valid = true;
+            for(int y = 0; y < 2; y++) {
+                for(int x = 0; x < 2; x++) {
+                    valid &= tiles.IsWithinBounds(position) && tiles(position).Traversable_Terrain(unitNavType);
+                }
+            }
+            return valid;
+        }
+    }
+
+    bool Map::HasValidPlacement_Building(const glm::ivec2& position, const glm::ivec2& size, int navType, bool coastal, bool is_oil) {
+        bool has_coast = false;
+
+        for(int y = position.y; y < position.y + size.y; y++) {
+            for(int x = position.x; x < position.x + size.x; x++) {
+                glm::ivec2 pos = glm::ivec2(x,y);
+                if(!tiles.IsWithinBounds(pos) || !tiles(pos).Traversable_Terrain(navType))
+                    return false;
+                has_coast |= tiles(y,x).IsCoastTile();
+            }
+        }
+
+        return (navType != NavigationBit::WATER) ? (!has_coast) : (is_oil ^ has_coast);
     }
 
     int Map::NearestOilPatchDistance(const glm::ivec2& pos, const glm::ivec2& size) const {

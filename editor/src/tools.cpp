@@ -208,6 +208,8 @@ void PaintTool::ApplyPaint() {
 
     context.level.map.ModifyTiles(paint, tileType, randomVariations, variationValue, &op.actions);
     context.tools.PushOperation(std::move(op));
+
+    context.level.objects.RemoveInvalidlyPlacedObjects(context.level);
 }
 
 //===== ObjectPlacementTool =====
@@ -312,7 +314,7 @@ void ObjectPlacementTool::Render() {
 
     //hovering tile coordinate (in map space)
     glm::ivec2 coord = glm::ivec2(cam.GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f);
-    if(data->navigationType != NavigationBit::GROUND && data->objectType != ObjectType::BUILDING) {
+    if(data->navigationType != NavigationBit::GROUND && (data->objectType != ObjectType::BUILDING || data->IsOil())) {
         coord = make_even(coord);
         if(!place_buildings) object_size = glm::ivec2(2);
     }
@@ -520,7 +522,14 @@ bool ObjectPlacementTool::IsLocationValid(const glm::ivec2& location, const glm:
     bool preconditions;
     if(data->objectType == ObjectType::BUILDING) {
         BuildingData* building = static_cast<BuildingData*>(data.get());
-        preconditions = context.level.map.CoastCheck(location, size, building->coastal);
+        preconditions = true;
+        for(int y = 0; y < size.y; y++) {
+            for(int x = 0; x < size.x; x++) {
+                preconditions &= context.level.map.IsBuildable(glm::ivec2(location.x+x,location.y+y), data->navigationType, glm::ivec2(-1));
+            }
+        }
+        if(data->navigationType == NavigationBit::WATER)
+            preconditions &= data->IsOil() ^ (context.level.map.IsLocationCoastal(location, size));
     }
     else if(data->navigationType != NavigationBit::WATER) {
         preconditions = context.level.map.CanSpawn(location, data->navigationType);
@@ -546,7 +555,7 @@ ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const 
     ASSERT_MSG(data != nullptr, "ObjectPlacementTool::AddObject - data should never be null at this point.");
 
     glm::ivec2 coord = location;
-    if(data->navigationType != NavigationBit::GROUND && data->objectType != ObjectType::BUILDING) {
+    if(data->navigationType != NavigationBit::GROUND && (data->objectType != ObjectType::BUILDING || data->IsOil())) {
         coord = make_even(coord);
     }
 

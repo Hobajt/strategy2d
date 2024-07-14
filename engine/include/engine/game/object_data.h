@@ -130,6 +130,8 @@ namespace eng {
         virtual int MaxHealth() const { return 0; }
 
         void SetupID(const std::string& str_id_, const glm::ivec3& num_id_) { str_id = str_id_; num_id = num_id_; }
+
+        bool IsOil() const { return (objectType == ObjectType::BUILDING) && (num_id[1] == BuildingType::OIL_PATCH || num_id[1] == BuildingType::OIL_PLATFORM); }
     };
 
     struct ButtonDescriptions {

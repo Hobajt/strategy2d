@@ -99,6 +99,7 @@ namespace eng {
 
         void RefreshColors();
         void RemoveFactionlessObjects(Level& level);
+        void RemoveInvalidlyPlacedObjects(Level& level);
 
         std::vector<ClickSelectionEntry> ClickSelectionDataFromIDs(const std::vector<ObjectID>& ids);
 

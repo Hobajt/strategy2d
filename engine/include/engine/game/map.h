@@ -143,6 +143,9 @@ namespace eng {
         bool Traversable(int unitNavType) const;
         bool TraversableOrForrest(int unitNavType) const;
 
+        //Same as Traversable(), but doesn't consider if the tile is taken or not.
+        bool Traversable_Terrain(int unitNavType) const;
+
         //Returns true if the tile is marked as water & isn't occupied (used to round selection coordinates for water objects).
         bool IsEmptyWaterTile() const;
 
@@ -424,8 +427,12 @@ namespace eng {
         bool IsAreaBuildable(const glm::ivec2& position, const glm::ivec2& building_size, int nav_type, const glm::ivec2& worker_pos, bool coastal, bool requires_foundation) const;
         bool IsBuildable(const glm::ivec2& position, int nav_type, const glm::ivec2& worker_pos) const;
         bool CoastCheck(const glm::ivec2& position, const glm::ivec2& building_size, bool coastal) const;
+        bool IsLocationCoastal(const glm::ivec2& position, const glm::ivec2& size) const;
 
         bool CanSpawn(const glm::ivec2& position, int unitNavType);
+
+        bool HasValidPlacement_Unit(const glm::ivec2& position, int unitNavType);
+        bool HasValidPlacement_Building(const glm::ivec2& position, const glm::ivec2& size, int navType, bool coastal, bool is_oil);
 
         int NearestOilPatchDistance(const glm::ivec2& position, const glm::ivec2& size) const;
         bool BuildingFoundationCheck(const glm::ivec2& position, int type) const;
