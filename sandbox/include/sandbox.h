@@ -8,8 +8,14 @@ public:
 
     virtual void PauseRequest(bool pause) override;
     virtual void PauseToggleRequest() override;
+    virtual void ChangeLevel(const std::string& filename) override;
+
+    void LevelSwitching(eng::Level& level);
 private:
     bool paused = false;
+
+    bool switch_signaled = false;
+    std::string switch_filepath;
 };
 
 class Sandbox : public eng::App {

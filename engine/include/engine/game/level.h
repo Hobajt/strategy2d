@@ -8,6 +8,7 @@
 #include "engine/game/faction.h"
 #include "engine/game/map.h"
 #include "engine/game/object_pool.h"
+#include "engine/game/player_controller.h"
 
 namespace eng {
 
@@ -48,6 +49,7 @@ namespace eng {
 
         bool Save(const std::string& filepath);
         static int Load(const std::string& filepath, Level& out_level);
+        void Release();
 
         glm::ivec2 MapSize() const { return map.Size(); }
 

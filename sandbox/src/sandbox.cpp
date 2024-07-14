@@ -35,6 +35,25 @@ void MockIngameStageController::PauseToggleRequest() {
     Input::Get().SetPaused(paused);
 }
 
+void MockIngameStageController::ChangeLevel(const std::string& filename) {
+    switch_signaled = true;
+    switch_filepath = filename;
+    LOG_INFO("ChangeLevel queued.");
+}
+
+void MockIngameStageController::LevelSwitching(Level& level) {
+    //NOTE: switching is split this way to avoid triggering level overrides from within objects referenced by the level instance
+    //this way, switch is only signaled from the code and then performed later when it's safe to do so
+    if(switch_signaled) {
+        LOG_INFO("Switching level to '{}'.", switch_filepath);
+        level.Release();
+        Level::Load(switch_filepath, level);
+
+        LinkController(level.factions.Player());
+        switch_signaled = false;
+    }
+}
+
 #define LOAD_FROM_SAVEFILE
 
 void Sandbox::OnInit() {
@@ -50,9 +69,18 @@ void Sandbox::OnInit() {
         TilesetRef tileset = Resources::LoadTileset("summer");
         level = Level(glm::ivec2(10), tileset);
 
+        // //TODO: link an actual ingame stage after the level init (sandbox has none tho, so using mock instead)
+        ingameStage = {};
+        ingameStage.RegisterKeyCallback();
+
+        Camera::Get().SetBounds(level.map.Size());
+        Camera::Get().SetupZoomUpdates(true);
+        Camera::Get().ZoomToFit(glm::vec2(12.f));
+        Camera::Get().SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
 
 #ifdef LOAD_FROM_SAVEFILE
-        Level::Load("res/saves/CHUJA.json", level);
+        Level::Load("res/saves/AJJ.json", level);
+        // Level::Load("res/saves/CHUJA.json", level);
 #else
         Level::Load("res/ignored/tst.json", level);
         
@@ -70,12 +98,7 @@ void Sandbox::OnInit() {
         FactionControllerRef f2 = level.factions[2];
 #endif
 
-
-        ENG_LOG_INFO("{} {}", level.factions.Player()->ID(), level.factions.Player()->Name());
-        // //TODO: link an actual ingame stage after the level init (sandbox has none tho, so using mock instead)
-        ingameStage = {};
         ingameStage.LinkController(level.factions.Player());
-        ingameStage.RegisterKeyCallback();
 
 #ifndef LOAD_FROM_SAVEFILE
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"),   f1, glm::vec2(3.f, 5.f), false);
@@ -154,23 +177,18 @@ void Sandbox::OnInit() {
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);
+
+        Camera::Get().Center(glm::vec2(16.f, 7.f));
 #endif
 
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
-
-        Camera::Get().SetBounds(level.map.Size());
-        Camera::Get().SetupZoomUpdates(true);
-        Camera::Get().ZoomToFit(glm::vec2(12.f));
-        Camera::Get().SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
 
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");
         throw e;
     }
-
-    Camera::Get().Center(glm::vec2(16.f, 7.f));
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
@@ -221,6 +239,8 @@ void Sandbox::OnUpdate() {
 
     level.Render();
     level.factions.Player()->Render();
+
+    ingameStage.LevelSwitching(level);
 
     //======================
     

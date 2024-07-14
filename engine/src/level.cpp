@@ -17,12 +17,14 @@ namespace eng {
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
     bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config);
     bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config);
+    bool Parse_Camera(const nlohmann::json& config);
     Techtree Parse_Techtree(const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
     nlohmann::json Export_FactionsFile(const LevelInfo& info, const FactionsFile& factions);
     nlohmann::json Export_Objects(const ObjectsFile& objects);
+    nlohmann::json Export_Camera();
     nlohmann::json Export_Techtree(const Techtree& techtree);
 
     void parse_GameObject(const nlohmann::json& d, GameObject::Entry& e);
@@ -61,9 +63,16 @@ namespace eng {
             throw std::runtime_error("Savefile - invalid factions data.");
         }
 
+        //parse object data (optional entry, but malformed structure throws)
         if(config.count("objects") && !Parse_Objects(objects, config.at("objects"))) {
             ENG_LOG_WARN("Savefile - invalid object data.");
             throw std::runtime_error("Savefile - invalid object data.");
+        }
+
+        //parse camera params (optional entry, but malformed structure throws)
+        if(config.count("camera") && !Parse_Camera(config.at("camera"))) {
+            ENG_LOG_WARN("Savefile - invalid camera data.");
+            throw std::runtime_error("Savefile - invalid camera data.");
         }
 
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
@@ -77,6 +86,7 @@ namespace eng {
         data["factions"] = Export_FactionsFile(info, factions);
         data["objects"] = Export_Objects(objects);
         data["info"] = Export_Info(info);
+        data["camera"] = Export_Camera();
 
         WriteFile(filepath.c_str(), data.dump());
         
@@ -87,9 +97,13 @@ namespace eng {
 
     Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects(ObjectPool{}) {}
 
-    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects(ObjectPool{}), factions(Factions()), initialized(true) {}
+    Level::Level(const glm::vec2& mapSize, const TilesetRef& tileset) : map(Map(mapSize, tileset)), objects(ObjectPool{}), factions(Factions()), initialized(true) {
+        ENG_LOG_INFO("Level initialization complete.");
+    }
 
-    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size(), map), objects(*this, std::move(savefile.objects)), initialized(true) {}
+    Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size(), map), objects(*this, std::move(savefile.objects)), initialized(true) {
+        ENG_LOG_INFO("Level initialization complete.");
+    }
 
     void Level::Update() {
         map.UntouchabilityUpdate(factions.Diplomacy().Bitmap());
@@ -128,6 +142,15 @@ namespace eng {
             return 2;
         }
         return 0;
+    }
+
+    void Level::Release() {
+        objects = {};
+        factions = {};
+        info = {};
+        map = {};
+        initialized = false;
+        ENG_LOG_INFO("Level data released.");
     }
 
     void Level::CustomGame_InitFactions(int playerRace, int opponents) {
@@ -323,6 +346,15 @@ namespace eng {
         return true;
     }
 
+    bool Parse_Camera(const nlohmann::json& config) {
+        Camera& cam = Camera::Get();
+
+        cam.Zoom(config.at("zoom"));
+        cam.Position(json::parse_ivec2(config.at("position")));
+
+        return true;
+    }
+
     Techtree Parse_Techtree(const nlohmann::json& config) {
         Techtree t = {};
         for(int i = 0; i < 2; i++) {
@@ -503,6 +535,16 @@ namespace eng {
             entries.push_back({ entry.first.type, entry.first.idx, entry.first.id, entry.second });
         }
         entrance.push_back(entries);
+
+        return out;
+    }
+
+    nlohmann::json Export_Camera() {
+        nlohmann::json out = {};
+
+        Camera& cam = Camera::Get();
+        out["zoom"] = cam.Zoom();
+        out["position"] = { cam.Position().x, cam.Position().y };
 
         return out;
     }

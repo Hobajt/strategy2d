@@ -112,6 +112,7 @@ void IngameController::DBG_GUI(bool active) {
 
 void IngameController::LevelSetup(int startType, GameInitParams* params) {
     LOG_INFO("IngameController::LevelSetup: loading from '{}'", params->filepath);
+    level.Release();
     if(Level::Load(params->filepath, level) != 0) {
         LOG_ERROR("IngameController::LevelSetup: failed to initialize the level.");
         // throw std::runtime_error("");

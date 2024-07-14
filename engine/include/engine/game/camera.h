@@ -44,6 +44,7 @@ namespace eng {
 
         void Zoom(float zoom_);
         void ZoomLog(float zoom_log_);
+        float Zoom() const { return zoom; }
 
         void ZoomToFit(const glm::vec2& bounds);
 

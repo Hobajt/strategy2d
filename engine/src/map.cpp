@@ -553,11 +553,13 @@ namespace eng {
 
     Map::Map(const glm::ivec2& size_, const TilesetRef& tileset_) : tiles(MapTiles(size_)), occlusion(GenOcclusionSprite()) {
         ChangeTileset(tileset_);
+        Camera::Get().SetBounds(Size());
     }
 
     Map::Map(Mapfile&& mapfile) : tiles(std::move(mapfile.tiles)), occlusion(GenOcclusionSprite()) {
         ASSERT_MSG(tiles.Valid(), "Mapfile doesn't contain any tile descriptions!");
         ChangeTileset(Resources::LoadTileset(mapfile.tileset));
+        Camera::Get().SetBounds(Size());
     }
 
     Map::Map(Map&& m) noexcept {

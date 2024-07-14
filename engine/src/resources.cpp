@@ -605,10 +605,11 @@ namespace eng::Resources {
             data.spells[i] = std::make_shared<UtilityObjectData>();
             data.spells[i]->SetupID(entry, glm::ivec3(ObjectType::UTILITY, i, 0));
             data.objects.insert({ entry, data.spells[i] });
+            data.utilities.push_back(data.spells[i]);
             i++;
         }
 
-        i = 0;
+        i = SpellID::COUNT;
         for(auto& entry : config.at("utility")) {
             if(data.objects.count(entry)) {
                 ENG_LOG_ERROR("Resources::ProcessIndexFile - objects can only be referenced once in the entire index ('{}').", entry);
