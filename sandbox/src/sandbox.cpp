@@ -54,7 +54,7 @@ void MockIngameStageController::LevelSwitching(Level& level) {
     }
 }
 
-#define LOAD_FROM_SAVEFILE
+// #define LOAD_FROM_SAVEFILE
 
 void Sandbox::OnInit() {
     Config::Reload();

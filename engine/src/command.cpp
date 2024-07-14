@@ -21,6 +21,10 @@ namespace eng {
 #define BUILDING_ATTACK_SCAN_INTERVAL 5
 #define BUILDING_ATTACK_SPEED 5.f
 
+#define IDLE_COMMAND_TICK_PERIOD 0.5f
+
+static bool cmd_switching = true;
+
     /* GROUND RULES:
         - command cannot override action when it's returning ACTION_INPROGRESS (use action.Signal() for that)
     */
@@ -282,17 +286,13 @@ namespace eng {
     //=======================================
 
     int IdleAction_Update(Unit& src, Level& level, Action& action) {
-        //TODO:
-
         src.act() = action.logic.type;
 
         //should probably always return finished, so that other commands can cancel it
         return ACTION_FINISHED_SUCCESS;
     }
 
-    void IdleAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev) {
-
-    }
+    void IdleAction_Signal(Unit& src, Action& action, int signal, int cmdType, int cmdType_prev) {}
 
     int MoveAction_Update(Unit& src, Level& level, Action& action) {
         Input& input = Input::Get();
@@ -492,7 +492,7 @@ namespace eng {
 
     //===== Command =====
 
-    Command::Command() : type(CommandType::IDLE), handler(CommandHandler_Idle), flag(0) {}
+    Command::Command() : type(CommandType::IDLE), handler(CommandHandler_Idle), flag(0), t(0.f) {}
 
     Command::Command(const Command::Entry& entry) {
         type = entry.type;
@@ -541,6 +541,14 @@ namespace eng {
             handler = CommandHandler_TransportUnload;
             break;
         }
+    }
+
+    bool Command::SwitchingEnabled() {
+        return cmd_switching;
+    }
+
+    void Command::EnableSwitching(bool state) {
+        cmd_switching = state;
     }
 
     Command Command::Idle() {
@@ -767,18 +775,85 @@ namespace eng {
     //=======================================
 
     void CommandHandler_Idle(Unit& src, Level& level, Command& cmd, Action& action) {
-        //TODO:
         int res = action.Update(src, level);
         if(res != ACTION_INPROGRESS && action.logic.type != ActionType::IDLE) {
             action = Action::Idle();
+        }
+
+        if(Command::SwitchingEnabled()) {
+            //periodically scan for enemy units & attack (unless the unit has passive mindset)
+            if(!src.PassiveMindset() && (cmd.t + IDLE_COMMAND_TICK_PERIOD < Input::CurrentTime())) {
+                cmd.t = Input::CurrentTime();
+                
+                ObjectID targetID = ObjectID();
+                glm::ivec2 targetPos = glm::ivec2(-1);
+                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), src.VisionRange(), targetID, &targetPos)) {
+                    //switch to attack command if enemy detected
+                    ENG_LOG_TRACE("Idle Command - Enemy detected ({}), switching to attack.", targetID.to_string());
+                    cmd = Command::Attack(targetID, targetPos);
+                    return;
+                }
+            }
         }
     }
 
     void CommandHandler_StandGround(Unit& src, Level& level, Command& cmd, Action& action) {
         int res = action.Update(src, level);
+        if(res == ACTION_INPROGRESS || !Command::SwitchingEnabled())
+            return;
+        action = Action::Idle();
 
-        //TODO: implement once Idle action is implemented (or auto command)
-        //do the same stuff as in Idle, but nothing that requires movement
+        if(src.PassiveMindset())
+            return;
+
+        FactionObject* target = nullptr;
+        bool no_target = !ObjectID::IsValid(cmd.target_id);
+        
+        //target existence and range verification
+        if(!no_target) {
+            if(!level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
+                //existence check failed - target no longer exists
+                cmd.target_id = ObjectID();
+                no_target = true;
+            }
+            else if(src.AttackRange() < get_range(src.Position(), target->MinPos(), target->MaxPos())) {
+                //range check failed - target is unattackable without moving
+                cmd.target_id = ObjectID();
+                no_target = true;
+            }
+        }
+
+        //no target or unreachable -> scan for new targets (in periodical ticks, not every frame)
+        if(no_target && (cmd.t + IDLE_COMMAND_TICK_PERIOD < Input::CurrentTime())) {
+            cmd.t = Input::CurrentTime();
+
+            ObjectID targetID = ObjectID();
+            glm::ivec2 targetPos = glm::ivec2(-1);
+            if(level.map.SearchForTarget(src, level.factions.Diplomacy(), src.AttackRange(), targetID, &targetPos)) {
+                //switch to attack command if enemy detected (within attack range)
+                cmd.target_id = targetID;
+                cmd.target_pos = targetPos;
+                level.objects.GetObject(cmd.target_id, target);
+                ENG_LOG_TRACE("StandGround Command - Enemy detected ({}), switching to attack.", targetID.to_string());
+            }
+
+        }
+
+        if(target == nullptr) {
+            cmd.target_id = ObjectID();
+        }
+
+        //target detected (or kept the one from previous frames)
+        if(ObjectID::IsValid(cmd.target_id)) {
+            glm::vec2 pos_min = target->MinPos();
+            glm::vec2 pos_max = target->MaxPos();
+            glm::vec2 target_pos = target->PositionCentered();
+
+            glm::ivec2 itarget_pos = glm::ivec2(target_pos);
+            bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;
+            // ENG_LOG_INFO("TP: ({}, {}), MIN: ({}, {}), {}", target_pos.x, target_pos.y, pos_min.x, pos_min.y, leftover);
+            action = Action::Attack(cmd.target_id, itarget_pos, glm::ivec2(pos_min) - src.Position(), src.AttackRange() > 1, leftover);
+        }
     }
 
     void CommandHandler_Move(Unit& src, Level& level, Command& cmd, Action& action) {

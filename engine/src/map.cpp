@@ -1102,21 +1102,21 @@ namespace eng {
 
             for(int x = -range; x <= range+sz.x; x++) {
                 int d_x = std::abs(x) - std::clamp(x, 0, sz.x);
-                int distance = d_x + d_y;
+                int distance = std::min(d_x, d_y);
                 
-                //ignore tiles with that are outside of attack range (manhattan distance, accounting for object size > 1)
+                //ignore tiles with that are outside of attack range (chessboard distance, accounting for object size > 1)
                 if(distance > range)
                     continue;
 
                 glm::ivec2 pos = glm::ivec2(src_pos.x + x, src_pos.y + y);
                 if(tiles.IsWithinBounds(pos)) {
-                    if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId)) {
+                    if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId) && !IsUntouchable(pos, false)) {
                         out_targetID = tiles(pos).info[0].id;
                         if(out_targetPos != nullptr)
                             *out_targetPos = pos;
                         return true;
                     }
-                    else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId)) {
+                    else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId) && !IsUntouchable(pos, true)) {
                         out_targetID = tiles(pos).info[1].id;
                         if(out_targetPos != nullptr)
                             *out_targetPos = pos;

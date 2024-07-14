@@ -542,6 +542,17 @@ namespace eng {
         if(ids.count(action.data.target)) action.data.target = ids.at(action.data.target);
     }
 
+    bool Unit::PassiveMindset() const {
+        return 
+            data->num_id[1] == UnitType::PEASANT || 
+            data->num_id[1] == UnitType::MAGE || 
+            data->num_id[1] == UnitType::TRANSPORT || 
+            data->num_id[1] == UnitType::TANKER || 
+            data->num_id[1] == UnitType::DEMOSQUAD || 
+            data->num_id[1] == UnitType::ROFLCOPTER || 
+            (data->num_id[1] >= UnitType::SEAL && data->num_id[1] <= UnitType::EYE);
+    }
+
     void Unit::IssueCommand(const Command& cmd) {
         int prevType = command.Type();
         command = cmd;

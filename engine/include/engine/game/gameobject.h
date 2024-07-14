@@ -320,6 +320,8 @@ namespace eng {
         Unit::Entry Export() const;
         void RepairIDs(const idMappingType& ids);
 
+        bool PassiveMindset() const;
+
         //Issue new command (by overriding the existing one).
         void IssueCommand(const Command& cmd);
 

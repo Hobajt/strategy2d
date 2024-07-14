@@ -121,6 +121,10 @@ namespace eng {
         Command();
         Command(const Command::Entry& entry);
 
+        //Switching means auto-transitions from Idle/StandGround to Attack command.
+        static bool SwitchingEnabled();
+        static void EnableSwitching(bool state);
+
         static Command Idle();
         static Command Move(const glm::ivec2& target_pos);
         static Command Attack(const ObjectID& target_id, const glm::ivec2& target_pos);
@@ -163,6 +167,7 @@ namespace eng {
         int flag;
 
         glm::ivec2 v2;
+        float t;
     };
 
     //===== BuildingAction =====
