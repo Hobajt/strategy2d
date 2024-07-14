@@ -236,7 +236,7 @@ void ObjectPlacementTool::GUI_Update() {
     
     ImGui::Text("Mode:");
     ImGui::SameLine();
-    if(ImGui::Button(objRace ? "Human" : "Orc")) {
+    if(ImGui::Button(objRace ? "Orc": "Human")) {
         objRace = 1 - objRace;
         objdata = nullptr;
     }

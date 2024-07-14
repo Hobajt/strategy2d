@@ -14,6 +14,7 @@
         "mana": 0,
         "speed": 6,
         "attack_rotated": true,
+        "gnd_attack_only": true,
         "build_time": 140,
         "cost": [1000,500,1000],
         "attack_range": 6,

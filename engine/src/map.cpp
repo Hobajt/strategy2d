@@ -808,6 +808,19 @@ namespace eng {
         return Pathfinding_RetrieveNextPos(unit.Position(), dst_pos, navType);
     }
 
+    bool Map::Pathfinding_CanGetInRange(const FactionObject& src, const glm::ivec2& m, const glm::ivec2& M, int distance) {
+        if(get_range(src.Position(), m, M) <= src.AttackRange())
+            return true;
+        else if(src.IsUnit()) {
+            if(src.NavigationType() != NavigationBit::AIR)
+                return Pathfinding_NextPosition_Range((Unit&)src, m, M, distance) != src.Position();
+            else
+                return true;
+        }
+        else
+            return false;
+    }
+
     glm::ivec2 Map::Pathfinding_NextPosition_Forrest(const Unit& unit, const glm::ivec2& target_pos) {
         ENG_LOG_FINEST("    Map::Pathfinding::Lookup | from ({},{}) to ({},{}) (unit {}; forrest search)", unit.Position().x, unit.Position().y, target_pos.x, target_pos.y, unit.ID());
 
@@ -1110,13 +1123,13 @@ namespace eng {
 
                 glm::ivec2 pos = glm::ivec2(src_pos.x + x, src_pos.y + y);
                 if(tiles.IsWithinBounds(pos)) {
-                    if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId) && !IsUntouchable(pos, false)) {
+                    if(diplomacy.AreHostile(src_factionId, tiles(pos).info[0].factionId) && !IsUntouchable(pos, false) && src.CanAttackTarget(tiles(pos).TileTraversability()) && Pathfinding_CanGetInRange(src, pos, pos)) {
                         out_targetID = tiles(pos).info[0].id;
                         if(out_targetPos != nullptr)
                             *out_targetPos = pos;
                         return true;
                     }
-                    else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId) && !IsUntouchable(pos, true)) {
+                    else if(diplomacy.AreHostile(src_factionId, tiles(pos).info[1].factionId) && !IsUntouchable(pos, true) && src.CanAttackTarget(NavigationBit::AIR) && Pathfinding_CanGetInRange(src, pos, pos)) {
                         out_targetID = tiles(pos).info[1].id;
                         if(out_targetPos != nullptr)
                             *out_targetPos = pos;
@@ -1360,6 +1373,10 @@ namespace eng {
         ENG_LOG_WARN("Map::RemoveTraversableObject - {} not found", id);
     }
 
+    glm::ivec2 Map::GetPanicMovementLocation(const Unit& src) {
+        //TODO:
+        return src.Position();
+    }
 
     ObjectID Map::ObjectIDAt(glm::ivec2& out_coords) const {
         bool out_airborne = false;

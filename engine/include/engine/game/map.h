@@ -166,7 +166,7 @@ namespace eng {
         bool IsCoastTile() const;
 
         int DespawnRune(ObjectID::dtype ID);
-    private:
+        
         //Defines how can this tile be traversed. Only considers tile type (no navigation data).
         int TileTraversability() const;
     };
@@ -410,6 +410,7 @@ namespace eng {
         glm::ivec2 Pathfinding_NextPosition(const Unit& unit, const glm::ivec2& target_pos);
         //Searches for path that moves object to specified distance from given block of tiles (distance < 0 -> use unit's attack range).
         glm::ivec2 Pathfinding_NextPosition_Range(const Unit& unit, const glm::ivec2& target_min, const glm::ivec2& target_max, int distance = -1);
+        bool Pathfinding_CanGetInRange(const FactionObject& src, const glm::ivec2& target_min, const glm::ivec2& target_max, int distance = -1);
         //Searches for path to nearest trees tile (any tree tile that's part of the same forrest).
         glm::ivec2 Pathfinding_NextPosition_Forrest(const Unit& unit, const glm::ivec2& target_pos);
 
@@ -468,6 +469,8 @@ namespace eng {
         void RemoveTraversableObject(const ObjectID& id);
 
         const std::vector<TraversableObjectEntry>& TraversableObjects() const { return traversableObjects; }
+
+        glm::ivec2 GetPanicMovementLocation(const Unit& src);
 
         ObjectID ObjectIDAt(glm::ivec2& out_coords) const;
         ObjectID ObjectIDAt(glm::ivec2& out_coords, bool& out_isAirborne) const;

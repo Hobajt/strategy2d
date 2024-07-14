@@ -223,12 +223,12 @@ namespace eng {
             //damage application from the projectile
             if(ud.Projectile_IsAutoGuided()) {
                 if(!ud.b3)
-                    ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos);
+                    ApplyDamage(level, d.i2, d.i3, d.targetID, d.target_pos, d.sourceID);
                 else
-                    ApplyDamageFlat(level, d.i3, d.targetID, d.target_pos);
+                    ApplyDamageFlat(level, d.i3, d.targetID, d.target_pos, d.sourceID);
             }
             else
-                ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, ud.Projectile_SplashRadius(), ud.b3 ? d.sourceID : ObjectID());
+                ApplyDamage_Splash(level, d.i2, d.i3, d.target_pos, ud.Projectile_SplashRadius(), ud.b3 ? d.sourceID : ObjectID(), d.sourceID);
 
             //optional spawning of followup object
             if(ud.spawn_followup) {
@@ -750,7 +750,7 @@ namespace eng {
             d.f1 += obj.UData()->duration;
 
             //apply damage to objects around
-            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, d.targetID, false);
+            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, d.targetID, ObjectID(), false);
             ENG_LOG_FINE("UtilityObject - Flame Shield tick - Damaged {} objects ({} damage in total).", hit_count, total_damage);
             
             //increment tick counter & possibly terminate
@@ -830,7 +830,7 @@ namespace eng {
             d.f1 += obj.UData()->duration;
 
             //apply damage to objects around
-            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, ObjectID(), false);
+            auto [hit_count, total_damage] = ApplyDamage_Splash(level, ud.i3, ud.i4, obj.pos(), ud.i2, ObjectID(), ObjectID(), false);
             ENG_LOG_FINE("UtilityObject - Tornado tick - Damaged {} objects ({} damage in total).", hit_count, total_damage);
             
             //increment tick counter & possibly terminate
@@ -1122,7 +1122,7 @@ namespace eng {
         }
 
         src->Kill();
-        auto [hit_count, damage] = ApplyDamageFlat_Splash(*obj.lvl(), ud.i4, d.target_pos, ud.i2, src->OID(), false);
+        auto [hit_count, damage] = ApplyDamageFlat_Splash(*obj.lvl(), ud.i4, d.target_pos, ud.i2, src->OID(), ObjectID(), false);
 
         ENG_LOG_FINE("UtilityObject - Demolish spawned at {} ({} objects hit, {} damage dealt).", d.target_pos, hit_count, damage);
     }

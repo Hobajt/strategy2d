@@ -21,7 +21,7 @@ namespace eng {
 #define BUILDING_ATTACK_SCAN_INTERVAL 5
 #define BUILDING_ATTACK_SPEED 5.f
 
-#define IDLE_COMMAND_TICK_PERIOD 0.5f
+#define IDLE_COMMAND_TICK_PERIOD 2.5f
 
 static bool cmd_switching = true;
 
@@ -782,7 +782,7 @@ static bool cmd_switching = true;
 
         if(Command::SwitchingEnabled()) {
             //periodically scan for enemy units & attack (unless the unit has passive mindset)
-            if(!src.PassiveMindset() && (cmd.t + IDLE_COMMAND_TICK_PERIOD < Input::CurrentTime())) {
+            if(!src.PassiveMindset() && ((cmd.t + IDLE_COMMAND_TICK_PERIOD) < Input::CurrentTime())) {
                 cmd.t = Input::CurrentTime();
                 
                 ObjectID targetID = ObjectID();
@@ -791,6 +791,7 @@ static bool cmd_switching = true;
                     //switch to attack command if enemy detected
                     ENG_LOG_TRACE("Idle Command - Enemy detected ({}), switching to attack.", targetID.to_string());
                     cmd = Command::Attack(targetID, targetPos);
+                    cmd.t = Input::CurrentTime();
                     return;
                 }
             }
@@ -898,8 +899,8 @@ static bool cmd_switching = true;
                 //target is regular object
 
                 FactionObject* target;
-                if(!level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR)) {
-                    //existence check failed - target no longer exists
+                if(!level.objects.GetObject(cmd.target_id, target) || level.map.IsUntouchable(target->Position(), target->NavigationType() == NavigationBit::AIR) || !src.CanAttackTarget(target->NavigationType())) {
+                    //existence check failed - target no longer exists (or not attackable)
                     cmd = Command::Idle();
                     return;
                 }
@@ -1664,7 +1665,7 @@ static bool cmd_switching = true;
                 //spawn a projectile
                 UtilityObjectDataRef projectile_data = src.FetchProjectileRef();
                 if(projectile_data != nullptr) {
-                    level.objects.EmplaceUtilityObj(level, projectile_data, target->Position(), targetID, src);
+                    level.objects.EmplaceUtilityObj(level, projectile_data, target->PositionCentered(), targetID, src);
                     ENG_LOG_TRACE("BuildingAttack - Projectile spawned (target = {}).", *target);
                 }
                 else {

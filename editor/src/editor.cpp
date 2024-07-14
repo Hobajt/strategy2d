@@ -27,6 +27,9 @@ void Editor::OnInit() {
 
     context.level.map.EnableOcclusion(false);
 
+    //disable, otherwise units will start attacking each other
+    Command::EnableSwitching(false);
+
     btn_toggleFullscreen = InputButton(GLFW_KEY_T);
 }
 

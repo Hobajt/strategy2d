@@ -350,6 +350,10 @@ namespace eng {
         return dmg;
     }
 
+    bool FactionObject::CanAttackTarget(int targetNavType) const {
+        return (targetNavType != NavigationBit::AIR || !data_f->ground_attack_only);
+    }
+
     void FactionObject::SetHealth(int value) {
         health = value;
         health = (health <= MaxHealth()) ? health : MaxHealth();
@@ -811,6 +815,14 @@ namespace eng {
     void Unit::TrollRegeneration() {
         if(IsOrc() && NumID()[1] == UnitType::RANGER && Tech().GetResearch(ResearchType::LM_UNIQUE, true)) {
             AddHealth(Input::Get().deltaTime * TROLL_REGENERATION_SPEED);
+        }
+    }
+
+    void Unit::PanicMovement(bool hostile_attack, bool source_unreachable) {
+        if(command.Type() == CommandType::IDLE && (source_unreachable || (hostile_attack && PassiveMindset()))) {
+            glm::ivec2 target_pos = lvl()->map.GetPanicMovementLocation(*this);
+            ENG_LOG_TRACE("Unit::PanicMovement - {} to {}", *this, target_pos);
+            IssueCommand(Command::Move(target_pos));
         }
     }
 
@@ -1401,6 +1413,7 @@ namespace eng {
             if(level.objects.GetObject(targetID, target)) {
                 target->ApplyDirectDamage(src);
                 attack_happened = true;
+                target->PanicMovement(level.factions.Diplomacy().AreHostile(src.FactionIdx(), target->FactionIdx()), src.NavigationType() != target->NavigationType());
             }
         }
         else {
@@ -1414,14 +1427,23 @@ namespace eng {
         return attack_happened;
     }
 
-    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos) {
+    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos, const ObjectID& srcID) {
         bool attack_happened = false;
         if(targetID.type != ObjectType::MAP_OBJECT) {
             //target is regular object
+
+            FactionObject* src = nullptr;
+            if(ObjectID::IsValid(srcID)) {
+                level.objects.GetObject(srcID, src);
+            }
+
             FactionObject* target = nullptr;
             if(level.objects.GetObject(targetID, target)) {
                 target->ApplyDirectDamage(basicDamage, pierceDamage);
                 attack_happened = true;
+                if(src != nullptr) {
+                    target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                }
             }
         }
         else {
@@ -1435,14 +1457,23 @@ namespace eng {
         return attack_happened;
     }
 
-    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos) {
+    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos, const ObjectID& srcID) {
         bool attack_happened = false;
         if(targetID.type != ObjectType::MAP_OBJECT) {
             //target is regular object
+
+            FactionObject* src = nullptr;
+            if(ObjectID::IsValid(srcID)) {
+                level.objects.GetObject(srcID, src);
+            }
+
             FactionObject* target = nullptr;
             if(level.objects.GetObject(targetID, target)) {
                 target->ApplyDamageFlat(damage);
                 attack_happened = true;
+                if(src != nullptr) {
+                    target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                }
             }
         }
         else {
@@ -1456,9 +1487,14 @@ namespace eng {
         return attack_happened;
     }
 
-    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff) {
+    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, const ObjectID& srcID, bool dropoff) {
         int hit_count = 0;
         int total_damage = 0;
+
+        FactionObject* src = nullptr;
+        if(ObjectID::IsValid(srcID)) {
+            level.objects.GetObject(srcID, src);
+        }
 
         //to avoid applying damage to the same object multiple times
         std::vector<ObjectID> hit_objects = {};
@@ -1484,8 +1520,11 @@ namespace eng {
                         hit_objects.push_back(id);
                         FactionObject* target = nullptr;
                         if(level.objects.GetObject(id, target)) {
-                             total_damage += target->ApplyDirectDamage(B, P);
+                            total_damage += target->ApplyDirectDamage(B, P);
                             hit_count++;
+                            if(src != nullptr) {
+                                target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                            }
                         }
                     }
                 }
@@ -1504,9 +1543,14 @@ namespace eng {
         return { hit_count, total_damage };
     }
 
-    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff) {
+    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, const ObjectID& srcID, bool dropoff) {
         int hit_count = 0;
         int total_damage = 0;
+
+        FactionObject* src = nullptr;
+        if(ObjectID::IsValid(srcID)) {
+            level.objects.GetObject(srcID, src);
+        }
 
         //to avoid applying damage to the same object multiple times
         std::vector<ObjectID> hit_objects = {};
@@ -1531,8 +1575,11 @@ namespace eng {
                         hit_objects.push_back(id);
                         FactionObject* target = nullptr;
                         if(level.objects.GetObject(id, target)) {
-                             total_damage += target->ApplyDamageFlat(D);
+                            total_damage += target->ApplyDamageFlat(D);
                             hit_count++;
+                            if(src != nullptr) {
+                                target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                            }
                         }
                     }
                 }

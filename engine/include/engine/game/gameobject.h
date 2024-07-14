@@ -216,6 +216,10 @@ namespace eng {
         int ApplyDirectDamage(const FactionObject& source);
         int ApplyDirectDamage(int src_basicDmg, int src_pierceDmg);
         int ApplyDamageFlat(int dmg);
+        
+        bool CanAttackTarget(int targetNavType) const;
+
+        virtual void PanicMovement(bool hostile_attack, bool source_unreachable) {}
 
         void SetHealth(int health);
         void AddHealth(float value);
@@ -380,6 +384,8 @@ namespace eng {
 
         void Transport_UnitAdded();
         void Transport_UnitRemoved();
+
+        virtual void PanicMovement(bool hostile_attack, bool source_unreachable) override;
 
         //Conditionally issues a move command onto the ship to go to an accessible coast tile.
         //Movement is issued only if the ship already isn't on its way to dock (on any coast tile).
@@ -625,9 +631,9 @@ namespace eng {
 
     //Apply damage to given target. Works for both regular & map objects. Returns true if the application went through.
     bool ApplyDamage(Level& level, Unit& src, const ObjectID& targetID, const glm::ivec2& target_pos);
-    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos);
-    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos);
-    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
-    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, bool dropoff = true);
+    bool ApplyDamage(Level& level, int basicDamage, int pierceDamage, const ObjectID& targetID, const glm::ivec2& target_pos, const ObjectID& srcID);
+    bool ApplyDamageFlat(Level& level, int damage, const ObjectID& targetID, const glm::ivec2& target_pos, const ObjectID& srcID);
+    std::pair<int,int> ApplyDamage_Splash(Level& level, int basicDamage, int pierceDamage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, const ObjectID& srcID, bool dropoff = true);
+    std::pair<int,int> ApplyDamageFlat_Splash(Level& level, int damage, const glm::ivec2& target_pos, int radius, const ObjectID& exceptID, const ObjectID& srcID, bool dropoff = true);
 
 }//namespace eng

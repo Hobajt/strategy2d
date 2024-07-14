@@ -126,9 +126,9 @@ void Sandbox::OnInit() {
         ObjectID id_dk = level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f1, glm::vec2(20.f, 23.f), false);
         ObjectID id_pl = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/paladin"), f1, glm::vec2(20.f, 26.f), false);
         ObjectID id_om = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/demosquad"), f1, glm::vec2(20.f, 24.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f2, glm::vec2(20.f, 22.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/death_knight"), f2, glm::vec2(20.f, 22.f), false);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"), f1, glm::vec2(18.f, 24.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"), f1, glm::vec2(18.f, 24.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("misc/pig"), f1, glm::vec2(17.f, 24.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("misc/eye"), f1, glm::vec2(16.f, 24.f), false);
 
@@ -147,6 +147,7 @@ void Sandbox::OnInit() {
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(15.f, 17.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f1, glm::vec2(16.f, 17.f), false);
 
+        level.objects.EmplaceBuilding(level, Resources::LoadBuilding("human/cannon_tower"), f1, glm::vec2(7.f, 26.f), true);
         ObjectID un = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(6.f, 26.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/footman"),   f2, glm::vec2(9.f, 25.f), false);
         level.objects.EmplaceUnit(level, Resources::LoadUnit("human/archer"),   f1, glm::vec2(4.f, 4.f), false);
@@ -165,15 +166,15 @@ void Sandbox::OnInit() {
         level.objects.GetBuilding(gm).SetAmountLeft(654321);
         level.objects.GetBuilding(ol2).SetAmountLeft(100);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f1, glm::vec2(18.f, 4.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f1, glm::vec2(20.f, 4.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f1, glm::vec2(18.f, 6.f), false);
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f1, glm::vec2(18.f, 4.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f1, glm::vec2(20.f, 4.f), false);
+        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/transport"), f2, glm::vec2(18.f, 12.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/tanker"), f1, glm::vec2(22.f, 8.f), false);
 
-        ObjectID sub = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 2.f), false);
-        ObjectID en  = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
+        // ObjectID sub = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 2.f), false);
+        // ObjectID en  = level.objects.EmplaceUnit(level, Resources::LoadUnit("human/destroyer"), f2, glm::vec2(20.f, 2.f), false);
 
-        level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 12.f), false);
+        // level.objects.EmplaceUnit(level, Resources::LoadUnit("human/submarine"), f2, glm::vec2(18.f, 12.f), false);
 
         glm::ivec3 d = level.objects.GetBuilding(gm).Data()->num_id;
         ENG_LOG_INFO("GM NUM_ID: ({}, {}, {})", d.x, d.y, d.z);

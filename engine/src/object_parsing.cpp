@@ -259,6 +259,11 @@ namespace eng {
 
         data.invulnerable       = config.count("invulnerable") ? bool(config.at("invulnerable")) : false;
 
+        if(config.count("gnd_attack_only"))
+            data.ground_attack_only = bool(config.at("gnd_attack_only"));
+        else
+            data.ground_attack_only = data.attack_range < 2;
+
         //sounds
         if(config.count("sounds")) {
             auto& sounds = config.at("sounds");
@@ -330,6 +335,8 @@ namespace eng {
 
         data->speed = config.count("speed") ? int(config.at("speed")) : 10;
         data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;
+
+        data->ground_attack_only |= data->siege;
 
         data->upgrade_src = config.count("upgrade_src") ? json::parse_ivec2(config.at("upgrade_src")) : glm::ivec2(UnitUpgradeSource::NONE);
     }

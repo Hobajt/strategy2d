@@ -162,6 +162,7 @@ namespace eng {
         int race;
 
         bool invulnerable;
+        bool ground_attack_only = false;
 
         UtilityObjectDataRef projectile = nullptr;
         ButtonDescriptions gui_btns;
