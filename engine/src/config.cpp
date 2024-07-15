@@ -83,6 +83,17 @@ namespace eng::Config {
         }
 
         ImGui::Separator();
+        ImGui::Text("Volume - spatial");
+        if(ImGui::SliderFloat("Min distance", &data.audio.minDistance, 0.f, 100.f, "%.1f")) {
+        }
+
+        if(ImGui::SliderFloat("Max distance", &data.audio.maxDistance, 0.f, 100.f, "%.1f")) {
+        }
+
+        if(ImGui::SliderFloat("Rolloff", &data.audio.outOfScreenRolloff, 0.f, 1.f, "%.1f")) {
+        }
+
+        ImGui::Separator();
         ImGui::Text("Preferences");
 
         ImGui::Checkbox("Fog of War", &data.fog_of_war);
@@ -242,6 +253,10 @@ namespace eng::Config {
         if(config.count("map_mouse_speed"))     data.map_mouse_speed = config.at("map_mouse_speed");
         if(config.count("map_key_speed"))       data.map_key_speed = config.at("map_key_speed");
 
+        if(config.count("audio_dmin"))          data.audio.minDistance = config.at("audio_dmin");
+        if(config.count("audio_dmax"))          data.audio.maxDistance = config.at("audio_dmax");
+        if(config.count("audio_rolloff"))       data.audio.outOfScreenRolloff = config.at("audio_rolloff");
+
         if(config.count("fog_of_war"))      data.fog_of_war = config.at("fog_of_war");
 
         return data;
@@ -260,6 +275,10 @@ namespace eng::Config {
         out["game_speed"] = data.game_speed;
         out["map_mouse_speed"] = data.map_mouse_speed;
         out["map_key_speed"] = data.map_key_speed;
+
+        out["audio_dmin"] = data.audio.minDistance;
+        out["audio_dmax"] = data.audio.maxDistance;
+        out["audio_rolloff"] = data.audio.outOfScreenRolloff;
 
         out["fog_of_war"] = data.fog_of_war;
 

@@ -565,7 +565,7 @@ namespace eng {
 
         //play sound
         if(obj.UData()->on_spawn.valid)
-            Audio::Play(obj.UData()->on_spawn.Random());
+            Audio::Play(obj.UData()->on_spawn.Random(), src->Position());
     }
 
     void UtilityHandler_Vision_Init(UtilityObject& obj, FactionObject* src) {
@@ -1022,7 +1022,7 @@ namespace eng {
 
         //play sound
         if(ud.on_spawn.valid)
-            Audio::Play(ud.on_spawn.Random());
+            Audio::Play(ud.on_spawn.Random(), src->Position());
 
         ENG_LOG_FINE("UtilityObject - Exo/Coil wrapper spawned ({} targets, {} total damage dealt).", targets.size(), damage);
     }

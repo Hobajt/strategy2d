@@ -13,11 +13,11 @@ namespace eng::Config {
         float volume_music = 100.f;
 
         //TODO: setup attenuation distances so that sound grows weaker when it goes out of screen
-        float minDistance = 10.f;
-        float maxDistance = 20.f;
+        float minDistance = 15.f;
+        float maxDistance = 25.f;
         //TODO: maybe move these back to audio.cpp - probably shouldn't be modifiable
 
-        float outOfScreenRolloff = 0.85f;
+        float outOfScreenRolloff = 0.7f;
     public:
         void UpdateSounds(float master, float digital, float music, bool save_changes = true);
     };

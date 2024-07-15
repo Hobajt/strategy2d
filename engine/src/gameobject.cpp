@@ -1283,7 +1283,7 @@ namespace eng {
         ASSERT_MSG(data->Update != nullptr, "UtilityObject - Update() handler in prefab '{}' isn't setup properly!", data->name);
         bool res = data->Update(*this, *lvl());
         if(res && data->on_done.valid) {
-            Audio::Play(data->on_done.Random(), Position());
+            Audio::Play(data->on_done.Random(), real_pos());
         }
         animator.Update(ActionIdx());
         return res || IsKilled();
@@ -1327,8 +1327,7 @@ namespace eng {
         }
 
         if(play_sound && data->on_spawn.valid) {
-            //TODO: add once sound positioning works properly (is way too much attenuated currently)
-            Audio::Play(data->on_spawn.Random());//, Position());
+            Audio::Play(data->on_spawn.Random(), Position());
         }
     }
 
@@ -1345,8 +1344,7 @@ namespace eng {
         }
 
         if(play_sound && data->on_spawn.valid) {
-            //TODO: add once sound positioning works properly (is way too much attenuated currently)
-            Audio::Play(data->on_spawn.Random());//, Position());
+            Audio::Play(data->on_spawn.Random(), Position());
         }
     }
 
@@ -1366,8 +1364,7 @@ namespace eng {
         }
 
         if(play_sound && data->on_spawn.valid) {
-            //TODO: add once sound positioning works properly (is way too much attenuated currently)
-            Audio::Play(data->on_spawn.Random());//, Position());
+            Audio::Play(data->on_spawn.Random(), Position());
         }
     }
 

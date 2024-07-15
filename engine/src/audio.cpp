@@ -63,9 +63,9 @@ namespace eng {
 
             //not sure why, but direction needs to be set (both listener and sound), otherwise you'll get extreme panning
             //or increase constant's value at miniaudio.h:49088
-            ma_engine_listener_set_world_up(&data.engine, 0, 0.f, 1.f, 0.f);
-            ma_engine_listener_set_direction(&data.engine, 0, 0.f, 0.f, 1.f);
-            ma_engine_listener_set_cone(&data.engine, 0, 1.f, 1.f, 1.f);
+            // ma_engine_listener_set_world_up(&data.engine, 0, 0.f, 1.f, 0.f);
+            // ma_engine_listener_set_direction(&data.engine, 0, 0.f, 0.f, 1.f);
+            // ma_engine_listener_set_cone(&data.engine, 0, 1.f, 1.f, 1.f);
 
             ENG_LOG_TRACE("[C] Audio");
         }
@@ -118,8 +118,8 @@ namespace eng {
             ma_sound_set_position(sound, position.x, position.y, 0.f);
 
             //spherical sound source
-            ma_sound_set_direction(sound, 0.f, 0.f, 1.f);
-            ma_sound_set_cone(sound, 1.f, 1.f, 1.f);
+            // ma_sound_set_direction(sound, 0.f, 0.f, 1.f);
+            // ma_sound_set_cone(sound, 1.f, 1.f, 1.f);
 
             //distance attenuation setup
             ma_sound_set_rolloff(sound, Config::Audio().outOfScreenRolloff);
