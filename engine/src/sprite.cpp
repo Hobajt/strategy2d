@@ -115,11 +115,12 @@ namespace eng {
     }
 
     TexCoords Sprite::TexOffset(const glm::ivec2& added_offset) const {
-        return texture->GetTexCoords(data.offset + added_offset, data.size);
+        //+1,-2 is to avoid dark edges around tiles
+        return texture->GetTexCoords(data.offset + added_offset+1, data.size-2);
     }
 
     TexCoords Sprite::TexOffset(const glm::ivec2& added_offset, bool flip) const {
-        return texture->GetTexCoords(data.offset + added_offset, data.size, flip);
+        return texture->GetTexCoords(data.offset + added_offset+1, data.size-2, flip);
     }
 
     //===== Spritesheet =====

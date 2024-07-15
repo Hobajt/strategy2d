@@ -165,8 +165,6 @@ namespace eng {
     }
 
     TexCoords Texture::GetTexCoords(const glm::ivec2& rect_offset, const glm::ivec2& rect_size, bool flip) const {
-        glm::ivec2 of = merge_offset + rect_offset;
-        glm::ivec2 sz = rect_size;
         glm::vec2 m = glm::vec2(merge_offset + rect_offset            ) / merge_size;
         glm::vec2 M = glm::vec2(merge_offset + rect_offset + rect_size) / merge_size;
 
