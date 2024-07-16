@@ -163,8 +163,6 @@ namespace eng {
         int race = 0;
         glm::ivec3 resources = glm::ivec3(0);
         glm::ivec2 population = glm::ivec2(0);
-
-        static int idCounter;
     };
 
     //===== DiplomacyMatrix =====

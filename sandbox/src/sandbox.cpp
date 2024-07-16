@@ -54,7 +54,7 @@ void MockIngameStageController::LevelSwitching(Level& level) {
     }
 }
 
-// #define LOAD_FROM_SAVEFILE
+#define LOAD_FROM_SAVEFILE
 
 void Sandbox::OnInit() {
     Config::Reload();
@@ -78,9 +78,12 @@ void Sandbox::OnInit() {
         Camera::Get().ZoomToFit(glm::vec2(12.f));
         Camera::Get().SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
 
+        Command::EnableSwitching(false);
+
 #ifdef LOAD_FROM_SAVEFILE
-        Level::Load("res/saves/AJJ.json", level);
+        // Level::Load("res/saves/AJJ.json", level);
         // Level::Load("res/saves/CHUJA.json", level);
+        Level::Load("res/saves/all.json", level);
 #else
         Level::Load("res/ignored/tst.json", level);
         
@@ -274,6 +277,11 @@ void Sandbox::OnGUI() {
                 //throw e;
             }
             LOG_INFO("Shaders reloaded.");
+        }
+        static bool cmd_switching = Command::SwitchingEnabled();
+        if(ImGui::Button(cmd_switching ? "Disable Command Switching" : "Enable Command Switching")) {
+            cmd_switching = !cmd_switching;
+            Command::EnableSwitching(cmd_switching);
         }
         ImGui::End();
 

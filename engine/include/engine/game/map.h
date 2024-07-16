@@ -183,7 +183,7 @@ namespace eng {
         TileRecord() = default;
         TileRecord(const TileData& td, int cornerType_, int y, int x) : tileType(td.tileType), variation(td.variation), cornerType(cornerType_), pos(glm::ivec2(x, y)) {}
 
-        TileRecord(const ObjectID& id_, int action_, const glm::ivec2& pos_, const glm::ivec3& num_id_) : id(id_), tileType(action_), pos(pos_), num_id(num_id_) {}
+        TileRecord(const ObjectID& id_, int action_, const glm::ivec2& pos_, const glm::ivec3& num_id_, int factionIdx) : id(id_), tileType(action_), pos(pos_), num_id(num_id_), variation(factionIdx) {}
     };
 
     //Helper struct, used during the map modifications.

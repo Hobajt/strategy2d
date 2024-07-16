@@ -142,8 +142,8 @@ private:
 
     bool IsLocationValid(const glm::ivec2& location, const glm::ivec2& size, const eng::FactionObjectDataRef& data);
 
-    eng::ObjectID AddObject(const glm::ivec3& num_id, const glm::ivec2& location, bool add_op_record = true);
-    eng::ObjectID AddObject(const eng::FactionObjectDataRef& data, const glm::ivec2& location, bool add_op_record = true);
+    eng::ObjectID AddObject(const glm::ivec3& num_id, const glm::ivec2& location, int factionIdx, bool add_op_record = true);
+    eng::ObjectID AddObject(const eng::FactionObjectDataRef& data, const glm::ivec2& location, int factionIdx, bool add_op_record = true);
     int MoveObject(const eng::ObjectID& id, const glm::ivec2& new_pos, bool add_op_record = true, glm::ivec2* out_prev_pos = nullptr);
 private:
     bool drag = false;

@@ -33,7 +33,7 @@ namespace eng {
 
     void FactionsEditor::AddFaction(Factions& factions, const char* name, int controllerID, int colorIdx) {
         //TODO: maybe create separate class for faction controller representation in the editor
-        FactionControllerRef faction = std::make_shared<FactionController>(FactionsFile::FactionEntry(controllerID, 0, std::string(name), colorIdx, FactionController::idCounter++), glm::ivec2(-1), controllerID);
+        FactionControllerRef faction = std::make_shared<FactionController>(FactionsFile::FactionEntry(controllerID, 0, std::string(name), colorIdx, factions.factions.size()), glm::ivec2(-1), controllerID);
         factions.factions.push_back(faction);
     }
 
@@ -70,8 +70,6 @@ namespace eng {
 
     //===== FactionController =====
 
-    int FactionController::idCounter = 0;
-
     FactionControllerRef FactionController::CreateController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize) {
         switch(entry.controllerID) {
             case FactionControllerID::LOCAL_PLAYER:
@@ -87,7 +85,7 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id((entry.id >= 0) ? entry.id : (idCounter++)), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
+        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
 
     FactionsFile::FactionEntry FactionController::Export() {
         FactionsFile::FactionEntry entry = {};
@@ -620,6 +618,11 @@ namespace eng {
 
     Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
         for(FactionsFile::FactionEntry& entry : data.factions) {
+            if(entry.id != factions.size()) {
+                ENG_LOG_WARN("Factions reload - faction mismatch detected ({}, {})", entry.id, factions.size());
+                //TODO: if if this can happen (not sure it can), then add some translation mapping and update factionIDs in all units
+            }
+            entry.id = factions.size();
             factions.push_back(FactionController::CreateController(std::move(entry), mapSize));
 
             //setup reference to player faction controller

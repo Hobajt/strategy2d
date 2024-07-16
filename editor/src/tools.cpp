@@ -338,7 +338,7 @@ void ObjectPlacementTool::OnLMB(int state) {
         {
             if(input.ctrl) {
                 //object placement
-                AddObject(objdata, coord);
+                AddObject(objdata, coord, factionIdx);
             }
             else {
                 ObjectID id = context.level.map.ObjectIDAt(coord);
@@ -384,7 +384,7 @@ void ObjectPlacementTool::OnRMB(int state) {
     //add undo/redo entry
     OperationRecord op = {};
     op.paint = false;
-    op.actions.push_back(TileRecord(obj.OID(), ObjectOperation::REMOVE, obj.Position(), obj.NumID()));
+    op.actions.push_back(TileRecord(obj.OID(), ObjectOperation::REMOVE, obj.Position(), obj.NumID(), obj.FactionIdx()));
     context.tools.PushOperation(std::move(op));
 
     /* HOW TO HANDLE OBJECT RESTORATION (from undo operation):
@@ -418,7 +418,7 @@ bool ObjectPlacementTool::UndoOperation(OperationRecord& op, UndoRedoUpdateData&
         }
         case ObjectOperation::REMOVE:
         {
-            ObjectID id = AddObject(r.num_id, r.pos, false);
+            ObjectID id = AddObject(r.num_id, r.pos, r.variation, false);
             if(!ObjectID::IsValid(id)) {
                 LOG_WARN("ObjectPlacementTool::UndoOperation - failed to undo Object-Remove, object restoration failed.");
                 return false;
@@ -545,13 +545,13 @@ bool ObjectPlacementTool::IsLocationValid(const glm::ivec2& location, const glm:
     return preconditions;
 }
 
-ObjectID ObjectPlacementTool::AddObject(const glm::ivec3& num_id, const glm::ivec2& location, bool add_op_record) {
+ObjectID ObjectPlacementTool::AddObject(const glm::ivec3& num_id, const glm::ivec2& location, int factionIdx, bool add_op_record) {
     GameObjectDataRef data_go = Resources::LoadObject(num_id);
     FactionObjectDataRef data = std::dynamic_pointer_cast<FactionObjectData>(data_go);
-    return AddObject(data, location, add_op_record);
+    return AddObject(data, location, factionIdx, add_op_record);
 }
 
-ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const glm::ivec2& location, bool add_op_record) {
+ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const glm::ivec2& location, int factionIdx, bool add_op_record) {
     ASSERT_MSG(data != nullptr, "ObjectPlacementTool::AddObject - data should never be null at this point.");
 
     glm::ivec2 coord = location;
@@ -563,6 +563,12 @@ ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const 
         LOG_TRACE("ObjectPlacementTool::AddObject - invalid placement location.");
         return ObjectID();
     }
+
+    if(factionIdx >= context.level.factions.size()) {
+        LOG_TRACE("ObjectPlacementTool::AddObject - invalid faction idx ({}).", factionIdx);
+        return ObjectID();
+    }
+    FactionControllerRef faction = context.level.factions[factionIdx];
 
     ObjectID id = ObjectID();
     switch(data->objectType) {
@@ -581,7 +587,7 @@ ObjectID ObjectPlacementTool::AddObject(const FactionObjectDataRef& data, const 
     if(add_op_record) {
         OperationRecord op = {};
         op.paint = false;
-        op.actions.push_back(TileRecord(id, ObjectOperation::ADD, coord, data->num_id));
+        op.actions.push_back(TileRecord(id, ObjectOperation::ADD, coord, data->num_id, factionIdx));
         context.tools.PushOperation(std::move(op));
     }
 
@@ -607,7 +613,7 @@ int ObjectPlacementTool::MoveObject(const ObjectID& id, const glm::ivec2& new_po
         //add undo/redo entry
         OperationRecord op = {};
         op.paint = false;
-        op.actions.push_back(TileRecord(obj->OID(), ObjectOperation::MOVE, obj->Position(), obj->NumID()));
+        op.actions.push_back(TileRecord(obj->OID(), ObjectOperation::MOVE, obj->Position(), obj->NumID(), obj->FactionIdx()));
         context.tools.PushOperation(std::move(op));
     }
 

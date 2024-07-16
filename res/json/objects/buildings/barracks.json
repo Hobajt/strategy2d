@@ -5,7 +5,7 @@
         "type": 3,
         "nav_type": 1,
         "size": [3,3],
-        "icon": [3,4],
+        "icon": [2,4],
         "vision_range": 3,
         "health": 800,
         "mana": 0,

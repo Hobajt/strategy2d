@@ -61,7 +61,7 @@
         "race": 1,
         "death_sound": 3,
         "scale": 2.25,
-        "icon": [4,2],
+        "icon": [5,2],
         "upgrade_src": [2, 2],
         "sounds": {
             "yes": ["ships/oshpyes", 3],

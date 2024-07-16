@@ -34,7 +34,7 @@
         "type": 3,
         "nav_type": 1,
         "size": [3,3],
-        "icon": [5,4],
+        "icon": [4,4],
         "vision_range": 3,
         "health": 600,
         "mana": 0,
