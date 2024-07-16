@@ -38,5 +38,45 @@
                 { "idx": 3, "cmd": 10, "pid": 9, "hotkey": ["o", 0] }
             ]
         ]
+    },
+    {
+        "str_id": "orc/tanker",
+        "name": "oil tanker",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 3.0, "wobble": true },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "idle2": { "duration": 1.0, "sprite_name": "idle_carry" },
+            "walk2": { "duration": 1.0, "sprite_name": "idle_carry" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 90,
+        "mana": 0,
+        "build_time": 50,
+        "cost": [400,200,0],
+        "attack_range": 1,
+        "armor": 10,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 3,
+        "worker": true,
+        "icon": [9,1],
+        "upgrade_src": [2, 2],
+        "scale": 2,
+        "sounds": {
+            "yes": "ships/foghorn",
+            "what": ["ships/oshpwht", 3],
+            "pissed": ["ships/oshppis", 3],
+            "ready": "ships/oshpredy"
+        },
+        "buttons": [
+            [
+                { "idx": 3, "cmd": 10, "pid": 9, "hotkey": ["o", 0] }
+            ]
+        ]
     }
 ]

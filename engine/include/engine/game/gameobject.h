@@ -115,6 +115,7 @@ namespace eng {
         virtual std::ostream& DBG_Print(std::ostream& os) const;
         static int PeekNextID() { return idCounter; }
         static int GetNextID() { return idCounter++; }
+        static void SetID(int value) { idCounter = value; }
         void IntegrateIntoLevel(const ObjectID& oid_) { oid = oid_; InnerIntegrate(); }
         virtual void InnerIntegrate() {}
 

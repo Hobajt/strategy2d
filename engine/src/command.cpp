@@ -1606,7 +1606,7 @@ static bool cmd_switching = true;
 
     void BuildingAction_Idle(Building& src, Level& level, BuildingAction& action) {
         //swap to attack idle if the building can attack
-        if(src.CanAttack()) {
+        if(src.CanAttack() && !Command::SwitchingEnabled()) {
             action = BuildingAction::IdleAttack();
         }
 
@@ -1614,7 +1614,7 @@ static bool cmd_switching = true;
     }
 
     void BuildingAction_Attack(Building& src, Level& level, BuildingAction& action) {
-        if(!src.CanAttack()) {
+        if(!src.CanAttack() || !Command::SwitchingEnabled()) {
             action = BuildingAction::Idle();
         }
 

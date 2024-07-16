@@ -332,6 +332,7 @@ void InfoMenu::GUI_Update() {
 
 void InfoMenu::NewLevelCreated() {
     tileset.selection = tileset.choices.FindName(context.level.map.GetTilesetName().c_str());
+    context.level.map.EnableOcclusion(false);
 }
 
 //===== ToolsMenu =====

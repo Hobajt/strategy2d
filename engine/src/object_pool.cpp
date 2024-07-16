@@ -439,28 +439,55 @@ namespace eng {
 
     idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file) {
         std::vector<std::pair<ObjectID, ObjectID>> id_mapping = {};
+        int failure_counter = 0;
+        int max_id = 0;
 
         for(const Unit::Entry& entry : file.units) {
-            UnitsPool::key key = units.emplace(entry.id.z, level, entry);
-            ObjectID new_id = ObjectID(ObjectType::UNIT, key.idx, key.id);
-            units[key].IntegrateIntoLevel(new_id);
-            id_mapping.push_back({ entry.id, new_id });
+            try {
+                UnitsPool::key key = units.add(entry.id.z, Unit(level, entry));
+                ObjectID new_id = ObjectID(ObjectType::UNIT, key.idx, key.id);
+                if(max_id < entry.id.z) max_id = entry.id.z;
+                units[key].IntegrateIntoLevel(new_id);
+                id_mapping.push_back({ entry.id, new_id });
+            } catch(std::exception&) {
+                ENG_LOG_WARN("Failed to load unit (ID={}, num_id={}, faction={})", entry.id, entry.num_id, entry.factionIdx);
+                failure_counter++;
+            }
         }
 
         for(const Building::Entry& entry : file.buildings) {
-            BuildingsPool::key key = buildings.emplace(entry.id.z, level, entry);
-            ObjectID new_id = ObjectID(ObjectType::BUILDING, key.idx, key.id);
-            buildings[key].IntegrateIntoLevel(new_id);
-            id_mapping.push_back({ entry.id, new_id });
+            try {
+                BuildingsPool::key key = buildings.add(entry.id.z, Building(level, entry));
+                ObjectID new_id = ObjectID(ObjectType::BUILDING, key.idx, key.id);
+                if(max_id < entry.id.z) max_id = entry.id.z;
+                buildings[key].IntegrateIntoLevel(new_id);
+                id_mapping.push_back({ entry.id, new_id });
+            } catch(std::exception&) {
+                ENG_LOG_WARN("Failed to load building (ID={}, num_id={}, faction={})", entry.id, entry.num_id, entry.factionIdx);
+                failure_counter++;
+            }
         }
 
         for(const UtilityObject::Entry& entry : file.utilities) {
-            UtilityObjsPool::key key = utilityObjs.emplace(entry.id.z, level, entry);
-            ObjectID new_id = ObjectID(ObjectType::UTILITY, key.idx, key.id);
-            utilityObjs[key].IntegrateIntoLevel(new_id);
-            id_mapping.push_back({ entry.id, new_id });
+            try {
+                UtilityObjsPool::key key = utilityObjs.add(entry.id.z, UtilityObject(level, entry));
+                ObjectID new_id = ObjectID(ObjectType::UTILITY, key.idx, key.id);
+                if(max_id < entry.id.z) max_id = entry.id.z;
+                utilityObjs[key].IntegrateIntoLevel(new_id);
+                id_mapping.push_back({ entry.id, new_id });
+            } catch(std::exception&) {
+                ENG_LOG_WARN("Failed to load utility object (ID={}, num_id={})", entry.id, entry.num_id);
+                failure_counter++;
+            }
         }
 
+        if(failure_counter != 0) {
+            ENG_LOG_WARN("ObjectPool::PopulatePools - total failed loads = {}", failure_counter);
+        }
+
+        GameObject::SetID(max_id+1);
+
+        ENG_LOG_TRACE("ObjectPool::PopulatePools: U={}, B={}, UT={}", units.size(), buildings.size(), utilityObjs.size());
         return idMappingType(id_mapping.begin(), id_mapping.end());
     }
 

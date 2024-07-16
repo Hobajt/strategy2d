@@ -28,5 +28,35 @@
                 { "idx": 4, "cmd": 11, "pid": 10, "hotkey": ["s", 8] }
             ]
         ]
+    },
+    {
+        "str_id": "orc/shipyard",
+        "name": "shipyard",
+        "type": 3,
+        "nav_type": 2,
+        "size": [3,3],
+        "icon": [9,4],
+        "vision_range": 3,
+        "health": 1100,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [800,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "dropoff_mask": 4,
+        "coastal": true,
+        "sounds": { "yes": "bldg/shipbell" },
+        "buttons": [
+            [
+                { "idx": 0, "cmd": 11, "pid": 7,  "hotkey": ["o", 0] },
+                { "idx": 1, "cmd": 11, "pid": 8,  "hotkey": ["d", 0] },
+                { "idx": 2, "cmd": 11, "pid": 11, "hotkey": ["t", 0] },
+                { "idx": 3, "cmd": 11, "pid": 9,  "hotkey": ["b", 0] },
+                { "idx": 4, "cmd": 11, "pid": 10, "hotkey": ["s", 8] }
+            ]
+        ]
     }
 ]

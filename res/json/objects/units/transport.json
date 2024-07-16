@@ -31,5 +31,38 @@
             "pissed": ["ships/hshppis", 3],
             "ready": "ships/hshpredy"
         }
+    },
+    {
+        "str_id": "orc/transport",
+        "name": "transport",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 3.0, "wobble": true },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 4,
+        "health": 150,
+        "mana": 0,
+        "build_time": 70,
+        "cost": [600,200,500],
+        "attack_range": 1,
+        "armor": 0,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "cooldown": 1.0,
+        "race": 1,
+        "death_sound": 3,
+        "icon": [0,2],
+        "upgrade_src": [2, 2],
+        "scale": 2,
+        "transport": true,
+        "sounds": {
+            "yes": ["ships/oshpyes", 3],
+            "what": ["ships/oshpwht", 3],
+            "pissed": ["ships/oshppis", 3],
+            "ready": "ships/oshpredy"
+        }
     }
 ]

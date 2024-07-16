@@ -653,10 +653,12 @@ namespace eng {
     }
 
     FactionControllerRef Factions::operator[](int i) {
+        ASSERT_MSG(((unsigned int)i) < factions.size(), "FactionIdx out of bounds! ({}, {})", i, factions.size());
         return factions.at(i);
     }
 
     const FactionControllerRef Factions::operator[](int i) const {
+        ASSERT_MSG(((unsigned int)i) < factions.size(), "FactionIdx out of bounds! ({}, {})", i, factions.size());
         return factions.at(i);
     }
 

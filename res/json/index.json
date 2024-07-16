@@ -10,7 +10,7 @@
         ["human/tanker", "orc/tanker"],
         ["human/destroyer", "orc/destroyer"],
         ["human/battleship", "orc/juggernaut"],
-        ["human/submarine", "orc/submarine"],
+        ["human/submarine", "orc/turtle"],
         ["human/transport", "orc/transport"],
         ["human/machine", "orc/zeppelin"],
         ["human/demosquad", "orc/sappers"],
@@ -23,7 +23,7 @@
         ["human/farm", "orc/farm"],
         ["human/lumber_mill", "orc/lumber_mill"],
         ["human/blacksmith", "orc/blacksmith"],
-        ["human/watch_tower", "orc/watch_tower"],
+        ["human/watch_tower", "orc/scout_tower"],
     
         ["human/shipyard", "orc/shipyard"],
         ["human/foundry", "orc/foundry"],

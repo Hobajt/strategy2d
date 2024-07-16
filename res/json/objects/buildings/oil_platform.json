@@ -19,5 +19,26 @@
         "gatherable": true,
         "requires_foundation": true,
         "sounds": { "yes": "bldg/oilplat" }
+    },
+    {
+        "str_id": "orc/oil_platform",
+        "name": "oil platform",
+        "type": 3,
+        "nav_type": 2,
+        "size": [2,2],
+        "icon": [5,5],
+        "vision_range": 3,
+        "health": 650,
+        "mana": 0,
+        "build_time": 200,
+        "cost": [700,450,0],
+        "attack_range": 0,
+        "armor": 20,
+        "basic_damage": 0,
+        "pierce_damage": 0,
+        "race": 1,
+        "gatherable": true,
+        "requires_foundation": true,
+        "sounds": { "yes": "bldg/oilplat" }
     }
 ]

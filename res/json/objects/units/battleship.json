@@ -34,5 +34,41 @@
             "ready": "ships/hshpredy"
         },
         "projectile": "fiery_cannon_ball"
+    },
+    {
+        "str_id": "orc/juggernaut",
+        "name": "juggernaut",
+        "type": 2,
+        "nav_type": 2,
+        "animations": {
+            "idle": { "duration": 3.0, "wobble": true },
+            "walk": { "duration": 1.0, "sprite_name": "idle" },
+            "death": { "duration": 1.0, "repeat": false }
+        },
+        "vision_range": 8,
+        "health": 150,
+        "mana": 0,
+        "speed": 6,
+        "attack_rotated": true,
+        "gnd_attack_only": true,
+        "build_time": 140,
+        "cost": [1000,500,1000],
+        "attack_range": 6,
+        "armor": 15,
+        "basic_damage": 130,
+        "pierce_damage": 0,
+        "cooldown": 2.0,
+        "race": 1,
+        "death_sound": 3,
+        "scale": 2.25,
+        "icon": [4,2],
+        "upgrade_src": [2, 2],
+        "sounds": {
+            "yes": ["ships/oshpyes", 3],
+            "what": ["ships/oshpwht", 3],
+            "pissed": ["ships/hshppis", 3],
+            "ready": "ships/hshpredy"
+        },
+        "projectile": "fiery_cannon_ball"
     }
 ]

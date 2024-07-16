@@ -242,6 +242,23 @@
         "duration": 1.0
     },
     {
+        "str_id": "griffin_projectile",
+        "name": "storm hammer",
+        "type": 4,
+        "nav_type": 1,
+        "size": [1, 1],
+        "utility_id": 0,
+        "animations": [ "misc/effects/storm_hammer" ],
+        "duration": 1.0,
+        "guided": false,
+        "sounds": {
+            "on_spawn": "misc/fireball",
+            "on_done": "misc/explode"
+        },
+        "followup": "explosion_long",
+        "bounces": 2
+    },
+    {
         "str_id": "dragon_fireball",
         "name": "dragon fireball",
         "type": 4,

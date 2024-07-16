@@ -15,6 +15,7 @@ EditorContext::EditorContext() : input(EditorInputHandler(*this)), tools(EditorT
 }
 
 void EditorContext::Terrain_SetupNew(const glm::ivec2& size, const eng::TilesetRef& tileset) {
+    level.Release();
     level = Level(size, tileset);
 
     //camera reset
@@ -30,11 +31,9 @@ void EditorContext::Terrain_SetupNew(const glm::ivec2& size, const eng::TilesetR
 }
 
 int EditorContext::Terrain_Load(const std::string& filepath) {
-    Level new_level;
-    int res = Level::Load(filepath, new_level);
-    if(res == 0) {
-        level = std::move(new_level);
-    }
+    level.Release();
+    int res = Level::Load(filepath, level);
+    level.map.EnableOcclusion(false);
     return res;
 }
 

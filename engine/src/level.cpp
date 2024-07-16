@@ -191,7 +191,8 @@ namespace eng {
 
     Savefile Level::Export() {
         Savefile savefile;
-        factions.Player()->UpdateOcclusions(*this);
+        if(factions.IsInitialized())
+            factions.Player()->UpdateOcclusions(*this);
         savefile.map = map.Export();
         savefile.factions = factions.Export();
         savefile.objects = objects.Export();
