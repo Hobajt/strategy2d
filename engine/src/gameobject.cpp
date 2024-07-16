@@ -693,6 +693,10 @@ namespace eng {
         return (NumID()[1] == UnitType::SUBMARINE) && !effects.flags[UnitEffectType::INVISIBILITY];
     }
 
+    void Unit::RandomizeIdleRotation() {
+        command.RandomizeIdleRotation();
+    }
+
     void Unit::ChangeCarryStatus(int new_state) {
         if(IsWorker()) {
             ASSERT_MSG(new_state == WorkerCarryState::NONE || carry_state == WorkerCarryState::NONE, "Unit::ChangeCarryStatus - resource override, worker is already carrying something.");

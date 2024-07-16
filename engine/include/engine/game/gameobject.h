@@ -364,6 +364,8 @@ namespace eng {
 
         virtual bool DetectablyInvisible() const override;
 
+        void RandomizeIdleRotation();
+
         bool AnimationFinished() const { return animation_ended; }
 
         UnitDataRef UData() const { return data; }

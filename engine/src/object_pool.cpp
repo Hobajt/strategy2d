@@ -672,6 +672,12 @@ namespace eng {
         ENG_LOG_TRACE("ObjectPool::UnitUpgade - upgraded {} -> {} (faction{}, unit count={})", old_type, new_type, factionID, count);
     }
 
+    void ObjectPool::RandomizeIdleRotations() {
+        for(Unit& u : units) {
+            u.RandomizeIdleRotation();
+        }
+    }
+
     //===== getters =====
 
     ObjectID ObjectPool::GetObjectAt(const glm::ivec2& map_coords) {

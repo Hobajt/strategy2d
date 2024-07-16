@@ -188,6 +188,8 @@ void Sandbox::OnInit() {
         colorPalette = ColorPalette(true);
         colorPalette.UpdateShaderValues(shader);
 
+        level.objects.RandomizeIdleRotations();
+
     } catch(std::exception& e) {
         LOG_INFO("ERROR: {}", e.what());
         LOG_ERROR("Failed to load resources; Terminating...");

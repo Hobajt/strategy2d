@@ -8,6 +8,8 @@
 #include "engine/game/player_controller.h"
 #include "engine/game/resources.h"
 
+#include "engine/utils/randomness.h"
+
 namespace eng {
 
 #define ACTION_INPROGRESS               0
@@ -727,6 +729,10 @@ static bool cmd_switching = true;
         return entry;
     }
 
+    void Command::RandomizeIdleRotation() {
+        t = Random::Uniform() * IDLE_COMMAND_TICK_PERIOD;
+    }
+
     std::string Command::to_string() const {
         char buf[2048];
 
@@ -780,20 +786,23 @@ static bool cmd_switching = true;
             action = Action::Idle();
         }
 
-        if(Command::SwitchingEnabled()) {
-            //periodically scan for enemy units & attack (unless the unit has passive mindset)
-            if(!src.PassiveMindset() && ((cmd.t + IDLE_COMMAND_TICK_PERIOD) < Input::CurrentTime())) {
+        //periodically idle update
+        if(((cmd.t + IDLE_COMMAND_TICK_PERIOD) < Input::CurrentTime())) {
+            cmd.t = Input::CurrentTime();
+
+            //scan for enemy units & attack (unless the unit has passive mindset)
+            ObjectID targetID = ObjectID();
+            glm::ivec2 targetPos = glm::ivec2(-1);
+            if(Command::SwitchingEnabled() && !src.PassiveMindset() && level.map.SearchForTarget(src, level.factions.Diplomacy(), src.VisionRange(), targetID, &targetPos)) {
+                //switch to attack command if enemy detected
+                ENG_LOG_TRACE("Idle Command - Enemy detected ({}), switching to attack.", targetID.to_string());
+                cmd = Command::Attack(targetID, targetPos);
                 cmd.t = Input::CurrentTime();
-                
-                ObjectID targetID = ObjectID();
-                glm::ivec2 targetPos = glm::ivec2(-1);
-                if(level.map.SearchForTarget(src, level.factions.Diplomacy(), src.VisionRange(), targetID, &targetPos)) {
-                    //switch to attack command if enemy detected
-                    ENG_LOG_TRACE("Idle Command - Enemy detected ({}), switching to attack.", targetID.to_string());
-                    cmd = Command::Attack(targetID, targetPos);
-                    cmd.t = Input::CurrentTime();
-                    return;
-                }
+                return;
+            }
+            else if(src.NavigationType() == NavigationBit::GROUND && !src.IsSiege() && Random::Uniform() < 0.2f) {
+                //rotate the unit at random (only ground,organic units)
+                src.ori() = (src.ori() + Random::UniformInt(-2, 2) + 8) % 8;
             }
         }
     }

@@ -156,6 +156,8 @@ namespace eng {
 
         void UpdateTargetID(const ObjectID& new_id) { target_id = new_id; }
 
+        void RandomizeIdleRotation();
+
         //only use for debug msgs
         std::string to_string() const;
     private:
