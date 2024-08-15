@@ -5,16 +5,20 @@
 #include "engine/game/player_controller.h"
 
 #include "engine/core/renderer.h"
+#include "engine/core/input.h"
 
 #include "engine/utils/json.h"
 #include "engine/utils/utils.h"
-
 #include "engine/utils/randomness.h"
+#include "engine/utils/dbg_gui.h"
+
+#define CONDITIONS_UPDATE_FREQUENCY 5.f
 
 namespace eng {
 
     bool Parse_Mapfile(Mapfile& map, const nlohmann::json& config);
     bool Parse_Info(LevelInfo& info, const nlohmann::json& config);
+    EndCondition Parse_EndCondition(const nlohmann::json& config);
     bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config);
     bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config);
     bool Parse_Camera(const nlohmann::json& config);
@@ -22,6 +26,7 @@ namespace eng {
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
+    nlohmann::json Export_EndCondition(const EndCondition& condition);
     nlohmann::json Export_FactionsFile(const LevelInfo& info, const FactionsFile& factions);
     nlohmann::json Export_Objects(const ObjectsFile& objects);
     nlohmann::json Export_Camera();
@@ -93,6 +98,87 @@ namespace eng {
         ENG_LOG_TRACE("[R] Savefile::Save - successfully stored as '{}'.", filepath.c_str());
     }
 
+    //===== EndCondition =====
+
+    EndCondition::EndCondition(const std::vector<ObjectID>& objects_, bool any_) : objects(objects_), objects_any(any_), disabled(false), state(false) {
+        for(size_t i = objects.size(); i >= 0; --i) {
+            if(objects[i] == ObjectID()) {
+                ENG_LOG_WARN("EndCondition - removing invalid object {}", objects[i]);
+                objects.erase(objects.begin() + i);
+            }
+        }
+
+        ENG_LOG_TRACE("EndCondition - setup to track existence of {} objects.", objects.size());
+
+        if(objects.size() < 1) {
+            ENG_LOG_WARN("EndCondition - no valid object present during initialization (condition automatically met)!");
+        }
+    }
+
+    EndCondition::EndCondition(const std::vector<int>& factions_, bool any_) : factions(factions_), factions_any(any_), disabled(false), state(false) {
+        ENG_LOG_TRACE("EndCondition - setup to track existence of {} factions.", factions.size());
+        if(factions.size() < 1) {
+            ENG_LOG_WARN("EndCondition - no valid faction present during initialization (condition automatically met)!");
+        }
+    }
+
+    EndCondition::EndCondition(int factionID_) : factions(std::vector<int>{ factionID_ }), disabled(false), state(false) {
+        ENG_LOG_TRACE("EndCondition - setup to track existence of faction {}.", factionID_);
+    }
+
+    void EndCondition::Update(Level& level) {
+        if(state)
+            return;
+        
+        CheckFactions(level);
+        CheckObjects(level);
+
+        if(state)
+            ENG_LOG_INFO("EndCondition met.");
+    }
+
+    void EndCondition::UpdateLinkage(const idMappingType& id_mapping) {
+        for(int i = 0; i < objects.size(); i++) {
+            if(id_mapping.count(objects[i])) objects[i] = id_mapping.at(objects[i]);
+        }
+    }
+
+    void EndCondition::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
+        ImGui::Text("Objects: %d", objects.size());
+        ImGui::SameLine();
+        ImGui::Text("Any: %d", objects_any);
+
+        ImGui::Text("Factions: %d", factions.size());
+        ImGui::SameLine();
+        ImGui::Text("Any: %d", factions_any);
+
+        ImGui::Text("Met: %d", state);
+        ImGui::SameLine();
+        ImGui::Text("Disabled: %d", disabled);
+#endif
+    }
+
+    void EndCondition::CheckObjects(Level& level) {
+        int alive = 0;
+        FactionObject* obj = nullptr;
+
+        for(ObjectID& id : objects) {
+            alive += level.objects.GetObject(id, obj, false);
+        }
+
+        state |= (objects_any && alive != objects.size()) || (alive == 0);
+    }
+
+    void EndCondition::CheckFactions(Level& level) {
+        int dead = 0;
+        for(int id : factions) {
+            dead += int(id < 0 || id >= level.factions.size() || level.factions[id]->IsEliminated());
+        }
+        
+        state |= (factions_any && dead != 0) || (dead == factions.size());
+    }
+
     //===== Level =====
 
     Level::Level() : map(Map(glm::ivec2(0,0), nullptr)), objects(ObjectPool{}) {}
@@ -110,6 +196,8 @@ namespace eng {
         factions.Update(*this);
         objects.Update();
         objects.RunesDispatch(*this, map.RunesDispatch());
+
+        ConditionsUpdate();
     }
 
     void Level::Render() {
@@ -189,6 +277,11 @@ namespace eng {
         ENG_LOG_INFO("CustomGame - factions initialized.");
     }
 
+    void Level::EndConditionsEnabled(bool enabled) {
+        info.end_conditions[0].disabled = !enabled;
+        info.end_conditions[1].disabled = !enabled;
+    }
+
     Savefile Level::Export() {
         Savefile savefile;
         if(factions.IsInitialized())
@@ -202,6 +295,21 @@ namespace eng {
 
     void Level::LevelPtrUpdate() {
         objects.LevelPtrUpdate(*this);
+    }
+
+    void Level::ConditionsUpdate() {
+        if(lastConditionsUpdate + CONDITIONS_UPDATE_FREQUENCY < Input::CurrentTime()) {
+            lastConditionsUpdate = Input::CurrentTime();
+
+            for(int i = 0; i < 2; i++) {
+                info.end_conditions[i].Update(*this);
+                if(info.end_conditions[i].IsMet()) {
+                    factions.Player()->DisplayEndDialog(i);
+                    //to make it tick only once
+                    info.end_conditions[0].disabled = info.end_conditions[1].disabled = true;
+                }
+            }
+        }
     }
 
     //==============================
@@ -249,8 +357,42 @@ namespace eng {
         info.preferred_opponents = config.count("preferred_opponents")  ? int(config.at("preferred_opponents")) : 1;
         info.campaignIdx         = config.count("campaign_idx")         ? int(config.at("campaign_idx")) : -1;
         info.custom_game         = config.count("custom_game")          ? bool(config.at("custom_game")) : true;
+
+        if(config.count("conditions"))
+            info.end_conditions = EndConditions{ Parse_EndCondition(config.at("conditions")[0]), Parse_EndCondition(config.at("conditions")[1]) };
+        else
+            info.end_conditions = EndConditions{ EndCondition(), EndCondition() };
         
         return true;
+    }
+
+    EndCondition Parse_EndCondition(const nlohmann::json& config) {
+        EndCondition c = {};
+
+        int i = 0;
+        c.disabled      = config.at(i++);
+        c.state         = config.at(i++);
+        c.disabled      = config.at(i++);
+        c.factions_any  = config.at(i++);
+        c.objects_any   = config.at(i++);
+
+        c.factions = {};
+        auto& fac = config.at(i);
+        if(fac.size() > 0) {
+            for(auto& id : fac) {
+                c.factions.push_back(id);
+            }
+        }
+
+        c.objects = {};
+        auto& obj = config.at(i);
+        if(obj.size() > 0) {
+            for(auto& id : obj) {
+                c.objects.push_back(ObjectID(json::parse_ivec3(id)));
+            }
+        }
+
+        return c;
     }
 
     bool Parse_FactionsFile(const LevelInfo& info, FactionsFile& factions, const nlohmann::json& config) {
@@ -271,6 +413,7 @@ namespace eng {
             }
 
             e.techtree = Parse_Techtree(entry.at(3));
+            e.eliminated = (entry.size() > 4) ? entry.at(4) : false;
 
             factions.factions.push_back(e);
         }
@@ -425,6 +568,28 @@ namespace eng {
         out["preferred_opponents"]  = info.preferred_opponents;
         if(info.campaignIdx >= 0)
             out["campaign_idx"] = info.campaignIdx;
+        
+        out["conditions"] = { Export_EndCondition(info.end_conditions[0]), Export_EndCondition(info.end_conditions[1]) };
+
+        return out;
+    }
+
+    nlohmann::json Export_EndCondition(const EndCondition& condition) {
+        using json = nlohmann::json;
+        json out = {};
+
+        out.push_back(condition.disabled);
+        out.push_back(condition.state);
+        out.push_back(condition.disabled);
+        out.push_back(condition.factions_any);
+        out.push_back(condition.objects_any);
+
+        out.push_back(condition.factions);
+
+        json obj = {};
+        for(const ObjectID& id : condition.objects)
+            obj.push_back({ id.type, id.idx, id.id });
+        out.push_back(obj);
 
         return out;
     }
@@ -441,6 +606,7 @@ namespace eng {
             e.push_back(entry.name);
             e.push_back(entry.occlusionData);
             e.push_back(Export_Techtree(entry.techtree));
+            e.push_back(entry.eliminated);
 
             f.push_back(e);
         }

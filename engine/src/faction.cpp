@@ -6,6 +6,7 @@
 
 #include "engine/game/player_controller.h"
 #include "engine/game/controllers.h"
+#include "engine/game/level.h"
 
 #define POPULATION_CAP 200
 
@@ -25,7 +26,7 @@ namespace eng {
     }
 
     FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_, int id_)
-        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_) {}
+        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_), eliminated(false) {}
 
     //===== FactionsEditor =====
 
@@ -85,7 +86,7 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_) {}
+        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated) {}
 
     FactionsFile::FactionEntry FactionController::Export() {
         FactionsFile::FactionEntry entry = {};
@@ -97,6 +98,7 @@ namespace eng {
         entry.name = name;
         entry.techtree = techtree;
         entry.occlusionData = ExportOcclusion();
+        entry.eliminated = eliminated;
 
         return entry;
     }
@@ -667,14 +669,20 @@ namespace eng {
 
     void Factions::Update(Level& level) {
         ASSERT_MSG(initialized, "Factions are not initialized properly!");
+
+        const std::vector<int>& objectCounts = level.objects.FactionObjectCounter();
+        ASSERT_MSG(objectCounts.size() == factions.size(), "Object counter list (from ObjectPool) should have the same length as the number of factions.");
         
-        for(auto& faction : factions) {
-            faction->Update(level);
+        for(int i = 0; i < factions.size(); i++) {
+            factions[i]->Update(level);
+
+            if(objectCounts.at(i) == 0)
+                factions[i]->SetEliminated();
         }
     }
 
     bool Factions::IsValidFaction(const FactionControllerRef& faction) const {
-        auto& pos = std::find(factions.begin(), factions.end(), faction);
+        const auto& pos = std::find(factions.begin(), factions.end(), faction);
         return (pos != factions.end());
     }
 

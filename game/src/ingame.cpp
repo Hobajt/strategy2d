@@ -99,6 +99,14 @@ void IngameController::QuitMission() {
     ready_to_run = false;
 }
 
+void IngameController::GameOver(bool game_won) {
+    //TODO: transition to stats screen, remember the game outcome
+    // GetTransitionHandler()->InitTransition(
+    //     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true)
+    // );
+    // ready_to_run = false;
+}
+
 void IngameController::DBG_GUI(bool active) {
 #ifdef ENGINE_ENABLE_GUI
     if(active && level.initialized) {

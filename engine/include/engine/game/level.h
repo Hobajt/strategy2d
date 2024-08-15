@@ -12,6 +12,39 @@
 
 namespace eng {
 
+    //===== EndCondition =====
+
+    namespace EndConditionType { enum { WIN, LOSE }; }
+
+    class EndCondition {
+    public:
+        EndCondition() = default;
+        EndCondition(const std::vector<ObjectID>& objects, bool any);
+        EndCondition(const std::vector<int>& factions, bool any);
+        EndCondition(int factionID);
+
+        void Update(Level& level);
+
+        void UpdateLinkage(const idMappingType& id_mapping);
+
+        bool IsMet() const { return state && !disabled; }
+
+        void DBG_GUI();
+    private:
+        void CheckObjects(Level& level);
+        void CheckFactions(Level& level);
+    public:
+        std::vector<ObjectID> objects;
+        std::vector<int> factions;
+        bool objects_any = false;
+        bool factions_any = false;
+
+        bool state = false;
+        bool disabled = false;
+    };
+
+    using EndConditions = std::array<EndCondition, 2>;
+
     //===== LevelInfo =====
 
     //Container for various level metadata.
@@ -20,6 +53,7 @@ namespace eng {
         bool custom_game = true;
         int preferred_opponents = 1;
         std::vector<glm::ivec2> startingLocations;
+        EndConditions end_conditions;
     };
 
     //===== Savefile =====
@@ -54,9 +88,12 @@ namespace eng {
         glm::ivec2 MapSize() const { return map.Size(); }
 
         void CustomGame_InitFactions(int playerRace, int opponentCount);
+
+        void EndConditionsEnabled(bool enabled);
     private:
         Savefile Export();
         void LevelPtrUpdate();
+        void ConditionsUpdate();
     public:
         //dont change the order !!!
         Map map;
@@ -65,6 +102,7 @@ namespace eng {
         ObjectPool objects;
 
         bool initialized = false;
+        float lastConditionsUpdate = 0.f;
     };
 
 }//namespace eng

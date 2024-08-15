@@ -35,6 +35,7 @@ namespace eng {
             std::string name;
             Techtree techtree;
             std::vector<uint32_t> occlusionData;
+            bool eliminated;
         public:
             FactionEntry() = default;
             FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
@@ -129,6 +130,9 @@ namespace eng {
 
         int ProductionBoost(int res_idx);
 
+        bool IsEliminated() const { return eliminated; }
+        void SetEliminated() { eliminated = true; }
+
         //Button condition check, button description may get modified by calling the method.
         //Doesn't check for resources, returns false if given button doesn't meet the conditions and shouldn't be displayed.
         bool ActionButtonSetup(GUI::ActionButtonDescription& btn, bool isOrc) const;
@@ -159,6 +163,7 @@ namespace eng {
         int colorIdx = 0;
         std::string name = "unnamed_faction";
         int controllerID = -1;
+        bool eliminated = false;
 
         int race = 0;
         glm::ivec3 resources = glm::ivec3(0);

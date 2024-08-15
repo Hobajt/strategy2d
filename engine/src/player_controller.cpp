@@ -674,6 +674,16 @@ namespace eng {
         confirm_label = dynamic_cast<ScrollText*>(menus.at(IngameMenuTab::CONFIRM_SCREEN).GetChild(0));
         confirm_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::CONFIRM_SCREEN).GetChild(1));
 
+        menus.insert({ IngameMenuTab::GAME_OVER_SCREEN, Menu(offset, glm::vec2(size.x, size.y * 0.333f), zOffset, bg_style, std::vector<GUI::Element*>{
+                new GUI::ScrollText(glm::vec2(0.f, -0.7f), glm::vec2(bw, 0.25f), 1.f, text_style, "End message"),
+                new GUI::TextButton(glm::vec2(0.f, -0.35f), glm::vec2(bw, bh*3.f), 1.f, btn_style, "Confirm", this, [](GUI::ButtonCallbackHandler* handler, int id){
+                    static_cast<IngameMenu*>(handler)->GameOver();
+                }, glm::vec2(0, 1))
+            })
+        });
+        gameover_label = dynamic_cast<ScrollText*>(menus.at(IngameMenuTab::GAME_OVER_SCREEN).GetChild(0));
+        gameover_btn = dynamic_cast<TextButton*>(menus.at(IngameMenuTab::GAME_OVER_SCREEN).GetChild(1));
+
         menus.insert({ IngameMenuTab::OPTIONS, Menu(offset, size, zOffset, bg_style, std::vector<GUI::Element*>{
                 new GUI::TextLabel(glm::vec2(0.f, -0.85f), glm::vec2(bw, bh), 1.f, text_style, "Game Options"),
                 new GUI::TextButton(glm::vec2( 0.f, -0.65f), glm::vec2(bw, bh), 1.f, btn_style, "Sound (F7)", this, [](GUI::ButtonCallbackHandler* handler, int id){
@@ -841,6 +851,9 @@ namespace eng {
             case MenuAction::QUIT_MISSION:
                 ctrl.QuitMission();
                 break;
+            case MenuAction::GAME_OVER:
+                ctrl.GameOver(game_won);
+                break;
         }
         action = MenuAction::NONE;
     }
@@ -1003,6 +1016,11 @@ namespace eng {
         confirm_btn = m.confirm_btn;
         confirm_keycode = m.confirm_keycode;
 
+        gameover_label = m.gameover_label;
+        gameover_btn = m.gameover_btn;
+        gameover_keycode = m.gameover_keycode;
+        game_won = m.game_won;
+
         for(auto& [id, menu] : menus) {
             for(auto& child : menu) {
                 child->HandlerPtrMove(&m, this);
@@ -1023,6 +1041,25 @@ namespace eng {
         OpenTab(IngameMenuTab::CONFIRM_SCREEN);
     }
 
+    void GUI::IngameMenu::SetGameOverState(int conditionID) {
+        switch(conditionID) {
+            case EndConditionType::LOSE:
+                gameover_label->UpdateText("You have been defeated!");
+                gameover_btn->Text("Defeat", glm::ivec2(0,1));
+                gameover_keycode = GLFW_KEY_D;
+                OpenTab(IngameMenuTab::GAME_OVER_SCREEN);
+                game_won = false;
+                break;
+            case EndConditionType::WIN:
+                gameover_label->UpdateText("You are victorious!");
+                gameover_btn->Text("Victory", glm::ivec2(0,1));
+                gameover_keycode = GLFW_KEY_V;
+                OpenTab(IngameMenuTab::GAME_OVER_SCREEN);
+                game_won = true;
+                break;
+        }
+    }
+
     void GUI::IngameMenu::EndGame() {
         switch(confirm_keycode) {
             // //TODO:
@@ -1040,6 +1077,10 @@ namespace eng {
                 ENG_LOG_WARN("NOT IMPLEMENTED YET");
                 break;
         }
+    }
+
+    void GUI::IngameMenu::GameOver() {
+        action = MenuAction::GAME_OVER;
     }
 
     //===== PlayerSelection =====
@@ -2051,10 +2092,10 @@ namespace eng {
         msg_bar.Update();
     }
 
-    void PlayerFactionController::SwitchMenu(bool active) {
+    void PlayerFactionController::SwitchMenu(bool active, int tabID) {
         ASSERT_MSG(handler != nullptr, "PlayerFactionController not initialized properly!");
         is_menu_active = active;
-        menu.OpenTab(GUI::IngameMenuTab::MAIN);
+        menu.OpenTab(tabID);
         handler->PauseRequest(active);
     }
 
@@ -2064,6 +2105,10 @@ namespace eng {
 
     void PlayerFactionController::QuitMission() {
         handler->QuitMission();
+    }
+
+    void PlayerFactionController::GameOver(bool game_won) {
+        handler->GameOver(game_won);
     }
 
     void PlayerFactionController::OnKeyPressed(int keycode, int modifiers, bool single_press) {
@@ -2588,6 +2633,12 @@ namespace eng {
 
     void PlayerFactionController::UpdateOcclusions(Level& level) {
         level.map.DownloadOcclusionMask(occlusion, ID());
+    }
+
+    void PlayerFactionController::DisplayEndDialog(int condition_id) {
+        //pause the game & display the end game menu
+        menu.SetGameOverState(condition_id);
+        SwitchMenu(true, GUI::IngameMenuTab::GAME_OVER_SCREEN);
     }
 
     std::vector<uint32_t> PlayerFactionController::ExportOcclusion() {

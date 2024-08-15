@@ -136,8 +136,8 @@ namespace eng {
 
         //===== GUI::IngameMenu =====
 
-        namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO, CONFIRM_SCREEN }; }
-        namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE, QUIT_MISSION }; }
+        namespace IngameMenuTab { enum { MAIN, HELP, OPTIONS, OPTIONS_SOUND, OPTIONS_SPEED, OPTIONS_PREFERENCES, SAVE, LOAD, OBJECTIVES, END_SCENARIO, CONFIRM_SCREEN, GAME_OVER_SCREEN }; }
+        namespace MenuAction { enum { NONE, SAVE, LOAD, DELETE, QUIT_MISSION, GAME_OVER }; }
 
         class IngameMenu : public ButtonCallbackHandler {
         public:
@@ -152,7 +152,6 @@ namespace eng {
             //move enabled
             IngameMenu(IngameMenu&&) noexcept;
             IngameMenu& operator=(IngameMenu&&) noexcept;
-                
 
             void Render();
             void Update(Level& level, PlayerFactionController& ctrl, SelectionHandler& gui_handler);
@@ -160,12 +159,15 @@ namespace eng {
             void OnKeyPressed(int keycode, int modifiers, bool single_press);
 
             void OpenTab(int tabID);
+
+            void SetGameOverState(int conditionID);
         private:
             void Move(IngameMenu&&) noexcept;
 
             void EnableDeleteButton(bool enabled);
             void SetupConfirmScreen(const std::string& label, const std::string& btn, const glm::ivec2& highlightIdx, int keycode);
             void EndGame();
+            void GameOver();
         private:
             std::unordered_map<int, GUI::Menu> menus;
             int active_menu = IngameMenuTab::MAIN;
@@ -192,6 +194,11 @@ namespace eng {
             ScrollText* confirm_label = nullptr;
             TextButton* confirm_btn = nullptr;
             int confirm_keycode = 0;
+
+            ScrollText* gameover_label = nullptr;
+            TextButton* gameover_btn = nullptr;
+            int gameover_keycode = 0;
+            bool game_won = false;
         };
     }
 
@@ -318,6 +325,7 @@ namespace eng {
 
             virtual void ChangeLevel(const std::string& filename) {}
             virtual void QuitMission() {}
+            virtual void GameOver(bool game_won) {}
 
             void LinkController(const PlayerFactionControllerRef& ctrl);
         protected:
@@ -340,11 +348,14 @@ namespace eng {
 
         void Update_Paused(Level& level);
 
-        void SwitchMenu(bool active);
+        void SwitchMenu(bool active, int tabID = GUI::IngameMenuTab::MAIN);
         void ChangeLevel(const std::string& filename);
         void QuitMission();
+        void GameOver(bool game_won);
 
         void UpdateOcclusions(Level& level);
+
+        void DisplayEndDialog(int condition_id);
 
         MapView& GetMapView() { return mapview; }
     private:

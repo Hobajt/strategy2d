@@ -81,9 +81,9 @@ void Sandbox::OnInit() {
         Command::EnableSwitching(false);
 
 #ifdef LOAD_FROM_SAVEFILE
-        // Level::Load("res/saves/AJJ.json", level);
+        Level::Load("res/saves/AJJ.json", level);
         // Level::Load("res/saves/CHUJA.json", level);
-        Level::Load("res/saves/all.json", level);
+        // Level::Load("res/saves/all.json", level);
 #else
         Level::Load("res/ignored/tst.json", level);
         
@@ -102,6 +102,7 @@ void Sandbox::OnInit() {
 #endif
 
         ingameStage.LinkController(level.factions.Player());
+        level.EndConditionsEnabled(false);
 
 #ifndef LOAD_FROM_SAVEFILE
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"),   f1, glm::vec2(3.f, 5.f), false);
@@ -285,6 +286,13 @@ void Sandbox::OnGUI() {
             cmd_switching = !cmd_switching;
             Command::EnableSwitching(cmd_switching);
         }
+        ImGui::Separator();
+        ImGui::Text("Lose condition");
+        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("Win condition");
+        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
         ImGui::End();
 
         ImGui::Begin("Sandbox stuff");

@@ -24,6 +24,7 @@ public:
     virtual void PauseToggleRequest() override;
     virtual void ChangeLevel(const std::string& filename) override;
     virtual void QuitMission() override;
+    virtual void GameOver(bool game_won) override;
 
     virtual void DBG_GUI(bool active) override;
 private:

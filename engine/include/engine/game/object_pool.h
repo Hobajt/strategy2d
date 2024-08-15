@@ -111,6 +111,9 @@ namespace eng {
         //Purely for aesthetics, cuz I'm weird that way.
         void RandomizeIdleRotations();
 
+        void InitObjectCounter(Level& level);
+        const std::vector<int>& FactionObjectCounter() const { return factionObjectCount; }
+
         //===== entrance controller API =====
 
         bool IssueEntrance_Work(const ObjectID& buildingID, const ObjectID& workerID, const glm::ivec2& cmd_target, int cmdType) { return entranceController.IssueEntrance_Work(*this, buildingID, workerID, cmd_target, cmdType); }
@@ -184,7 +187,7 @@ namespace eng {
         void DBG_GUI();
     private:
         idMappingType PopulatePools(Level& level, const ObjectsFile& file);
-        void UpdateLinkage(const idMappingType& id_mapping);
+        void UpdateLinkage(Level& level, const idMappingType& id_mapping);
     private:
         UnitsPool units;
         BuildingsPool buildings;
@@ -192,6 +195,7 @@ namespace eng {
 
         std::vector<ObjectID::dtype> markedForRemoval;
         std::vector<UtilityObject> to_spawn;                //objects added from other objects Update() method
+        std::vector<int> factionObjectCount;
 
         EntranceController entranceController;
     };

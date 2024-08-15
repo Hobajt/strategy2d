@@ -434,7 +434,8 @@ namespace eng {
         auto id_mapping = PopulatePools(level, file);
         id_mapping.insert({ ObjectID(), ObjectID() });
         entranceController = EntranceController(std::move(file.entrance), id_mapping);
-        UpdateLinkage(id_mapping);
+        UpdateLinkage(level, id_mapping);
+        InitObjectCounter(level);
     }
 
     idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file) {
@@ -491,7 +492,7 @@ namespace eng {
         return idMappingType(id_mapping.begin(), id_mapping.end());
     }
 
-    void ObjectPool::UpdateLinkage(const idMappingType& id_mapping) {
+    void ObjectPool::UpdateLinkage(Level& level, const idMappingType& id_mapping) {
         for(Unit& u : units) {
             u.RepairIDs(id_mapping);
         }
@@ -503,12 +504,19 @@ namespace eng {
         for(UtilityObject& u : utilityObjs) {
             u.RepairIDs(id_mapping);
         }
+
+        level.info.end_conditions[0].UpdateLinkage(id_mapping);
+        level.info.end_conditions[1].UpdateLinkage(id_mapping);
     }
 
     void ObjectPool::Update() {
         entranceController.Update(*this);
 
+        for(int i = 0; i < factionObjectCount.size(); i++)
+            factionObjectCount[i] = 0;
+
         for(Unit& u : units) {
+            factionObjectCount[u.FactionIdx()]++;
             if(u.Update()) {
                 if(u.Kill()) {
                     markedForRemoval.push_back(u.OID().idx);
@@ -518,6 +526,7 @@ namespace eng {
         markedForRemoval.push_back((ObjectID::dtype)-1);
         
         for(Building& b : buildings) {
+            factionObjectCount[b.FactionIdx()]++;
             if(b.Update()) {
                 if(b.Kill()) {
                     markedForRemoval.push_back(b.OID().idx);
@@ -675,6 +684,13 @@ namespace eng {
     void ObjectPool::RandomizeIdleRotations() {
         for(Unit& u : units) {
             u.RandomizeIdleRotation();
+        }
+    }
+
+    void ObjectPool::InitObjectCounter(Level& level) {
+        if(factionObjectCount.size() == 0) {
+            for(int i = 0; i < level.factions.size(); i++)
+                factionObjectCount.push_back(0);
         }
     }
 
