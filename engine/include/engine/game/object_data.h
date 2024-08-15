@@ -193,6 +193,7 @@ namespace eng {
         bool siege = false;
         bool transport = false;
         bool attack_rotated = false;
+        bool no_attack = false;
 
         int deathAnimIdx = -1;
 

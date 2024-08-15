@@ -102,7 +102,8 @@ void Sandbox::OnInit() {
 #endif
 
         ingameStage.LinkController(level.factions.Player());
-        level.EndConditionsEnabled(false);
+        // level.EndConditionsEnabled(false);
+        level.CustomGame_InitEndConditions();
 
 #ifndef LOAD_FROM_SAVEFILE
         level.objects.EmplaceUnit(level, Resources::LoadUnit("orc/catapult"),   f1, glm::vec2(3.f, 5.f), false);

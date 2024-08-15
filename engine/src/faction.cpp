@@ -676,8 +676,10 @@ namespace eng {
         for(int i = 0; i < factions.size(); i++) {
             factions[i]->Update(level);
 
-            if(objectCounts.at(i) == 0)
+            if(objectCounts.at(i) == 0 && !factions[i]->IsEliminated()) {
+                ENG_LOG_INFO("Faction[{}] eliminated.", i);
                 factions[i]->SetEliminated();
+            }
         }
     }
 

@@ -9,6 +9,8 @@
 #include "engine/game/resources.h"
 #include "engine/game/level.h"
 
+#include <sstream>
+
 #define WORKER_ENTRY_DURATION 1.f
 
 #define MAX_UNLOAD_RANGE 3
@@ -688,9 +690,21 @@ namespace eng {
     }
 
     void ObjectPool::InitObjectCounter(Level& level) {
-        if(factionObjectCount.size() == 0) {
-            for(int i = 0; i < level.factions.size(); i++)
-                factionObjectCount.push_back(0);
+        if(factionObjectCount.size() != 0) {
+            ENG_LOG_WARN("ObjectPool::InitObjectCounter - counter already initialized.");
+            return;
+        }
+
+        for(int i = 0; i < level.factions.size(); i++)
+            factionObjectCount.push_back(0);
+
+        
+        for(Unit& u : units) {
+            factionObjectCount[u.FactionIdx()]++;
+        }
+        
+        for(Building& b : buildings) {
+            factionObjectCount[b.FactionIdx()]++;
         }
     }
 
@@ -877,7 +891,11 @@ namespace eng {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("GameObjects");
 
+        std::stringstream factionObjectCount_str;
+        std::copy(factionObjectCount.begin(), factionObjectCount.end(), std::ostream_iterator<int>(factionObjectCount_str, " "));
+
         ImGui::Text("Units: %d, Buildings: %d, Utilities: %d", (int)units.size(), (int)buildings.size(), (int)utilityObjs.size());
+        ImGui::Text("Faction Object Counter: %s", factionObjectCount_str.str().c_str());
         ImGui::Separator();
 
         // float indent_val = ImGui::GetWindowSize().x * 0.05f;

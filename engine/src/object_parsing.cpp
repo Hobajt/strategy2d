@@ -332,6 +332,7 @@ namespace eng {
         if(config.count("siege"))           data->siege  = config.at("siege");
         if(config.count("transport"))       data->transport  = config.at("transport");
         if(config.count("attack_rotated"))  data->attack_rotated  = config.at("attack_rotated");
+        if(config.count("no_attack"))       data->no_attack  = config.at("no_attack");
 
         data->speed = config.count("speed") ? int(config.at("speed")) : 10;
         data->scale = config.count("scale") ? float(config.at("scale")) : 1.f;

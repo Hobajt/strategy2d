@@ -138,8 +138,9 @@ namespace eng {
     }
 
     void EndCondition::UpdateLinkage(const idMappingType& id_mapping) {
-        for(int i = 0; i < objects.size(); i++) {
-            if(id_mapping.count(objects[i])) objects[i] = id_mapping.at(objects[i]);
+        for(int i = objects.size()-1; i >= 0; i--) {
+            if(id_mapping.count(objects[i]))
+                objects[i] = id_mapping.at(objects[i]);
         }
     }
 
@@ -160,14 +161,14 @@ namespace eng {
     }
 
     void EndCondition::CheckObjects(Level& level) {
-        int alive = 0;
+        int dead = 0;
         FactionObject* obj = nullptr;
 
         for(ObjectID& id : objects) {
-            alive += level.objects.GetObject(id, obj, false);
+            dead += !level.objects.GetObject(id, obj, false);
         }
 
-        state |= (objects_any && alive != objects.size()) || (alive == 0);
+        state |= (dead != 0) && (objects_any || dead == objects.size());
     }
 
     void EndCondition::CheckFactions(Level& level) {
@@ -176,7 +177,7 @@ namespace eng {
             dead += int(id < 0 || id >= level.factions.size() || level.factions[id]->IsEliminated());
         }
         
-        state |= (factions_any && dead != 0) || (dead == factions.size());
+        state |= (dead != 0) && (factions_any || dead == factions.size());
     }
 
     //===== Level =====
@@ -275,6 +276,20 @@ namespace eng {
         }
 
         ENG_LOG_INFO("CustomGame - factions initialized.");
+    }
+
+    void Level::CustomGame_InitEndConditions() {
+        int pID = factions.Player()->ID();
+
+        std::vector<int> factions_to_eliminate = {};
+        for(int i = 0; i < factions.size(); i++) {
+            int fID = factions[i]->ID();
+            if(fID != pID && factions.Diplomacy().AreHostile(pID, fID))
+                factions_to_eliminate.push_back(i);
+        }
+
+        info.end_conditions[EndConditionType::WIN ] = EndCondition(factions_to_eliminate, false);
+        info.end_conditions[EndConditionType::LOSE] = EndCondition(pID);
     }
 
     void Level::EndConditionsEnabled(bool enabled) {

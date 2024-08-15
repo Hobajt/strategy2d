@@ -476,6 +476,9 @@ static bool cmd_switching = true;
             action_stop_time = input.GameTimeDelay((2.f - src.SpeedBuffValue()) * src.Cooldown());
         }
 
+        if(orientation < 0)
+            orientation = src.ori();
+
         //animation values update
         src.act() = anim_ended ? ActionType::IDLE : action.logic.type;
         src.ori() = orientation;
@@ -950,7 +953,7 @@ static bool cmd_switching = true;
                 }
                 return;
             }
-            else {
+            else if(src.CanAttack()) {
                 //within range -> iniate new attack action
                 glm::ivec2 itarget_pos = glm::ivec2(target_pos);
                 bool leftover = ((target_pos.x - itarget_pos.x) + (target_pos.y - itarget_pos.y)) > 0.9f;

@@ -88,6 +88,7 @@ namespace eng {
         glm::ivec2 MapSize() const { return map.Size(); }
 
         void CustomGame_InitFactions(int playerRace, int opponentCount);
+        void CustomGame_InitEndConditions();
 
         void EndConditionsEnabled(bool enabled);
     private:

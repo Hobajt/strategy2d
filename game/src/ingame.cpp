@@ -101,6 +101,7 @@ void IngameController::QuitMission() {
 
 void IngameController::GameOver(bool game_won) {
     //TODO: transition to stats screen, remember the game outcome
+
     // GetTransitionHandler()->InitTransition(
     //     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true)
     // );
@@ -143,6 +144,7 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
             return;
         }
         level.CustomGame_InitFactions(params->race, params->opponents);
+        level.CustomGame_InitEndConditions();
     }
 
     LinkController(level.factions.Player());
