@@ -1415,6 +1415,7 @@ namespace eng {
                 target->ApplyDirectDamage(src);
                 attack_happened = true;
                 target->PanicMovement(level.factions.Diplomacy().AreHostile(src.FactionIdx(), target->FactionIdx()), src.NavigationType() != target->NavigationType());
+                target->LastHitFaction(src.FactionIdx());
             }
         }
         else {
@@ -1444,6 +1445,10 @@ namespace eng {
                 attack_happened = true;
                 if(src != nullptr) {
                     target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                    target->LastHitFaction(src->FactionIdx());
+                }
+                else {
+                    target->LastHitFaction(-1);
                 }
             }
         }
@@ -1474,6 +1479,10 @@ namespace eng {
                 attack_happened = true;
                 if(src != nullptr) {
                     target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                    target->LastHitFaction(src->FactionIdx());
+                }
+                else {
+                    target->LastHitFaction(-1);
                 }
             }
         }
@@ -1525,6 +1534,10 @@ namespace eng {
                             hit_count++;
                             if(src != nullptr) {
                                 target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                                target->LastHitFaction(src->FactionIdx());
+                            }
+                            else {
+                                target->LastHitFaction(-1);
                             }
                         }
                     }
@@ -1580,6 +1593,10 @@ namespace eng {
                             hit_count++;
                             if(src != nullptr) {
                                 target->PanicMovement(level.factions.Diplomacy().AreHostile(src->FactionIdx(), target->FactionIdx()), src->NavigationType() != target->NavigationType());
+                                target->LastHitFaction(src->FactionIdx());
+                            }
+                            else {
+                                target->LastHitFaction(-1);
                             }
                         }
                     }

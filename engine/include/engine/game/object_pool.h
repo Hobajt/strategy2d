@@ -113,6 +113,7 @@ namespace eng {
 
         void InitObjectCounter(Level& level);
         const std::vector<int>& FactionObjectCounter() const { return factionObjectCount; }
+        const std::vector<glm::ivec2>& FactionKillCounter() const { return factionKillCount; }
 
         //===== entrance controller API =====
 
@@ -128,6 +129,8 @@ namespace eng {
         void GetUnitsInsideObject(const ObjectID& container_unit, std::vector<ObjectID>& out_ids) { entranceController.GetUnitsInside(container_unit, out_ids); }
 
         int KillObjectsInside(const ObjectID& id) { return entranceController.KillObjectsInside(*this, id); }
+
+        void IncrementKillCounter(ObjectID::dtype idx, bool isBuilding);
 
         //===== getters =====
 
@@ -196,6 +199,7 @@ namespace eng {
         std::vector<ObjectID::dtype> markedForRemoval;
         std::vector<UtilityObject> to_spawn;                //objects added from other objects Update() method
         std::vector<int> factionObjectCount;
+        std::vector<glm::ivec2> factionKillCount;
 
         EntranceController entranceController;
     };

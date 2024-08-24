@@ -86,7 +86,9 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated) {}
+        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated) {
+        stats.stats = entry.stats;
+    }
 
     FactionsFile::FactionEntry FactionController::Export() {
         FactionsFile::FactionEntry entry = {};
@@ -99,6 +101,7 @@ namespace eng {
         entry.techtree = techtree;
         entry.occlusionData = ExportOcclusion();
         entry.eliminated = eliminated;
+        entry.stats = stats.stats;
 
         return entry;
     }
@@ -112,10 +115,13 @@ namespace eng {
                 if(data->num_id[1] < BuildingType::COUNT) {
                     stats.buildings[data->num_id[1]]++;
                 }
+                stats.stats.total_buildings++;
                 break;
             case ObjectType::UNIT:
-                if(!Unit::IsMinion(data->num_id))
+                if(!Unit::IsMinion(data->num_id)) {
                     stats.unitCount++;
+                    stats.stats.total_units++;
+                }
                 else
                     stats.minionCount++;
                 break;
@@ -242,7 +248,10 @@ namespace eng {
                 throw std::runtime_error("");
         }
 
-        resources[idx] += 100 + ProductionBoost(idx);
+        int value = 100 + ProductionBoost(idx);
+
+        resources[idx] += value;
+        stats.stats.total_resources[idx] += value;
     }
 
     BuildingDataRef FactionController::FetchBuildingData(int buildingID, bool orcBuildings) {
@@ -254,6 +263,15 @@ namespace eng {
 
     int FactionController::UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc) {
         return Tech().UnitUpgradeTier(attack_upgrade, upgrade_type, isOrc);
+    }
+
+    void FactionController::RestoreEndgameStats(const EndgameStats& endgameStats) {
+        stats.stats = endgameStats;
+    }
+
+    void FactionController::UpdateKillCounts(const glm::ivec2& killCounts) {
+        stats.stats.units_killed += killCounts[0];
+        stats.stats.buildings_razed += killCounts[1];
     }
 
     int FactionController::ProductionBoost(int res_idx) {
@@ -397,6 +415,11 @@ namespace eng {
                 ImGui::EndTable();
             }
             ImGui::Text("Tier: %d", stats.tier);
+
+            ImGui::Text("Endgame stats:");
+            ImGui::Text("    Total units: %d, buildings: %d", stats.stats.total_units, stats.stats.total_buildings);
+            ImGui::Text("    Destroyed units: %d, buildings: %d", stats.stats.units_killed, stats.stats.buildings_razed);
+            ImGui::Text("    Total resources: [%d, %d, %d]", stats.stats.total_resources[0], stats.stats.total_resources[1], stats.stats.total_resources[2]);
         }
         ImGui::Separator();
 
@@ -671,10 +694,15 @@ namespace eng {
         ASSERT_MSG(initialized, "Factions are not initialized properly!");
 
         const std::vector<int>& objectCounts = level.objects.FactionObjectCounter();
+        const std::vector<glm::ivec2>& killCounts = level.objects.FactionKillCounter();
         ASSERT_MSG(objectCounts.size() == factions.size(), "Object counter list (from ObjectPool) should have the same length as the number of factions.");
         
         for(int i = 0; i < factions.size(); i++) {
             factions[i]->Update(level);
+
+            if(i < killCounts.size()) {
+                factions[i]->UpdateKillCounts(killCounts[i]);
+            }
 
             if(objectCounts.at(i) == 0 && !factions[i]->IsEliminated()) {
                 ENG_LOG_INFO("Faction[{}] eliminated.", i);
@@ -698,6 +726,12 @@ namespace eng {
         file.diplomacy = diplomacy.Export();
 
         return file;
+    }
+
+    void Factions::RestoreEndgameStats(const FactionsFile& file) {
+        for(int i = 0; i < factions.size(); i++) {
+            factions.at(i)->RestoreEndgameStats(file.factions.at(i).stats);
+        }
     }
 
     void Factions::DBG_GUI() {

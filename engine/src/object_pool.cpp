@@ -516,6 +516,8 @@ namespace eng {
 
         for(int i = 0; i < factionObjectCount.size(); i++)
             factionObjectCount[i] = 0;
+        for(int i = 0; i < factionKillCount.size(); i++)
+            factionKillCount[i] = glm::ivec2(0);
 
         for(Unit& u : units) {
             factionObjectCount[u.FactionIdx()]++;
@@ -553,9 +555,17 @@ namespace eng {
             }
 
             switch(poolIdx) {
-                case 0: units.remove(idx);          break;
-                case 1: buildings.remove(idx);      break;
-                case 2: utilityObjs.remove(idx);    break;
+                case 0:
+                    IncrementKillCounter(idx, false);
+                    units.remove(idx);
+                    break;
+                case 1:
+                    IncrementKillCounter(idx, true);
+                    buildings.remove(idx);
+                    break;
+                case 2:
+                    utilityObjs.remove(idx);
+                    break;
             }
         }
         markedForRemoval.clear();
@@ -563,6 +573,23 @@ namespace eng {
         for(UtilityObject& obj : to_spawn)
             Add(std::move(obj));
         to_spawn.clear();
+    }
+
+    void ObjectPool::IncrementKillCounter(ObjectID::dtype idx, bool isBuilding) {
+        int fIdx = -1;
+        if(isBuilding && buildings.taken(idx))
+            fIdx = buildings[idx].LastHitFaction();
+        else if(!isBuilding && units.taken(idx))
+            fIdx = units[idx].LastHitFaction();
+        
+        if(fIdx < 0)
+            return;
+
+        for(int i = factionKillCount.size() - 1; i <= fIdx; i++) {
+            factionKillCount.push_back(glm::ivec2(0));
+        }
+
+        factionKillCount[fIdx][int(isBuilding)]++;
     }
 
     void ObjectPool::Render() {
@@ -706,6 +733,9 @@ namespace eng {
         for(Building& b : buildings) {
             factionObjectCount[b.FactionIdx()]++;
         }
+
+        for(int i = 0; i < level.factions.size(); i++)
+            factionKillCount.push_back(glm::ivec2(0));
     }
 
     //===== getters =====

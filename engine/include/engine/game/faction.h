@@ -23,6 +23,17 @@ namespace eng {
     namespace ResourceBit { enum { GOLD = 1, WOOD = 2, OIL = 4 }; }
     const char* GameResourceName(int res_idx);
 
+    //===== EndgameStats =====
+
+    //Stats that will be displayed on the gameover screen.
+    struct EndgameStats {
+        int total_units = 0;
+        int total_buildings = 0;
+        glm::ivec3 total_resources = glm::ivec3(0);
+        int units_killed = 0;
+        int buildings_razed = 0;
+    };
+
     //===== FactionsFile =====
 
     //Struct for serialization.
@@ -36,6 +47,7 @@ namespace eng {
             Techtree techtree;
             std::vector<uint32_t> occlusionData;
             bool eliminated;
+            EndgameStats stats;
         public:
             FactionEntry() = default;
             FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
@@ -52,6 +64,7 @@ namespace eng {
         int minionCount = 0;
         std::array<int, BuildingType::COUNT> buildings = {0};
         int tier = 0;
+        EndgameStats stats = {};
     };
 
     //===== FactionsEditor =====
@@ -118,6 +131,9 @@ namespace eng {
 
         //Lookup research tier for unit upgrades.
         int UnitUpgradeTier(bool attack_upgrade, int upgrade_type, bool isOrc);
+
+        void RestoreEndgameStats(const EndgameStats& stats);
+        void UpdateKillCounts(const glm::ivec2& killCounts);
 
         virtual void Update(Level& level) {}
 
@@ -245,6 +261,8 @@ namespace eng {
 
         //Returns false if provided faction isn't tracked from within this object.
         bool IsValidFaction(const FactionControllerRef& faction) const;
+
+        void RestoreEndgameStats(const FactionsFile& file);
 
         FactionsFile Export();
 

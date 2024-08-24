@@ -179,6 +179,9 @@ namespace eng {
 
         virtual bool DetectablyInvisible() const { return false; }
 
+        int LastHitFaction() const { return lastHit_factionID; }
+        void LastHitFaction(int id) { lastHit_factionID = id; }
+
         //====== object stats getters - anything Base/Bonus prefix returns partial value (mostly for GUI), the rest returns final stat value ======
 
         virtual int BasicDamage() const { return data_f->basic_damage; }
@@ -283,6 +286,8 @@ namespace eng {
         bool active = true;
         bool finalized = true;
         bool faction_informed = true;
+
+        int lastHit_factionID = -1;
     };
 
     namespace UnitEffectType {

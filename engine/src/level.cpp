@@ -23,6 +23,7 @@ namespace eng {
     bool Parse_Objects(ObjectsFile& objects, const nlohmann::json& config);
     bool Parse_Camera(const nlohmann::json& config);
     Techtree Parse_Techtree(const nlohmann::json& config);
+    EndgameStats Parse_EndgameStats(const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
@@ -189,6 +190,9 @@ namespace eng {
     }
 
     Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size(), map), objects(*this, std::move(savefile.objects)), initialized(true) {
+        //restore stats after objects were created (otherwise each unit/building will be counted again)
+        factions.RestoreEndgameStats(savefile.factions);
+        
         ENG_LOG_INFO("Level initialization complete.");
     }
 
@@ -430,6 +434,8 @@ namespace eng {
             e.techtree = Parse_Techtree(entry.at(3));
             e.eliminated = (entry.size() > 4) ? entry.at(4) : false;
 
+            e.stats = (entry.size() > 5) ? Parse_EndgameStats(entry.at(5)) : EndgameStats{};
+
             factions.factions.push_back(e);
         }
 
@@ -552,6 +558,21 @@ namespace eng {
         return t;
     }
 
+    EndgameStats Parse_EndgameStats(const nlohmann::json& config) {
+        EndgameStats stats = {};
+
+        int i = 0;
+        stats.total_units           = config.at(i++);
+        stats.total_buildings       = config.at(i++);
+        stats.units_killed          = config.at(i++);
+        stats.buildings_razed       = config.at(i++);
+        stats.total_resources[0]    = config.at(i++);
+        stats.total_resources[1]    = config.at(i++);
+        stats.total_resources[2]    = config.at(i++);
+
+        return stats;
+    }
+
     nlohmann::json Export_Mapfile(const Mapfile& map) {
         using json = nlohmann::json;
 
@@ -622,6 +643,8 @@ namespace eng {
             e.push_back(entry.occlusionData);
             e.push_back(Export_Techtree(entry.techtree));
             e.push_back(entry.eliminated);
+
+            e.push_back({ entry.stats.total_units, entry.stats.total_buildings, entry.stats.units_killed, entry.stats.buildings_razed, entry.stats.total_resources[0], entry.stats.total_resources[1], entry.stats.total_resources[2] });
 
             f.push_back(e);
         }

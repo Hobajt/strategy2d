@@ -101,6 +101,8 @@ void RecapController::Update() {
                 );
             }
             break;
+        case RecapState::GAME_RECAP:
+            break;
     }
 
     interrupted = false;
@@ -132,6 +134,8 @@ void RecapController::Render() {
             }
             btn.Render();
             text.Render();
+            break;
+        case RecapState::GAME_RECAP:
             break;
     }
     /*
@@ -181,6 +185,10 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
         }
             break;
         case RecapState::GAME_RECAP:
+        {
+            //async await for the data issued from OnPreLoad
+            // gameRecapData = static_cast<GameInitParams*>(data);
+        }
             break;
     }
 
@@ -203,6 +211,8 @@ void RecapController::OnStart(int prevStageID, int info, void* data) {
         case RecapState::OBJECTIVES:
             timing = Input::CurrentTime();
             flag = 0;
+            break;
+        case RecapState::GAME_RECAP:
             break;
     }
 }

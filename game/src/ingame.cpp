@@ -1,5 +1,6 @@
 #include "ingame.h"
 #include "menu.h"
+#include "recap.h"
 
 using namespace eng;
 
@@ -100,12 +101,12 @@ void IngameController::QuitMission() {
 }
 
 void IngameController::GameOver(bool game_won) {
+    // gameInitParams.;
     //TODO: transition to stats screen, remember the game outcome
-
-    // GetTransitionHandler()->InitTransition(
-    //     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true)
-    // );
-    // ready_to_run = false;
+    GetTransitionHandler()->InitTransition(
+        TransitionParameters(TransitionDuration::SHORT, TransitionType::FADE_OUT, GameStageName::RECAP, RecapState::GAME_RECAP, (void*)&gameInitParams, true)
+    );
+    ready_to_run = false;
 }
 
 void IngameController::DBG_GUI(bool active) {
@@ -115,6 +116,16 @@ void IngameController::DBG_GUI(bool active) {
         level.map.DBG_GUI();
         if(level.factions.IsInitialized())
             level.factions.DBG_GUI();
+
+        ImGui::Begin("End Conditions");
+        ImGui::Separator();
+        ImGui::Text("Lose condition");
+        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("Win condition");
+        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
+        ImGui::End();
     }
 #endif
 }
@@ -144,8 +155,9 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
             return;
         }
         level.CustomGame_InitFactions(params->race, params->opponents);
-        level.CustomGame_InitEndConditions();
     }
+    //TODO: MOVE ONE LINE ABOVE - IS HERE TO ENSURE SAVEFILES HAVE CONDITION
+    level.CustomGame_InitEndConditions();
 
     LinkController(level.factions.Player());
     ready_to_render = true;
