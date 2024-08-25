@@ -6,6 +6,12 @@
 
 namespace GameStartType { enum { INVALID, CAMPAIGN = 0, CUSTOM, LOAD }; }
 
+struct IngameInitParams {
+    GameInitParams params;
+    std::vector<eng::EndgameFactionData> stats;
+    bool game_won;
+};
+
 class IngameController : public GameStageController, public eng::PlayerFactionController::GUIRequestHandler {
 public:
     IngameController();

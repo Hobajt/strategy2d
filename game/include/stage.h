@@ -99,7 +99,7 @@ public:
     //Value identifying this specific controller type (should be the same for multiple instances of the same controller).
     virtual int GetStageID() const = 0;
 
-    //Triggered when transition into this state begins.
+    //Triggered when transition into this state begins (when the fading out begins).
     //Use for async assets preloading.
     virtual void OnPreLoad(int prevStageID, int info, void* data) {}
 

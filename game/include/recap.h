@@ -23,7 +23,21 @@ struct ScenarioInfo {
 
     bool cinematic = false;
     //...
+
 };
+
+struct ObjectivesScreenData {
+    ScenarioInfo scenario;
+
+    eng::GUI::ScrollText text;
+};
+
+struct RecapScreenData {
+    std::vector<eng::GUI::TextLabel> faction_names;
+    eng::TextureRef background = nullptr;
+};
+
+struct IngameInitParams;
 
 namespace RecapState { enum { INVALID, ACT_INTRO, OBJECTIVES, GAME_RECAP, CREDITS }; }
 
@@ -38,6 +52,7 @@ public:
 
     virtual int GetStageID() const override { return GameStageName::RECAP; }
 
+    virtual void OnPreLoad(int prevStageID, int info, void* data) override;
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
     virtual void OnStop() override;
@@ -48,6 +63,8 @@ private:
     void ActIntro_Reset(bool isOrc);
 
     bool LoadScenarioInfo(int campaignIdx, bool isOrc);
+    void SetupRecapScreen(IngameInitParams* params);
+    bool LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won);
 private:
     int state = RecapState::INVALID;
 
@@ -58,11 +75,12 @@ private:
 
     glm::vec4 textColor = glm::vec4(1.f, 0.f, 0.f, 1.f);
 
-    eng::GUI::ScrollText text;
-    eng::GUI::TextButton btn;
     eng::GUI::SelectionHandler selection = {};
+    eng::GUI::TextButton continue_btn;
 
-    ScenarioInfo scenario;
+    RecapScreenData recap;
+    ObjectivesScreenData objectives;
+
     GameInitParams* gameInitData = nullptr;
 };
 

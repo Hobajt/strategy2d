@@ -1,4 +1,6 @@
 #include "recap.h"
+#include "ingame.h"
+#include "menu.h"
 
 #include <nlohmann/json.hpp>
 
@@ -27,7 +29,7 @@ RecapController::RecapController() {
     btnStyle->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
     btnStyle->holdOffset = glm::ivec2(borderWidth);
 
-    btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 
+    continue_btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 
         this, [](GUI::ButtonCallbackHandler* handler, int id) {
             static_cast<RecapController*>(handler)->interrupted = true;
         }
@@ -38,7 +40,7 @@ RecapController::RecapController() {
     textStyle->textColor = glm::vec4(1.f);
     textStyle->color = glm::vec4(0.f);
 
-    text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
+    objectives.text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
 }
 
 void RecapController::Update() {
@@ -81,8 +83,9 @@ void RecapController::Update() {
             break;
         }
         case RecapState::OBJECTIVES:
+        {
             //scroll until all the text is gone
-            if(text.ScrollUpdate(input.deltaTime_real * OBJ_SCROLL_SPEED) && flag == 0) {
+            if(objectives.text.ScrollUpdate(input.deltaTime_real * OBJ_SCROLL_SPEED) && flag == 0) {
                 timing = currentTime;
                 flag = 1;
                 LOG_TRACE("RecapState::OBJECTIVES - scroll over");
@@ -91,8 +94,8 @@ void RecapController::Update() {
             bool conditionMet = (flag == 1 && currentTime >= timing + OBJ_AFTERSROLL_DELAY);
             interrupted |= (input.enter || input.space);
 
-            selection.Update(&btn);
-            btn.OnHighlight();
+            selection.Update(&continue_btn);
+            continue_btn.OnHighlight();
 
             //transition to game on key interrupt or when all the text is gone
             if(interrupted || conditionMet) {
@@ -101,8 +104,22 @@ void RecapController::Update() {
                 );
             }
             break;
+        }
         case RecapState::GAME_RECAP:
+        {
+            //TODO:
+            //animate the stats unveiling
+            //      have an interpolation var that will track the revealing of one stat
+            //      once revealed, move to another one
+            //      reveal one stat at a time (for all factions at the same time)
+
+            //detect button presses to skip the unveiling
+
+            //begin transition once the 'Continue' button is pressed
+            //      transition to main menu if game mode is custom game
+            //      transition to Recap-Objectives if game mode is campaign - check where the campaign increment is done (possibly do it here if it's nowhere to be found)
             break;
+        }
     }
 
     interrupted = false;
@@ -115,28 +132,43 @@ void RecapController::Render() {
         case RecapState::ACT_INTRO:
         {
             float fh = (5.f * font->GetRowHeight()) / Window::Get().Height();
-            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, t), scenario.act_background));
-            font->RenderTextCentered(scenario.act_text1.c_str(), glm::vec2(0.f, 0.1f), 4.f, clr_interpolate(glm::vec4(1.f), textColor, t));
-            font->RenderTextCentered(scenario.act_text2.c_str(), glm::vec2(0.f, 0.1f-fh), 5.f, clr_interpolate(glm::vec4(1.f), textColor, t));
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, t), objectives.scenario.act_background));
+            font->RenderTextCentered(objectives.scenario.act_text1.c_str(), glm::vec2(0.f, 0.1f), 4.f, clr_interpolate(glm::vec4(1.f), textColor, t));
+            font->RenderTextCentered(objectives.scenario.act_text2.c_str(), glm::vec2(0.f, 0.1f-fh), 5.f, clr_interpolate(glm::vec4(1.f), textColor, t));
             break;
         }
         case RecapState::OBJECTIVES:
-            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f), scenario.obj_background));
-            font->RenderTextCentered(scenario.obj_title.c_str(), glm::vec2(0.33f, 0.86f), 1.5f, glm::vec4(1.f));
+        {
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f), objectives.scenario.obj_background));
+            font->RenderTextCentered(objectives.scenario.obj_title.c_str(), glm::vec2(0.33f, 0.86f), 1.5f, glm::vec4(1.f));
 
             //objectives window
             float fh = (1.f * font->GetRowHeight()) / Window::Get().Height();
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.56f, -0.53f, -1e-3f), glm::vec2(0.4f, 0.3f), glm::vec4(glm::vec3(0.f), 0.5f)));
             glm::vec2 pos = glm::vec2(0.17f, -0.23f - fh);
             font->RenderText("Objectives:", pos, 1.f);
-            for(int i = 0; i < (int)scenario.obj_objectives.size(); i++) {
-                font->RenderText(scenario.obj_objectives[i].c_str(), glm::vec2(pos.x, pos.y - fh*1.1f - i*fh), 1.f);
+            for(int i = 0; i < (int)objectives.scenario.obj_objectives.size(); i++) {
+                font->RenderText(objectives.scenario.obj_objectives[i].c_str(), glm::vec2(pos.x, pos.y - fh*1.1f - i*fh), 1.f);
             }
-            btn.Render();
-            text.Render();
+            continue_btn.Render();
+            objectives.text.Render();
             break;
+        }
         case RecapState::GAME_RECAP:
+        {
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(0.f), recap.background));
+
+            //TODO:
+
+            //render background
+
+            //render fully visible stat columns
+            //render interpolated stat column
+            //render the continue button once unveiling is done
+            //render the texts
+
             break;
+        }
     }
     /*
     render() depends on state:
@@ -148,6 +180,32 @@ void RecapController::Render() {
     */
 }
 
+void RecapController::OnPreLoad(int prevStageID, int info, void* data) {
+    int state = info;
+    switch(state) {
+        case RecapState::GAME_RECAP:
+        {
+            IngameInitParams* params = nullptr;
+            try {
+                params = static_cast<IngameInitParams*>(data);
+            } catch(std::exception&) {
+                params = nullptr;
+            }
+
+            //invalid data - transition to main menu
+            if(params == nullptr) {
+                LOG_ERROR("RecapState::Recap - invalid data recieved, switching to main menu");
+                GetTransitionHandler()->InitTransition(
+                    TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true),
+                    true
+                );
+                return;
+            }
+            break;
+        }
+    }
+}
+
 void RecapController::OnPreStart(int prevStageID, int info, void* data) {
     //substage identification
     state = info;
@@ -156,7 +214,7 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
             break;
         case RecapState::ACT_INTRO:
             //can only be triggered if cinematic was played (data is already loaded)
-            ActIntro_Reset(scenario.isOrc);
+            ActIntro_Reset(objectives.scenario.isOrc);
             break;
         case RecapState::OBJECTIVES:
         {
@@ -166,7 +224,7 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
             bool isOrc = gameInitData->race == GameParams::Race::ORC;
 
             //load scenario info
-            if(cIdx != scenario.campaignIdx || isOrc != scenario.isOrc) {
+            if(cIdx != objectives.scenario.campaignIdx || isOrc != objectives.scenario.isOrc) {
                 if(!LoadScenarioInfo(cIdx, isOrc)) {
                     LOG_WARN("Info file not found for scenario '{}_{}'.", isOrc ? "oc" : "hu", cIdx);
                 }
@@ -174,22 +232,21 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
 
             //optional switch to cinematic/act intro substages (based on loaded config)
             if(prevStageID == GameStageName::MAIN_MENU) {
-                if(scenario.cinematic) {
+                if(objectives.scenario.cinematic) {
                     //TODO:
                 }
-                else if(scenario.act) {
+                else if(objectives.scenario.act) {
                     state = RecapState::ACT_INTRO;
-                    ActIntro_Reset(scenario.isOrc);
+                    ActIntro_Reset(objectives.scenario.isOrc);
                 }
             }
-        }
             break;
+        }
         case RecapState::GAME_RECAP:
         {
-            //async await for the data issued from OnPreLoad
-            // gameRecapData = static_cast<GameInitParams*>(data);
-        }
+            SetupRecapScreen(static_cast<IngameInitParams*>(data));
             break;
+        }
     }
 
     /*what stages can transition to recapStage:
@@ -239,20 +296,20 @@ void RecapController::ActIntro_Reset(bool isOrc) {
     flag = 0;
     t = 0.f;
     textColor = isOrc ? glm::vec4(1.f, 0.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f);
-    text.UpdateText(scenario.obj_text);
-    text.SetPositionPreset(GUI::ScrollTextPosition::FIRST_LINE_GONE);
+    objectives.text.UpdateText(objectives.scenario.obj_text);
+    objectives.text.SetPositionPreset(GUI::ScrollTextPosition::FIRST_LINE_GONE);
 }
 
 bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
     using json = nlohmann::json;
 
     //data already loaded
-    if(scenario.campaignIdx == campaignIdx && scenario.isOrc == isOrc) {
+    if(objectives.scenario.campaignIdx == campaignIdx && objectives.scenario.isOrc == isOrc) {
         return true;
     }
 
-    scenario.campaignIdx = campaignIdx;
-    scenario.isOrc = isOrc;
+    objectives.scenario.campaignIdx = campaignIdx;
+    objectives.scenario.isOrc = isOrc;
 
     //load & parse the scenario file
     char filepath[512];
@@ -266,32 +323,51 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
     
     if(data.count("obj")) {
         auto& obj = data.at("obj");
-        scenario.obj_text = obj.at("text");
-        scenario.obj_title = obj.at("title");
-        scenario.obj_background = Resources::LoadTexture(obj.at("background"), true);
-        scenario.obj_objectives.clear();
+        objectives.scenario.obj_text = obj.at("text");
+        objectives.scenario.obj_title = obj.at("title");
+        objectives.scenario.obj_background = Resources::LoadTexture(obj.at("background"), true);
+        objectives.scenario.obj_objectives.clear();
         for(auto& o : obj.at("objectives")) {
-            scenario.obj_objectives.push_back(o);
+            objectives.scenario.obj_objectives.push_back(o);
         }
     }
     else {
         //use default
-        scenario.obj_text = "";
-        scenario.obj_background = nullptr;
+        objectives.scenario.obj_text = "";
+        objectives.scenario.obj_background = nullptr;
     }
 
     if(data.count("act")) {
-        scenario.act = true;
+        objectives.scenario.act = true;
         auto& act = data.at("act");
-        scenario.act_text1 = act.at("text1");
-        scenario.act_text2 = act.at("text2");
-        scenario.act_background = Resources::LoadTexture(act.at("background"), true);
+        objectives.scenario.act_text1 = act.at("text1");
+        objectives.scenario.act_text2 = act.at("text2");
+        objectives.scenario.act_background = Resources::LoadTexture(act.at("background"), true);
     }
 
     if(data.count("cinematic")) {
-        scenario.cinematic = true;
+        objectives.scenario.cinematic = true;
         //TODO: campaign cinematics
     }
 
     return true;
+}
+
+void RecapController::SetupRecapScreen(IngameInitParams* params) {
+    LoadRecapBackground(params->params.campaignIdx, bool(params->params.race), params->game_won);
+
+    
+}
+
+bool RecapController::LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won) {
+    char filepath[512];
+    snprintf(filepath, sizeof(filepath), "res/textures/backgrounds/end_%s_%s.json", isOrc ? "oc" : "hu", game_won ? "win" : "loss");
+
+    try {
+        recap.background = Resources::LoadTexture(filepath, true);
+    }
+    catch(std::exception&) {
+        recap.background = nullptr;
+    }
+    return recap.background != nullptr;
 }

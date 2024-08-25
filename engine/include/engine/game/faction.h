@@ -34,6 +34,12 @@ namespace eng {
         int buildings_razed = 0;
     };
 
+    struct EndgameFactionData {
+        EndgameStats stats;
+        std::string name;
+        int controllerID;
+    };
+
     //===== FactionsFile =====
 
     //Struct for serialization.
@@ -134,6 +140,7 @@ namespace eng {
 
         void RestoreEndgameStats(const EndgameStats& stats);
         void UpdateKillCounts(const glm::ivec2& killCounts);
+        EndgameFactionData GetEndgameStats() const;
 
         virtual void Update(Level& level) {}
 
@@ -263,6 +270,7 @@ namespace eng {
         bool IsValidFaction(const FactionControllerRef& faction) const;
 
         void RestoreEndgameStats(const FactionsFile& file);
+        std::vector<EndgameFactionData> GetEndgameStats() const;
 
         FactionsFile Export();
 

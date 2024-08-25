@@ -6,7 +6,7 @@ using namespace eng;
 
 static std::string stage_names[] = { "CAMPAIGN", "CUSTOM", "LOAD" };
 
-static GameInitParams gameInitParams = {};
+static IngameInitParams gameInitParams = {};
 
 IngameController::IngameController() {}
 
@@ -84,11 +84,11 @@ void IngameController::PauseToggleRequest() {
 }
 
 void IngameController::ChangeLevel(const std::string& filename) {
-    gameInitParams = {};
-    gameInitParams.filepath = filename;
+    gameInitParams.params = {};
+    gameInitParams.params.filepath = filename;
 
     GetTransitionHandler()->InitTransition(
-        TransitionParameters(TransitionDuration::SHORT, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::LOAD, (void*)&gameInitParams, true, true)
+        TransitionParameters(TransitionDuration::SHORT, TransitionType::FADE_OUT, GameStageName::INGAME, GameStartType::LOAD, (void*)&gameInitParams.params, true, true)
     );
     ready_to_run = false;
 }
@@ -101,8 +101,9 @@ void IngameController::QuitMission() {
 }
 
 void IngameController::GameOver(bool game_won) {
-    // gameInitParams.;
-    //TODO: transition to stats screen, remember the game outcome
+    gameInitParams.stats = level.factions.GetEndgameStats();
+    gameInitParams.game_won = game_won;
+
     GetTransitionHandler()->InitTransition(
         TransitionParameters(TransitionDuration::SHORT, TransitionType::FADE_OUT, GameStageName::RECAP, RecapState::GAME_RECAP, (void*)&gameInitParams, true)
     );
@@ -158,6 +159,7 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
     }
     //TODO: MOVE ONE LINE ABOVE - IS HERE TO ENSURE SAVEFILES HAVE CONDITION
     level.CustomGame_InitEndConditions();
+    gameInitParams.params = *params;
 
     LinkController(level.factions.Player());
     ready_to_render = true;

@@ -289,6 +289,16 @@ namespace eng {
         return 10;
     }
 
+    EndgameFactionData FactionController::GetEndgameStats() const {
+        EndgameFactionData data = {};
+
+        data.stats = stats.stats;
+        data.name = name;
+        data.controllerID = controllerID;
+
+        return data;
+    }
+
     bool FactionController::ActionButtonSetup(GUI::ActionButtonDescription& btn, bool isOrc) const {
         switch(btn.command_id) {
             case GUI::ActionButton_CommandType::RESEARCH:
@@ -732,6 +742,16 @@ namespace eng {
         for(int i = 0; i < factions.size(); i++) {
             factions.at(i)->RestoreEndgameStats(file.factions.at(i).stats);
         }
+    }
+
+    std::vector<EndgameFactionData> Factions::GetEndgameStats() const {
+        std::vector<EndgameFactionData> stats = {};
+
+        for(const auto& faction : factions) {
+            stats.push_back(faction->GetEndgameStats());
+        }
+
+        return stats;
     }
 
     void Factions::DBG_GUI() {
