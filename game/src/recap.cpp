@@ -4,7 +4,6 @@
 
 #include <nlohmann/json.hpp>
 
-
 using namespace eng;
 
 #define ACT_INTRO_FADEIN_TIME 2.f
@@ -13,34 +12,14 @@ using namespace eng;
 #define OBJ_SCROLL_SPEED 1.f
 #define OBJ_AFTERSROLL_DELAY 2.f
 
+constexpr float RECAP_HEIGHT = 1.f / 20.f;
+
+//==============================================
+
 RecapController::RecapController() {
-    glm::vec2 buttonSize = glm::vec2(0.16f, 0.05f);
-    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
-    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
-    glm::ivec2 textureSize = ts * upscaleFactor;
-    int borderWidth = 2 * upscaleFactor;
-
-    GUI::StyleRef btnStyle = std::make_shared<GUI::Style>();
-    btnStyle->textColor = glm::vec4(1.f);
-    btnStyle->font = Resources::DefaultFont();
-    btnStyle->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
-    btnStyle->hoverTexture = btnStyle->texture;
-    btnStyle->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
-    btnStyle->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
-    btnStyle->holdOffset = glm::ivec2(borderWidth);
-
-    continue_btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 
-        this, [](GUI::ButtonCallbackHandler* handler, int id) {
-            static_cast<RecapController*>(handler)->interrupted = true;
-        }
-    );
-
-    GUI::StyleRef textStyle = std::make_shared<GUI::Style>();
-    textStyle->font = Resources::DefaultFont();
-    textStyle->textColor = glm::vec4(1.f);
-    textStyle->color = glm::vec4(0.f);
-
-    objectives.text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
+    GUI_Init_ObjectivesScreen();
+    GUI_Init_RecapScreen();
+    GUI_Init_Other();
 }
 
 void RecapController::Update() {
@@ -156,12 +135,25 @@ void RecapController::Render() {
         }
         case RecapState::GAME_RECAP:
         {
+            //TODO: change color back to white once there are actual background textures in use
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(0.f), recap.background));
 
+            //TODO: this is temporary rendering - add the sequential revealing later on
+            recap.outcomeLabel.Render();
+            recap.outcome.Render();
+
+            recap.rankLabel.Render();
+            recap.rank.Render();
+
+            recap.scoreLabel.Render();
+            recap.score.Render();
+
+            for(auto& label : recap.statsLabels) {
+                label.Render();
+            }
+
+
             //TODO:
-
-            //render background
-
             //render fully visible stat columns
             //render interpolated stat column
             //render the continue button once unveiling is done
@@ -354,9 +346,12 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
 }
 
 void RecapController::SetupRecapScreen(IngameInitParams* params) {
+    //load the background texture
     LoadRecapBackground(params->params.campaignIdx, bool(params->params.race), params->game_won);
+    gameInitData = &params->params;
 
-    
+    //setup the screen GUI elements
+    // recap.factions.
 }
 
 bool RecapController::LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won) {
@@ -370,4 +365,65 @@ bool RecapController::LoadRecapBackground(int campaignIdx, bool isOrc, bool game
         recap.background = nullptr;
     }
     return recap.background != nullptr;
+}
+
+//==================================================
+
+void RecapController::GUI_Init_ObjectivesScreen() {
+    GUI::StyleRef textStyle = std::make_shared<GUI::Style>();
+    textStyle->font = Resources::DefaultFont();
+    textStyle->textColor = glm::vec4(1.f);
+    textStyle->color = glm::vec4(0.f);
+
+    objectives.text = GUI::ScrollText(glm::vec2(0.31f, -0.3f), glm::vec2(0.48f, 0.37), 0.f, textStyle, "placeholder");
+}
+
+void RecapController::GUI_Init_RecapScreen() {
+    GUI::StyleRef text_sml = std::make_shared<GUI::Style>();
+    GUI::StyleRef text_mid = std::make_shared<GUI::Style>();
+    GUI::StyleRef text_big = std::make_shared<GUI::Style>();
+    text_sml->font = text_mid->font = text_big->font = Resources::DefaultFont();
+    text_sml->color = text_mid->color = text_big->color = glm::vec4(0.f);
+    text_sml->textColor = text_mid->textColor = text_big->textColor = glm::vec4(1.f);
+    text_sml->textScale = 1.f;
+    text_mid->textScale = 2.f;
+    text_big->textScale = 4.f;
+
+    recap.outcomeLabel  = GUI::TextLabel(glm::vec2(-2.f/3.f, -1.f + 1.50f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 1.f*RECAP_HEIGHT), 1.f, text_sml, "Outcome");
+    recap.outcome       = GUI::TextLabel(glm::vec2(-2.f/3.f, -1.f + 3.75f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 2.f*RECAP_HEIGHT), 1.f, text_big, "Victory!");
+
+    recap.rankLabel  = GUI::TextLabel(glm::vec2(0.f, -1.f + 1.50f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 1.0f*RECAP_HEIGHT), 1.f, text_sml, "Rank");
+    recap.rank       = GUI::TextLabel(glm::vec2(0.f, -1.f + 3.75f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 1.5f*RECAP_HEIGHT), 1.f, text_mid, "Peasant");
+
+    recap.scoreLabel  = GUI::TextLabel(glm::vec2(2.f/3.f, -1.f + 1.50f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 1.0f*RECAP_HEIGHT), 1.f, text_sml, "Score");
+    recap.score       = GUI::TextLabel(glm::vec2(2.f/3.f, -1.f + 3.75f*RECAP_HEIGHT), glm::vec2(1.f/3.f, 1.5f*RECAP_HEIGHT), 1.f, text_mid, "1234567");
+
+    constexpr int sz = RecapScreenData::STATS_COUNT;
+    std::array<const char*, RecapScreenData::STATS_COUNT> stat_names = { "Units", "Buildings", "Gold", "Lumber", "Oil", "Kills", "Razings" };
+    for(int i = 0; i < recap.statsLabels.size(); i++) {
+        recap.statsLabels.at(i) = GUI::TextLabel(glm::vec2((2.f*i)/sz - 1.f + 1.f / (sz+0.5f), -1.f + 7.5f*RECAP_HEIGHT), glm::vec2(1.f/(sz+0.5f), 1.5f*RECAP_HEIGHT), 1.f, text_sml, stat_names.at(i));
+    }
+}
+
+void RecapController::GUI_Init_Other() {
+    glm::vec2 buttonSize = glm::vec2(0.16f, 0.05f);
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::ivec2 textureSize = ts * upscaleFactor;
+    int borderWidth = 2 * upscaleFactor;
+
+    GUI::StyleRef btnStyle = std::make_shared<GUI::Style>();
+    btnStyle->textColor = glm::vec4(1.f);
+    btnStyle->font = Resources::DefaultFont();
+    btnStyle->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, false));
+    btnStyle->hoverTexture = btnStyle->texture;
+    btnStyle->holdTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear(textureSize.x, textureSize.y, borderWidth, borderWidth, 0, true));
+    btnStyle->highlightTexture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonHighlightTexture(textureSize.x, textureSize.y, borderWidth));
+    btnStyle->holdOffset = glm::ivec2(borderWidth);
+
+    continue_btn = GUI::TextButton(glm::vec2(0.58f, 0.92f), buttonSize, 0.f, btnStyle, "Continue", 
+        this, [](GUI::ButtonCallbackHandler* handler, int id) {
+            static_cast<RecapController*>(handler)->interrupted = true;
+        }
+    );
 }

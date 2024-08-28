@@ -32,9 +32,28 @@ struct ObjectivesScreenData {
     eng::GUI::ScrollText text;
 };
 
+struct FactionGUIElements {
+    //TODO: maybe use progress bar instead
+    std::array<eng::GUI::ValueBar, 7> stats;
+    eng::GUI::TextLabel factionName;
+};
+
 struct RecapScreenData {
-    std::vector<eng::GUI::TextLabel> faction_names;
+    static constexpr int STATS_COUNT = 7;
+
     eng::TextureRef background = nullptr;
+
+    eng::GUI::TextLabel outcomeLabel;
+    eng::GUI::TextLabel outcome;
+
+    eng::GUI::TextLabel rankLabel;
+    eng::GUI::TextLabel rank;
+
+    eng::GUI::TextLabel scoreLabel;
+    eng::GUI::TextLabel score;
+
+    std::array<eng::GUI::TextLabel, STATS_COUNT> statsLabels;
+    std::vector<FactionGUIElements> factions;
 };
 
 struct IngameInitParams;
@@ -65,6 +84,10 @@ private:
     bool LoadScenarioInfo(int campaignIdx, bool isOrc);
     void SetupRecapScreen(IngameInitParams* params);
     bool LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won);
+
+    void GUI_Init_ObjectivesScreen();
+    void GUI_Init_RecapScreen();
+    void GUI_Init_Other();
 private:
     int state = RecapState::INVALID;
 
