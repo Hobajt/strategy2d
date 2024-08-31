@@ -120,6 +120,19 @@ namespace eng {
         return NUM_FACTION_COLORS;
     }
 
+    std::array<glm::vec4, ColorPalette::COLOR_COUNT> ColorPalette::Colors() {
+        return std::array<glm::vec4, ColorPalette::COLOR_COUNT>{
+            rgba{164, 0, 0, 255},
+            rgba{0, 60, 192, 255},
+            rgba{44, 180, 148, 255},
+            rgba{152, 72, 176, 255},
+            rgba{240, 132, 20, 255},
+            rgba{40, 40, 60, 255},
+            rgba{224, 224, 224, 255},
+            rgba{252, 252, 72, 255},
+        };
+    }
+
     void ColorPalette::Move(ColorPalette&& p) noexcept {
         texture = p.texture;
         data = p.data;

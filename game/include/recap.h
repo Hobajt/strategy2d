@@ -33,9 +33,14 @@ struct ObjectivesScreenData {
 };
 
 struct FactionGUIElements {
-    //TODO: maybe use progress bar instead
-    std::array<eng::GUI::ValueBar, 7> stats;
     eng::GUI::TextLabel factionName;
+    std::array<int, 7> values;
+    std::array<eng::GUI::ValueBar, 7> stats;
+public:
+    FactionGUIElements() = default;
+    FactionGUIElements(const std::string& name, const eng::EndgameStats& stats, const eng::GUI::StyleRef& bar_style, const eng::GUI::StyleRef& text_style, const glm::vec4& color, int pos);
+
+    void Render();
 };
 
 struct RecapScreenData {

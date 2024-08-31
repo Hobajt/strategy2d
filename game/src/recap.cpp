@@ -152,6 +152,10 @@ void RecapController::Render() {
                 label.Render();
             }
 
+            for(auto& faction : recap.factions) {
+                faction.Render();
+            }
+
 
             //TODO:
             //render fully visible stat columns
@@ -350,8 +354,29 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
     LoadRecapBackground(params->params.campaignIdx, bool(params->params.race), params->game_won);
     gameInitData = &params->params;
 
-    //setup the screen GUI elements
-    // recap.factions.
+    auto colors = ColorPalette::Colors();
+    
+    glm::vec2 buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::vec2 textureSize = ts * upscaleFactor;
+    int borderWidth = 7 * upscaleFactor;
+    glm::vec2 border_size = 7.f / ts;
+
+    GUI::StyleRef text_style = recap.rankLabel.Style();
+    GUI::StyleRef bar_style = std::make_shared<GUI::Style>();
+    bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2));
+
+    recap.outcome.Setup(params->game_won ? "Victory!" : "Defeat!");
+
+    //setup GUI elements for each ingame faction
+    int row = 1;
+    for(const auto& f : params->stats) {
+        if(f.controllerID == FactionControllerID::NATURE)
+            continue;
+        glm::vec4 color = (f.colorIdx >= 0) ? colors.at(f.colorIdx) : colors.at(0);
+        recap.factions.push_back(FactionGUIElements(f.name, f.stats, bar_style, text_style, color, row++));
+    }
 }
 
 bool RecapController::LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won) {
@@ -426,4 +451,51 @@ void RecapController::GUI_Init_Other() {
             static_cast<RecapController*>(handler)->interrupted = true;
         }
     );
+}
+
+FactionGUIElements::FactionGUIElements(const std::string& name, const eng::EndgameStats& factionStats, const eng::GUI::StyleRef& bar_style, const eng::GUI::StyleRef& text_style, const glm::vec4& color, int pos) {
+    int j = 0;
+    values.at(j++) = factionStats.total_units;
+    values.at(j++) = factionStats.total_buildings;
+    values.at(j++) = factionStats.total_resources[0];
+    values.at(j++) = factionStats.total_resources[1];
+    values.at(j++) = factionStats.total_resources[2];
+    values.at(j++) = factionStats.units_killed;
+    values.at(j++) = factionStats.buildings_razed;
+
+    constexpr int sz = RecapScreenData::STATS_COUNT;
+
+    factionName = GUI::TextLabel(
+        glm::vec2((2.f*0)/sz - 1.f + 1.f / (sz+0.5f), -1.f + (7.5f + pos*4.75f)*RECAP_HEIGHT), 
+        glm::vec2(1.f/(sz+0.5f), 1.5f*RECAP_HEIGHT), 
+        1.f, 
+        text_style,
+        name
+    );
+
+    glm::vec2 size = glm::vec2(1.f/(sz+0.5f), 1.f*RECAP_HEIGHT);
+    glm::vec2 border_size = size * glm::vec2(0.15f, 2.2f);
+
+    for(int i = 0; i < sz; i++) {
+        stats.at(i) = GUI::ValueBar(
+            glm::vec2((2.f*i)/sz - 1.f + 1.f / (sz+0.5f), -1.f + (10.f + pos*4.75f)*RECAP_HEIGHT), 
+            size, 
+            1.f, 
+            bar_style, 
+            border_size, 
+            text_style, 
+            color, 
+            "0"
+        );
+        // stats.at(i).Setup(0.f, "0");
+    }
+}
+
+void FactionGUIElements::Render() {
+    factionName.Render();
+
+    //TODO: do slow revealing and sliding bar filling (based on passed in params)
+    for(auto& stat : stats) {
+        stat.Render();
+    }
 }

@@ -118,15 +118,7 @@ void IngameController::DBG_GUI(bool active) {
         if(level.factions.IsInitialized())
             level.factions.DBG_GUI();
 
-        ImGui::Begin("End Conditions");
-        ImGui::Separator();
-        ImGui::Text("Lose condition");
-        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
-        ImGui::Separator();
-        ImGui::Text("Win condition");
-        level.info.end_conditions[EndConditionType::LOSE].DBG_GUI();
-        ImGui::Separator();
-        ImGui::End();
+        level.info.DBG_GUI();
     }
 #endif
 }

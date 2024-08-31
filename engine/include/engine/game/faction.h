@@ -38,6 +38,7 @@ namespace eng {
         EndgameStats stats;
         std::string name;
         int controllerID;
+        int colorIdx;
     };
 
     //===== FactionsFile =====

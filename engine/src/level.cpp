@@ -84,6 +84,26 @@ namespace eng {
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
     }
 
+    void LevelInfo::DBG_GUI() {
+        ImGui::Begin("End Conditions");
+        ImGui::Separator();
+        ImGui::Text("Lose condition");
+        end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("Win condition");
+        end_conditions[EndConditionType::LOSE].DBG_GUI();
+        ImGui::Separator();
+        ImGui::Text("Force condition");
+        if(ImGui::Button("LOSE")) {
+            end_conditions[EndConditionType::LOSE].Set();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("WIN")) {
+            end_conditions[EndConditionType::WIN].Set();
+        }
+        ImGui::End();
+    }
+
     void Savefile::Save(const std::string& filepath) {
         using json = nlohmann::json;
 
@@ -147,11 +167,11 @@ namespace eng {
 
     void EndCondition::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
-        ImGui::Text("Objects: %d", objects.size());
+        ImGui::Text("Objects: %d", (int)objects.size());
         ImGui::SameLine();
         ImGui::Text("Any: %d", objects_any);
 
-        ImGui::Text("Factions: %d", factions.size());
+        ImGui::Text("Factions: %d", (int)factions.size());
         ImGui::SameLine();
         ImGui::Text("Any: %d", factions_any);
 
@@ -432,7 +452,7 @@ namespace eng {
             }
 
             e.techtree = Parse_Techtree(entry.at(3));
-            e.eliminated = (entry.size() > 4) ? entry.at(4) : false;
+            e.eliminated = (entry.size() > 4) ? bool(entry.at(4)) : false;
 
             e.stats = (entry.size() > 5) ? Parse_EndgameStats(entry.at(5)) : EndgameStats{};
 

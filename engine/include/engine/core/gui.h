@@ -121,6 +121,7 @@ namespace eng::GUI {
         void SetHighlight(bool active) { highlight = active; }
 
         void ChangeStyle(const StyleRef& style_) { style = style_; }
+        GUI::StyleRef Style() const { return style; }
     protected:
         virtual void InnerRender();
 
@@ -512,6 +513,7 @@ namespace eng::GUI {
 
     class ValueBar : public Element {
     public:
+        ValueBar() = default;
         ValueBar(const glm::vec2& offset, const glm::vec2& size, float zOffset, 
             const StyleRef& bar_style, const glm::vec2& borders_size, const StyleRef& text_style, const glm::vec4 filler_clr, const std::string& text);
         

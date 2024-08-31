@@ -295,6 +295,7 @@ namespace eng {
         data.stats = stats.stats;
         data.name = name;
         data.controllerID = controllerID;
+        data.colorIdx = colorIdx;
 
         return data;
     }

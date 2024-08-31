@@ -28,6 +28,7 @@ namespace eng {
         void UpdateLinkage(const idMappingType& id_mapping);
 
         bool IsMet() const { return state && !disabled; }
+        void Set() { state = true; }
 
         void DBG_GUI();
     private:
@@ -54,6 +55,8 @@ namespace eng {
         int preferred_opponents = 1;
         std::vector<glm::ivec2> startingLocations;
         EndConditions end_conditions;
+    public:
+        void DBG_GUI();
     };
 
     //===== Savefile =====

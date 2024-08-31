@@ -14,6 +14,8 @@ namespace eng {
     //Wrapper for a color palette texture.
     class ColorPalette {
     public:
+        static constexpr int COLOR_COUNT = 8;
+    public:
         ColorPalette(const glm::ivec2& size, const std::string& name = "colorPalette");
         ColorPalette(bool dummy);
 
@@ -43,6 +45,8 @@ namespace eng {
         glm::ivec2 Size() const { return size; }
 
         static int FactionColorCount();
+
+        static std::array<glm::vec4, COLOR_COUNT> Colors();
     private:
         void Move(ColorPalette&&) noexcept;
         void Release() noexcept;
