@@ -25,6 +25,18 @@ namespace eng {
         return names[res_idx];
     }
 
+    std::array<int,7> EndgameStats::ToArray() const {
+        return std::array<int,7>{
+            total_units,
+            total_buildings,
+            total_resources[0],
+            total_resources[1],
+            total_resources[2],
+            units_killed,
+            buildings_razed
+        };
+    }
+
     FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_, int id_)
         : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_), eliminated(false) {}
 

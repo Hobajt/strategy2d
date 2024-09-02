@@ -86,17 +86,51 @@ void RecapController::Update() {
         }
         case RecapState::GAME_RECAP:
         {
-            //TODO:
-            //animate the stats unveiling
-            //      have an interpolation var that will track the revealing of one stat
-            //      once revealed, move to another one
-            //      reveal one stat at a time (for all factions at the same time)
+            static std::array<float,17> time_steps = {
+                1.f, 
+                1.f, 1.f, 1.f,
+                1.f, 0.1f, 1.f, 0.1f, 1.f, 0.1f, 1.f, 0.1f, 1.f, 0.1f, 1.f, 0.1f, 1.f
+            };
 
-            //detect button presses to skip the unveiling
+            if(flag < time_steps.size()) {
+                //GUI elements 'slow reveal' animation
+                interrupted |= (input.lmb.down() || input.rmb.down() || input.enter || input.space);
+                t = (currentTime - timing) / time_steps.at(flag);
 
-            //begin transition once the 'Continue' button is pressed
-            //      transition to main menu if game mode is custom game
-            //      transition to Recap-Objectives if game mode is campaign - check where the campaign increment is done (possibly do it here if it's nowhere to be found)
+                if(t >= 1.f) {
+                    RecapSubstage_Finalize(flag);
+
+                    timing = Input::CurrentTime();
+                    flag++;
+                }
+                else {
+                    RecapSubstage_Interpolate(flag, t);
+                }
+
+                if(flag >= 2) {
+                    selection.Update(&continue_btn);
+                    continue_btn.OnHighlight();
+                }
+
+                //display all when interrupted
+                if(interrupted) {
+                    for(int i = 0; i < time_steps.size(); i++) {
+                        RecapSubstage_Finalize(i);
+                    }
+                    flag = time_steps.size();
+                    interrupted = false;
+                }
+            }
+            else {
+                //unveiling animation done
+                selection.Update(&continue_btn);
+                continue_btn.OnHighlight();
+
+                //transition to game on key interrupt or when all the text is gone
+                if(interrupted) {
+                    RecapSubstage_TransitionOut();
+                }
+            }
             break;
         }
     }
@@ -138,7 +172,6 @@ void RecapController::Render() {
             //TODO: change color back to white once there are actual background textures in use
             Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(0.f), recap.background));
 
-            //TODO: this is temporary rendering - add the sequential revealing later on
             recap.outcomeLabel.Render();
             recap.outcome.Render();
 
@@ -156,12 +189,7 @@ void RecapController::Render() {
                 faction.Render();
             }
 
-
-            //TODO:
-            //render fully visible stat columns
-            //render interpolated stat column
-            //render the continue button once unveiling is done
-            //render the texts
+            continue_btn.Render();
 
             break;
         }
@@ -266,6 +294,9 @@ void RecapController::OnStart(int prevStageID, int info, void* data) {
             flag = 0;
             break;
         case RecapState::GAME_RECAP:
+            timing = Input::CurrentTime();
+            flag = 0;
+            interrupted = false;
             break;
     }
 }
@@ -369,6 +400,26 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
 
     recap.outcome.Setup(params->game_won ? "Victory!" : "Defeat!");
 
+    //hide all the GUI to allow the 'slow reveal' animation
+    recap.outcome.Enable(false);
+    recap.outcomeLabel.Enable(false);
+
+    recap.rank.Enable(false);
+    recap.rankLabel.Enable(false);
+
+    recap.score.Enable(false);
+    recap.scoreLabel.Enable(false);
+
+    continue_btn.Enable(false);
+
+    for(auto& label : recap.statsLabels) {
+        label.Enable(false);
+    }
+
+    for(int i = 0; i < RecapScreenData::STATS_COUNT; i++) {
+        recap.statsMax.at(i) = 0;
+    }
+
     //setup GUI elements for each ingame faction
     int row = 1;
     for(const auto& f : params->stats) {
@@ -376,6 +427,13 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
             continue;
         glm::vec4 color = (f.colorIdx >= 0) ? colors.at(f.colorIdx) : colors.at(0);
         recap.factions.push_back(FactionGUIElements(f.name, f.stats, bar_style, text_style, color, row++));
+
+        auto stats_arr = f.stats.ToArray();
+        for(int i = 0; i < RecapScreenData::STATS_COUNT; i++) {
+            if(recap.statsMax.at(i) < stats_arr.at(i)) {
+                recap.statsMax.at(i) = stats_arr.at(i);
+            }
+        }
     }
 }
 
@@ -453,15 +511,58 @@ void RecapController::GUI_Init_Other() {
     );
 }
 
+void RecapController::RecapSubstage_Interpolate(int idx, float t) {
+    if(idx >= 4 && idx <= 16 && idx % 2 == 0) {
+        idx = (idx-4)/2;
+        recap.statsLabels.at(idx).Enable(true);
+        for(auto& f : recap.factions)
+            f.Interpolate(idx, t, recap.statsMax.at(idx));
+    }
+}
+
+void RecapController::RecapSubstage_Finalize(int idx) {
+    switch(idx) {
+    case 1:
+        recap.outcome.Enable(true);
+        recap.outcomeLabel.Enable(true);
+        break;
+    case 2:
+        recap.rank.Enable(true);
+        recap.rankLabel.Enable(true);
+        break;
+    case 3:
+        recap.score.Enable(true);
+        recap.scoreLabel.Enable(true);
+        continue_btn.Enable(true);
+        break;
+    case 4:
+    case 6:
+    case 8:
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+        recap.statsLabels.at((idx-4)/2).Enable(true);
+        for(auto& f : recap.factions)
+            f.Finalize((idx-4)/2, recap.statsMax.at((idx-4)/2));
+        break;
+    default:
+        break;
+    }
+}
+
+void RecapController::RecapSubstage_TransitionOut() {
+    // GetTransitionHandler()->InitTransition(
+    //     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, 0, (void*)gameInitData, true)
+    // );
+
+    //begin transition once the 'Continue' button is pressed
+    //      transition to main menu if game mode is custom game
+    //      transition to Recap-Objectives if game mode is campaign - check where the campaign increment is done (possibly do it here if it's nowhere to be found)
+}
+
 FactionGUIElements::FactionGUIElements(const std::string& name, const eng::EndgameStats& factionStats, const eng::GUI::StyleRef& bar_style, const eng::GUI::StyleRef& text_style, const glm::vec4& color, int pos) {
-    int j = 0;
-    values.at(j++) = factionStats.total_units;
-    values.at(j++) = factionStats.total_buildings;
-    values.at(j++) = factionStats.total_resources[0];
-    values.at(j++) = factionStats.total_resources[1];
-    values.at(j++) = factionStats.total_resources[2];
-    values.at(j++) = factionStats.units_killed;
-    values.at(j++) = factionStats.buildings_razed;
+    values = factionStats.ToArray();
 
     constexpr int sz = RecapScreenData::STATS_COUNT;
 
@@ -472,6 +573,7 @@ FactionGUIElements::FactionGUIElements(const std::string& name, const eng::Endga
         text_style,
         name
     );
+    factionName.Enable(false);
 
     glm::vec2 size = glm::vec2(1.f/(sz+0.5f), 1.f*RECAP_HEIGHT);
     glm::vec2 border_size = size * glm::vec2(0.15f, 2.2f);
@@ -487,15 +589,37 @@ FactionGUIElements::FactionGUIElements(const std::string& name, const eng::Endga
             color, 
             "0"
         );
-        // stats.at(i).Setup(0.f, "0");
+        stats.at(i).Setup(0.f, "0", false);
+        stats.at(i).Enable(false);
     }
 }
 
 void FactionGUIElements::Render() {
     factionName.Render();
-
-    //TODO: do slow revealing and sliding bar filling (based on passed in params)
     for(auto& stat : stats) {
         stat.Render();
     }
+}
+
+void FactionGUIElements::Interpolate(int idx, float t, int maxval) {
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%d", int(t * values.at(idx)));
+
+    if(maxval != 0)
+        t = t * (float(values.at(idx)) / maxval);
+    else
+        t = 0.f;
+
+    factionName.Enable(true);
+    stats.at(idx).Setup(t, buf, true);
+}
+
+void FactionGUIElements::Finalize(int idx, int maxval) {
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%d", values.at(idx));
+
+    float t = (maxval != 0) ? (float(values.at(idx)) / maxval) : 0.f;
+
+    factionName.Enable(true);
+    stats.at(idx).Setup(t, buf, true);
 }

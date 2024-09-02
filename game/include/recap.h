@@ -41,6 +41,9 @@ public:
     FactionGUIElements(const std::string& name, const eng::EndgameStats& stats, const eng::GUI::StyleRef& bar_style, const eng::GUI::StyleRef& text_style, const glm::vec4& color, int pos);
 
     void Render();
+
+    void Interpolate(int idx, float t, int maxval);
+    void Finalize(int idx, int maxval);
 };
 
 struct RecapScreenData {
@@ -58,6 +61,7 @@ struct RecapScreenData {
     eng::GUI::TextLabel score;
 
     std::array<eng::GUI::TextLabel, STATS_COUNT> statsLabels;
+    std::array<int, STATS_COUNT> statsMax;
     std::vector<FactionGUIElements> factions;
 };
 
@@ -93,6 +97,10 @@ private:
     void GUI_Init_ObjectivesScreen();
     void GUI_Init_RecapScreen();
     void GUI_Init_Other();
+
+    void RecapSubstage_Interpolate(int idx, float t);
+    void RecapSubstage_Finalize(int idx);
+    void RecapSubstage_TransitionOut();
 private:
     int state = RecapState::INVALID;
 

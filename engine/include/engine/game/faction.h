@@ -32,6 +32,8 @@ namespace eng {
         glm::ivec3 total_resources = glm::ivec3(0);
         int units_killed = 0;
         int buildings_razed = 0;
+    public:
+        std::array<int,7> ToArray() const;
     };
 
     struct EndgameFactionData {
