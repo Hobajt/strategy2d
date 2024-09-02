@@ -111,6 +111,7 @@ namespace eng {
         //Purely for aesthetics, cuz I'm weird that way.
         void RandomizeIdleRotations();
 
+        void InitObjectCounter_Editor();
         void InitObjectCounter(Level& level);
         const std::vector<int>& FactionObjectCounter() const { return factionObjectCount; }
         const std::vector<glm::ivec2>& FactionKillCounter() const { return factionKillCount; }

@@ -37,6 +37,7 @@ private:
     void KeyPressCallback(int keycode, int modifiers);
 
     void LevelSetup(int startType, GameInitParams* params);
+    void StateReset();
 private:
     eng::Level level;
 

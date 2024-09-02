@@ -17,6 +17,7 @@ EditorContext::EditorContext() : input(EditorInputHandler(*this)), tools(EditorT
 void EditorContext::Terrain_SetupNew(const glm::ivec2& size, const eng::TilesetRef& tileset) {
     level.Release();
     level = Level(size, tileset);
+    level.objects.InitObjectCounter_Editor();
 
     //camera reset
     Camera& camera = Camera::Get();

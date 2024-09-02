@@ -33,6 +33,8 @@ void IngameController::Render() {
 void IngameController::OnPreLoad(int prevStageID, int info, void* data) {
     //start loading game assets - probably just map data, since opengl can't handle async loading
 
+    StateReset();
+
     //TODO: do this in a separate thread
     LevelSetup(info, static_cast<GameInitParams*>(data));
 
@@ -152,7 +154,24 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
     //TODO: MOVE ONE LINE ABOVE - IS HERE TO ENSURE SAVEFILES HAVE CONDITION
     level.CustomGame_InitEndConditions();
     gameInitParams.params = *params;
+    
+    //restore campaign transition data for loaded savefiles
+    if(startType == GameStartType::LOAD) {
+        gameInitParams.params.campaignIdx = level.info.campaignIdx;
+        gameInitParams.params.race = level.info.race;
+
+        //note: no need to restore these when starting new game - should be baked in the savefile already
+    }
 
     LinkController(level.factions.Player());
     ready_to_render = true;
+}
+
+void IngameController::StateReset() {
+    can_be_paused = true;
+    paused = false;
+    Input::Get().SetPaused(paused);
+
+    ready_to_render = false;
+    ready_to_run = false;
 }

@@ -372,6 +372,14 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
         objectives.scenario.act_background = Resources::LoadTexture(act.at("background"), true);
     }
 
+    if(data.count("filepath")) {
+        gameInitData->filepath = data.at("filepath");
+    }
+    else {
+        snprintf(filepath, sizeof(filepath), "res/campaign/maps/%s_%02d.json", isOrc ? "oc" : "hu", campaignIdx);
+        gameInitData->filepath = std::string(filepath);
+    }
+
     if(data.count("cinematic")) {
         objectives.scenario.cinematic = true;
         //TODO: campaign cinematics
@@ -386,17 +394,9 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
     gameInitData = &params->params;
 
     auto colors = ColorPalette::Colors();
-    
-    glm::vec2 buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
-    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
-    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
-    glm::vec2 textureSize = ts * upscaleFactor;
-    int borderWidth = 7 * upscaleFactor;
-    glm::vec2 border_size = 7.f / ts;
 
     GUI::StyleRef text_style = recap.rankLabel.Style();
-    GUI::StyleRef bar_style = std::make_shared<GUI::Style>();
-    bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2));
+    GUI::StyleRef bar_style = recap.bar_style;
 
     recap.outcome.Setup(params->game_won ? "Victory!" : "Defeat!");
 
@@ -422,9 +422,11 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
 
     //setup GUI elements for each ingame faction
     int row = 1;
+    recap.factions.clear();
     for(const auto& f : params->stats) {
         if(f.controllerID == FactionControllerID::NATURE)
             continue;
+
         glm::vec4 color = (f.colorIdx >= 0) ? colors.at(f.colorIdx) : colors.at(0);
         recap.factions.push_back(FactionGUIElements(f.name, f.stats, bar_style, text_style, color, row++));
 
@@ -486,6 +488,16 @@ void RecapController::GUI_Init_RecapScreen() {
     for(int i = 0; i < recap.statsLabels.size(); i++) {
         recap.statsLabels.at(i) = GUI::TextLabel(glm::vec2((2.f*i)/sz - 1.f + 1.f / (sz+0.5f), -1.f + 7.5f*RECAP_HEIGHT), glm::vec2(1.f/(sz+0.5f), 1.5f*RECAP_HEIGHT), 1.f, text_sml, stat_names.at(i));
     }
+
+    glm::vec2 buttonSize = glm::vec2(0.25f, 0.25f * GUI::ImageButtonWithBar::BarHeightRatio());
+    glm::vec2 ts = glm::vec2(Window::Get().Size()) * buttonSize;
+    float upscaleFactor = std::max(1.f, 128.f / std::min(ts.x, ts.y));  //upscale the smaller side to 128px
+    glm::vec2 textureSize = ts * upscaleFactor;
+    int borderWidth = 7 * upscaleFactor;
+    glm::vec2 border_size = 7.f / ts;
+
+    recap.bar_style = std::make_shared<GUI::Style>();
+    recap.bar_style->texture = TextureGenerator::GetTexture(TextureGenerator::Params::ButtonTexture_Clear_2borders(textureSize.x, textureSize.y, borderWidth, borderWidth, glm::uvec3(120), glm::uvec3(20), glm::uvec3(120), glm::uvec3(120), glm::uvec3(240), borderWidth/2));
 }
 
 void RecapController::GUI_Init_Other() {
@@ -552,13 +564,21 @@ void RecapController::RecapSubstage_Finalize(int idx) {
 }
 
 void RecapController::RecapSubstage_TransitionOut() {
-    // GetTransitionHandler()->InitTransition(
-    //     TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::INGAME, 0, (void*)gameInitData, true)
-    // );
+    ASSERT_MSG(gameInitData != nullptr, "GameInitData have to be set here!");
 
-    //begin transition once the 'Continue' button is pressed
-    //      transition to main menu if game mode is custom game
-    //      transition to Recap-Objectives if game mode is campaign - check where the campaign increment is done (possibly do it here if it's nowhere to be found)
+    if(gameInitData->campaignIdx >= 0) {
+        //campaign - next scenario, transition to RecapScreen::Objectives
+        gameInitData->campaignIdx++;
+        GetTransitionHandler()->InitTransition(
+            TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::RECAP, RecapState::OBJECTIVES, (void*)gameInitData, true)
+        );
+    }
+    else {
+        //custom game - transition to main menu
+        GetTransitionHandler()->InitTransition(
+            TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, nullptr, true)
+        );
+    }
 }
 
 FactionGUIElements::FactionGUIElements(const std::string& name, const eng::EndgameStats& factionStats, const eng::GUI::StyleRef& bar_style, const eng::GUI::StyleRef& text_style, const glm::vec4& color, int pos) {

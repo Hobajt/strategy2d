@@ -738,6 +738,16 @@ namespace eng {
             factionKillCount.push_back(glm::ivec2(0));
     }
 
+    void ObjectPool::InitObjectCounter_Editor() {
+        factionObjectCount.clear();
+        for(int i = 0; i < 12; i++)
+            factionObjectCount.push_back(0);
+
+        factionKillCount.clear();
+        for(int i = 0; i < 12; i++)
+            factionKillCount.push_back(glm::ivec2(0));
+    }
+
     //===== getters =====
 
     ObjectID ObjectPool::GetObjectAt(const glm::ivec2& map_coords) {

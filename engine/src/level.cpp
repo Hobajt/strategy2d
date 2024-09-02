@@ -396,6 +396,7 @@ namespace eng {
         info.preferred_opponents = config.count("preferred_opponents")  ? int(config.at("preferred_opponents")) : 1;
         info.campaignIdx         = config.count("campaign_idx")         ? int(config.at("campaign_idx")) : -1;
         info.custom_game         = config.count("custom_game")          ? bool(config.at("custom_game")) : true;
+        info.race                = config.count("race")                 ? int(config.at("race")) : 0;
 
         if(config.count("conditions"))
             info.end_conditions = EndConditions{ Parse_EndCondition(config.at("conditions")[0]), Parse_EndCondition(config.at("conditions")[1]) };
@@ -624,6 +625,7 @@ namespace eng {
         out["preferred_opponents"]  = info.preferred_opponents;
         if(info.campaignIdx >= 0)
             out["campaign_idx"] = info.campaignIdx;
+        out["race"] = info.race;
         
         out["conditions"] = { Export_EndCondition(info.end_conditions[0]), Export_EndCondition(info.end_conditions[1]) };
 

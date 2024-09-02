@@ -63,6 +63,8 @@ struct RecapScreenData {
     std::array<eng::GUI::TextLabel, STATS_COUNT> statsLabels;
     std::array<int, STATS_COUNT> statsMax;
     std::vector<FactionGUIElements> factions;
+
+    eng::GUI::StyleRef bar_style;
 };
 
 struct IngameInitParams;
