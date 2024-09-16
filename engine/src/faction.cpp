@@ -80,6 +80,7 @@ namespace eng {
     int& FactionsEditor::Faction_Race(FactionController& f) { return f.race; }
     int& FactionsEditor::Faction_Color(FactionController& f) { return f.colorIdx; }
     int& FactionsEditor::Faction_ControllerType(FactionController& f) { return f.controllerID; }
+    glm::ivec3& FactionsEditor::Faction_Resources(FactionController& f) { return f.resources; }
 
     //===== FactionController =====
 
@@ -98,7 +99,7 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated), cameraPosition(entry.cameraPosition) {
+        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated), cameraPosition(entry.cameraPosition), resources(entry.resources) {
         stats.stats = entry.stats;
     }
 
@@ -115,6 +116,7 @@ namespace eng {
         entry.eliminated = eliminated;
         entry.stats = stats.stats;
         entry.cameraPosition = cameraPosition;
+        entry.resources = resources;
 
         return entry;
     }
@@ -235,12 +237,36 @@ namespace eng {
         ENG_LOG_TRACE("Faction {} - removed dropoff point '{}' (mask={}, count={})", ID(), building, building.DropoffMask(), dropoff_points.size());
     }
 
-    bool FactionController::CanBeBuilt(int buildingID, bool orcBuildings) const {
+    int FactionController::ResourcesCheck(const glm::ivec3& price) const {
+        for(int i = 0; i < 3; i++) {
+            if(price[i] > resources[i])
+                return i+1;
+        }
+        return 0;
+    }
+
+    int FactionController::CanBeBuilt(int buildingID, bool orcBuildings) const {
+        //TODO: implement build order conditions check
         //have a precomputed bitmap - condition check for each building type
         //have values for both races, in case you somehow obtain worker of the other race
-        //do resources check here as well
         //dont handle map placement validation here, handled elsewhere
-        return true;
+        return 0;
+    }
+
+    int FactionController::CanBeBuilt(int buildingID, bool orcBuildings, const glm::ivec3& price) const {
+        //resources check (returns <1,3> if it fails)
+        for(int idx = 0; idx < 3; idx++) {
+            if(price[idx] > resources[idx]) {
+                return idx+1;
+            }
+        }
+        return CanBeBuilt(buildingID, orcBuildings);
+    }
+
+    void FactionController::PayResources(const glm::ivec3& price) {
+        ASSERT_MSG(price.x >= 0 && price.y >= 0 && price.z >= 0, "Cannot pay negative values.");
+        resources -= price;
+        ENG_LOG_FINE("FactionController::PayResources - paid {} (val={})", price, resources);
     }
 
     void FactionController::RefundResources(const glm::ivec3& refund) {
@@ -268,7 +294,7 @@ namespace eng {
     }
 
     BuildingDataRef FactionController::FetchBuildingData(int buildingID, bool orcBuildings) {
-        if(CanBeBuilt(buildingID, orcBuildings))
+        if(CanBeBuilt(buildingID, orcBuildings) == 0)
             return Resources::LoadBuilding(buildingID, orcBuildings);
         else
             return nullptr;
@@ -411,6 +437,15 @@ namespace eng {
         return cameraPosition;
     }
 
+    std::string FactionController::BuildAction_ErrorMessage(int code) {
+        static std::array<std::string,3> msgs = {
+            "Not enough Gold.",
+            "Not enough Lumber.",
+            "Not enough Oil.",
+        };
+        return msgs.at(code);
+    }
+
     void FactionController::DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::PushID(this);
@@ -454,6 +489,7 @@ namespace eng {
             ImGui::Text("    Total resources: [%d, %d, %d]", stats.stats.total_resources[0], stats.stats.total_resources[1], stats.stats.total_resources[2]);
         }
         ImGui::Separator();
+        ImGui::DragInt3("Resources", (int*)&resources);
 
         Inner_DBG_GUI();
         ImGui::PopID();

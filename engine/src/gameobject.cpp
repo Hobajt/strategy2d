@@ -1097,6 +1097,22 @@ namespace eng {
         }
     }
 
+    glm::ivec3 Building::ActionPrice(int command_id, int payload_id) const {
+        switch(command_id) {
+            case GUI::ActionButton_CommandType::UPGRADE:
+                ASSERT_MSG(((unsigned)payload_id) < BuildingType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with building type ({}, max {})", payload_id, BuildingType::COUNT-1);
+                return Resources::LoadBuilding(payload_id, IsOrc())->cost;
+            case GUI::ActionButton_CommandType::RESEARCH:
+                return Tech().ResearchPrice(payload_id, IsOrc(), true);
+            case GUI::ActionButton_CommandType::TRAIN:
+                ASSERT_MSG(((unsigned)payload_id) < UnitType::COUNT, "Building::ActionPrice - payload_id doesn't correspond with unit type ({}, max {})", payload_id, UnitType::COUNT-1);
+                return Resources::LoadUnit(payload_id, IsOrc())->cost;
+            default:
+                ENG_LOG_WARN("Building::ActionPrice - possibly invalid invokation");
+                return glm::ivec3(0);
+        }
+    }
+
     float Building::TrainOrResearchTime(bool training, int payload_id) const {
         if(training) {
             return Resources::LoadUnit(payload_id, IsOrc())->build_time;

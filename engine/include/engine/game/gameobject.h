@@ -494,7 +494,9 @@ namespace eng {
         bool IsTraining() const;
         bool ProgressableAction() const;
         float ActionProgress() const;
+        
         glm::ivec3 ActionPrice() const;
+        glm::ivec3 ActionPrice(int command_id, int payload_id) const;
 
         float TrainOrResearchTime(bool training, int payload_id) const;
 

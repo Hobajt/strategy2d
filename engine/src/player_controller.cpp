@@ -1389,6 +1389,7 @@ namespace eng {
         int command_id = cmd_data.x;
         int payload_id = cmd_data.y;
         ObjectID target_id = target_id_;
+        PlayerFactionControllerRef player = level.factions.Player();
 
         //targeted commands can only be issued on player owned units (player buildings have no targeted commands)
         if(selection_type != SelectionType::PLAYER_UNIT)
@@ -1426,13 +1427,14 @@ namespace eng {
                     }
 
                     //resources & techtree conditions checks
-                    if(!unit.Faction()->CanBeBuilt(payload_id, bool(unit.Race()))) {
-                        ENG_LOG_FINE("Targeted command - '{}' - conditions not met - (pos: ({}, {}), payload: {})", cmd_name, target_pos.x, target_pos.y, payload_id);
-                        msg_bar.DisplayMessage("You cannot build this");
+                    int buildStatus = unit.Faction()->CanBeBuilt(payload_id, bool(unit.Race()), glm::ivec3(bd->cost));
+                    if(buildStatus != 0) {
+                        ENG_LOG_FINE("Targeted command - '{}' - conditions not met - (pos: ({}, {}), payload: {}, err: {})", cmd_name, target_pos.x, target_pos.y, payload_id, buildStatus);
+                        msg_bar.DisplayMessage(FactionController::BuildAction_ErrorMessage(buildStatus-1));
                         Audio::Play(SoundEffect::Error().Random());
                         return false;
                     }
-
+                    
                     cmd = Command::Build(payload_id, target_pos);
                     cmd_name = cmd_names[1];
                     break;
@@ -1614,6 +1616,22 @@ namespace eng {
 
         if(building_command) {
             Building& building = level.objects.GetBuilding(selection[0]);
+
+            //price check
+            PlayerFactionControllerRef player = level.factions.Player();
+            glm::ivec3 price = building.ActionPrice(command_id, payload_id);
+            glm::ivec3 resources = player->Resources();
+
+            char buf[256];
+            for(int idx = 0; idx < 3; idx++) {
+                if(price[idx] > resources[idx]) {
+                    snprintf(buf, sizeof(buf), "Not enough %s.", GameResourceName(idx));
+                    msg_bar.DisplayMessage(buf);
+                    return;
+                }
+            }
+            player->PayResources(price);
+            
             switch(command_id) {
                 case GUI::ActionButton_CommandType::UPGRADE:
                     ENG_LOG_FINE("Targetless command - Upgrade (payload={})", payload_id);
@@ -2362,6 +2380,22 @@ namespace eng {
                     nontarget_cmd_issued = true;
                     break;
                 }
+            case GUI::ActionButton_CommandType::BUILD:
+            {
+                //targetable command with resources check
+                int resourcesCheckResult = ResourcesCheck(glm::ivec3(btn.price));
+                if(resourcesCheckResult == 0) {
+                    state = PlayerControllerState::COMMAND_TARGET_SELECTION;
+                    actionButtons.ShowCancelPage();
+                    command_data = glm::ivec2(btn.command_id, btn.payload_id);
+                    command_target = ObjectID();
+                }
+                else {
+                    msg_bar.DisplayMessage(FactionController::BuildAction_ErrorMessage(resourcesCheckResult-1));
+                    Audio::Play(SoundEffect::Error().Random());
+                }
+                break;
+            }
             default:
                 //targetable commands, move to target selection
                 //keep track of the command (or button), watch out for selection changes -> selection cancel?

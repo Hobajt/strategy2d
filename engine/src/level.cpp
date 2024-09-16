@@ -459,6 +459,8 @@ namespace eng {
 
             e.cameraPosition = (entry.size() > 6) ? json::parse_ivec2(entry.at(6)) : glm::ivec2(-1);
 
+            e.resources = (entry.size() > 7) ? json::parse_ivec3(entry.at(7)) : glm::ivec3(0);
+
             factions.factions.push_back(e);
         }
 
@@ -671,6 +673,8 @@ namespace eng {
             e.push_back({ entry.stats.total_units, entry.stats.total_buildings, entry.stats.units_killed, entry.stats.buildings_razed, entry.stats.total_resources[0], entry.stats.total_resources[1], entry.stats.total_resources[2] });
 
             e.push_back({ entry.cameraPosition.x, entry.cameraPosition.y });
+
+            e.push_back({ entry.resources[0], entry.resources[1], entry.resources[2] });
 
             f.push_back(e);
         }

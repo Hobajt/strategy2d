@@ -439,6 +439,8 @@ void FactionsMenu::GUI_Update() {
                 ImGui::Text("Race:"); ImGui::SameLine();
                 ImGui::RadioButton("Human", &Faction_Race(f), 0); ImGui::SameLine();
                 ImGui::RadioButton("Orc", &Faction_Race(f), 1);
+                
+                ImGui::DragInt3("Starting resources", (int*)&Faction_Resources(f));
 
                 if(ImGui::CollapsingHeader("Techtree")) {
                     f.Tech().EditableGUI();

@@ -1289,6 +1289,7 @@ static bool cmd_switching = true;
 
         glm::ivec2 building_size = buildingData->size;
         int buildable_distance = int(buildingData->coastal);
+        glm::ivec3 price = glm::ivec3(buildingData->cost);
 
         if(get_range(src.Position(), cmd.target_pos, cmd.target_pos + building_size) >= (1 + buildable_distance)) {
             //move until the worker stands within the rectangle (where the building is to be built)
@@ -1305,7 +1306,7 @@ static bool cmd_switching = true;
         }
         else {
             //validate that the area is clear & all the building conditions are met
-            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position(), buildingData->coastal, buildingData->requires_foundation) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race())) {
+            if(level.map.IsAreaBuildable(cmd.target_pos, building_size, buildingData->navigationType, src.Position(), buildingData->coastal, buildingData->requires_foundation) && src.Faction()->CanBeBuilt(cmd.target_id.id, (bool)src.Race(), price) == 0) {
                 //start the construction
                 src.WithdrawObject();
                 if(!buildingData->requires_foundation) {
@@ -1320,6 +1321,7 @@ static bool cmd_switching = true;
                     buildingID = level.objects.GetBuilding(buildingID).TransformFoundation(buildingData, src.Faction());
                     level.objects.IssueEntrance_Construction(buildingID, src.OID());
                 }
+                src.Faction()->PayResources(price);
             }
             else {
                 ENG_LOG_TRACE("Command::Build - cannot build at ({}, {})", cmd.target_pos.x, cmd.target_pos.y);

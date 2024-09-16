@@ -58,6 +58,7 @@ namespace eng {
             bool eliminated;
             EndgameStats stats;
             glm::ivec2 cameraPosition;
+            glm::ivec3 resources;
         public:
             FactionEntry() = default;
             FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
@@ -95,6 +96,7 @@ namespace eng {
         int& Faction_Race(FactionController& f);
         int& Faction_Color(FactionController& f);
         int& Faction_ControllerType(FactionController& f);
+        glm::ivec3& Faction_Resources(FactionController& f);
     };
     
     //===== FactionController =====
@@ -130,11 +132,18 @@ namespace eng {
         void RemoveDropoffPoint(const Building& building);
         const std::vector<buildingMapCoords>& DropoffPoints() const { return dropoff_points; }
 
+        void PayResources(const glm::ivec3& price);
         void RefundResources(const glm::ivec3& refund);
         void ResourcesUptick(int resource_type);
 
-        //Returns true if all the conditions for given building are met (including resources check).
-        bool CanBeBuilt(int buildingID, bool orcBuildings) const;
+        //Returns 0 on success, otherwise returns the index+1 of the first missing resource.
+        int ResourcesCheck(const glm::ivec3& price) const;
+
+        //Returns 0 if all the conditions for given building are met (no resources check).
+        int CanBeBuilt(int buildingID, bool orcBuildings) const;
+
+        //Returns 0 if all the conditions for given building are met (including resources check).
+        int CanBeBuilt(int buildingID, bool orcBuildings, const glm::ivec3& price) const;
 
         //Returns data object for particular type of building. Returns nullptr if the building cannot be built.
         BuildingDataRef FetchBuildingData(int buildingID, bool orcBuildings);
@@ -179,6 +188,8 @@ namespace eng {
         void CameraPosition(const glm::ivec2& pos) { cameraPosition = pos; }
 
         glm::ivec2 CameraPositionInit(const glm::ivec2& mapSize);
+
+        static std::string BuildAction_ErrorMessage(int code);
 
         void DBG_GUI();
     private:
