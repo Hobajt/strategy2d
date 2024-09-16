@@ -561,6 +561,10 @@ void RecapController::RecapSubstage_Finalize(int idx) {
     default:
         break;
     }
+
+    if((idx >= 1 && idx <= 3) || (idx > 3 && idx % 2 == 0)) {
+        Audio::Play(SoundEffect::GetPath("misc/thunk"));
+    }
 }
 
 void RecapController::RecapSubstage_TransitionOut() {
@@ -591,7 +595,8 @@ FactionGUIElements::FactionGUIElements(const std::string& name, const eng::Endga
         glm::vec2(1.f/(sz+0.5f), 1.5f*RECAP_HEIGHT), 
         1.f, 
         text_style,
-        name
+        name,
+        false
     );
     factionName.Enable(false);
 

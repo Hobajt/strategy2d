@@ -20,6 +20,7 @@ void IngameController::Update() {
     else {
         level.factions.Player()->Update_Paused(level);
     }
+    level.factions.Player()->CameraPosition(Camera::Get().Position());
 }
 
 void IngameController::Render() {
@@ -49,10 +50,14 @@ void IngameController::OnPreLoad(int prevStageID, int info, void* data) {
 }
 
 void IngameController::OnPreStart(int prevStageID, int info, void* data) {
-    Camera::Get().SetBounds(level.map.Size());
-    Camera::Get().SetupZoomUpdates(true);           //TODO: should be disabled
-    Camera::Get().ZoomToFit(glm::vec2(12.f));
-    Camera::Get().SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
+    Camera& camera = Camera::Get();
+
+    camera.SetBounds(level.map.Size());
+    camera.SetupZoomUpdates(true);           //TODO: should be disabled
+    camera.ZoomToFit(glm::vec2(12.f));
+    camera.SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
+
+    camera.Center(level.factions.Player()->CameraPositionInit(level.MapSize()), true);
 }
 
 void IngameController::OnStart(int prevStageID, int info, void* data) {
@@ -165,6 +170,9 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
 
     LinkController(level.factions.Player());
     ready_to_render = true;
+
+    //manually trigger first GUI update - to have it finalized when fading in
+    level.factions.Player()->Update(level);
 }
 
 void IngameController::StateReset() {

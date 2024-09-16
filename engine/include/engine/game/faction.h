@@ -57,6 +57,7 @@ namespace eng {
             std::vector<uint32_t> occlusionData;
             bool eliminated;
             EndgameStats stats;
+            glm::ivec2 cameraPosition;
         public:
             FactionEntry() = default;
             FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
@@ -174,6 +175,11 @@ namespace eng {
         Techtree& Tech() { return techtree; }
         const Techtree& Tech() const { return techtree; }
 
+        glm::ivec2 CameraPosition() const { return cameraPosition; }
+        void CameraPosition(const glm::ivec2& pos) { cameraPosition = pos; }
+
+        glm::ivec2 CameraPositionInit(const glm::ivec2& mapSize);
+
         void DBG_GUI();
     private:
         virtual void Inner_DBG_GUI() {}
@@ -194,6 +200,8 @@ namespace eng {
         int race = 0;
         glm::ivec3 resources = glm::ivec3(0);
         glm::ivec2 population = glm::ivec2(0);
+
+        glm::ivec2 cameraPosition = glm::ivec2(-1);
     };
 
     //===== DiplomacyMatrix =====

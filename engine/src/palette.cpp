@@ -2,6 +2,8 @@
 
 #include "engine/core/renderer.h"
 
+#include <array>
+
 using rgba = glm::u8vec4;
 
 #define NUM_FACTION_COLORS 8
@@ -122,14 +124,14 @@ namespace eng {
 
     std::array<glm::vec4, ColorPalette::COLOR_COUNT> ColorPalette::Colors() {
         return std::array<glm::vec4, ColorPalette::COLOR_COUNT>{
-            rgba{164, 0, 0, 255},
-            rgba{0, 60, 192, 255},
-            rgba{44, 180, 148, 255},
-            rgba{152, 72, 176, 255},
-            rgba{240, 132, 20, 255},
-            rgba{40, 40, 60, 255},
-            rgba{224, 224, 224, 255},
-            rgba{252, 252, 72, 255},
+            glm::vec4{164/255.0, 0/255.0, 0/255.0, 255/255.0},
+            glm::vec4{0/255.0, 60/255.0, 192/255.0, 255/255.0},
+            glm::vec4{44/255.0, 180/255.0, 148/255.0, 255/255.0},
+            glm::vec4{152/255.0, 72/255.0, 176/255.0, 255/255.0},
+            glm::vec4{240/255.0, 132/255.0, 20/255.0, 255/255.0},
+            glm::vec4{40/255.0, 40/255.0, 60/255.0, 255/255.0},
+            glm::vec4{224/255.0, 224/255.0, 224/255.0, 255/255.0},
+            glm::vec4{252/255.0, 252/255.0, 72/255.0, 255/255.0},
         };
     }
 

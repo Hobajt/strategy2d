@@ -98,7 +98,7 @@ namespace eng {
     }
 
     FactionController::FactionController(FactionsFile::FactionEntry&& entry, const glm::ivec2& mapSize, int controllerID_)
-        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated) {
+        : id(entry.id), name(std::move(entry.name)), techtree(std::move(entry.techtree)), colorIdx(entry.colorIdx), race(entry.race), controllerID(controllerID_), eliminated(entry.eliminated), cameraPosition(entry.cameraPosition) {
         stats.stats = entry.stats;
     }
 
@@ -114,6 +114,7 @@ namespace eng {
         entry.occlusionData = ExportOcclusion();
         entry.eliminated = eliminated;
         entry.stats = stats.stats;
+        entry.cameraPosition = cameraPosition;
 
         return entry;
     }
@@ -400,6 +401,14 @@ namespace eng {
 
     bool FactionController::CastConditionCheck(const Unit& src, int payload_id) const {
         return techtree.CastConditionCheck(payload_id, src.Mana());
+    }
+
+    glm::ivec2 FactionController::CameraPositionInit(const glm::ivec2& mapSize) {
+        if(cameraPosition == glm::ivec2(-1)) {
+            cameraPosition = mapSize / 2;
+        }
+
+        return cameraPosition;
     }
 
     void FactionController::DBG_GUI() {
