@@ -25,16 +25,72 @@ void SelectionTool::GUI_Update() {
 #ifdef ENGINE_ENABLE_GUI
     ImGui::Text("Selection Tool");
     ImGui::Separator();
-    //TODO:
+
+    if(!selection || !ObjectID::IsValid(targetID)) {
+        ImGui::Text("Nothing selected");
+        return;
+    }
+    
+    FactionObject* target = nullptr;
+    if(context.level.objects.GetObject(targetID, target)) {
+        target->DBG_GUI();
+    }
+    else {
+        ImGui::Text("Nothing selected");
+        targetID = ObjectID();
+        selection = false;
+        return;
+    }
+
+
+
 #endif
 }
 
 void SelectionTool::Render() {
-    //TODO:
+    if(!selection)
+        return;
+
+    FactionObject* target = nullptr;
+    if(!context.level.objects.GetObject(targetID, target)) {
+        targetID = ObjectID();
+        selection = false;
+        return;
+    }
+
+    pos = target->RenderPosition();
+    size = target->RenderSize();
+
+    Camera& camera = Camera::Get();
+    glm::vec2 mult = camera.Mult();
+    glm::vec4 clr = glm::vec4(0.f, 1.f, 0.f, 1.f);
+    
+    glm::vec2 m = camera.map2screen(pos);
+    glm::vec2 M = camera.map2screen(pos+size);
+    glm::vec2 v = M - m;
+
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, -0.9f), glm::vec2(v.x, 0.025f * mult.y), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, M.y, -0.9f), glm::vec2(v.x, 0.025f * mult.y), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(m.x, m.y, -0.9f), glm::vec2(0.025f * mult.x, v.y), clr));
+    Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, -0.9f), glm::vec2(0.025f * mult.x, v.y + 0.025f*mult.y), clr));
 }
 
 void SelectionTool::OnLMB(int state) {
-    //TODO:
+    if(state != InputButtonState::DOWN)
+        return;
+
+    glm::ivec2 coords = Camera::Get().GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f;
+    ObjectID clickID = context.level.map.ObjectIDAt(coords);
+
+    selection = false;
+    targetID = ObjectID();
+    FactionObject* target = nullptr;
+    if(ObjectID::IsValid(clickID) && ObjectID::IsObject(clickID) && context.level.objects.GetObject(clickID, target)) {
+        targetID = clickID;
+        pos = target->RenderPosition();
+        size = target->RenderSize();
+        selection = true;
+    }
 }
 
 //===== PaintTool =====
@@ -158,6 +214,10 @@ void PaintTool::OnLMB(int state) {
 }
 
 void PaintTool::NewLevelCreated(const glm::ivec2& size_) {
+    paint = PaintBitmap(size_);
+}
+
+void PaintTool::LevelLoaded(const glm::ivec2& size_) {
     paint = PaintBitmap(size_);
 }
 
@@ -635,10 +695,16 @@ void StartingLocationTool::GUI_Update() {
     ImGui::Text("Starting Location Tool");
     ImGui::Separator();
 
-    if(!context.level.info.custom_game) {
-        ImGui::Text("Starting locations are ignored for non-custom games.");
-        return;
+    if(context.level.info.custom_game) {
+        ImGui::Text("Custom game - locations used as faction starting locations.");
     }
+    else {
+        ImGui::Text("Campaign scenario - location used as player's starting camera location.");
+        if(startingLocations.size() > 1) {
+            LocationsUpdated();
+        }
+    }
+    ImGui::Separator();
 
     ImGui::Checkbox("Render locations", &renderStartingLocations);
     ImGui::Separator();
@@ -686,9 +752,6 @@ void StartingLocationTool::Render_NotSelected() {
 }
 
 void StartingLocationTool::OnLMB(int state) {
-    if(!context.level.info.custom_game)
-        return;
-
     Input& input = Input::Get();
     Camera& cam = Camera::Get();
 
@@ -752,15 +815,24 @@ void StartingLocationTool::OnRMB(int state) {
     }
 }
 
+glm::ivec2 StartingLocationTool::PlayerCameraPosition() const {
+    return (startingLocations.size() > 0) ? startingLocations.at(0) : glm::ivec2(-1);
+}
+
+void StartingLocationTool::NewLevelCreated(const glm::ivec2& size) {
+    startingLocations.clear();
+}
+
+void StartingLocationTool::LevelLoaded(const glm::ivec2& size) {
+    startingLocations = context.level.info.startingLocations;
+}
+
 int StartingLocationTool::LocationIdx(const glm::ivec2& loc) const {
     auto pos = std::find(startingLocations.begin(), startingLocations.end(), loc);
     return (pos != startingLocations.end()) ? (pos - startingLocations.begin()) : -1;
 }
 
 void StartingLocationTool::InnerRender() {
-    if(!context.level.info.custom_game)
-        return;
-    
     if(renderStartingLocations) {
         Camera& cam = Camera::Get();
         const Sprite& tilemap = context.level.map.GetTileset()->Tilemap();
@@ -775,6 +847,11 @@ void StartingLocationTool::InnerRender() {
 
 void StartingLocationTool::LocationsUpdated() {
     context.level.info.startingLocations = startingLocations;
+    if(!context.level.info.custom_game && startingLocations.size() > 1) {
+        glm::ivec2 loc = startingLocations[0];
+        startingLocations.clear();
+        startingLocations.push_back(loc);
+    }
 }
 
 //===== EditorTools =====
@@ -812,6 +889,12 @@ void EditorTools::SwitchTool(int toolType) {
 void EditorTools::NewLevelCreated(const glm::ivec2& size) {
     for(auto& [id, tool] : tools) {
         tool->NewLevelCreated(size);
+    }
+}
+
+void EditorTools::LevelLoaded(const glm::ivec2& size) {
+    for(auto& [id, tool] : tools) {
+        tool->LevelLoaded(size);
     }
 }
 

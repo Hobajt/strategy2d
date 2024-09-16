@@ -1207,6 +1207,7 @@ namespace eng {
             NearbySpawnCoords(NavigationBit::GROUND, dir, coords);
             ENG_LOG_INFO("RESULT: ({}, {})", coords.x, coords.y);
         }
+        ImGui::SliderInt("Amount left", &amount_left, 0, 200000);
 #endif
     }
 

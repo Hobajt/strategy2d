@@ -1,0 +1,10 @@
+{
+    "obj": {
+        "background": "slash.png",
+        "title": "XXX. DEMO LEVEL",
+        "objectives": [
+            "-Eliminate the opponent"
+        ],
+        "text": "Just a level for demonstration.\n\nEliminate the enemy forces."
+    }
+}

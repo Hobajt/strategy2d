@@ -51,6 +51,7 @@ public:
     virtual void OnHover() { hover = true; }
 
     virtual void NewLevelCreated(const glm::ivec2& size) {}
+    virtual void LevelLoaded(const glm::ivec2& size) {}
 
     //Return true when operation matches given tool (and was successfully undone).
     virtual bool UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) { return false; }
@@ -70,6 +71,12 @@ public:
     virtual void Render() override;
 
     virtual void OnLMB(int state) override;
+private:
+    bool selection = false;
+    glm::vec2 pos;
+    glm::vec2 size;
+
+    eng::ObjectID targetID = eng::ObjectID();
 };
 
 //===== PaintTool =====
@@ -90,6 +97,7 @@ public:
     virtual void OnLMB(int state) override;
 
     virtual void NewLevelCreated(const glm::ivec2& size) override;
+    virtual void LevelLoaded(const glm::ivec2& size) override;
 
     virtual bool UndoOperation(OperationRecord& op, UndoRedoUpdateData& info_update) override;
 private:
@@ -172,6 +180,11 @@ public:
     virtual void Render_NotSelected() override;
     virtual void OnLMB(int state) override;
     virtual void OnRMB(int state) override;
+
+    glm::ivec2 PlayerCameraPosition() const;
+
+    virtual void NewLevelCreated(const glm::ivec2& size) override;
+    virtual void LevelLoaded(const glm::ivec2& size) override;
 private:
     int LocationIdx(const glm::ivec2& loc) const;
     void InnerRender();
@@ -199,6 +212,7 @@ public:
     void SwitchTool(int toolType);
 
     void NewLevelCreated(const glm::ivec2& size);
+    void LevelLoaded(const glm::ivec2& size);
 
     void CustomSignal(int state, int id = 0);
     void Render();

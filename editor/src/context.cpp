@@ -35,6 +35,7 @@ int EditorContext::Terrain_Load(const std::string& filepath) {
     level.Release();
     int res = Level::Load(filepath, level);
     level.map.EnableOcclusion(false);
+    tools.LevelLoaded(level.map.Size());
     return res;
 }
 
@@ -44,6 +45,14 @@ int EditorContext::Terrain_Save(const std::string& filepath) {
     if(level.info.custom_game) {
         backup = std::move(level.factions);
         level.factions = Factions();
+    }
+    else {
+        //assign starting location[0] as player's camera position in case of campaign scenarios
+        glm::ivec2 pos = static_cast<StartingLocationTool*>(tools.GetTools().at(ToolType::STARTING_LOCATION))->PlayerCameraPosition();
+        for(auto& faction : level.factions) {
+            if(faction->ControllerID() == FactionControllerID::LOCAL_PLAYER)
+                faction->CameraPosition(pos);
+        }
     }
     
     int res = int(!level.Save(filepath));
