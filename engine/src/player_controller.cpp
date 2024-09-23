@@ -1888,21 +1888,39 @@ namespace eng {
     }
 
     MapView::rgba* MapView::Redraw(const Map& map) const {
-        constexpr static std::array<rgba, TileType::COUNT> tileColors = {
-            rgba(50,102,15,255),        //GROUND1
-            rgba(50,102,15,255),        //GROUND2
-            rgba(118,69,4,255),         //MUD1
-            rgba(118,69,4,255),         //MUD2
-            rgba(34,70,11,255),         //WALL_BROKEN
-            rgba(86,51,3,255),          //ROCK_BROKEN
-            rgba(50,102,15,255),        //TREES_FELLED
-            rgba(4,56,116,255),         //WATER
-            rgba(78,65,60,255),         //ROCK
-            rgba(117,106,104,255),      //WALL_HU
-            rgba(117,106,104,255),      //WALL_HU_DAMAGED
-            rgba(117,106,104,255),      //WALL_OC
-            rgba(117,106,104,255),      //WALL_OC_DAMAGED
-            rgba(14,45,0,255),          //TREES
+        constexpr static std::array<std::array<rgba, TileType::COUNT>,2> tileColors = {
+            std::array<rgba, TileType::COUNT> {
+                rgba(50,102,15,255),        //GROUND1
+                rgba(50,102,15,255),        //GROUND2
+                rgba(118,69,4,255),         //MUD1
+                rgba(118,69,4,255),         //MUD2
+                rgba(34,70,11,255),         //WALL_BROKEN
+                rgba(86,51,3,255),          //ROCK_BROKEN
+                rgba(50,102,15,255),        //TREES_FELLED
+                rgba(4,56,116,255),         //WATER
+                rgba(78,65,60,255),         //ROCK
+                rgba(117,106,104,255),      //WALL_HU
+                rgba(117,106,104,255),      //WALL_HU_DAMAGED
+                rgba(117,106,104,255),      //WALL_OC
+                rgba(117,106,104,255),      //WALL_OC_DAMAGED
+                rgba(14,45,0,255),          //TREES
+            },
+            std::array<rgba, TileType::COUNT> {
+                rgba(138,138,155,255),        //GROUND1
+                rgba(138,138,155,255),        //GROUND2
+                rgba(24,84,136,255),         //MUD1
+                rgba(24,84,136,255),         //MUD2
+                rgba(34,70,11,255),         //WALL_BROKEN
+                rgba(86,51,3,255),          //ROCK_BROKEN
+                rgba(50,102,15,255),        //TREES_FELLED
+                rgba(4,56,116,255),         //WATER
+                rgba(78,65,60,255),         //ROCK
+                rgba(117,106,104,255),      //WALL_HU
+                rgba(117,106,104,255),      //WALL_HU_DAMAGED
+                rgba(117,106,104,255),      //WALL_OC
+                rgba(117,106,104,255),      //WALL_OC_DAMAGED
+                rgba(0,68,48,255),          //TREES
+            }
         };
 
         constexpr int colorCount = 9;
@@ -1941,11 +1959,11 @@ namespace eng {
                         else if(ObjectID::IsObject(td.info[0].id) && !td.info[0].IsUntouchable(map.PlayerFactionID()))
                             color = factionColors[td.info[0].colorIdx % colorCount];
                         else
-                            color = tileColors[td.tileType];
+                            color = tileColors[tilesetIdx][td.tileType];
                         break;
                     case 1:     //explored, but with fog (show only buildings)
                     {
-                        rgba tmp[2] = { tileColors[td.tileType], rgba(0,0,0,255) };
+                        rgba tmp[2] = { tileColors[tilesetIdx][td.tileType], rgba(0,0,0,255) };
                         if(ObjectID::IsObject(td.info[1].id) && td.info[1].id.type == ObjectType::BUILDING)
                             color = factionColors[td.info[1].colorIdx % colorCount];
                         else if(ObjectID::IsObject(td.info[0].id) && td.info[1].id.type == ObjectType::BUILDING)
@@ -2015,6 +2033,8 @@ namespace eng {
         price.Render();
         RenderMapView();
 
+        RenderBuildingViz();
+
         switch(state) {
             case PlayerControllerState::OBJECT_SELECTION:
                 RenderSelectionRectangle();
@@ -2029,6 +2049,7 @@ namespace eng {
 
         selection.GroupsUpdate(level);
         resources.Update(level.factions.Player()->Resources(), level.factions.Player()->Population());
+        mapview.SetTilesetIdx(level.map.GetTileset()->GetType());
 
         int cursor_idx = CursorIconName::HAND_HU + int(bool(Race()));
         if(!is_menu_active) {
@@ -2316,7 +2337,7 @@ namespace eng {
                         if(command_data.x == GUI::ActionButton_CommandType::BUILD) {
                             Unit* worker;
                             if(level.objects.GetUnit(selection.selection[0], worker)) {
-                                RenderBuildingViz(level.map, worker->Position());
+                                Queue_RenderBuildingViz(level.map, worker->Position(), command_data.y);
                             }
                             else {
                                 ENG_LOG_WARN("Invalid selection for build command!");
@@ -2457,31 +2478,59 @@ namespace eng {
         Renderer::RenderQuad(Quad::FromCorner(glm::vec3(M.x, m.y, SELECTION_ZIDX), glm::vec2(SELECTION_HIGHLIGHT_WIDTH * mult.x, v.y + SELECTION_HIGHLIGHT_WIDTH*mult.y), highlight_clr));
     }
 
-    void PlayerFactionController::RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos) {
-        BuildingDataRef building = Resources::LoadBuilding(command_data.y, bool(Race()));
+    void PlayerFactionController::Queue_RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos, int id) {
+        buildingViz_id = id;
+        buildingViz_workerPos = worker_pos;
+
+        BuildingDataRef building = Resources::LoadBuilding(buildingViz_id, bool(Race()));
         SpriteGroup& sg = building->animData->GetGraphics(BuildingAnimationType::IDLE);
         glm::ivec2 sz = glm::ivec2(building->size);
 
         Camera& cam = Camera::Get();
         Input& input = Input::Get();
         glm::ivec2 corner = glm::ivec2(cam.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
-        float zIdx = -0.5f;
+        float zIdx = SELECTION_ZIDX;
         int nav_type = building->navigationType;
         bool coast_check = map.CoastCheck(corner, sz, building->coastal);
         bool foundation_check = (!building->requires_foundation || map.BuildingFoundationCheck(corner, BuildingType::OIL_PATCH));
         bool precondtions = coast_check && foundation_check;
 
+        buildingViz_check.clear();
+        for(int y = 0; y < sz.y; y++) {
+            for(int x = 0; x < sz.x; x++) {
+                glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
+                buildingViz_check.push_back((map.IsBuildable(pos, nav_type, buildingViz_workerPos) && precondtions));
+            }
+        }
+    }
+
+    void PlayerFactionController::RenderBuildingViz() {
+        if(buildingViz_id < 0)
+            return;
+
+        BuildingDataRef building = Resources::LoadBuilding(buildingViz_id, bool(Race()));
+        SpriteGroup& sg = building->animData->GetGraphics(BuildingAnimationType::IDLE);
+        glm::ivec2 sz = glm::ivec2(building->size);
+
+        Camera& cam = Camera::Get();
+        Input& input = Input::Get();
+        glm::ivec2 corner = glm::ivec2(cam.GetMapCoords(input.mousePos_n * 2.f - 1.f) + 0.5f);
+        float zIdx = SELECTION_ZIDX;
+
         //building sprite
         sg.Render(glm::vec3(cam.map2screen(corner), zIdx), building->size * cam.Mult(), glm::ivec4(0), 0, 0);
         
         //colored overlay, signaling buildability
+        int i = 0;
         for(int y = 0; y < sz.y; y++) {
             for(int x = 0; x < sz.x; x++) {
                 glm::ivec2 pos = glm::ivec2(corner.x + x, corner.y + y);
-                glm::vec4 clr = (map.IsBuildable(pos, nav_type, worker_pos) && precondtions) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
+                glm::vec4 clr = buildingViz_check.at(i++) ? glm::vec4(0.f, 0.62f, 0.f, 1.f) : glm::vec4(0.62f, 0.f, 0.f, 1.f);
                 Renderer::RenderQuad(Quad::FromCorner(glm::vec3(cam.map2screen(pos), zIdx-1e-3f), cam.Mult(), clr, shadows));
             }
         }
+
+        buildingViz_id = -1;
     }
 
     void PlayerFactionController::RenderMapView() {

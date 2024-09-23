@@ -265,7 +265,7 @@ namespace eng {
 
     void FactionController::PayResources(const glm::ivec3& price) {
         ASSERT_MSG(price.x >= 0 && price.y >= 0 && price.z >= 0, "Cannot pay negative values.");
-        resources -= price;
+        // resources -= price;
         ENG_LOG_FINE("FactionController::PayResources - paid {} (val={})", price, resources);
     }
 

@@ -298,6 +298,8 @@ namespace eng {
         
         void Update(const Map& map,  bool forceRedraw = false);
 
+        void SetTilesetIdx(int idx) { tilesetIdx = idx; }
+
         TextureRef GetTexture() const { return tex; }
     private:
         rgba* Redraw(const Map& map) const;
@@ -306,6 +308,8 @@ namespace eng {
         TextureRef tex = nullptr;
         int counter = 0;
         int scale = 1;
+
+        int tilesetIdx = 0;
     };
 
     //===== PlayerFactionController =====
@@ -372,7 +376,8 @@ namespace eng {
         glm::ivec2 MapView2MapCoords(const glm::vec2& pos, const glm::ivec2& mapSize);
 
         void RenderSelectionRectangle();
-        void RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos);
+        void Queue_RenderBuildingViz(const Map& map, const glm::ivec2& worker_pos, int id);
+        void RenderBuildingViz();
         void RenderMapView();
 
         void InitializeGUI();
@@ -409,6 +414,10 @@ namespace eng {
         OcclusionMask occlusion;
         MapView mapview;
         bool first_tick = true;
+
+        int buildingViz_id = -1;
+        std::vector<bool> buildingViz_check;
+        glm::ivec2 buildingViz_workerPos = glm::ivec2(0);
     };
 
 }//namespace eng
