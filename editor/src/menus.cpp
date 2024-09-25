@@ -320,6 +320,11 @@ void InfoMenu::GUI_Update() {
     glm::ivec2 size = level.map.Size();
     ImGui::Text("Size: [%d x %d]", size.x, size.y);
     ImGui::SliderInt("Preferred opponents", &level.info.preferred_opponents, 1, 7);
+    if(!level.info.custom_game) {
+        ImGui::DragInt("Campaign index", &level.info.campaignIdx);
+        ImGui::DragInt("Race", &level.info.race);
+    }
+    ImGui::Separator();
     ImGui::Separator();
     ImGui::Text("Tileset");
     if(tileset.GUI_Combo()) {
@@ -482,4 +487,8 @@ void FactionsMenu::GUI_Update() {
     }
 
     ImGui::End();
+}
+
+void FactionsMenu::LevelLoaded() {
+    factionCount = context.level.factions.size();
 }

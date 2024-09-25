@@ -36,6 +36,9 @@ int EditorContext::Terrain_Load(const std::string& filepath) {
     int res = Level::Load(filepath, level);
     level.map.EnableOcclusion(false);
     tools.LevelLoaded(level.map.Size());
+    for(EditorComponentRef& comp : components) {
+        comp->LevelLoaded();
+    }
     return res;
 }
 

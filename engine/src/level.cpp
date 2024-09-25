@@ -24,6 +24,7 @@ namespace eng {
     bool Parse_Camera(const nlohmann::json& config);
     Techtree Parse_Techtree(const nlohmann::json& config);
     EndgameStats Parse_EndgameStats(const nlohmann::json& config);
+    bool Parse_Scenario(std::vector<int>& data, const nlohmann::json& config);
 
     nlohmann::json Export_Mapfile(const Mapfile& map);
     nlohmann::json Export_Info(const LevelInfo& info);
@@ -32,6 +33,7 @@ namespace eng {
     nlohmann::json Export_Objects(const ObjectsFile& objects);
     nlohmann::json Export_Camera();
     nlohmann::json Export_Techtree(const Techtree& techtree);
+    nlohmann::json Export_Scenario(const std::vector<int>& data);
 
     void parse_GameObject(const nlohmann::json& d, GameObject::Entry& e);
     void parse_FactionObject(const nlohmann::json& d, FactionObject::Entry& e);
@@ -81,6 +83,11 @@ namespace eng {
             throw std::runtime_error("Savefile - invalid camera data.");
         }
 
+        if(config.count("scenario") && !Parse_Scenario(scenario, config.at("scenario"))) {
+            ENG_LOG_WARN("Savefile - invalid scenario data.");
+            throw std::runtime_error("Savefile - invalid scenario data.");
+        }
+
         ENG_LOG_TRACE("[R] Savefile '{}' successfully loaded.", filepath.c_str());
     }
 
@@ -113,6 +120,7 @@ namespace eng {
         data["objects"] = Export_Objects(objects);
         data["info"] = Export_Info(info);
         data["camera"] = Export_Camera();
+        data["scenario"] = Export_Scenario(scenario);
 
         WriteFile(filepath.c_str(), data.dump());
         
@@ -212,11 +220,18 @@ namespace eng {
     Level::Level(Savefile& savefile) : map(std::move(savefile.map)), info(savefile.info), factions(std::move(savefile.factions), map.Size(), map), objects(*this, std::move(savefile.objects)), initialized(true) {
         //restore stats after objects were created (otherwise each unit/building will be counted again)
         factions.RestoreEndgameStats(savefile.factions);
+
+        if(!info.custom_game) {
+            scenario = ScenarioController::Initialize(info.campaignIdx, info.race, savefile.scenario);
+        }
         
         ENG_LOG_INFO("Level initialization complete.");
     }
 
     void Level::Update() {
+        if(scenario != nullptr)
+            scenario->Update(*this);
+
         map.UntouchabilityUpdate(factions.Diplomacy().Bitmap());
         factions.Update(*this);
         objects.Update();
@@ -262,6 +277,7 @@ namespace eng {
         factions = {};
         info = {};
         map = {};
+        scenario = nullptr;
         initialized = false;
         ENG_LOG_INFO("Level data released.");
     }
@@ -329,6 +345,7 @@ namespace eng {
         savefile.factions = factions.Export();
         savefile.objects = objects.Export();
         savefile.info = info;
+        savefile.scenario = (scenario != nullptr) ? scenario->Export() : std::vector<int>{};
         return savefile;
     }
 
@@ -598,6 +615,19 @@ namespace eng {
         return stats;
     }
 
+    bool Parse_Scenario(std::vector<int>& data, const nlohmann::json& config) {
+        data = {};
+        
+        if(config.size() < 1)
+            return true;
+            
+        data.reserve(config.size());
+        for(auto& entry : config) {
+            data.push_back(entry);
+        }
+        return true;
+    }
+
     nlohmann::json Export_Mapfile(const Mapfile& map) {
         using json = nlohmann::json;
 
@@ -814,6 +844,10 @@ namespace eng {
             out.push_back(std::vector<int>{});
 
         return out;
+    }
+
+    nlohmann::json Export_Scenario(const std::vector<int>& data) {
+        return nlohmann::json(data);
     }
 
     //============================================

@@ -42,6 +42,7 @@ public:
     virtual void Render() {}
 
     virtual void NewLevelCreated() {}
+    virtual void LevelLoaded() {}
 protected:
     EditorContext& context;
 };
@@ -132,6 +133,8 @@ public:
     static const char* TabName() { return "Factions"; }
 
     virtual void GUI_Update() override;
+
+    virtual void LevelLoaded() override;
 private:
     int factionCount = 2;
 };

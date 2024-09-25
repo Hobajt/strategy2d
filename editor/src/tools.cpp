@@ -82,6 +82,8 @@ void SelectionTool::OnLMB(int state) {
     glm::ivec2 coords = Camera::Get().GetMapCoords(Input::Get().mousePos_n * 2.f - 1.f) + 0.5f;
     ObjectID clickID = context.level.map.ObjectIDAt(coords);
 
+
+
     selection = false;
     targetID = ObjectID();
     FactionObject* target = nullptr;
@@ -90,6 +92,29 @@ void SelectionTool::OnLMB(int state) {
         pos = target->RenderPosition();
         size = target->RenderSize();
         selection = true;
+    }
+    else {
+        glm::ivec2 m = coords;
+        glm::ivec2 M = coords + 1;
+
+        //traversable object selection (oil patch)
+        for(auto& to : context.level.map.TraversableObjects()) {
+            if(!ObjectID::IsObject(to.id) || !ObjectID::IsValid(to.id))
+                    continue;
+            
+            if(!context.level.objects.GetObject(to.id, target))
+                continue;
+
+            glm::ivec2 pm = glm::ivec2(target->MinPos());
+            glm::ivec2 pM = glm::ivec2(target->MaxPos()) + 1;
+            if(((pm.x <= M.x && pM.x >= m.x) && (pm.y <= M.y && pM.y >= m.y))) {
+                targetID = to.id;
+                pos = target->RenderPosition();
+                size = target->RenderSize();
+                selection = true;
+                break;
+            }
+        }
     }
 }
 

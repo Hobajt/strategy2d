@@ -9,6 +9,7 @@
 #include "engine/game/map.h"
 #include "engine/game/object_pool.h"
 #include "engine/game/player_controller.h"
+#include "engine/game/scenario.h"
 
 namespace eng {
 
@@ -67,6 +68,7 @@ namespace eng {
         LevelInfo info;
         FactionsFile factions;
         ObjectsFile objects;
+        std::vector<int> scenario;
     public:
         Savefile() = default;
         Savefile(const std::string& filepath);
@@ -105,6 +107,7 @@ namespace eng {
         LevelInfo info;
         Factions factions;
         ObjectPool objects;
+        ScenarioControllerRef scenario = nullptr;
 
         bool initialized = false;
         float lastConditionsUpdate = 0.f;
