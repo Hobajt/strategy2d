@@ -102,10 +102,12 @@ namespace eng {
         ImGui::Separator();
         ImGui::Text("Force condition");
         if(ImGui::Button("LOSE")) {
+            end_conditions[EndConditionType::LOSE].disabled = false;
             end_conditions[EndConditionType::LOSE].Set();
         }
         ImGui::SameLine();
         if(ImGui::Button("WIN")) {
+            end_conditions[EndConditionType::WIN].disabled = false;
             end_conditions[EndConditionType::WIN].Set();
         }
         ImGui::End();
@@ -223,6 +225,7 @@ namespace eng {
 
         if(!info.custom_game) {
             scenario = ScenarioController::Initialize(info.campaignIdx, info.race, savefile.scenario);
+            EndConditionsEnabled(false);
         }
         
         ENG_LOG_INFO("Level initialization complete.");

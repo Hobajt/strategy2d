@@ -63,6 +63,7 @@ struct RecapScreenData {
     std::array<eng::GUI::TextLabel, STATS_COUNT> statsLabels;
     std::array<int, STATS_COUNT> statsMax;
     std::vector<FactionGUIElements> factions;
+    bool game_won = false;
 
     eng::GUI::StyleRef bar_style;
 };
@@ -85,7 +86,7 @@ public:
     virtual void OnPreLoad(int prevStageID, int info, void* data) override;
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
-    virtual void OnStop() override;
+    virtual void OnStop(int nextStageID) override;
 
     DBGONLY(virtual void DBG_StageSwitch(int stateIdx) override);
 private:

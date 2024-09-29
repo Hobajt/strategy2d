@@ -71,7 +71,7 @@ void IngameController::OnStart(int prevStageID, int info, void* data) {
     ready_to_run = true;
 }
 
-void IngameController::OnStop() {
+void IngameController::OnStop(int nextStageID) {
     ready_to_render = false;
     ready_to_run = false;
 }
@@ -155,9 +155,8 @@ void IngameController::LevelSetup(int startType, GameInitParams* params) {
             return;
         }
         level.CustomGame_InitFactions(params->race, params->opponents);
+        level.CustomGame_InitEndConditions();
     }
-    //TODO: MOVE ONE LINE ABOVE - IS HERE TO ENSURE SAVEFILES HAVE CONDITION
-    level.CustomGame_InitEndConditions();
     gameInitParams.params = *params;
     
     //restore campaign transition data for loaded savefiles

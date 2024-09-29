@@ -18,7 +18,7 @@ public:
 
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
-    virtual void OnStop() override;
+    virtual void OnStop(int nextStageID) override;
 private:
     void KeyPressCallback(int keycode, int modifiers, bool single_press);
 private:

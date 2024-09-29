@@ -102,7 +102,7 @@ void IntroController::OnStart(int prevStageID, int info, void* data) {
     timeStart = Input::Get().CurrentTime();
 }
 
-void IntroController::OnStop() {}
+void IntroController::OnStop(int nextStageID) {}
 
 void IntroController::KeyPressCallback(int keycode, int modifiers, bool single_press) {
     interrupted = true;

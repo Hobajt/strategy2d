@@ -19,7 +19,7 @@ public:
 
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
-    virtual void OnStop() override;
+    virtual void OnStop(int nextStageID) override;
 
     virtual void DBG_GUI(bool active) override;
 

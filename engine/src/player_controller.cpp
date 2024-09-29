@@ -2182,22 +2182,27 @@ namespace eng {
                 break;
             case GLFW_KEY_F1:
                 menu.OpenTab(GUI::IngameMenuTab::HELP);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F5:
                 menu.OpenTab(GUI::IngameMenuTab::OPTIONS);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F7:
                 menu.OpenTab(GUI::IngameMenuTab::OPTIONS_SOUND);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F8:
                 menu.OpenTab(GUI::IngameMenuTab::OPTIONS_SPEED);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F9:
                 menu.OpenTab(GUI::IngameMenuTab::OPTIONS_PREFERENCES);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F10:
@@ -2205,10 +2210,12 @@ namespace eng {
                 break;
             case GLFW_KEY_F11:
                 menu.OpenTab(GUI::IngameMenuTab::SAVE);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
             case GLFW_KEY_F12:
                 menu.OpenTab(GUI::IngameMenuTab::LOAD);
+                handler->PauseRequest(true);
                 is_menu_active = true;
                 break;
         }

@@ -43,6 +43,11 @@ bool TransitionHandler::Update() {
         //render black quad when transition ends in faded out state
         Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, -1.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, 1.f)));
     }
+
+    if(blackScreen) {
+        Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f, 0.f, -1.f), glm::vec2(1.f), glm::vec4(0.f, 0.f, 0.f, 1.f)));
+    }
+
     return false;
 }
 
@@ -93,7 +98,7 @@ void GameStage::Initialize(const std::vector<GameStageControllerRef>& stages_, i
 void GameStage::Update() {
     currentStage->Update();
 
-    if(transitionHandler.TransitionStarted() && (currentStageID != transitionHandler.NextStageID() || transitionHandler.ForcePreloadStage())) {
+    if(transitionHandler.TransitionStarted() && (currentStageID != transitionHandler.NextStageID() || (transitionHandler.ForcePreloadStage() && transitionHandler.IsFadingOut()))) {
         stages[transitionHandler.NextStageID()]->OnPreLoad(currentStageID, transitionHandler.Info(), transitionHandler.Data());
     }
 }
@@ -101,7 +106,7 @@ void GameStage::Update() {
 void GameStage::Render() {
     currentStage->Render();
     if(transitionHandler.Update()) {
-        currentStage->OnStop();
+        currentStage->OnStop(transitionHandler.NextStageID());
         currentStage = stages[transitionHandler.NextStageID()];
         if(transitionHandler.IsFadedOut())
             currentStage->OnPreStart(currentStageID, transitionHandler.Info(), transitionHandler.Data());

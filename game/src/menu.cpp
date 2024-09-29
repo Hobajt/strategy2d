@@ -129,7 +129,7 @@ void MainMenuController::OnStart(int prevStageID, int info, void* data) {
     }, true, this);
 }
 
-void MainMenuController::OnStop() {
+void MainMenuController::OnStop(int nextStageID) {
 
 }
 

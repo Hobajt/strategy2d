@@ -184,6 +184,8 @@ namespace eng {
         Techtree& Tech() { return techtree; }
         const Techtree& Tech() const { return techtree; }
 
+        const FactionStats& Stats() const { return stats; }
+
         glm::ivec2 CameraPosition() const { return cameraPosition; }
         void CameraPosition(const glm::ivec2& pos) { cameraPosition = pos; }
 

@@ -54,7 +54,7 @@
         "pierce_damage": 3,
         "cooldown": 1.0,
         "race": 1,
-        "death_sound": 1,
+        "death_sound": 2,
         "icon": [3,0],
         "upgrade_src": [1, 1],
         "sounds": {

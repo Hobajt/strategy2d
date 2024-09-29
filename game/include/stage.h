@@ -54,6 +54,7 @@ public:
 
     bool TransitionInProgress() const { return active; }
     bool IsFadedOut() const { return fadedOut; }
+    bool IsFadingOut() const { return fadingOut; }
 
     //Initializes fade in transition if previous transition had autoFadeIn = true. Reuses all the values except for transition type.
     void AutoFadeIn();
@@ -65,6 +66,8 @@ public:
 
     void ForceFadeOut() { fadedOut = true; }
     void ForceUnfade() { fadedOut = false; }
+
+    void ForceBlackScreen(bool enabled) { blackScreen = enabled; }
     
     bool ForcePreloadStage() const { return params.forcePreload; }
 
@@ -83,6 +86,7 @@ private:
     TransitionParameters params;
 
     bool fadingOut;
+    bool blackScreen = false;
 };
 
 //===== GameStageController =====
@@ -112,7 +116,7 @@ public:
     virtual void OnStart(int prevStageID, int info, void* data) {}
 
     //Triggered when switching from this state.
-    virtual void OnStop() {}
+    virtual void OnStop(int nextStageID) {}
 
     virtual void DBG_GUI(bool active) {}
     

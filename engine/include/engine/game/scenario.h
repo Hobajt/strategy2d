@@ -31,6 +31,10 @@ namespace eng {
         Sc00_ScenarioController(const std::vector<int>& data, int race);
 
         virtual void Update(Level& level) override;
+    private:
+        bool EndConditionsUpdate(Level& level);
+    private:
+        float t = 0.f;
     };
 
     //=============================================
@@ -40,12 +44,10 @@ namespace eng {
         Sc01_ScenarioController(const std::vector<int>& data, int race);
 
         virtual void Update(Level& level) override;
+    private:
+        bool EndConditionsUpdate(Level& level);
+    private:
+        float t = 0.f;
     };
-
-/*
-ScenarioController TODO:
-    - add the 2nd map
-    - implement both controllers (both campaign & for both races)
-*/
 
 }//namespace eng

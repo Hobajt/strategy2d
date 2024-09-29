@@ -24,7 +24,7 @@ public:
     virtual void OnPreLoad(int prevStageID, int info, void* data) override;
     virtual void OnPreStart(int prevStageID, int info, void* data) override;
     virtual void OnStart(int prevStageID, int info, void* data) override;
-    virtual void OnStop() override;
+    virtual void OnStop(int nextStageID) override;
 
     virtual void PauseRequest(bool pause) override;
     virtual void PauseToggleRequest() override;

@@ -28,6 +28,9 @@ void RecapController::Update() {
     Input& input = Input::Get();
 
     switch(state) {
+        case RecapState::INVALID:
+            GetTransitionHandler()->InitTransition(TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::MAIN_MENU, MainMenuState::MAIN, true));
+            break;
         case RecapState::ACT_INTRO:
         {
             interrupted |= (input.lmb.down() || input.rmb.down() || input.enter || input.space);
@@ -251,8 +254,14 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
             if(cIdx != objectives.scenario.campaignIdx || isOrc != objectives.scenario.isOrc) {
                 if(!LoadScenarioInfo(cIdx, isOrc)) {
                     LOG_WARN("Info file not found for scenario '{}_{}'.", isOrc ? "oc" : "hu", cIdx);
+                    //transition to main menu if next scenario is not found
+                    GetTransitionHandler()->ForceBlackScreen(true);
+                    state = RecapState::INVALID;
+                    return;
                 }
             }
+
+            ActIntro_Reset(objectives.scenario.isOrc);
 
             //optional switch to cinematic/act intro substages (based on loaded config)
             if(prevStageID == GameStageName::MAIN_MENU) {
@@ -261,7 +270,6 @@ void RecapController::OnPreStart(int prevStageID, int info, void* data) {
                 }
                 else if(objectives.scenario.act) {
                     state = RecapState::ACT_INTRO;
-                    ActIntro_Reset(objectives.scenario.isOrc);
                 }
             }
             break;
@@ -301,7 +309,14 @@ void RecapController::OnStart(int prevStageID, int info, void* data) {
     }
 }
 
-void RecapController::OnStop() {}
+void RecapController::OnStop(int nextStageID) {
+    //state reset
+    if(nextStageID != GameStageName::RECAP) {
+        objectives.scenario.campaignIdx = -1;
+    }
+
+    GetTransitionHandler()->ForceBlackScreen(false);
+}
 
 #ifdef ENGINE_DEBUG
 void RecapController::DBG_StageSwitch(int stateIdx) {
@@ -399,6 +414,7 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
     GUI::StyleRef bar_style = recap.bar_style;
 
     recap.outcome.Setup(params->game_won ? "Victory!" : "Defeat!");
+    recap.game_won = params->game_won;
 
     //hide all the GUI to allow the 'slow reveal' animation
     recap.outcome.Enable(false);
@@ -571,8 +587,10 @@ void RecapController::RecapSubstage_TransitionOut() {
     ASSERT_MSG(gameInitData != nullptr, "GameInitData have to be set here!");
 
     if(gameInitData->campaignIdx >= 0) {
+        if(recap.game_won)
+            gameInitData->campaignIdx++;
+
         //campaign - next scenario, transition to RecapScreen::Objectives
-        gameInitData->campaignIdx++;
         GetTransitionHandler()->InitTransition(
             TransitionParameters(TransitionDuration::MID, TransitionType::FADE_OUT, GameStageName::RECAP, RecapState::OBJECTIVES, (void*)gameInitData, true)
         );
