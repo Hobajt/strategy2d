@@ -172,8 +172,7 @@ void RecapController::Render() {
         }
         case RecapState::GAME_RECAP:
         {
-            //TODO: change color back to white once there are actual background textures in use
-            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(0.f), recap.background));
+            Renderer::RenderQuad(Quad::FromCenter(glm::vec3(0.f), glm::vec2(1.f, 1.f), glm::vec4(1.f), recap.background));
 
             recap.outcomeLabel.Render();
             recap.outcome.Render();
@@ -355,6 +354,7 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
 
     //load & parse the scenario file
     char filepath[512];
+    char texpath[512];
     snprintf(filepath, sizeof(filepath), "res/campaign/%s_%02d.json", isOrc ? "oc" : "hu", campaignIdx);
 
     std::string data_str;
@@ -367,7 +367,14 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
         auto& obj = data.at("obj");
         objectives.scenario.obj_text = obj.at("text");
         objectives.scenario.obj_title = obj.at("title");
-        objectives.scenario.obj_background = Resources::LoadTexture(obj.at("background"), true);
+        try {
+            snprintf(texpath, sizeof(texpath), "backgrounds/%s", std::string(obj.at("background")).c_str());
+            objectives.scenario.obj_background = Resources::LoadTexture(texpath, true);
+        }
+        catch(std::exception&) {
+            LOG_WARN("RecapStage - background texture '{}' not found.", texpath);
+            objectives.scenario.obj_background = nullptr;
+        }
         objectives.scenario.obj_objectives.clear();
         for(auto& o : obj.at("objectives")) {
             objectives.scenario.obj_objectives.push_back(o);
@@ -384,7 +391,14 @@ bool RecapController::LoadScenarioInfo(int campaignIdx, bool isOrc) {
         auto& act = data.at("act");
         objectives.scenario.act_text1 = act.at("text1");
         objectives.scenario.act_text2 = act.at("text2");
-        objectives.scenario.act_background = Resources::LoadTexture(act.at("background"), true);
+        try {
+            snprintf(texpath, sizeof(texpath), "backgrounds/%s", std::string(act.at("background")).c_str());
+            objectives.scenario.act_background = Resources::LoadTexture(texpath, true);
+        }
+        catch(std::exception&) {
+            LOG_WARN("RecapStage - act background texture '{}' not found.", texpath);
+            objectives.scenario.act_background = nullptr;
+        }
     }
 
     if(data.count("filepath")) {
@@ -457,7 +471,7 @@ void RecapController::SetupRecapScreen(IngameInitParams* params) {
 
 bool RecapController::LoadRecapBackground(int campaignIdx, bool isOrc, bool game_won) {
     char filepath[512];
-    snprintf(filepath, sizeof(filepath), "res/textures/backgrounds/end_%s_%s.json", isOrc ? "oc" : "hu", game_won ? "win" : "loss");
+    snprintf(filepath, sizeof(filepath), "backgrounds/end_%s_%s.png", isOrc ? "oc" : "hu", game_won ? "win" : "loss");
 
     try {
         recap.background = Resources::LoadTexture(filepath, true);

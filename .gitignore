@@ -13,3 +13,5 @@ res/ignored
 res/sounds
 res/game.config
 res/saves/
+
+res/textures/backgrounds/*
