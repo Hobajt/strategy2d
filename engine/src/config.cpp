@@ -18,6 +18,7 @@ namespace eng::Config {
         float map_key_speed = 1.f;
 
         bool fog_of_war = true;
+        bool camera_panning = true;
     };
     static ConfigData data = {};
 
@@ -139,6 +140,10 @@ namespace eng::Config {
         return data.fog_of_war;
     }
 
+    bool CameraPanning() {
+        return data.camera_panning;
+    }
+
     void UpdateSpeeds(float game, float mouse, float keys, bool save_changes) {
         data.game_speed = game;
         data.map_mouse_speed = mouse;
@@ -151,6 +156,14 @@ namespace eng::Config {
         data.fog_of_war = fog;
         if(save_changes)
             SaveChanges();
+    }
+
+    void UpdateCameraPanning(bool enabled) {
+        data.camera_panning = enabled;
+    }
+
+    void ToggleCameraPanning() {
+        data.camera_panning = !data.camera_panning;
     }
 
     namespace Saves {
@@ -258,6 +271,7 @@ namespace eng::Config {
         if(config.count("audio_rolloff"))       data.audio.outOfScreenRolloff = config.at("audio_rolloff");
 
         if(config.count("fog_of_war"))      data.fog_of_war = config.at("fog_of_war");
+        if(config.count("camera_panning"))  data.camera_panning = config.at("camera_panning");
 
         return data;
     }

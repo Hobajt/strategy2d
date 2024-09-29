@@ -91,6 +91,7 @@ namespace eng {
     public:
         ObjectPool() = default;
         ObjectPool(Level& level, ObjectsFile&& file);
+        void Release();
 
         void Update();
         void Render();

@@ -102,6 +102,7 @@ void Game::OnInit() {
 }
 
 static InputButton t = InputButton(GLFW_KEY_T);
+static InputButton o = InputButton(GLFW_KEY_O);
 
 #ifdef ENGINE_ENABLE_GUI
 static bool gui_enabled = false;
@@ -127,12 +128,19 @@ void Game::OnUpdate() {
         gui_enabled = !gui_enabled;
 #endif
 
+    //TODO: remove these once the game is finished
     t.Update();
     if(t.down()) {
         static bool fullscreen = false;
         fullscreen = !fullscreen;
         LOG_INFO("SETTING FULLSCREEN = {}", fullscreen);
         window.SetFullscreen(fullscreen);
+    }
+
+    o.Update();
+    if(o.down()) {
+        Config::ToggleCameraPanning();
+        LOG_INFO("CAMERA PANNING = {}", Config::CameraPanning());
     }
 
     stageController.Update();
@@ -177,7 +185,7 @@ void Game::OnGUI() {
 }
 
 void Game::ReloadShaders() {
-    shader = Resources::LoadShader("test_shader", true);
+    shader = Resources::LoadShader("cycling_shader", true);
     shader->InitTextureSlots(Renderer::TextureSlotsCount());
     colorPalette.UpdateShaderValues(shader);
 }

@@ -37,8 +37,13 @@ namespace eng::Config {
     float Map_KeySpeed();
     bool FogOfWar();
 
+    bool CameraPanning();
+
     void UpdateSpeeds(float game, float mouse, float keys, bool save_changes = true);
     void UpdatePreferences(bool fog, bool save_changes = true);
+
+    void UpdateCameraPanning(bool enabled);
+    void ToggleCameraPanning();
 
     namespace Saves {
 

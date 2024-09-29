@@ -53,7 +53,7 @@ namespace eng {
     void pool<T, K, I>::clear() {
         if (m_data != nullptr) {
             for (idxType i = 0; i < m_capacity; i++) {
-                if (!m_data[i].taken)
+                if (m_data[i].taken)
                     m_data[i].data.~T();
                 m_data[i].info = key(i);
                 m_data[i].taken = false;

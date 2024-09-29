@@ -160,7 +160,7 @@ namespace eng {
     void GameObject::Inner_DBG_GUI() {
 #ifdef ENGINE_ENABLE_GUI
         ImGui::Text("ID: %d", id);
-        ImGui::Text("Action: %d (%d) | Orientation: %d", actionIdx, ActionIdx(), orientation);
+        ImGui::Text("AnimationIdx: %d (%d) | Orientation: %d", actionIdx, ActionIdx(), orientation);
         ImGui::Text("Position: [%d, %d]", position.x, position.y);
         ImGui::Text("Frame: %d/%d (%.0f%%)", animator.GetCurrentFrameIdx(), animator.GetCurrentFrameCount(), animator.GetCurrentFrame() * 100.f);
 #endif
@@ -217,8 +217,8 @@ namespace eng {
 
     FactionObject::~FactionObject() {
         RemoveFromMap();
-        lvl()->objects.KillObjectsInside(OID());
         if(lvl() != nullptr && Data() != nullptr) {
+            lvl()->objects.KillObjectsInside(OID());
             ENG_LOG_TRACE("Removing {}", OID());
             if(finalized) {
                 faction->ObjectRemoved(data_f);

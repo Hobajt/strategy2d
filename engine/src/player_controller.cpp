@@ -2437,6 +2437,9 @@ namespace eng {
     }
 
     void PlayerFactionController::CameraPanning(const glm::vec2& pos) {
+        if(!Config::CameraPanning())
+            return;
+
         float m = 0.01f;
         float M = 0.99f;
         glm::ivec2 vec = glm::ivec2(int(pos.x > M) - int(pos.x < m), -int(pos.y > M) + int(pos.y < m));

@@ -440,6 +440,15 @@ namespace eng {
         InitObjectCounter(level);
     }
 
+    void ObjectPool::Release() {
+        //have to cleanup EntranceController first (buildings KillObjectsInside() from their destructor)
+        entranceController = {};
+
+        units.clear();
+        buildings.clear();
+        utilityObjs.clear();
+    }
+
     idMappingType ObjectPool::PopulatePools(Level& level, const ObjectsFile& file) {
         std::vector<std::pair<ObjectID, ObjectID>> id_mapping = {};
         int failure_counter = 0;

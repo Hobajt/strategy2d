@@ -276,6 +276,7 @@ namespace eng {
     }
 
     void Level::Release() {
+        objects.Release();
         objects = {};
         factions = {};
         info = {};

@@ -190,6 +190,7 @@ static bool cmd_switching = true;
         case ActionType::ACTION:
             logic.update = ActionAction_Update;
             logic.signal = ActionAction_Signal;
+            data.t = 0.f;       //contains time, could halt the action
             break;
         }
     }
