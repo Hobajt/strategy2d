@@ -93,6 +93,7 @@ namespace eng {
     }
 
     void LevelInfo::DBG_GUI() {
+#ifdef ENGINE_ENABLE_GUI
         ImGui::Begin("End Conditions");
         ImGui::Separator();
         ImGui::Text("Lose condition");
@@ -112,6 +113,7 @@ namespace eng {
             end_conditions[EndConditionType::WIN].Set();
         }
         ImGui::End();
+#endif
     }
 
     void Savefile::Save(const std::string& filepath) {

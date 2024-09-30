@@ -44,20 +44,27 @@ using namespace eng;
 
 
 Game::Game(int argc, char** argv) : App(640, 480, "game") {
-#ifdef ENGINE_DEBUG
     try {
-        for(int i = 1; i < argc-1; i++) {
-            if(strncmp(argv[i], "--stage", 7) == 0) {
+        for(int i = 1; i < argc; i++) {
+            if(strncmp(argv[i], "--fullscreen", 12) == 0) {
+                fullscreen = true;
+            }
+#ifdef ENGINE_DEBUG
+            else if(strncmp(argv[i], "--stage", 7) == 0 && i < argc-1) {
                 dbg_stageIdx = GameStage::name2idx(std::string(argv[++i]));
             }
-            else if (strncmp(argv[i], "--state", 7) == 0) {
+            else if (strncmp(argv[i], "--state", 7) == 0 && i < argc-1) {
                 dbg_stageStateIdx = std::stoi(argv[++i]);
             }
+#endif
         }
     } catch(std::exception&) {
         LOG_DEBUG("invalid cmdline args, skipping...");
+#ifdef ENGINE_DEBUG
         dbg_stageIdx = dbg_stageStateIdx = -1;
+#endif
     }
+#ifdef ENGINE_DEBUG
     //stage = game stage idx, state = info for the stage controller 
     LOG_DEBUG("args: stage: {}, state: {}", dbg_stageIdx, dbg_stageStateIdx);
 #endif
@@ -85,7 +92,7 @@ void Game::OnInit() {
         throw e;
     }
 
-    // Window::Get().SetFullscreen(true);
+    Window::Get().SetFullscreen(fullscreen);
 
     stageController.Initialize({ 
         std::make_shared<IntroController>(),
@@ -101,8 +108,10 @@ void Game::OnInit() {
 #endif
 }
 
+#ifdef ENGINE_DEBUG
 static InputButton t = InputButton(GLFW_KEY_T);
 static InputButton o = InputButton(GLFW_KEY_O);
+#endif
 
 #ifdef ENGINE_ENABLE_GUI
 static bool gui_enabled = false;
@@ -119,8 +128,10 @@ void Game::OnUpdate() {
 
     Renderer::StatsReset();
 
+#ifdef ENGINE_DEBUG
     if(window.GetKeyState(GLFW_KEY_Q))
         window.Close();
+#endif
 
 #ifdef ENGINE_ENABLE_GUI
     gui_btn.Update();
@@ -129,6 +140,7 @@ void Game::OnUpdate() {
 #endif
 
     //TODO: remove these once the game is finished
+#ifdef ENGINE_DEBUG
     t.Update();
     if(t.down()) {
         static bool fullscreen = false;
@@ -142,6 +154,7 @@ void Game::OnUpdate() {
         Config::ToggleCameraPanning();
         LOG_INFO("CAMERA PANNING = {}", Config::CameraPanning());
     }
+#endif
 
     stageController.Update();
 

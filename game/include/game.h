@@ -23,4 +23,5 @@ private:
 
     DBGONLY(int dbg_stageIdx = -1);
     DBGONLY(int dbg_stageStateIdx = -1);
+    bool fullscreen = false;
 };
