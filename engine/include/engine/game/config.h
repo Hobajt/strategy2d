@@ -45,6 +45,12 @@ namespace eng::Config {
     void UpdateCameraPanning(bool enabled);
     void ToggleCameraPanning();
 
+    bool Hack_NoPrices();
+    bool Hack_NoPopLimit();
+    
+    bool Hack_MapReveal();
+    void Hack_MapReveal_Clear();
+
     namespace Saves {
 
         std::string FullPath(const std::string& name, bool append_extension = true);

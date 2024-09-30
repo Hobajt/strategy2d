@@ -341,6 +341,14 @@ namespace eng {
         }
     }
 
+    void MapTiles::MapReveal() {
+        for(int y = 0; y <= size.y; y++) {
+            for(int x = 0; x <= size.x; x++) {
+                operator()(y, x).VisionIncrement();
+            }
+        }
+    }
+
     void MapTiles::RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range) {
         if(range > 1) {
             operator()(m.y  , m.x  ).vis.visionCounter++;
@@ -708,6 +716,10 @@ namespace eng {
                     }
                 }
             }
+        }
+
+        if(Config::Hack_MapReveal()) {
+            tiles.MapReveal();
         }
     }
 

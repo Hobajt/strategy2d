@@ -1623,14 +1623,16 @@ namespace eng {
             glm::ivec3 resources = player->Resources();
 
             char buf[256];
-            for(int idx = 0; idx < 3; idx++) {
-                if(price[idx] > resources[idx]) {
-                    snprintf(buf, sizeof(buf), "Not enough %s.", GameResourceName(idx));
-                    msg_bar.DisplayMessage(buf);
-                    return;
+            if(!Config::Hack_NoPrices()) {
+                for(int idx = 0; idx < 3; idx++) {
+                    if(price[idx] > resources[idx]) {
+                        snprintf(buf, sizeof(buf), "Not enough %s.", GameResourceName(idx));
+                        msg_bar.DisplayMessage(buf);
+                        return;
+                    }
                 }
+                player->PayResources(price);
             }
-            player->PayResources(price);
             
             switch(command_id) {
                 case GUI::ActionButton_CommandType::UPGRADE:
@@ -1646,6 +1648,16 @@ namespace eng {
                     update_flag = true;
                     break;
                 case GUI::ActionButton_CommandType::TRAIN:
+                    //population check
+                    if(!Config::Hack_NoPopLimit()) {
+                        glm::ivec2 pop = player->Population();
+                        if(pop[0] >= pop[1]) {
+                            snprintf(buf, sizeof(buf), "Not enough food.");
+                            msg_bar.DisplayMessage(buf);
+                            return;
+                        }
+                    }
+
                     ENG_LOG_FINE("Targetless command - Train (payload={})", payload_id);
                     building.IssueAction(BuildingAction::TrainOrResearch(true, payload_id, building.TrainOrResearchTime(true, payload_id)));
                     building.LastBtnIcon() = last_click_icon;

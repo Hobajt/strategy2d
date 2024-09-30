@@ -113,7 +113,7 @@ namespace eng {
         void RandomizeIdleRotations();
 
         void InitObjectCounter_Editor();
-        void InitObjectCounter(Level& level);
+        void InitObjectCounter(Level& level, bool forced = false);
         const std::vector<int>& FactionObjectCounter() const { return factionObjectCount; }
         const std::vector<glm::ivec2>& FactionKillCounter() const { return factionKillCount; }
 

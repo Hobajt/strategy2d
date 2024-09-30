@@ -57,7 +57,7 @@ void IngameController::OnPreStart(int prevStageID, int info, void* data) {
     camera.ZoomToFit(glm::vec2(12.f));
     camera.SetGUIBoundsOffset(0.5f);     //based on GUI width (1/4 of screen; 2 = entire screen)
 
-    camera.Center(level.factions.Player()->CameraPositionInit(level.MapSize()), true);
+    camera.Center(level.factions.Player()->CameraPositionInit(level.MapSize()), false);
 }
 
 void IngameController::OnStart(int prevStageID, int info, void* data) {

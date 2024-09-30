@@ -3,6 +3,7 @@
 #include "engine/game/resources.h"
 #include "engine/game/camera.h"
 #include "engine/game/player_controller.h"
+#include "engine/game/config.h"
 
 #include "engine/core/renderer.h"
 #include "engine/core/input.h"
@@ -227,6 +228,7 @@ namespace eng {
             scenario = ScenarioController::Initialize(info.campaignIdx, info.race, savefile.scenario);
             EndConditionsEnabled(false);
         }
+        Config::Hack_MapReveal_Clear();
         
         ENG_LOG_INFO("Level initialization complete.");
     }
@@ -288,14 +290,18 @@ namespace eng {
 
     void Level::CustomGame_InitFactions(int playerRace, int opponents) {
         FactionsFile ff = {};
-        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE,        0, "Neutral", 5, 0));
-        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER,  playerRace, "Player", 0, 1));
+        ASSERT_MSG(factions.size() > 0, "There always has to be at least nature faction at this point.");
+        FactionControllerRef nature = factions[0];
+        ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::LOCAL_PLAYER, playerRace, "Player", 0, 1));
 
         if(opponents == 0) {
             opponents = info.preferred_opponents;
         }
 
+        //faction count limit that the map supports
         int factionCount = std::min((int)info.startingLocations.size(), opponents+1);
+
+        //generate entries for enemy factions
         char name_buf[256];
         for(int i = 1; i < factionCount; i++) {
             snprintf(name_buf, sizeof(name_buf), "Faction %d", i);
@@ -303,10 +309,12 @@ namespace eng {
             ff.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::RandomAIMindset(), race, std::string(name_buf), i, i+1));
 
             for(int j = 1; j < i+2; j++) {
+                if(i == j)
+                    continue;
                 ff.diplomacy.push_back({i, j, 1});
             }
         }
-        factions = Factions(std::move(ff), map.Size(), map);
+        factions = Factions(nature, std::move(ff), map.Size(), map);
 
         //spawn starting unit for each faction
         std::vector<glm::ivec2> starting_locations = info.startingLocations;
@@ -315,9 +323,12 @@ namespace eng {
             if(faction->ControllerID() != FactionControllerID::NATURE) {
                 int loc_idx = Random::UniformInt(starting_locations.size()-1);
                 objects.EmplaceUnit(*this, worker_data[faction->Race()], faction, starting_locations[loc_idx], false);
+                faction->CameraPosition(starting_locations[loc_idx]);
                 starting_locations.erase(starting_locations.begin() + loc_idx);
             }
         }
+
+        objects.InitObjectCounter(*this, true);
 
         ENG_LOG_INFO("CustomGame - factions initialized.");
     }
@@ -483,6 +494,11 @@ namespace eng {
             e.resources = (entry.size() > 7) ? json::parse_ivec3(entry.at(7)) : glm::ivec3(0);
 
             factions.factions.push_back(e);
+        }
+
+        //create entry for nature faction if there are no entries (required to spawn neutral objects)
+        if(factions.factions.size() == 0) {
+            factions.factions.push_back(FactionsFile::FactionEntry(FactionControllerID::NATURE, 0, "Neutral", 5, 0));
         }
 
         if(info.custom_game) {

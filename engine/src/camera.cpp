@@ -192,13 +192,13 @@ namespace eng {
 
         glm::vec2 v = screen_half * 2.f;
         if(v.x < bounds.x && v.y < bounds.y) {
-            if(position.x > b.x)
-                position.x = b.x;
+            if(position.x > b.x + 0.5f)
+                position.x = b.x + 0.5f;
             else if (position.x < screen_half.x - 0.5f - xOff)
                 position.x = screen_half.x - 0.5f - xOff;
 
-            if(position.y > b.y)
-                position.y = b.y;
+            if(position.y > b.y + 0.5f)
+                position.y = b.y + 0.5f;
             else if (position.y < screen_half.y - 0.5f)
                 position.y = screen_half.y - 0.5f;
         }

@@ -51,7 +51,12 @@
             [
                 { "idx": 0, "cmd": 10, "pid": 6, "hotkey": ["s", 0] },
                 { "idx": 1, "cmd": 10, "pid": 7, "hotkey": ["f", 0] },
-                { "idx": 2, "cmd": 10, "pid": 8, "hotkey": ["r", 4] }
+                { "idx": 2, "cmd": 10, "pid": 8, "hotkey": ["r", 4] },
+                { "idx": 3, "cmd": 10, "pid": 10, "hotkey": ["i", 8] },
+                { "idx": 4, "cmd": 10, "pid": 11, "hotkey": ["a", 2] },
+                { "idx": 5, "cmd": 10, "pid": 12, "hotkey": ["c", 0] },
+                { "idx": 6, "cmd": 10, "pid": 13, "hotkey": ["m", 0] },
+                { "idx": 7, "cmd": 10, "pid": 14, "hotkey": ["g", 0] }
             ]
         ]
     },
@@ -107,7 +112,12 @@
             [
                 { "idx": 0, "cmd": 10, "pid": 6, "hotkey": ["s", 0] },
                 { "idx": 1, "cmd": 10, "pid": 7, "hotkey": ["f", 0] },
-                { "idx": 2, "cmd": 10, "pid": 8, "hotkey": ["r", 4] }
+                { "idx": 2, "cmd": 10, "pid": 8, "hotkey": ["r", 4] },
+                { "idx": 3, "cmd": 10, "pid": 10, "hotkey": ["a", 7] },
+                { "idx": 4, "cmd": 10, "pid": 11, "hotkey": ["o", 0] },
+                { "idx": 5, "cmd": 10, "pid": 12, "hotkey": ["l", 1] },
+                { "idx": 6, "cmd": 10, "pid": 13, "hotkey": ["t", 0] },
+                { "idx": 7, "cmd": 10, "pid": 14, "hotkey": ["d", 0] }
             ]
         ]
     }

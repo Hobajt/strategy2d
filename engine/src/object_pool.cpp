@@ -725,7 +725,12 @@ namespace eng {
         }
     }
 
-    void ObjectPool::InitObjectCounter(Level& level) {
+    void ObjectPool::InitObjectCounter(Level& level, bool forced) {
+        if(forced) {
+            factionObjectCount.clear();
+            factionKillCount.clear();
+        }
+        
         if(factionObjectCount.size() != 0) {
             ENG_LOG_WARN("ObjectPool::InitObjectCounter - counter already initialized.");
             return;

@@ -19,6 +19,10 @@ namespace eng::Config {
 
         bool fog_of_war = true;
         bool camera_panning = true;
+        bool hack_map_reveal = false;
+        bool hack_map_reveal_flag = false;
+        bool hack_no_prices = false;
+        bool hack_no_pop_limit = false;
     };
     static ConfigData data = {};
 
@@ -100,6 +104,17 @@ namespace eng::Config {
         ImGui::Checkbox("Fog of War", &data.fog_of_war);
 
         ImGui::Separator();
+        ImGui::Text("Hacks");
+
+        ImGui::Checkbox("No Prices", &data.hack_no_prices);
+        ImGui::SameLine();
+        ImGui::Checkbox("No Pop Limit", &data.hack_no_pop_limit);
+        ImGui::SameLine();
+        if(ImGui::Checkbox("Reveal map", &data.hack_map_reveal)) {
+            data.hack_map_reveal = true;
+        }
+
+        ImGui::Separator();
         if(ImGui::Button("Reload config")) {
             Reload();
         }
@@ -166,6 +181,25 @@ namespace eng::Config {
         data.camera_panning = !data.camera_panning;
     }
 
+    bool Hack_NoPrices() {
+        return data.hack_no_prices;
+    }
+
+    bool Hack_NoPopLimit() {
+        return data.hack_no_pop_limit;
+    }
+
+    bool Hack_MapReveal() {
+        bool res = data.hack_map_reveal && !data.hack_map_reveal_flag;
+        data.hack_map_reveal_flag |= data.hack_map_reveal;
+        return res;
+    }
+
+    void Hack_MapReveal_Clear() {
+        data.hack_map_reveal = false;
+        data.hack_map_reveal_flag = false;
+    }
+
     namespace Saves {
 
         bool string_ends_with(const std::string& fullString, const std::string& suffix) {
@@ -196,7 +230,7 @@ namespace eng::Config {
         }
 
         std::string CustomGames_DirPath() {
-            return "res/ignored/";
+            return "res/maps/";
         }
 
         std::vector<std::string> DirectoryScan(const std::string& dir, bool extract_names = false) {

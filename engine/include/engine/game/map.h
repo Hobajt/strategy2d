@@ -262,6 +262,8 @@ namespace eng {
         void VisibilityUpdate(const glm::ivec2& pos_prev, const glm::ivec2& pos_next, int range);
         void UpdateOcclusionIndices();
 
+        void MapReveal();
+
         void RoundCorners_Increment(const glm::ivec2& m, const glm::ivec2& M, int range);
         void RoundCorners_Decrement(const glm::ivec2& m, const glm::ivec2& M, int range);
 

@@ -61,7 +61,7 @@ namespace eng {
             glm::ivec3 resources;
         public:
             FactionEntry() = default;
-            FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id);
+            FactionEntry(int controllerID, int race, const std::string& name, int colorIdx, int id, const glm::ivec2& camPos = glm::ivec2(-1), const glm::ivec3& resources = glm::ivec3(2000,1000,1000));
         };
     public:
         std::vector<FactionEntry> factions;
@@ -270,6 +270,7 @@ namespace eng {
     public:
         Factions() = default;
         Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map);
+        Factions(const FactionControllerRef& nature, FactionsFile&& data, const glm::ivec2& mapSize, Map& map);
 
         const DiplomacyMatrix& Diplomacy() const { return diplomacy; }
 

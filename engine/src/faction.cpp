@@ -7,6 +7,7 @@
 #include "engine/game/player_controller.h"
 #include "engine/game/controllers.h"
 #include "engine/game/level.h"
+#include "engine/game/config.h"
 
 #define POPULATION_CAP 200
 
@@ -37,8 +38,8 @@ namespace eng {
         };
     }
 
-    FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_, int id_)
-        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_), eliminated(false) {}
+    FactionsFile::FactionEntry::FactionEntry(int controllerID_, int race_, const std::string& name_, int colorIdx_, int id_, const glm::ivec2& camPos_, const glm::ivec3& resources_)
+        : controllerID(controllerID_), race(race_), name(name_), colorIdx(colorIdx_), techtree(Techtree{}), id(id_), eliminated(false), cameraPosition(camPos_), resources(resources_) {}
 
     //===== FactionsEditor =====
 
@@ -238,6 +239,9 @@ namespace eng {
     }
 
     int FactionController::ResourcesCheck(const glm::ivec3& price) const {
+        if(Config::Hack_NoPrices())
+            return 0;
+        
         for(int i = 0; i < 3; i++) {
             if(price[i] > resources[i])
                 return i+1;
@@ -255,17 +259,17 @@ namespace eng {
 
     int FactionController::CanBeBuilt(int buildingID, bool orcBuildings, const glm::ivec3& price) const {
         //resources check (returns <1,3> if it fails)
-        for(int idx = 0; idx < 3; idx++) {
-            if(price[idx] > resources[idx]) {
-                return idx+1;
-            }
-        }
-        return CanBeBuilt(buildingID, orcBuildings);
+        int res = ResourcesCheck(price);
+        if(res != 0)
+            return res;
+        else
+            return CanBeBuilt(buildingID, orcBuildings);
     }
 
     void FactionController::PayResources(const glm::ivec3& price) {
         ASSERT_MSG(price.x >= 0 && price.y >= 0 && price.z >= 0, "Cannot pay negative values.");
-        // resources -= price;
+        if(!Config::Hack_NoPrices())
+            resources -= price;
         ENG_LOG_FINE("FactionController::PayResources - paid {} (val={})", price, resources);
     }
 
@@ -411,6 +415,10 @@ namespace eng {
                 return stats.buildings[BuildingType::LUMBER_MILL] > 0;
             case BuildingType::CANNON_TOWER:
                 return stats.buildings[BuildingType::BLACKSMITH] > 0;
+            case BuildingType::KEEP:
+                return stats.buildings[BuildingType::BARRACKS] > 0;
+            case BuildingType::CASTLE:
+                return (stats.buildings[BuildingType::BARRACKS] > 0) && (stats.buildings[BuildingType::STABLES] > 0);
             default:
                 return true;
         }
@@ -539,7 +547,7 @@ namespace eng {
         //invalid faction idx (can just mean empty tile)
         if((unsigned int)(f1) >= factionCount || (unsigned int)(f2) >= factionCount)
             return false;
-        return this->operator()(f1, f2) != 0;
+        return (f1 != f2) && (this->operator()(f1, f2) != 0);
     }
 
     std::vector<glm::ivec3> DiplomacyMatrix::Export() const { 
@@ -709,7 +717,15 @@ namespace eng {
 
     //===== Factions =====
 
-    Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix((int)data.factions.size(), data.diplomacy)) {
+    Factions::Factions(FactionsFile&& data, const glm::ivec2& mapSize, Map& map) : Factions(nullptr, std::move(data), mapSize, map) {}
+
+    Factions::Factions(const FactionControllerRef& nature_, FactionsFile&& data, const glm::ivec2& mapSize, Map& map) : initialized(true), player(nullptr), diplomacy(DiplomacyMatrix(int(data.factions.size()) + int(nature != nullptr), data.diplomacy)) {
+        //when nature is already created (required to spawn neutral objects)
+        if(nature_ != nullptr) {
+            factions.push_back(nature_);
+            nature = nature_;
+        }
+        
         for(FactionsFile::FactionEntry& entry : data.factions) {
             if(entry.id != factions.size()) {
                 ENG_LOG_WARN("Factions reload - faction mismatch detected ({}, {})", entry.id, factions.size());
