@@ -1,6 +1,11 @@
 # Strategy 2d
 
-My attempts at a 2D strategy game, inspired by Warcraft II.
+My attempts at a 2D strategy game, "inspired" by Warcraft II.
+
+## Gameplay Demo
+<img src="sample_compressed.gif">
+
+Less compressed version is <a href="sample.gif">here</a>.
 
 **3rd party libraries:**
 * <a href="https://github.com/glfw/glfw">GLFW</a> (3.4)
@@ -20,16 +25,16 @@ The game expects OpenGL version 4.5 or higher (might work with lower, but you'd 
 
 Expects to be launched from the project root (in order to properly locate the resources).
 
-Game starts in 640x480 resolution, but can be made fullscreen when launched with ```--fullscreen``` argument
+Game starts in 640x480 resolution, but can be made fullscreen when launched with ```--fullscreen``` argument.
 
 ## Notes
 - This project was intended as a learning/hobby project of mine and, as such, is not a 1:1 copy of the original game
 - I did however try to at least keep it holistically similar to the original game
 - Things that are different:
-    - Limited number of campaign & custom maps (only 2 of each to be precise)
+    - Limited number of campaign & custom maps (only 2 of each)
     - Timings are off or are sped up (building construction, attack speeds, etc.)
     - Pathfinding works differently
-    - There's no AI
+    - There's no AI (apart from unit responses - no faction controlling AI)
     - Sprite sizes are off for some units (footman smaller than peasant for example)
     - Various bugs that I didn't find, but that are no doubt present in my version
 - Apart from the game itself, there's also an **editor**, which can be used to generate game maps
@@ -43,8 +48,8 @@ Game starts in 640x480 resolution, but can be made fullscreen when launched with
 
 - Requirements:
     - CMake 3.16 or later
-    - C++17
     - OpenGL 4.5 or later
+    - C++17
 - Howto:
     - Generate the project:
         - ```cmake -B ./build -S ./```

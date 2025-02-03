@@ -93,6 +93,8 @@ void Game::OnInit() {
     }
 
     Window::Get().SetFullscreen(fullscreen);
+    Resources::CursorIcons::SetIcon(CursorIconName::HAND_OC);
+        
 
     stageController.Initialize({ 
         std::make_shared<IntroController>(),

@@ -1631,6 +1631,17 @@ namespace eng {
                         return;
                     }
                 }
+
+                //population check
+                if(command_id == GUI::ActionButton_CommandType::TRAIN && !Config::Hack_NoPopLimit()) {
+                    glm::ivec2 pop = player->Population();
+                    if(pop[0] >= pop[1]) {
+                        snprintf(buf, sizeof(buf), "Not enough food.");
+                        msg_bar.DisplayMessage(buf);
+                        return;
+                    }
+                }
+
                 player->PayResources(price);
             }
             
@@ -1648,16 +1659,6 @@ namespace eng {
                     update_flag = true;
                     break;
                 case GUI::ActionButton_CommandType::TRAIN:
-                    //population check
-                    if(!Config::Hack_NoPopLimit()) {
-                        glm::ivec2 pop = player->Population();
-                        if(pop[0] >= pop[1]) {
-                            snprintf(buf, sizeof(buf), "Not enough food.");
-                            msg_bar.DisplayMessage(buf);
-                            return;
-                        }
-                    }
-
                     ENG_LOG_FINE("Targetless command - Train (payload={})", payload_id);
                     building.IssueAction(BuildingAction::TrainOrResearch(true, payload_id, building.TrainOrResearchTime(true, payload_id)));
                     building.LastBtnIcon() = last_click_icon;
